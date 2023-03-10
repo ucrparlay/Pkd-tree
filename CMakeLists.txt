@@ -57,7 +57,7 @@ add_executable(data_generator data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
 
 #CGAL 
-find_package( CGAL QUIET COMPONENTS  )
+find_package( CGAL )
 if ( NOT CGAL_FOUND )
   message(STATUS "This project requires the CGAL library, and will not be compiled.")
   return()  

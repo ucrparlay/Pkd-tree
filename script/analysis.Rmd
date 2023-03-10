@@ -53,7 +53,9 @@ plot the dim graph
 ```{R}
 ggplot(byDim, aes(x = dims, y = avg, color = solver,shape = solver))+
   geom_point(size = 3) +
-  geom_line() 
+  geom_line()
+
+ggsave("by_dim.pdf")
 ```
 
 plot the node graph
@@ -61,4 +63,7 @@ plot the node graph
 ggplot(byNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
   geom_point(size = 3) +
   geom_line() 
-```
+
+ggsave("by_nodes.pdf")
+
+```  
