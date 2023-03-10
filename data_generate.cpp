@@ -14,12 +14,12 @@ const double EPS = 1e-9;
 #define MOD ( (int)1000000007 )
 #define MAXN 1000 + 5
 ///**********************************START*********************************///
-const size_t pnum = 1e6;
-const size_t dim = 10;
-const size_t numFile = 20;
+const size_t pnum = 8e5;
+const size_t dim = 5;
+const size_t numFile = 10;
 const double dataRange = 1e9;
 
-std::string path = "../benchmark/craft";
+std::string path = "../benchmark/craft_var_node";
 std::default_random_engine generator;
 struct kd_node_t
 {
@@ -83,7 +83,7 @@ main()
    std::ofstream f;
    for( size_t i = 0; i < numFile; i++ )
    {
-      std::string newpath = path + toString( i ) + ".txt";
+      std::string newpath = path + toString( i ) + ".in";
       std::cout << newpath << std::endl;
       f.open( newpath );
       generatePoints( f );

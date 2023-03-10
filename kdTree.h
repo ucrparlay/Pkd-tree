@@ -1,14 +1,8 @@
 #pragma GCC optimize( 3 )
 
 #include <bits/stdc++.h>
-#include <parlay/delayed_sequence.h>
-#include <parlay/internal/get_time.h>
-#include <parlay/primitives.h>
-#include <parlay/sequence.h>
-#include <parlay/utilities.h>
-
-const size_t MAX_DIM = 10;
-const size_t MAXN = 1e6 + 5;
+const size_t MAX_DIM = 15;
+const size_t MAXN = 2e6 + 5;
 const long double eps = 1e-10;
 
 int N, Dim, Q, K;

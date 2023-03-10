@@ -47,7 +47,6 @@
 *.app
 
 # test files
-test_customized.cpp
-benchmark/
+*.in
 build/
 .vscode

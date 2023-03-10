@@ -47,9 +47,11 @@ target_link_libraries(kdTree INTERFACE kdTreeParallel)
 
 add_executable(test test.cpp)
 target_link_libraries(test PUBLIC  kdTreeParallel)
+target_compile_options(test PRIVATE -w)
 
 add_library(kdTreeParallel kdTreeParallel.cpp)
 target_link_libraries(kdTreeParallel PUBLIC parlay)
 
 add_executable(data_generator data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
+target_compile_options(data_generator PRIVATE -w)

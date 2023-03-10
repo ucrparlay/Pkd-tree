@@ -12,19 +12,20 @@ int
 main( int argc, char* argv[] )
 {
    parlay::internal::timer timer;
+
+   std::string name( argv[1] );
+   name = name.substr( name.rfind( "/" ) + 1 );
+   std::cout << name << " ";
+
    timer.start();
-   if( argc >= 2 )
-   {
-      setup( argv[1] );
-   }
+   setup( argv[1] );
+   timer.stop();
+   std::cout << timer.total_time() << " ";
+
+   timer.start();
    query_k_Nearest();
    timer.stop();
-
-   std::string resPath( argv[1] );
-   resPath = resPath.substr( 0, resPath.rfind( "/" ) ) + "/res.txt";
-   std::ofstream f;
-   f.open( resPath, std::ios_base::app );
-   f << timer.total_time() << std::endl;
+   std::cout << timer.total_time() << std::endl;
 
    return 0;
 }
