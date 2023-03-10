@@ -10,12 +10,14 @@ project(
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -w")
 
 option(DEBUG "" ON)
 option(CILKPLUS "" OFF)
 option(OPENCILK "" OFF)
 option(SERIAL "" OFF)
 option(STDALLOC "" OFF)
+option(CGAL "" OFF)
 
 if(CILKPLUS)
   add_compile_options(-DPARLAY_CILKPLUS -DCILK -fcilkplus)
@@ -47,11 +49,32 @@ target_link_libraries(kdTree INTERFACE kdTreeParallel)
 
 add_executable(test test.cpp)
 target_link_libraries(test PUBLIC  kdTreeParallel)
-target_compile_options(test PRIVATE -w)
 
 add_library(kdTreeParallel kdTreeParallel.cpp)
 target_link_libraries(kdTreeParallel PUBLIC parlay)
 
 add_executable(data_generator data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
-target_compile_options(data_generator PRIVATE -w)
+
+#CGAL 
+find_package( CGAL QUIET COMPONENTS  )
+if ( NOT CGAL_FOUND )
+  message(STATUS "This project requires the CGAL library, and will not be compiled.")
+  return()  
+endif()
+
+add_executable(cgal_knn "../cgal/cgal_knn.cpp")
+target_link_libraries(cgal_knn CGAL::CGAL)
+# target_compile_options(cgal_knn PRIVATE -w)
+
+FIND_PROGRAM(CLANG_FORMAT "clang-format")
+IF(CLANG_FORMAT)
+    add_custom_target(
+        format
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMAND ${CLANG_FORMAT}
+        -style=file
+        -i
+        ${all_files}
+    )
+endif()
