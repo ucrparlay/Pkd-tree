@@ -1,0 +1,69 @@
+
+```{r setup, include=FALSE}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(xtable)
+library(gsubfn)
+library(fmtr)
+
+library(ggthemes)
+theme_set(theme_light())
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+options(scipen = 999)
+options(digits = 20, nsmall = 6)
+```
+
+with num 
+```{R}
+kd<-read.csv("./benchmark/script/my_kd.csv",header=TRUE)
+# cgal<-read.csv("./benchmark/script/cgal.csv",header=TRUE)
+# t<-kd %>% bind_rows(cgal)
+t<-kd
+```
+
+```{R}
+byDim<-t %>% 
+    group_by(solver,benchType,dims) %>%
+    summarise(avg=as.double(mean(as.double(queryTime))),.groups="drop") 
+
+
+byDim<- byDim %>% 
+    filter(benchType=='craft_var_dim')  %>%
+    select(solver, dims, avg)
+
+byDim
+```
+
+```{R}
+byNodes <- t %>%
+    group_by(solver, benchType, nodes) %>%
+    summarise(avg=mean(queryTime, na.rm=FALSE),.groups="drop") 
+
+byNodes<- byNodes %>% 
+    filter(benchType=='craft_var_node')  %>%
+    select(solver, nodes, avg)
+
+byNodes
+```
+
+plot the dim graph
+```{R}
+ggplot(byDim, aes(x = dims, y = avg, color = solver,shape = solver))+
+  geom_point(size = 3) +
+  geom_line()
+
+ggsave("by_dim.pdf")
+```
+
+plot the node graph
+```{R}
+ggplot(byNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
+  geom_point(size = 3) +
+  geom_line() 
+
+ggsave("by_nodes.pdf")
+
+```  
