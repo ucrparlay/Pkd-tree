@@ -9,10 +9,11 @@ from unittest import case
 import math
 import csv
 
-solverName = ['my_kd', 'cgal']
+solverName = ['my_kd']
 resMap = {'my_kd': 'res.out', 'cgal': 'cgal_res.out'}
+print(os.getcwd())
 
-path = "benchmark"
+path = ".."
 benchDim = "craft_var_dim"
 benchNode = "craft_var_node"
 Nodes = [10000, 50000, 100000, 500000, 800000, 1000000, 2000000]
