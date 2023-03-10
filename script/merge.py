@@ -9,7 +9,7 @@ from unittest import case
 import math
 import csv
 
-solverName = ['my_kd']
+solverName = ['my_kd','cgal']
 resMap = {'my_kd': 'res.out', 'cgal': 'cgal_res.out'}
 print(os.getcwd())
 
