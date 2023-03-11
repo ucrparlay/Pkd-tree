@@ -13,15 +13,15 @@ theme_set(theme_light())
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
 options(scipen = 999)
-options(digits = 20, nsmall = 6)
+options(digits = 10, nsmall = 3)
 ```
 
 with num 
 ```{R}
-kd<-read.csv("./benchmark/script/my_kd.csv",header=TRUE)
-# cgal<-read.csv("./benchmark/script/cgal.csv",header=TRUE)
-# t<-kd %>% bind_rows(cgal)
-t<-kd
+kd<-read.csv("my_kd.csv",header=TRUE)
+cgal<-read.csv("cgal.csv",header=TRUE)
+t<-kd %>% bind_rows(cgal)
+t
 ```
 
 ```{R}
@@ -51,11 +51,11 @@ byNodes
 
 plot the dim graph
 ```{R}
-ggplot(byDim, aes(x = dims, y = avg, color = solver,shape = solver))+
+ggplot(byDim, aes(x = dims, y = avg, color = solver, shape = solver))+
   geom_point(size = 3) +
   geom_line()
 
-ggsave("by_dim.pdf")
+ggsave("../script/plot/by_dim.pdf")
 ```
 
 plot the node graph
@@ -64,6 +64,6 @@ ggplot(byNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
   geom_point(size = 3) +
   geom_line() 
 
-ggsave("by_nodes.pdf")
+ggsave("../script/plot/by_node.pdf")
 
 ```  
