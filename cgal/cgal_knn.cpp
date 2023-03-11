@@ -80,10 +80,11 @@ main( int argc, char* argv[] )
          scanf( "%Lf", &z.x[j] );
       Point_d query( Dim, std::begin( z.x ), std::begin( z.x ) + Dim );
       Neighbor_search search( tree, query, K );
-      for( Neighbor_search::iterator it = search.begin(); it != search.end();
-           ++it )
-         std::cout << it->first << " " << std::sqrt( it->second ) << std::endl;
-      puts( "" );
+      // for( Neighbor_search::iterator it = search.begin(); it != search.end();
+      //      ++it )
+      //    std::cout << it->first << " " << std::sqrt( it->second ) <<
+      //    std::endl;
+      // puts( "" );
    }
    timer.stop();
    std::cout << std::fixed << timer.time() << std::endl;
