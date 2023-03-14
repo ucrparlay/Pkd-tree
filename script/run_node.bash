@@ -1,8 +1,9 @@
 path="../benchmark/craft_var_node/"
-Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
+Nodes=("2000000")
+# Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
 Dims="5"
-tester="cgal_knn"
-resFile="cgal_res.out"
+tester="test"
+resFile="res.out"
 T="1200"
 
 for node in ${Nodes[@]}

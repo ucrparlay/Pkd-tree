@@ -175,7 +175,7 @@ k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
    dx = root->x[i] - nd->x[i];
    dx2 = dx * dx;
    // printf( "%Lf %Lf\n", sqrt( d ), q.size() ? sqrt( q.top() ) : -1 );
-
+   //* q.top() return the largest element
    if( q.size() < K || d - q.top() < eps )
    {
       q.push( d );

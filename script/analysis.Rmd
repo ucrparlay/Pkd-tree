@@ -7,63 +7,101 @@ library(ggplot2)
 library(xtable)
 library(gsubfn)
 library(fmtr)
+library(stringr)
+library(common)
+library(proto)
+library(patchwork)
 
 library(ggthemes)
 theme_set(theme_light())
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
-options(scipen = 999)
-options(digits = 10, nsmall = 3)
+# options(scipen = 999)
+# options(digits = 10, nsmall = 3)
 ```
 
 with num 
 ```{R}
-kd<-read.csv("my_kd.csv",header=TRUE)
-cgal<-read.csv("cgal.csv",header=TRUE)
+setwd("/home/zmen002/KDtree/")
+# setwd("/home/zmen002/KDtree")
+kd<-read.csv("script/my_kd.csv",header=TRUE)
+cgal<-read.csv("script/cgal.csv",header=TRUE)
 t<-kd %>% bind_rows(cgal)
 t
 ```
 
+header[] = solver,benchType,nodes,dims,file,buildTime,queryTime
+ 
 ```{R}
-byDim<-t %>% 
+queryByDim<-t %>% 
     group_by(solver,benchType,dims) %>%
-    summarise(avg=as.double(mean(as.double(queryTime))),.groups="drop") 
-
-
-byDim<- byDim %>% 
+    summarise(avg=mean(queryTime/nodes),.groups="drop") %>% 
     filter(benchType=='craft_var_dim')  %>%
     select(solver, dims, avg)
 
-byDim
+buildByDim<-t %>% 
+    group_by(solver,benchType,dims) %>%
+    summarise(avg=mean(buildTime),.groups="drop") %>% 
+    filter(benchType=='craft_var_dim')  %>%
+    select(solver, dims, avg)
 ```
 
 ```{R}
-byNodes <- t %>%
+queryByNodes <- t %>%
     group_by(solver, benchType, nodes) %>%
-    summarise(avg=mean(queryTime, na.rm=FALSE),.groups="drop") 
-
-byNodes<- byNodes %>% 
+    summarise(avg=mean(queryTime/nodes),.groups="drop")  %>% 
     filter(benchType=='craft_var_node')  %>%
     select(solver, nodes, avg)
 
-byNodes
+buildByNodes<-t %>% 
+    group_by(solver,benchType,nodes) %>%
+    summarise(avg=mean(buildTime),.groups="drop") %>% 
+    filter(benchType=='craft_var_node')  %>%
+    select(solver, nodes, avg)
 ```
 
 plot the dim graph
 ```{R}
-ggplot(byDim, aes(x = dims, y = avg, color = solver, shape = solver))+
-  geom_point(size = 3) +
-  geom_line()
+gBuildDim<-ggplot(buildByDim, aes(x = dims, y = avg, color = solver, shape = solver))+
+  geom_point(size=3) +
+  geom_line() + 
+  theme_gray() + 
+  labs(y="Ave build time") +
+  scale_x_continuous(name="dims",breaks=seq(2,16,by=2),limits =c(2,16) )
 
-ggsave("../script/plot/by_dim.pdf")
+gQueryDim<-ggplot(queryByDim, aes(x = dims, y = avg, color = solver, shape = solver))+
+  geom_point(size=3) +
+  geom_line() + 
+  theme_gray() + 
+  labs(y="Ave query time")+
+  scale_x_continuous(name="dims",breaks=seq(2,16,by=2),limits =c(2,16) )
+
 ```
 
 plot the node graph
 ```{R}
-ggplot(byNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
+gBuildNode<-ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
+  geom_point(size=3) +
+  geom_line() + 
+  theme_gray() +
+  labs(y="Ave build time")
+
+gQueryNode<-ggplot(queryByNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
   geom_point(size = 3) +
-  geom_line() 
+  geom_line() + 
+  theme_gray() +
+  labs(y="Ave query time")
 
-ggsave("../script/plot/by_node.pdf")
+```
 
-```  
+summarize the plot info: https://ggplot2-book.org/arranging-plots.html
+c(a,b,c) combine [a,b,c]
+seq(2,6,by=2) [2,4,6]
+
+```{R}
+saveid=paste0("script/plot/",substr(system("git rev-parse HEAD", intern=TRUE),0,7),".png")
+saveid
+
+gBuildDim + gQueryDim + gBuildNode + gQueryNode
+ggsave(saveid,width=12,dpi=900)
+```
