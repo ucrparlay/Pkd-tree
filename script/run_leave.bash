@@ -1,21 +1,21 @@
 path="../benchmark/craft_var_node/"
-# Nodes=("2000000")
-Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
+node="1000000"
+Wrap=("16" "32" "64" "128" "256")
 Dims="5"
 tester="test"
-resFile="res.out"
+resFile="res_"
 T="1200"
 
-for node in ${Nodes[@]}
+for wrap in ${Wrap[@]}
 do
     files_path="${path}${node}_${Dims}"
-    : > "${files_path}/${resFile}"
-    echo "-------${files_path}"
+    : > "${files_path}/${resFile}${wrap}.out"
+    echo "-------${files_path}_${wrap}"
 
     for file in "${files_path}/"*.in
     do
         file_name="${file##*"/"}"
-        timeout ${T} ../build/${tester} $file >> "${files_path}/${resFile}"
+        timeout ${T} ../build/${tester} ${file} ${wrap} >> "${files_path}/${resFile}${wrap}.out"
         retval=$?
         if [ ${retval} -eq 124 ]
         then

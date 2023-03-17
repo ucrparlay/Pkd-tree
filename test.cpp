@@ -18,14 +18,22 @@ main( int argc, char* argv[] )
    std::cout << name << " ";
 
    timer.start();
-   setup( argv[1] );
+   if( argc >= 2 )
+   {
+      setup( argv[1], "16" );
+   }
+   else if( argc >= 3 )
+   {
+      setup( argv[1], argv[2] );
+   }
    timer.stop();
    std::cout << timer.total_time() << " ";
 
    timer.start();
    query_k_Nearest();
    timer.stop();
-   std::cout << timer.total_time() << std::endl;
+   std::cout << timer.total_time() << " ";
 
+   std::cout << ( argc >= 3 ? argv[2] : "16" ) << std::endl;
    return 0;
 }

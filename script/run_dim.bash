@@ -1,8 +1,8 @@
 path="../benchmark/craft_var_dim/100000_"
 Dims=("2" "3" "5" "7" "9" "10" "12" "15")
 # Dims=("12" "15")
-tester="cgal_knn"
-resFile="cgal_res.out"
+tester="test"
+resFile="res.out"
 T="1200"
 
 for dim in ${Dims[@]}

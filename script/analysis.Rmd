@@ -15,6 +15,7 @@ library(patchwork)
 library(ggthemes)
 theme_set(theme_light())
 '%!in%' <- function(x,y)!('%in%'(x,y))
+setwd("/home/zmen002/KDtree/")
 
 # options(scipen = 999)
 # options(digits = 10, nsmall = 3)
@@ -22,7 +23,6 @@ theme_set(theme_light())
 
 with num 
 ```{R}
-setwd("/home/zmen002/KDtree/")
 # setwd("/home/zmen002/KDtree")
 kd<-read.csv("script/my_kd.csv",header=TRUE)
 cgal<-read.csv("script/cgal.csv",header=TRUE)
@@ -30,7 +30,7 @@ t<-kd %>% bind_rows(cgal)
 t
 ```
 
-header[] = solver,benchType,nodes,dims,file,buildTime,queryTime
+header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
  
 ```{R}
 queryByDim<-t %>% 
@@ -103,5 +103,38 @@ saveid=paste0("script/plot/",substr(system("git rev-parse HEAD", intern=TRUE),0,
 saveid
 
 gBuildDim + gQueryDim + gBuildNode + gQueryNode
+ggsave(saveid,width=12,dpi=900)
+```
+
+Now collect the leave wrapping
+```{R}
+wrap<-read.csv("script/my_kd_wrap.csv",header=TRUE)
+wrap 
+
+wrapQuery<- wrap %>% 
+  group_by(wrapSize) %>%
+  summarise(avg=mean(queryTime/nodes),.groups="drop") %>%
+  select(wrapSize,avg)
+
+wrapBuild<- wrap %>% 
+  group_by(wrapSize) %>%
+  summarise(avg=mean(buildTime/nodes),.groups="drop") %>%
+  select(wrapSize,avg)
+
+# gBuildWrap<-ggplot(wrapBuild, aes(x = wrapSize, y = avg))+
+#   geom_point(size=3) +
+#   geom_line() + 
+#   theme_gray() + 
+#   labs(y="Ave build time")
+
+gQueryWrap<-ggplot(wrapQuery, aes(x = wrapSize, y = avg))+
+  geom_point(size=3) +
+  geom_line() + 
+  theme_gray() + 
+  labs(y="Ave build time")
+saveid=paste0("script/plot/",substr(system("git rev-parse HEAD", intern=TRUE),0,7),"wrap.png")
+saveid
+
+gQueryWrap
 ggsave(saveid,width=12,dpi=900)
 ```
