@@ -1,6 +1,5 @@
 
 ```{r setup, include=FALSE}
-
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -14,84 +13,79 @@ library(patchwork)
 
 library(ggthemes)
 theme_set(theme_light())
-'%!in%' <- function(x,y)!('%in%'(x,y))
-setwd("/home/zmen002/KDtree/")
+"%!in%" <- function(x, y) !("%in%"(x, y))
+# setwd("/home/zmen002/KDtree/")
 
 # options(scipen = 999)
 # options(digits = 10, nsmall = 3)
 ```
+header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 
-with num 
 ```{R}
 # setwd("/home/zmen002/KDtree")
-kd<-read.csv("script/my_kd.csv",header=TRUE)
-cgal<-read.csv("script/cgal.csv",header=TRUE)
-t<-kd %>% bind_rows(cgal)
+kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
+kd <- read.csv("script/backup_data/my_kd_wrap.csv", header = TRUE)
+cgal <- read.csv("script/cgal.csv", header = TRUE)
+t <- kd_proto %>%
+  bind_rows(cgal) %>%
+  bind_rows(kd_wrap)
 t
 ```
 
-header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
  
 ```{R}
-queryByDim<-t %>% 
-    group_by(solver,benchType,dims) %>%
-    summarise(avg=mean(queryTime/nodes),.groups="drop") %>% 
-    filter(benchType=='craft_var_dim')  %>%
-    select(solver, dims, avg)
+queryByDim <- t %>%
+  group_by(solver, benchType, dims) %>%
+  summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
+  filter(benchType == "craft_var_dim") %>%
+  select(solver, dims, avg)
 
-buildByDim<-t %>% 
-    group_by(solver,benchType,dims) %>%
-    summarise(avg=mean(buildTime),.groups="drop") %>% 
-    filter(benchType=='craft_var_dim')  %>%
-    select(solver, dims, avg)
-```
+buildByDim <- t %>%
+  group_by(solver, benchType, dims) %>%
+  summarise(avg = mean(buildTime), .groups = "drop") %>%
+  filter(benchType == "craft_var_dim") %>%
+  select(solver, dims, avg)
 
-```{R}
 queryByNodes <- t %>%
-    group_by(solver, benchType, nodes) %>%
-    summarise(avg=mean(queryTime/nodes),.groups="drop")  %>% 
-    filter(benchType=='craft_var_node')  %>%
-    select(solver, nodes, avg)
+  group_by(solver, benchType, nodes) %>%
+  summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
+  filter(benchType == "craft_var_node") %>%
+  select(solver, nodes, avg)
 
-buildByNodes<-t %>% 
-    group_by(solver,benchType,nodes) %>%
-    summarise(avg=mean(buildTime),.groups="drop") %>% 
-    filter(benchType=='craft_var_node')  %>%
-    select(solver, nodes, avg)
+buildByNodes <- t %>%
+  group_by(solver, benchType, nodes) %>%
+  summarise(avg = mean(buildTime), .groups = "drop") %>%
+  filter(benchType == "craft_var_node") %>%
+  select(solver, nodes, avg)
 ```
 
-plot the dim graph
+plot the graph
 ```{R}
-gBuildDim<-ggplot(buildByDim, aes(x = dims, y = avg, color = solver, shape = solver))+
-  geom_point(size=3) +
-  geom_line() + 
-  theme_gray() + 
-  labs(y="Ave build time") +
-  scale_x_continuous(name="dims",breaks=seq(2,16,by=2),limits =c(2,16) )
-
-gQueryDim<-ggplot(queryByDim, aes(x = dims, y = avg, color = solver, shape = solver))+
-  geom_point(size=3) +
-  geom_line() + 
-  theme_gray() + 
-  labs(y="Ave query time")+
-  scale_x_continuous(name="dims",breaks=seq(2,16,by=2),limits =c(2,16) )
-
-```
-
-plot the node graph
-```{R}
-gBuildNode<-ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
-  geom_point(size=3) +
-  geom_line() + 
-  theme_gray() +
-  labs(y="Ave build time")
-
-gQueryNode<-ggplot(queryByNodes, aes(x = nodes, y = avg, color = solver, shape = solver))+
+gBuildDim <- ggplot(buildByDim, aes(x = dims, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +
-  geom_line() + 
+  geom_line() +
   theme_gray() +
-  labs(y="Ave query time")
+  labs(y = "Ave build time") +
+  scale_x_continuous(name = "dims", breaks = seq(2, 16, by = 2), limits = c(2, 16))
 
+gQueryDim <- ggplot(queryByDim, aes(x = dims, y = avg, color = solver, shape = solver)) +
+  geom_point(size = 3) +
+  geom_line() +
+  theme_gray() +
+  labs(y = "Ave query time") +
+  scale_x_continuous(name = "dims", breaks = seq(2, 16, by = 2), limits = c(2, 16))
+
+gBuildNode <- ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
+  geom_point(size = 3) +
+  geom_line() +
+  theme_gray() +
+  labs(y = "Ave build time")
+
+gQueryNode <- ggplot(queryByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
+  geom_point(size = 3) +
+  geom_line() +
+  theme_gray() +
+  labs(y = "Ave query time")
 ```
 
 summarize the plot info: https://ggplot2-book.org/arranging-plots.html
@@ -99,42 +93,42 @@ c(a,b,c) combine [a,b,c]
 seq(2,6,by=2) [2,4,6]
 
 ```{R}
-saveid=paste0("script/plot/",substr(system("git rev-parse HEAD", intern=TRUE),0,7),".png")
+saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), ".jpg")
 saveid
 
 gBuildDim + gQueryDim + gBuildNode + gQueryNode
-ggsave(saveid,width=12,dpi=900)
+ggsave(saveid, width = 12, dpi = 1800)
 ```
 
 Now collect the leave wrapping
 ```{R}
-wrap<-read.csv("script/my_kd_wrap.csv",header=TRUE)
-wrap 
+wrap <- read.csv("script/my_kd_wrap.csv", header = TRUE)
+wrap
 
-wrapQuery<- wrap %>% 
+wrapQuery <- wrap %>%
   group_by(wrapSize) %>%
-  summarise(avg=mean(queryTime/nodes),.groups="drop") %>%
-  select(wrapSize,avg)
+  summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
+  select(wrapSize, avg)
 
-wrapBuild<- wrap %>% 
+wrapBuild <- wrap %>%
   group_by(wrapSize) %>%
-  summarise(avg=mean(buildTime/nodes),.groups="drop") %>%
-  select(wrapSize,avg)
+  summarise(avg = mean(buildTime / nodes), .groups = "drop") %>%
+  select(wrapSize, avg)
 
 # gBuildWrap<-ggplot(wrapBuild, aes(x = wrapSize, y = avg))+
 #   geom_point(size=3) +
-#   geom_line() + 
-#   theme_gray() + 
+#   geom_line() +
+#   theme_gray() +
 #   labs(y="Ave build time")
 
-gQueryWrap<-ggplot(wrapQuery, aes(x = wrapSize, y = avg))+
-  geom_point(size=3) +
-  geom_line() + 
-  theme_gray() + 
-  labs(y="Ave build time")
-saveid=paste0("script/plot/",substr(system("git rev-parse HEAD", intern=TRUE),0,7),"wrap.png")
+gQueryWrap <- ggplot(wrapQuery, aes(x = wrapSize, y = avg)) +
+  geom_point(size = 3) +
+  geom_line() +
+  theme_gray() +
+  labs(y = "Ave build time")
+saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), "wrap.png")
 saveid
 
 gQueryWrap
-ggsave(saveid,width=12,dpi=900)
+ggsave(saveid, width = 12, dpi = 900)
 ```

@@ -1,6 +1,7 @@
 path="../benchmark/craft_var_node/"
 node="1000000"
-Wrap=("16" "32" "64" "128" "256")
+# Wrap=("16" "32" "64" "128" "256")
+Wrap=("512" "1024" "2048" "4096")
 Dims="5"
 tester="test"
 resFile="res_"
