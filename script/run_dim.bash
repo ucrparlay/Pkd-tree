@@ -1,8 +1,10 @@
+#!/bin/bash
+
 path="../benchmark/craft_var_dim/100000_"
 Dims=("2" "3" "5" "7" "9" "10" "12" "15")
 # Dims=("12" "15")
-tester="test"
-resFile="res.out"
+tester="cgal"
+resFile="cgal_res.out"
 T="1200"
 
 for dim in ${Dims[@]}

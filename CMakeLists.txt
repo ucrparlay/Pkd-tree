@@ -63,8 +63,8 @@ if ( NOT CGAL_FOUND )
   return()  
 endif()
 
-add_executable(cgal_knn "../src_cgal/cgal_knn.cpp")
-target_link_libraries(cgal_knn CGAL::CGAL)
+add_executable(cgal "../src_x/cgal_knn.cpp")
+target_link_libraries(cgal CGAL::CGAL)
 # target_compile_options(cgal_knn PRIVATE -w)
 
 FIND_PROGRAM(CLANG_FORMAT "clang-format")

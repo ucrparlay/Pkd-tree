@@ -127,7 +127,7 @@ gQueryWrap <- ggplot(wrapQuery, aes(x = wrapSize, y = avg)) +
   geom_point(size = 3) +
   geom_line() +
   theme_gray() +
-  labs(y = "Ave build time") +
+  labs(y = "Ave query time") +
   scale_x_continuous(trans = log2_trans(),
     breaks = trans_breaks("log2", function(x) 2^x),
     labels = trans_format("log2", math_format(2^.x)))
@@ -136,6 +136,5 @@ gQueryWrap <- ggplot(wrapQuery, aes(x = wrapSize, y = avg)) +
 saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), "wrap.png")
 saveid
 
-gQueryWrap
 ggsave(saveid, width = 12, dpi = 900)
 ```

@@ -87,7 +87,7 @@ main( int argc, char* argv[] )
       // puts( "" );
    }
    timer.stop();
-   std::cout << std::fixed << timer.time() << std::endl;
+   std::cout << std::fixed << timer.time() << " -1 " << std::endl;
 
    return 0;
 }

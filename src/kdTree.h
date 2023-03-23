@@ -1,4 +1,3 @@
-
 #include "utility.h"
 
 const size_t MAX_DIM = 15;
@@ -178,13 +177,13 @@ query_k_Nearest()
       scanf( "%d", &K );
       for( j = 0; j < Dim; j++ )
          scanf( "%lf", &z.x[j] );
-      // kq.init( K );
-      while( !q.empty() )
-         q.pop();
+      kq.init( K );
+      // while( !q.empty() )
+      //    q.pop();
 
-      k_nearest( root, &z, 0, Dim );
+      k_nearest_array( root, &z, 0, Dim );
 
-      // printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
+      printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
       // printf( "%.6lf\n", sqrt( q.top() ) );
    }
 }
