@@ -47,13 +47,13 @@ add_library(kdTree INTERFACE)
 target_include_directories(kdTree INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(kdTree INTERFACE kdTreeParallel)
 
-add_executable(test test.cpp)
+add_executable(test ../src/test.cpp)
 target_link_libraries(test PUBLIC  kdTreeParallel)
 
-add_library(kdTreeParallel kdTreeParallel.cpp)
+add_library(kdTreeParallel ../src/kdTreeParallel.cpp)
 target_link_libraries(kdTreeParallel PUBLIC parlay)
 
-add_executable(data_generator data_generate.cpp)
+add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
 
 #CGAL 
@@ -63,7 +63,7 @@ if ( NOT CGAL_FOUND )
   return()  
 endif()
 
-add_executable(cgal_knn "../cgal/cgal_knn.cpp")
+add_executable(cgal_knn "../src_cgal/cgal_knn.cpp")
 target_link_libraries(cgal_knn CGAL::CGAL)
 # target_compile_options(cgal_knn PRIVATE -w)
 

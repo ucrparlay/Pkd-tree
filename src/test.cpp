@@ -11,6 +11,19 @@
 int
 main( int argc, char* argv[] )
 {
+
+   // int a[] = { 10, 6, 4, 5, 2, 8, 7, 9, 3, 1, 2, 3, 9 };
+   // int k = 1;
+   // kArrayQueue Q;
+   // Q.init( k );
+   // for( int i = 0; i < 13; i++ )
+   // {
+   //    Q.insert( a[i] );
+   //    std::cout << Q.getLoad() << std::endl;
+   //    Q.printQueue();
+   // }
+   // std::cout << Q.queryKthElement() << std::endl;
+
    parlay::internal::timer timer;
 
    std::string name( argv[1] );
