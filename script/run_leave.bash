@@ -1,7 +1,8 @@
+#!/bin/bash
 path="../benchmark/craft_var_node/"
-node="1000000"
-# Wrap=("16" "32" "64" "128" "256")
-Wrap=("512" "1024" "2048" "4096")
+node="2000000"
+Wrap=("1" "2" "4" "8" "16" "32" "64" "128" "256" "512" "1024" "2048" "4096" "8192" "16384")
+# Wrap=("512" "1024" "2048" "4096")
 Dims="5"
 tester="test"
 resFile="res_"
@@ -12,7 +13,7 @@ do
     files_path="${path}${node}_${Dims}"
     : > "${files_path}/${resFile}${wrap}.out"
     echo "-------${files_path}_${wrap}"
-
+    
     for file in "${files_path}/"*.in
     do
         file_name="${file##*"/"}"

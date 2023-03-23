@@ -55,10 +55,14 @@ if (len(sys.argv) > 1 and int(sys.argv[1]) == 1):
                 str(node)+"_"+str(dim)+'/'+resMap[solver]
             combine(P, csvWriter, solver, benchNode, node, dim)
 
-Wrap = ["2", "4", "8", "16", "32", "64", "128", "256"]
+Wrap = ["2", "4", "8", "16", "32", "64", "128", "256",
+        "512", "1024", "2048", "4096", "8192", "16384"]
 if (len(sys.argv) > 2 and int(sys.argv[2]) == 1):
+    solverName = ['my_kd_wrap', 'cgal']
+    resMap = {'my_kd_wrap': 'res.out', 'cgal': 'cgal_res.out'}
+
     solver = solverName[0]  # * my_kd
-    csvFilePointer = open(solver+'_wrap.csv', "w", newline='')
+    csvFilePointer = open('single_wrap.csv', "w", newline='')
     csvFilePointer.truncate()
     csvWriter = csv.writer(csvFilePointer)
     csvWriter.writerow(header)
@@ -67,4 +71,4 @@ if (len(sys.argv) > 2 and int(sys.argv[2]) == 1):
     dim = 5
     for wrap in Wrap:
         P = path+'/'+benchNode+"/1000000_5/res_"+wrap+'.out'
-        combine(P, csvWriter, solver+'_wrap', benchNode, node, dim)
+        combine(P, csvWriter, solver, benchNode, node, dim)

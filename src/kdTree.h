@@ -119,7 +119,7 @@ k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
    dx = root->x[i] - nd->x[i];
    dx2 = dx * dx;
    //* q.top() return the largest element
-   if( q.size() < K || d - q.top() < eps )
+   if( q.size() < K || Lt( d, q.top() ) )
    {
       q.push( d );
       if( q.size() > K )
@@ -130,7 +130,7 @@ k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
       i = 0;
 
    k_nearest( dx > 0 ? root->left : root->right, nd, i, dim );
-   if( dx2 - q.top() >= eps && q.size() >= K )
+   if( Gt( dx2, q.top() ) && q.size() >= K )
       return;
    k_nearest( dx > 0 ? root->right : root->left, nd, i, dim );
 }
@@ -178,10 +178,14 @@ query_k_Nearest()
       scanf( "%d", &K );
       for( j = 0; j < Dim; j++ )
          scanf( "%lf", &z.x[j] );
-      kq.init( K );
-      k_nearest_array( root, &z, 0, Dim );
+      // kq.init( K );
+      while( !q.empty() )
+         q.pop();
+
+      k_nearest( root, &z, 0, Dim );
 
       // printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
+      // printf( "%.6lf\n", sqrt( q.top() ) );
    }
 }
 
