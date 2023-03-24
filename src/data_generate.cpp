@@ -14,12 +14,12 @@ const double EPS = 1e-9;
 #define MOD ( (int)1000000007 )
 #define MAXN 1000 + 5
 ///**********************************START*********************************///
-const size_t pnum = 1e5;
-const size_t dim = 2;
+const size_t pnum = 5e4;
+const size_t dim = 5;
 const size_t numFile = 3;
 const double dataRange = 1e9;
 
-std::string path = "../benchmark/craft_var_dim";
+std::string path = "../benchmark/craft_var_node";
 std::default_random_engine generator;
 struct kd_node_t
 {

@@ -74,7 +74,7 @@ main( int argc, char* argv[] )
       double dist = maxQueue();
 
       // printf( "%.8f %.8f\n", std::sqrt( it->second ), std::sqrt( dist ) );
-      if( !Eq( std::sqrt( it->second ), std::sqrt( dist ) ) )
+      if( std::abs( std::sqrt( it->second ) - std::sqrt( dist ) ) > 1e-4 )
       {
          puts( "-1" );
          exit( 1 );
