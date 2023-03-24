@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 
-const double eps = 1e-9;
+const double eps = 1e-7;
 
 inline bool
 Gt( const double& a, const double& b )

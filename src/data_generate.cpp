@@ -14,20 +14,20 @@ const double EPS = 1e-9;
 #define MOD ( (int)1000000007 )
 #define MAXN 1000 + 5
 ///**********************************START*********************************///
-const size_t pnum = 2e6;
-const size_t dim = 5;
+const size_t pnum = 1e5;
+const size_t dim = 2;
 const size_t numFile = 3;
 const double dataRange = 1e9;
 
-std::string path = "../benchmark/craft_var_node";
+std::string path = "../benchmark/craft_var_dim";
 std::default_random_engine generator;
 struct kd_node_t
 {
-   long double x[dim];
+   double x[dim];
    struct kd_node_t *left, *right;
-   int num;              // number of nodes in subtree plus itself
-   long double mxx[dim]; // mxx[i] the maximum of sub points on dimension i
-   long double mnx[dim]; // mnx[i] the minimum
+   int num;         // number of nodes in subtree plus itself
+   double mxx[dim]; // mxx[i] the maximum of sub points on dimension i
+   double mnx[dim]; // mnx[i] the minimum
 };
 
 kd_node_t* node;

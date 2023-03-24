@@ -67,6 +67,10 @@ add_executable(cgal "../src_x/cgal_knn.cpp")
 target_link_libraries(cgal CGAL::CGAL)
 # target_compile_options(cgal_knn PRIVATE -w)
 
+add_executable(checkCorrect ../src/checkCorrect.cpp)
+target_link_libraries(checkCorrect PUBLIC  kdTreeParallel CGAL::CGAL)
+
+
 FIND_PROGRAM(CLANG_FORMAT "clang-format")
 IF(CLANG_FORMAT)
     add_custom_target(

@@ -93,7 +93,7 @@ make_tree( struct kd_node_t* a, int len, int i, int dim )
 }
 
 void
-k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
+k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim, int K )
 {
    double d, dx, dx2;
 
@@ -128,10 +128,10 @@ k_nearest( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
    if( ++i >= dim )
       i = 0;
 
-   k_nearest( dx > 0 ? root->left : root->right, nd, i, dim );
+   k_nearest( dx > 0 ? root->left : root->right, nd, i, dim, K );
    if( Gt( dx2, q.top() ) && q.size() >= K )
       return;
-   k_nearest( dx > 0 ? root->right : root->left, nd, i, dim );
+   k_nearest( dx > 0 ? root->right : root->left, nd, i, dim, K );
 }
 
 void
@@ -160,10 +160,23 @@ k_nearest_array( struct kd_node_t* root, struct kd_node_t* nd, int i, int dim )
    if( ++i >= dim )
       i = 0;
 
-   k_nearest( dx > 0 ? root->left : root->right, nd, i, dim );
+   k_nearest_array( dx > 0 ? root->left : root->right, nd, i, dim );
    if( kq.getLoad() >= K && Gt( dx2, kq.queryKthElement() ) )
       return;
-   k_nearest( dx > 0 ? root->right : root->left, nd, i, dim );
+   k_nearest_array( dx > 0 ? root->right : root->left, nd, i, dim );
+}
+
+void
+clearQueue()
+{
+   while( !q.empty() )
+      q.pop();
+}
+
+const double
+maxQueue()
+{
+   return q.top();
 }
 
 void
@@ -177,13 +190,13 @@ query_k_Nearest()
       scanf( "%d", &K );
       for( j = 0; j < Dim; j++ )
          scanf( "%lf", &z.x[j] );
-      kq.init( K );
-      // while( !q.empty() )
-      //    q.pop();
+      // kq.init( K );
+      clearQueue();
 
-      k_nearest_array( root, &z, 0, Dim );
+      k_nearest( root, &z, 0, Dim, K );
+      // k_nearest_array( root, &z, 0, Dim );
 
-      printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
+      // printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
       // printf( "%.6lf\n", sqrt( q.top() ) );
    }
 }
