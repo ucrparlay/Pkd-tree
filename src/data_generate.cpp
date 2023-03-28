@@ -14,9 +14,9 @@ const double EPS = 1e-9;
 #define MOD ( (int)1000000007 )
 #define MAXN 1000 + 5
 ///**********************************START*********************************///
-const size_t pnum = 2e6;
+const size_t pnum = 5e5;
 const size_t dim = 5;
-const size_t numFile = 3;
+const size_t numFile = 5;
 const double dataRange = 1e9;
 
 std::string path = "../benchmark/craft_var_node";

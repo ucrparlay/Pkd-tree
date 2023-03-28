@@ -48,15 +48,15 @@ main( int argc, char* argv[] )
    timer.reset();
 
    //* start test
-   std::random_shuffle( wp, wp + N );
+   // std::random_shuffle( wp, wp + N );
    timer.start();
    for( int i = 0; i < N; i++ )
    {
-      printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
-      // KD.query_k_nearest( &wp[i], K );
+      // printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
+      KD.query_k_nearest( &wp[i], K );
    }
    timer.stop();
-   std::cout << timer.total_time() << std::endl;
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << std::endl;
 
    return 0;
 }
