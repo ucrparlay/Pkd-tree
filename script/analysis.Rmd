@@ -26,8 +26,8 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 ```{R}
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
-kd <- read.csv("script/my_kd.csv", header = TRUE)
-cgal <- read.csv("script/cgal.csv", header = TRUE)
+kd <- read.csv("script/data/my_kd.csv", header = TRUE)
+cgal <- read.csv("script/data/cgal.csv", header = TRUE)
 t <- kd %>% bind_rows(cgal)
 t
 ```
@@ -102,7 +102,7 @@ ggsave(saveid, width = 12, dpi = 1800)
 
 Now collect the leave wrapping
 ```{R}
-wrap <- read.csv("script/single_wrap.csv", header = TRUE)
+wrap <- read.csv("script/data/single_wrap.csv", header = TRUE)
 wrap
 
 wrapQuery <- wrap %>%
@@ -126,9 +126,11 @@ gQueryWrap <- ggplot(wrapQuery, aes(x = wrapSize, y = avg)) +
   geom_line() +
   theme_gray() +
   labs(y = "Ave query time") +
-  scale_x_continuous(trans = log2_trans(),
+  scale_x_continuous(
+    trans = log2_trans(),
     breaks = trans_breaks("log2", function(x) 2^x),
-    labels = trans_format("log2", math_format(2^.x)))
+    labels = trans_format("log2", math_format(2^.x))
+  )
 
 
 saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), "wrap.png")

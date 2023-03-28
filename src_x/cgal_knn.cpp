@@ -8,7 +8,7 @@
 #include <bits/stdc++.h>
 #include <iterator>
 
-typedef CGAL::Cartesian_d<long double> Kernel;
+typedef CGAL::Cartesian_d<double> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits> Neighbor_search;
@@ -27,7 +27,8 @@ struct kd_node_t
    int num;                  // number of nodes in subtree plus itself
    long double mxx[MAX_DIM]; // mxx[i] the maximum of sub points on dimension i
    long double mnx[MAX_DIM]; // mnx[i] the minimum
-} wp[MAXN];
+};
+kd_node_t* wp;
 
 void
 setup( char* path )
@@ -35,6 +36,7 @@ setup( char* path )
    freopen( path, "r", stdin );
 
    scanf( "%d %d", &N, &Dim );
+   wp = new kd_node_t[N];
    int i, j;
 
    for( i = 0; i < N; i++ )
@@ -49,14 +51,21 @@ setup( char* path )
 int
 main( int argc, char* argv[] )
 {
-   std::cout.precision( 5 );
+   assert( argc >= 2 );
+   int K = 100;
    std::string name( argv[1] );
+   if( argc >= 3 )
+      K = std::stoi( argv[2] );
+
+   std::cout.precision( 5 );
    name = name.substr( name.rfind( "/" ) + 1 );
    std::cout << name << " ";
 
    CGAL::Timer timer;
-   timer.start();
    setup( argv[1] );
+   assert( N >= K );
+
+   timer.start();
    std::list<Point_d> points;
    for( int i = 0; i < N; i++ )
    {
@@ -68,18 +77,19 @@ main( int argc, char* argv[] )
    Tree tree( points.begin(), points.end() );
    timer.stop();
    std::cout << std::fixed << timer.time() << " ";
+   timer.reset();
 
+   //* start test
+   std::random_shuffle( wp, wp + N );
    timer.start();
-   int i, j;
-   scanf( "%d", &Q );
-   struct kd_node_t z;
-   while( Q-- )
+   for( int i = 0; i < N; i++ )
    {
-      scanf( "%d", &K );
-      for( j = 0; j < Dim; j++ )
-         scanf( "%Lf", &z.x[j] );
-      Point_d query( Dim, std::begin( z.x ), std::begin( z.x ) + Dim );
+      Point_d query( Dim, wp[i].x, wp[i].x + Dim );
       Neighbor_search search( tree, query, K );
+
+      // Neighbor_search::iterator it = search.end();
+      // it--;
+      // printf( "%.6lf\n", std::sqrt( it->second ) );
 
       // for( Neighbor_search::iterator it = search.begin(); it != search.end();
       //      ++it )

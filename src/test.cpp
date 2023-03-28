@@ -11,22 +11,27 @@
 int
 main( int argc, char* argv[] )
 {
-
-   parlay::internal::timer timer;
    assert( argc >= 2 );
 
+   int K = 100, LEAVE_WRAP = 16;
    std::string name( argv[1] );
+   if( argc >= 3 )
+      K = std::stoi( argv[2] );
+   if( argc >= 4 )
+      LEAVE_WRAP = std::stoi( argv[3] );
+
    name = name.substr( name.rfind( "/" ) + 1 );
    std::cout << name << " ";
+
+   parlay::internal::timer timer;
 
    freopen( argv[1], "r", stdin );
    Point<double>* wp;
    KDtree<double> KD;
-   int N, Q, K, Dim, LEAVE_WRAP = 16;
-   if( argc >= 3 )
-      LEAVE_WRAP = std::stoi( argv[2] );
+   int N, Dim;
 
    scanf( "%d %d", &N, &Dim );
+   assert( N >= K );
    wp = (Point<double>*)malloc( N * sizeof( Point<double> ) );
 
    for( int i = 0; i < N; i++ )
@@ -36,27 +41,22 @@ main( int argc, char* argv[] )
          scanf( "%lf", &wp[i].x[j] );
       }
    }
-
+   timer.start();
    KD.init( Dim, LEAVE_WRAP, wp, N );
+   timer.stop();
+   std::cout << timer.total_time() << " ";
+   timer.reset();
 
-   int i, j;
-   scanf( "%d", &Q );
-   Point<double> z;
-   while( Q-- )
+   //* start test
+   std::random_shuffle( wp, wp + N );
+   timer.start();
+   for( int i = 0; i < N; i++ )
    {
-      scanf( "%d", &K );
-      for( j = 0; j < Dim; j++ )
-         scanf( "%lf", &z.x[j] );
-
-      // puts( ">>>>" );
-
-      double ans = KD.query_k_nearest( &z, K );
-      printf( "%.6lf\n", sqrt( ans ) );
-
-      // k_nearest_array( root, &z, 0, Dim );
-
-      // printf( "%.6lf\n", sqrt( kq.queryKthElement() ) );
-      // printf( "%.6lf\n", sqrt( q.top() ) );
+      printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
+      // KD.query_k_nearest( &wp[i], K );
    }
+   timer.stop();
+   std::cout << timer.total_time() << std::endl;
+
    return 0;
 }
