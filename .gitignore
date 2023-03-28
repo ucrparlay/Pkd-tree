@@ -7,7 +7,7 @@
 # Debug files
 *.log
 *.data
-*.sh
+# *.sh
 *.dat
 *.swp
 *.tsv

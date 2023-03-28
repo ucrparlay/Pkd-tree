@@ -16,7 +16,7 @@ benchDim = "craft_var_dim"
 benchNode = "craft_var_node"
 storePrefix = "data/"
 Nodes = [10000, 50000, 100000, 500000, 800000, 1000000, 2000000]
-Dims = [2, 3, 5, 7, 9, 10, 12, 15]
+Dims = [2, 3, 5, 7, 9, 10, 12, 15, 18, 20, 25]
 header = ['solver', 'benchType', 'nodes',
           'dims', 'file', 'buildTime', 'queryTime', 'wrapSize']
 
@@ -74,7 +74,7 @@ if (len(sys.argv) > 1 and int(sys.argv[1]) == 1):
 
 # * query time by wrap size
 Wrap = ["2", "4", "8", "16", "32", "64", "128", "256",
-        "512", "1024", "2048", "4096", "8192", "16384"]
+        "512", "1024", "2048", "4096", "8192"]
 if (len(sys.argv) > 2 and int(sys.argv[2]) == 1):
     solverName = ['my_kd_wrap', 'cgal']
     resMap = {'my_kd_wrap': 'res.out', 'cgal': 'cgal_res.out'}
@@ -84,7 +84,7 @@ if (len(sys.argv) > 2 and int(sys.argv[2]) == 1):
     node = 1000000
     dim = 5
     for wrap in Wrap:
-        P = path+'/'+benchNode+"/1000000_5/res_"+wrap+'.out'
+        P = path+'/'+benchNode+"/500000_5/res_"+wrap+'.out'
         combine(P, csvWriter, solver, benchNode, node, dim)
 
 # * check the correctness

@@ -66,14 +66,14 @@ gBuildDim <- ggplot(buildByDim, aes(x = dims, y = avg, color = solver, shape = s
   geom_line() +
   theme_gray() +
   labs(y = "Ave build time") +
-  scale_x_continuous(name = "dims", breaks = seq(2, 16, by = 2), limits = c(2, 16))
+  scale_x_continuous(name = "dims", breaks = seq(2, 26, by = 4), limits = c(2, 26))
 
 gQueryDim <- ggplot(queryByDim, aes(x = dims, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +
   geom_line() +
   theme_gray() +
   labs(y = "Ave query time") +
-  scale_x_continuous(name = "dims", breaks = seq(2, 16, by = 2), limits = c(2, 16))
+  scale_x_continuous(name = "dims", breaks = seq(2, 26, by = 4), limits = c(2, 26))
 
 gBuildNode <- ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +

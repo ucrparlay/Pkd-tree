@@ -48,6 +48,7 @@ set(source_files
     ${PROJECT_SOURCE_DIR}/src/kdTreeParallel.cpp  
 )
 
+# my kd
 add_library(kdTree INTERFACE)
 target_include_directories(kdTree INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(kdTree INTERFACE kdTreeParallel)
@@ -60,6 +61,10 @@ target_link_libraries(kdTreeParallel PUBLIC parlay)
 
 add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
+
+#parlay::zd tree
+add_executable(zdtree ../src_x/zdtree/knn.cpp)
+target_link_libraries(zdtree PUBLIC parlay)
 
 #CGAL 
 find_package( CGAL )

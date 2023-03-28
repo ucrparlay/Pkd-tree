@@ -1,9 +1,10 @@
 #!/bin/bash
 
+# Solvers=("cgal")
 Solvers=("test" "cgal")
 path="../benchmark/craft_var_dim/100000_"
-Dims=("2" "3" "5" "7" "9" "10" "12" "15")
-# Dims=("12" "15")
+# Dims=("2" "3" "5" "7" "9" "10" "12" "15")
+Dims=("18" "20" "25")
 T="1200"
 K="100"
 
@@ -23,7 +24,7 @@ for solver in ${Solvers[@]}
     do
         files_path="${path}${dim}"
         : > "${files_path}/${resFile}"
-        echo "-------${files_path}"
+        echo ${solver}" <- ${files_path}"
 
         for file in "${files_path}/"*.in
         do
