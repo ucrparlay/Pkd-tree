@@ -49,9 +49,10 @@ class kArrayQueue
    void
    set( const int& k )
    {
-      for( int i = 0; i < 2 * k; i++ )
+      Q[0] = -1;
+      for( int i = 1; i <= 2 * k; i++ )
       {
-         Q[i] = DBL_MAX;
+         Q[i] = std::numeric_limits<T>::max();
       }
       K = k;
       load = 0;
@@ -61,19 +62,20 @@ class kArrayQueue
    inline void
    insert( T d )
    {
-      Q[load++] = d;
+      Q[++load] = d;
       if( load == size )
       {
-         std::nth_element( Q, Q + ( size / 2 - 1 ), Q + size );
-         load /= 2;
+         std::nth_element( Q + 1, Q + K, Q + size + 1 );
+         load = load / 2;
       }
       return;
    }
    inline T
    queryKthElement()
    {
-      std::nth_element( Q, Q + ( size / 2 - 1 ), Q + size );
-      return Q[size / 2 - 1];
+      //! wrong here, check the when load size < k
+      std::nth_element( Q + 1, Q + K, Q + size + 1 );
+      return Q[K];
    }
 
    void
@@ -91,7 +93,7 @@ class kArrayQueue
    void
    printQueue()
    {
-      for( int i = 0; i < size; i++ )
+      for( int i = 0; i <= K; i++ )
       {
          if( Q[i] == DBL_MAX )
             printf( "inf " );

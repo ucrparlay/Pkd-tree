@@ -81,6 +81,7 @@ main( int argc, char* argv[] )
 
    //* start test
    std::random_shuffle( wp, wp + N );
+
    timer.start();
    for( int i = 0; i < N; i++ )
    {

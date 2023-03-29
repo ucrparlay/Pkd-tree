@@ -91,6 +91,9 @@ class KDtree
    void
    k_nearest( KDnode<T>* root, Point<T>* nd, int i );
 
+   void
+   k_nearest_array( KDnode<T>* root, Point<T>* nd, int i );
+
    double
    query_k_nearest( Point<T>* nd, int _K )
    {
@@ -98,6 +101,18 @@ class KDtree
       this->k_nearest( this->KDroot, nd, 0 );
       double ans = q.top();
       this->reset();
+      return ans;
+   };
+
+   double
+   query_k_nearest_array( Point<T>* nd, int _K )
+   {
+      this->K = _K;
+      kq.set( this->K );
+      this->k_nearest_array( this->KDroot, nd, 0 );
+      puts( ">>>>>" );
+      double ans = kq.queryKthElement();
+      kq.printQueue();
       return ans;
    };
 
