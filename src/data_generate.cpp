@@ -14,20 +14,18 @@ const double EPS = 1e-9;
 #define MOD ( (int)1000000007 )
 #define MAXN 1000 + 5
 ///**********************************START*********************************///
-const size_t pnum = 1e5;
-const size_t dim = 25;
-const size_t numFile = 3;
+long long pnum = 8e5;
+long long dim = 5;
+long long numFile = 3;
 const double dataRange = 1e9;
 
 std::string path = "../benchmark/craft_var_dim";
 std::default_random_engine generator;
 struct kd_node_t
 {
-   double x[dim];
+   double x[15];
    struct kd_node_t *left, *right;
-   int num;         // number of nodes in subtree plus itself
-   double mxx[dim]; // mxx[i] the maximum of sub points on dimension i
-   double mnx[dim]; // mnx[i] the minimum
+   int num; // number of nodes in subtree plus itself
 };
 
 kd_node_t* node;
@@ -40,7 +38,7 @@ getRealRandom( const double& a, const double& b )
 }
 
 inline std::string
-toString( const size_t& a )
+toString( const long long& a )
 {
    return std::to_string( a );
 }
@@ -75,17 +73,22 @@ generatePoints( std::ofstream& f )
 }
 
 int
-main()
+main( int argc, char* argv[] )
 {
 #ifndef ONLINE_JUDGE
    freopen( "input.txt", "r", stdin );
 #endif
+   assert( argc >= 4 );
+   pnum = std::stoll( argv[1] );
+   dim = std::stoll( argv[2] );
+   numFile = std::stoll( argv[3] );
+
    path += "/" + toString( pnum ) + "_" + toString( dim ) + "/";
    std::filesystem::create_directory( path );
    std::ofstream f;
    node = (kd_node_t*)malloc( pnum * sizeof( kd_node_t ) );
 
-   for( size_t i = 0; i < numFile; i++ )
+   for( long long i = 0; i < numFile; i++ )
    {
       std::string newpath = path + toString( i ) + ".in";
       std::cout << newpath << std::endl;

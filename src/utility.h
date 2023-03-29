@@ -46,6 +46,7 @@ class kArrayQueue
    {
       Q = (T*)malloc( N * sizeof( T ) );
    }
+
    void
    set( const int& k )
    {
@@ -59,7 +60,8 @@ class kArrayQueue
       size = 2 * k;
       return;
    }
-   inline void
+
+   void
    insert( T d )
    {
       Q[++load] = d;
@@ -70,12 +72,19 @@ class kArrayQueue
       }
       return;
    }
-   inline T
+
+   T
    queryKthElement()
    {
-      //! wrong here, check the when load size < k
-      std::nth_element( Q + 1, Q + K, Q + size + 1 );
-      return Q[K];
+      if( load < K )
+      {
+         return Q[load];
+      }
+      else
+      {
+         std::nth_element( Q + 1, Q + K, Q + size + 1 );
+         return Q[K];
+      }
    }
 
    void

@@ -110,9 +110,9 @@ class KDtree
       this->K = _K;
       kq.set( this->K );
       this->k_nearest_array( this->KDroot, nd, 0 );
-      puts( ">>>>>" );
+      // puts( ">>>>>" );
       double ans = kq.queryKthElement();
-      kq.printQueue();
+      // kq.printQueue();
       return ans;
    };
 

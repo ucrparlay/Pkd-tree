@@ -10,19 +10,19 @@ K="100"
 resFile=""
 
 for solver in ${Solvers[@]}
-    do
+do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
         resFile="res.out"
-    elif [[ ${solver} == "cgal" ]]; then
+        elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal_res.out"
-    fi 
+    fi
     for node in ${Nodes[@]}
     do
         files_path="${path}${node}_${Dims}"
         : > "${files_path}/${resFile}"
         echo "-------${files_path}"
-
+        
         for file in "${files_path}/"*.in
         do
             file_name="${file##*"/"}"

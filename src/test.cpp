@@ -25,7 +25,8 @@ main( int argc, char* argv[] )
 
    parlay::internal::timer timer;
 
-   freopen( argv[1], "r", stdin );
+   auto f = freopen( argv[1], "r", stdin );
+   assert( f != nullptr );
    Point<double>* wp;
    KDtree<double> KD;
    int N, Dim;
@@ -53,6 +54,7 @@ main( int argc, char* argv[] )
    for( int i = 0; i < N; i++ )
    {
       // printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
+      // KD.query_k_nearest_array( &wp[i], K );
       KD.query_k_nearest( &wp[i], K );
    }
    timer.stop();

@@ -62,10 +62,10 @@ main( int argc, char* argv[] )
          scanf( "%lf", &z.x[j] );
       Point_d query( Dim, std::begin( z.x ), std::begin( z.x ) + Dim );
       Neighbor_search search( tree, query, K );
-      for( auto it : search )
-      {
-         printf( "%.2f ", it.second );
-      }
+      // for( auto it : search )
+      // {
+      //    printf( "%.2f ", it.second );
+      // }
       Neighbor_search::iterator it = search.end();
       it--;
       // std::cout << std::sqrt( it->second ) << std::endl;
@@ -73,13 +73,13 @@ main( int argc, char* argv[] )
       // double dist = KD.query_k_nearest( &z, K );
       double dist = KD.query_k_nearest_array( &z, K );
 
-      printf( "%.8f %.8f\n", it->second, dist );
+      // printf( "%.8f %.8f\n", it->second, dist );
       if( std::abs( std::sqrt( it->second ) - std::sqrt( dist ) ) > 1e-4 )
       {
          puts( "-1" );
          exit( 1 );
       }
-      puts( "______" );
+      // puts( "______" );
    }
    puts( "ok" );
    return 0;

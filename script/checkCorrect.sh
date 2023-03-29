@@ -2,8 +2,7 @@
 
 path="../benchmark/craft_var_node/"
 # Nodes=("2000000")
-Nodes=("10000" "50000" "100000")
-# Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
+Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
 Dims="5"
 tester="checkCorrect"
 resFile="Correct.out"
@@ -13,7 +12,7 @@ do
     files_path="${path}${node}_${Dims}"
     : > "${files_path}/${resFile}"
     echo "-------${files_path}"
-
+    
     for file in "${files_path}/"*.in
     do
         file_name="${file##*"/"}"

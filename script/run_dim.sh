@@ -11,21 +11,21 @@ K="100"
 resFile=""
 
 for solver in ${Solvers[@]}
-    do
+do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
         resFile="res.out"
-    elif [[ ${solver} == "cgal" ]]; then
+        elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal_res.out"
-    fi 
-
+    fi
+    
     #* main body
     for dim in ${Dims[@]}
     do
         files_path="${path}${dim}"
         : > "${files_path}/${resFile}"
         echo ${solver}" <- ${files_path}"
-
+        
         for file in "${files_path}/"*.in
         do
             file_name="${file##*"/"}"
