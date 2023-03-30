@@ -54,8 +54,8 @@ main( int argc, char* argv[] )
    for( int i = 0; i < N; i++ )
    {
       // printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
-      // KD.query_k_nearest_array( &wp[i], K );
-      KD.query_k_nearest( &wp[i], K );
+      KD.query_k_nearest_array( &wp[i], K );
+      // KD.query_k_nearest( &wp[i], K );
    }
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << std::endl;

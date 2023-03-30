@@ -8,6 +8,7 @@ KDtree<T>::init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len )
    this->LEAVE_WRAP = _LEAVE_WRAP;
    this->KDroot = this->make_tree( a, len, 0 );
    this->kq.init( 300 );
+   this->aq.init( 300 );
    return;
 }
 
@@ -105,7 +106,8 @@ KDtree<T>::k_nearest_array( KDnode<T>* root, Point<T>* nd, int i )
       for( int i = 0; i < root->num; i++ )
       {
          d = dist( &( root->p[i] ), nd, DIM );
-         kq.insert( d );
+         bq.insert( d );
+         // aq.insert( d );
       }
       return;
    }
@@ -113,14 +115,17 @@ KDtree<T>::k_nearest_array( KDnode<T>* root, Point<T>* nd, int i )
    d = dist( &( root->p[0] ), nd, DIM );
    dx = ( root->p[0] ).x[i] - nd->x[i];
    dx2 = dx * dx;
-   //* q.top() return the largest element
-   kq.insert( d );
+
+   bq.insert( d );
+   // aq.insert( d );
 
    if( ++i >= DIM )
       i = 0;
 
    k_nearest_array( dx > 0 ? root->left : root->right, nd, i );
-   if( Gt( dx2, kq.queryKthElement() ) && kq.getLoad() >= this->K )
+   // if( Gt( dx2, aq.top() ) && aq.full() )
+   //    return;
+   if( Gt( dx2, bq.top() ) && bq.full() )
       return;
    k_nearest_array( dx > 0 ? root->right : root->left, nd, i );
 }

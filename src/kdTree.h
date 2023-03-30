@@ -108,11 +108,11 @@ class KDtree
    query_k_nearest_array( Point<T>* nd, int _K )
    {
       this->K = _K;
-      kq.set( this->K );
+      bq.resize( this->K );
+      // aq.set( this->K );
       this->k_nearest_array( this->KDroot, nd, 0 );
-      // puts( ">>>>>" );
-      double ans = kq.queryKthElement();
-      // kq.printQueue();
+      double ans = bq.top();
+      // double ans = aq.top();
       return ans;
    };
 
@@ -131,4 +131,7 @@ class KDtree
 
    kArrayQueue<T> kq;
    std::priority_queue<T> q;
+   ArrayQueue<T> aq;
+   kBoundedQueue<T> bq;
+   // CGAL::internal::bounded_priority_queue<T> bq;
 };
