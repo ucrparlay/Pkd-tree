@@ -1,6 +1,7 @@
 #!/bin/bash
 
-Solvers=("test" "cgal")
+# Solvers=("test" "cgal")
+Solvers=("test")
 path="../benchmark/craft_var_node/"
 Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
 Dims="5"

@@ -26,9 +26,11 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 ```{R}
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
-kd <- read.csv("script/data/my_kd.csv", header = TRUE)
-cgal <- read.csv("script/data/cgal.csv", header = TRUE)
-t <- kd %>% bind_rows(cgal)
+kd_q <- read.csv("script/backup_data/my_kd_q.csv", header = TRUE)
+kd_bq <- read.csv("script/backup_data/my_kd_bq.csv", header = TRUE)
+kd_kq <- read.csv("script/backup_data/my_kd_kq.csv", header = TRUE)
+cgal <- read.csv("script/backup_data/cgal.csv", header = TRUE)
+t <- cgal %>% bind_rows(kd_q, kd_bq, kd_kq)
 t
 ```
 

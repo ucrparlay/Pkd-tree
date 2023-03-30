@@ -108,10 +108,12 @@ class KDtree
    query_k_nearest_array( Point<T>* nd, int _K )
    {
       this->K = _K;
-      bq.resize( this->K );
+      kq.set( this->K );
+      // bq.resize( this->K );
       // aq.set( this->K );
       this->k_nearest_array( this->KDroot, nd, 0 );
-      double ans = bq.top();
+      double ans = kq.queryKthElement();
+      // double ans = bq.top();
       // double ans = aq.top();
       return ans;
    };
