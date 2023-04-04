@@ -7,9 +7,10 @@
 #include <iostream>
 
 #include "kdTree.h"
+#include "kdTreeParallel.h"
 
-int
-main( int argc, char* argv[] )
+void
+testSequential( int argc, char* argv[] )
 {
    assert( argc >= 2 );
 
@@ -59,6 +60,24 @@ main( int argc, char* argv[] )
    }
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << std::endl;
+}
 
+void
+testParallel( int argc, char* argv[] )
+{
+}
+
+int
+main( int argc, char* argv[] )
+{
+   parlay::sequence<int> p = { 5, 10, 6, 4, 3, 2, 6, 7, 9, 3 };
+   auto s = p.cut( 0, p.size() );
+   auto m = s.begin() + s.size() / 2;
+   std::nth_element( s.begin(), m, s.end() );
+   for( int i = 0; i < 10; i++ )
+   {
+      std::cout << p[i] << std::endl;
+   }
+   testParallel( argc, argv );
    return 0;
 }

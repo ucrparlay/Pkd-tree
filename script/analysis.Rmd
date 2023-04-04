@@ -135,7 +135,7 @@ gQueryWrap <- ggplot(wrapQuery, aes(x = wrapSize, y = avg)) +
   )
 
 
-saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), "wrap.png")
+saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), "wrap.jpg")
 saveid
 
 ggsave(saveid, width = 12, dpi = 900)

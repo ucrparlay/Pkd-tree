@@ -1,8 +1,10 @@
+#pragma once
+
 #include <CGAL/Spatial_searching/internal/bounded_priority_queue.h>
 
 #include <bits/stdc++.h>
 
-const double eps = 1e-7;
+constexpr double eps = 1e-7;
 
 template <typename T>
 inline bool

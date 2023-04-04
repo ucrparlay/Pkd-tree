@@ -1,6 +1,8 @@
+#pragma once
+
 #include "utility.h"
 
-const int MAX_DIM = 15;
+constexpr int MAX_DIM = 15;
 
 template <typename T>
 class Point
