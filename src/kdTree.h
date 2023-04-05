@@ -26,6 +26,7 @@ class Point
    }
 
  public:
+   int id;
    T x[MAX_DIM];
 };
 
@@ -91,18 +92,18 @@ class KDtree
    make_tree( Point<T>* a, int len, int i );
 
    void
-   k_nearest( KDnode<T>* root, Point<T>* nd, int i );
+   k_nearest( KDnode<T>* root, Point<T>* nd, int i, std::priority_queue<T>& q );
 
    void
-   k_nearest_array( KDnode<T>* root, Point<T>* nd, int i );
+   k_nearest_array( KDnode<T>* root, Point<T>* nd, int i, kArrayQueue<T>& kq );
 
    double
    query_k_nearest( Point<T>* nd, int _K )
    {
       this->K = _K;
-      this->k_nearest( this->KDroot, nd, 0 );
+      std::priority_queue<T> q;
+      this->k_nearest( this->KDroot, nd, 0, q );
       double ans = q.top();
-      this->reset();
       return ans;
    };
 
@@ -110,22 +111,13 @@ class KDtree
    query_k_nearest_array( Point<T>* nd, int _K )
    {
       this->K = _K;
+      kArrayQueue<T> kq;
+      kq.init( 300 );
       kq.set( this->K );
-      // bq.resize( this->K );
-      // aq.set( this->K );
-      this->k_nearest_array( this->KDroot, nd, 0 );
+      this->k_nearest_array( this->KDroot, nd, 0, kq );
       double ans = kq.queryKthElement();
-      // double ans = bq.top();
-      // double ans = aq.top();
       return ans;
    };
-
-   void
-   reset()
-   {
-      while( !q.empty() )
-         q.pop();
-   }
 
  private:
    int DIM;
@@ -133,8 +125,6 @@ class KDtree
    int LEAVE_WRAP = 16;
    KDnode<T>* KDroot;
 
-   kArrayQueue<T> kq;
-   std::priority_queue<T> q;
    ArrayQueue<T> aq;
    kBoundedQueue<T> bq;
    // CGAL::internal::bounded_priority_queue<T> bq;

@@ -31,7 +31,7 @@ struct pointComparator : point
 using points = parlay::sequence<point>;
 
 // max leaf size of tree
-int node_size_cutoff = 16;
+constexpr int node_size_cutoff = 16;
 
 // **************************************************************
 // bounding box (min value on each dimension, and max on each)
@@ -123,18 +123,26 @@ parlay::type_allocator<interior> interior_allocator;
 
 template <typename slice>
 node*
-build( slice P, int i )
+build( slice P, int i, int DIM )
 {
-   if( P.size() <= node_size_cutoff )
+   int n = P.size();
+   if( n <= node_size_cutoff )
    {
       return leaf_allocator.allocate( parlay::to_sequence( P ) );
    }
-   std::nth_element( P.begin(), P.begin() + P.size() / 2, P.end(),
+   std::nth_element( P.begin(), P.begin() + n / 2, P.end(),
                      pointComparator( i ) );
+   i = ( i + 1 ) % DIM;
+
+   node *L, *R;
+   parlay::par_do( [&]() { L = build( P.cut( 0, n / 2 ), i, DIM ); },
+                   [&]() { R = build( P.cut( n / 2, n ), i, DIM ); } );
+   return interior_allocator.allocate( L, R );
 }
 
 node*
-z_tree( const parlay::sequence<coords>& P, long base_size = node_size_cutoff )
+kdTree( const parlay::sequence<coords>& P, long base_size = node_size_cutoff,
+        int DIM = 3 )
 {
    // tag points with identifiers
    points pts = parlay::tabulate( P.size(),
@@ -143,5 +151,26 @@ z_tree( const parlay::sequence<coords>& P, long base_size = node_size_cutoff )
                                   } );
 
    // build tree on top of morton ordering
-   return build( pts.cut( 0, P.size() ), 0 );
+   return build( pts.cut( 0, P.size() ), 0, DIM );
+}
+
+void
+queryKNN( node* T, point q, int k )
+{
+   if( T->is_leaf )
+   {
+      for( int i = 0; i < T->size; i++ )
+      {
+         leaf* TL = static_cast<leaf*>( T );
+         point p = TL->pts[i];
+      }
+      return;
+   }
+
+   interior* TI = static_cast<interior*>( T );
+   long n_left = TI->left->size;
+   long n = T->size;
+
+   parlay::par_do( [&]() { queryKNN( TI->left, q, k ); },
+                   [&]() { queryKNN( TI->right, q, k ); } );
 }

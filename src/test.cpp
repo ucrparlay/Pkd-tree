@@ -38,6 +38,7 @@ testSequential( int argc, char* argv[] )
 
    for( int i = 0; i < N; i++ )
    {
+      wp[i].id = i;
       for( int j = 0; j < Dim; j++ )
       {
          scanf( "%lf", &wp[i].x[j] );
@@ -50,11 +51,11 @@ testSequential( int argc, char* argv[] )
    timer.reset();
 
    //* start test
-   // std::random_shuffle( wp, wp + N );
+   std::random_shuffle( wp, wp + N );
    timer.start();
+   kArrayQueue<double> kq;
    for( int i = 0; i < N; i++ )
    {
-      // printf( "%.6lf\n", std::sqrt( KD.query_k_nearest( &wp[i], K ) ) );
       KD.query_k_nearest_array( &wp[i], K );
       // KD.query_k_nearest( &wp[i], K );
    }
@@ -70,14 +71,14 @@ testParallel( int argc, char* argv[] )
 int
 main( int argc, char* argv[] )
 {
-   parlay::sequence<int> p = { 5, 10, 6, 4, 3, 2, 6, 7, 9, 3 };
-   auto s = p.cut( 0, p.size() );
-   auto m = s.begin() + s.size() / 2;
-   std::nth_element( s.begin(), m, s.end() );
-   for( int i = 0; i < 10; i++ )
-   {
-      std::cout << p[i] << std::endl;
-   }
-   testParallel( argc, argv );
+   // parlay::sequence<int> p = { 5, 10, 6, 4, 3, 2, 6, 7, 9, 3 };
+   // auto s = p.cut( 0, p.size() );
+   // auto m = s.begin() + s.size() / 2;
+   // std::nth_element( s.begin(), m, s.end() );
+   // for( int i = 0; i < 10; i++ )
+   // {
+   //    std::cout << p[i] << std::endl;
+   // }
+   testSequential( argc, argv );
    return 0;
 }
