@@ -50,37 +50,66 @@ main( int argc, char* argv[] )
 
    //* kd tree
    KDtree<double> KD;
-   KD.init( Dim, 16, wp, N );
+   KDnode<double>* KDroot = KD.init( Dim, 16, wp, N );
 
-   int i, j;
-   scanf( "%d", &Q );
-   Point<double> z;
-   while( Q-- )
+   //* query phase
+   std::random_shuffle( wp, wp + N );
+   double* cgknn = new double[N];
+   double* kdknn = new double[N];
+   K = 100;
+   assert( N >= K );
+   //* cgal query
+   for( int i = 0; i < N; i++ )
    {
-      scanf( "%d", &K );
-      for( j = 0; j < Dim; j++ )
-         scanf( "%lf", &z.x[j] );
-      Point_d query( Dim, std::begin( z.x ), std::begin( z.x ) + Dim );
+      Point_d query( Dim, std::begin( wp[i].x ), std::begin( wp[i].x ) + Dim );
       Neighbor_search search( tree, query, K );
-      // for( auto it : search )
-      // {
-      //    printf( "%.2f ", it.second );
-      // }
       Neighbor_search::iterator it = search.end();
       it--;
-      // std::cout << std::sqrt( it->second ) << std::endl;
-
-      // double dist = KD.query_k_nearest( &z, K );
-      double dist = KD.query_k_nearest_array( &z, K );
-
-      // printf( "%.8f %.8f\n", it->second, dist );
-      if( std::abs( std::sqrt( it->second ) - std::sqrt( dist ) ) > 1e-4 )
-      {
-         puts( "-1" );
-         exit( 1 );
-      }
-      // puts( "______" );
+      cgknn[i] = std::sqrt( it->second );
    }
+   //* kd query
+   for( int i = 0; i < N; i++ )
+   {
+      double ans = KD.query_k_nearest( &wp[i], K );
+      kdknn[i] = std::sqrt( ans );
+   }
+
+   //* karray
+   // kArrayQueue<double>* kq = new kArrayQueue<double>[N];
+   // for( int i = 0; i < N; i++ )
+   // {
+   //    kq[i].resize( K );
+   // }
+   // parlay::parallel_for( 0, N,
+   //                       [&]( size_t i )
+   //                       {
+   //                          KD.k_nearest_array( KDroot, &wp[i], 0, kq[i] );
+   //                          kdknn[i] = std::sqrt( kq[i].queryKthElement() );
+   //                       } );
+
+   //* bounded_queue
+   // kBoundedQueue<double>* bq = new kBoundedQueue<double>[N];
+   // for( int i = 0; i < N; i++ )
+   // {
+   //    bq[i].resize( K );
+   // }
+   // parlay::parallel_for( 0, N,
+   //                       [&]( size_t i )
+   //                       {
+   //                          KD.k_nearest( KDroot, &wp[i], 0, bq[i] );
+   //                          kdknn[i] = std::sqrt( bq[i].top() );
+   //                       } );
+
+   //* verify
+   parlay::parallel_for( 0, N,
+                         [&]( size_t i )
+                         {
+                            if( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 )
+                            {
+                               puts( "wrong" );
+                               exit( 1 );
+                            }
+                         } );
    puts( "ok" );
    return 0;
 }

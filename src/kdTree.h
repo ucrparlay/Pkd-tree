@@ -85,14 +85,14 @@ class KDtree
  public:
    KDtree() {}
 
-   void
+   KDnode<T>*
    init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len );
 
    KDnode<T>*
    make_tree( Point<T>* a, int len, int i );
 
    void
-   k_nearest( KDnode<T>* root, Point<T>* nd, int i, std::priority_queue<T>& q );
+   k_nearest( KDnode<T>* root, Point<T>* nd, int i, kBoundedQueue<T>& q );
 
    void
    k_nearest_array( KDnode<T>* root, Point<T>* nd, int i, kArrayQueue<T>& kq );
@@ -101,9 +101,10 @@ class KDtree
    query_k_nearest( Point<T>* nd, int _K )
    {
       this->K = _K;
-      std::priority_queue<T> q;
-      this->k_nearest( this->KDroot, nd, 0, q );
-      double ans = q.top();
+      kBoundedQueue<T> bq;
+      bq.resize( _K );
+      this->k_nearest( this->KDroot, nd, 0, bq );
+      double ans = bq.top();
       return ans;
    };
 
@@ -112,20 +113,18 @@ class KDtree
    {
       this->K = _K;
       kArrayQueue<T> kq;
-      kq.init( 300 );
-      kq.set( this->K );
+      kq.resize( _K );
       this->k_nearest_array( this->KDroot, nd, 0, kq );
       double ans = kq.queryKthElement();
       return ans;
    };
 
- private:
+ public:
    int DIM;
    int K;
    int LEAVE_WRAP = 16;
    KDnode<T>* KDroot;
 
-   ArrayQueue<T> aq;
-   kBoundedQueue<T> bq;
+   // ArrayQueue<T> aq;
    // CGAL::internal::bounded_priority_queue<T> bq;
 };

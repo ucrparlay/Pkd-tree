@@ -53,11 +53,10 @@ testSequential( int argc, char* argv[] )
    //* start test
    std::random_shuffle( wp, wp + N );
    timer.start();
-   kArrayQueue<double> kq;
    for( int i = 0; i < N; i++ )
    {
-      KD.query_k_nearest_array( &wp[i], K );
-      // KD.query_k_nearest( &wp[i], K );
+      // KD.query_k_nearest_array( &wp[i], K );
+      KD.query_k_nearest( &wp[i], K );
    }
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << std::endl;
@@ -66,6 +65,59 @@ testSequential( int argc, char* argv[] )
 void
 testParallel( int argc, char* argv[] )
 {
+   assert( argc >= 2 );
+
+   int K = 100, LEAVE_WRAP = 16;
+   std::string name( argv[1] );
+   if( argc >= 3 )
+      K = std::stoi( argv[2] );
+   if( argc >= 4 )
+      LEAVE_WRAP = std::stoi( argv[3] );
+
+   name = name.substr( name.rfind( "/" ) + 1 );
+   std::cout << name << " ";
+
+   parlay::internal::timer timer;
+
+   auto f = freopen( argv[1], "r", stdin );
+   assert( f != nullptr );
+   Point<double>* wp;
+   KDtree<double> KD;
+   int N, Dim;
+
+   scanf( "%d %d", &N, &Dim );
+   assert( N >= K );
+   wp = (Point<double>*)malloc( N * sizeof( Point<double> ) );
+
+   for( int i = 0; i < N; i++ )
+   {
+      wp[i].id = i;
+      for( int j = 0; j < Dim; j++ )
+      {
+         scanf( "%lf", &wp[i].x[j] );
+      }
+   }
+   KDnode<double>* KDroot;
+   timer.start();
+   KDroot = KD.init( Dim, LEAVE_WRAP, wp, N );
+   timer.stop();
+   std::cout << timer.total_time() << " ";
+   timer.reset();
+
+   //* start test
+   std::random_shuffle( wp, wp + N );
+   timer.start();
+   parlay::sequence<kArrayQueue<double>> kq( N );
+   for( int i = 0; i < N; i++ )
+   {
+      kq[i].resize( K );
+   }
+   parlay::parallel_for( 0, N,
+                         [&]( size_t i )
+                         { KD.k_nearest_array( KDroot, &wp[i], 0, kq[i] ); } );
+
+   timer.stop();
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << std::endl;
 }
 
 int

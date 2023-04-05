@@ -4,6 +4,12 @@
 
 #include <bits/stdc++.h>
 
+#include "parlay/alloc.h"
+#include "parlay/delayed.h"
+#include "parlay/primitives.h"
+#include "parlay/sequence.h"
+#include "parlay/utilities.h"
+
 constexpr double eps = 1e-7;
 
 template <typename T>
@@ -45,6 +51,21 @@ template <typename T>
 class kArrayQueue
 {
  public:
+   //* build a k-nn graph for N points
+   void
+   resize( const int& k )
+   {
+      Q = (T*)malloc( 2 * k * sizeof( T ) );
+      for( int i = 0; i < 2 * k; i++ )
+      {
+         Q[i] = std::numeric_limits<T>::max();
+      }
+      K = k;
+      load = 0;
+      size = 2 * k;
+      return;
+   };
+
    void
    init( const int& N )
    {
@@ -54,8 +75,7 @@ class kArrayQueue
    void
    set( const int& k )
    {
-      Q[0] = -1;
-      for( int i = 1; i <= 2 * k; i++ )
+      for( int i = 0; i < 2 * k; i++ )
       {
          Q[i] = std::numeric_limits<T>::max();
       }
@@ -68,10 +88,10 @@ class kArrayQueue
    void
    insert( T d )
    {
-      Q[++load] = d;
+      Q[load++] = d;
       if( load == size )
       {
-         std::nth_element( Q + 1, Q + K, Q + size + 1 );
+         std::nth_element( Q, Q + K - 1, Q + size );
          load = load / 2;
       }
       return;
@@ -86,8 +106,8 @@ class kArrayQueue
       }
       else
       {
-         std::nth_element( Q + 1, Q + K, Q + size + 1 );
-         return Q[K];
+         std::nth_element( Q, Q + K - 1, Q + size );
+         return Q[K - 1];
       }
    }
 
@@ -118,6 +138,7 @@ class kArrayQueue
 
  public:
    T* Q;
+   int* L;
    int K;
    int load;
    int size;

@@ -2,12 +2,6 @@
 
 #include "utility.h"
 
-#include "parlay/alloc.h"
-#include "parlay/delayed.h"
-#include "parlay/primitives.h"
-#include "parlay/sequence.h"
-#include "parlay/utilities.h"
-
 constexpr int dims = 15; // works for any constant dimension
 using idx = int;         // index of point (int can handle up to 2^31 points)
 using coord = double;    // type of each coordinate

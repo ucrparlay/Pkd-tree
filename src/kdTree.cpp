@@ -1,13 +1,13 @@
 #include "kdTree.h"
 
 template <typename T>
-void
+KDnode<T>*
 KDtree<T>::init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len )
 {
    this->DIM = _DIM;
    this->LEAVE_WRAP = _LEAVE_WRAP;
    this->KDroot = this->make_tree( a, len, 0 );
-   return;
+   return this->KDroot;
 }
 
 template <typename T>
@@ -49,7 +49,7 @@ KDtree<T>::make_tree( Point<T>* a, int len, int i )
 template <typename T>
 void
 KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
-                      std::priority_queue<T>& q )
+                      kBoundedQueue<T>& q )
 {
    double d, dx, dx2;
    // root->print();
@@ -61,12 +61,13 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
       for( int i = 0; i < root->num; i++ )
       {
          d = dist( &( root->p[i] ), nd, DIM );
-         if( q.size() < K || Lt( d, q.top() ) )
-         {
-            q.push( d );
-            if( q.size() > K )
-               q.pop();
-         }
+         q.insert( d );
+         // if( q.size() < K || Lt( d, q.top() ) )
+         // {
+         //    q.push( d );
+         //    if( q.size() > K )
+         //       q.pop();
+         // }
       }
       return;
    }
@@ -74,19 +75,12 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
    d = dist( &( root->p[0] ), nd, DIM );
    dx = ( root->p[0] ).x[i] - nd->x[i];
    dx2 = dx * dx;
-   //* q.top() return the largest element
-   // if( q.size() < K || Lt( d, q.top() ) )
-   // {
-   //    q.push( d );
-   //    if( q.size() > K )
-   //       q.pop();
-   // }
 
    if( ++i >= DIM )
       i = 0;
 
    k_nearest( dx > 0 ? root->left : root->right, nd, i, q );
-   if( Gt( dx2, q.top() ) && q.size() >= K )
+   if( Gt( dx2, q.top() ) && q.full() )
       return;
    k_nearest( dx > 0 ? root->right : root->left, nd, i, q );
 }
