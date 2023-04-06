@@ -10,7 +10,9 @@
 #include <bits/stdc++.h>
 #include <iterator>
 
-typedef CGAL::Cartesian_d<double> Kernel;
+using Typename = long;
+
+typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits> Neighbor_search;
@@ -22,20 +24,45 @@ int
 main( int argc, char* argv[] )
 {
    std::cout.precision( 5 );
+   Point<Typename>* wp;
    std::string name( argv[1] );
-   name = name.substr( name.rfind( "/" ) + 1 );
-   std::cout << name << " ";
 
-   freopen( argv[1], "r", stdin );
-
-   scanf( "%d %d", &N, &Dim );
-   Point<double>* wp = new Point<double>[N];
-   for( int i = 0; i < N; i++ )
+   if( name.find( "/" ) != std::string::npos )
    {
-      for( int j = 0; j < Dim; j++ )
+      name = name.substr( name.rfind( "/" ) + 1 );
+      std::cout << name << " ";
+
+      freopen( argv[1], "r", stdin );
+
+      scanf( "%d %d", &N, &Dim );
+      wp = new Point<Typename>[N];
+      for( int i = 0; i < N; i++ )
       {
-         scanf( "%lf", &wp[i].x[j] );
+         for( int j = 0; j < Dim; j++ )
+         {
+            scanf( "%lf", &wp[i].x[j] );
+         }
       }
+   }
+   else
+   {
+      parlay::random_generator gen( 0 );
+      int box_size = 1000000000;
+      std::uniform_int_distribution<int> dis( 0, box_size );
+      assert( argc >= 3 );
+      long n = std::stoi( argv[1] );
+      Dim = std::stoi( argv[2] );
+      wp = new Point<Typename>[n];
+      // generate n random points in a cube
+      parlay::parallel_for( 0, n,
+                            [&]( long i )
+                            {
+                               auto r = gen[i];
+                               for( int j = 0; j < Dim; j++ )
+                               {
+                                  wp[i].x[j] = dis( r );
+                               }
+                            } );
    }
 
    //* cgal
@@ -49,13 +76,13 @@ main( int argc, char* argv[] )
    Tree tree( points.begin(), points.end() );
 
    //* kd tree
-   KDtree<double> KD;
-   KDnode<double>* KDroot = KD.init( Dim, 16, wp, N );
+   KDtree<Typename> KD;
+   KDnode<Typename>* KDroot = KD.init( Dim, 16, wp, N );
 
    //* query phase
    std::random_shuffle( wp, wp + N );
-   double* cgknn = new double[N];
-   double* kdknn = new double[N];
+   Typename* cgknn = new Typename[N];
+   Typename* kdknn = new Typename[N];
    K = 100;
    assert( N >= K );
    //* cgal query
@@ -70,12 +97,12 @@ main( int argc, char* argv[] )
    //* kd query
    for( int i = 0; i < N; i++ )
    {
-      double ans = KD.query_k_nearest( &wp[i], K );
+      Typename ans = KD.query_k_nearest( &wp[i], K );
       kdknn[i] = std::sqrt( ans );
    }
 
    //* karray
-   // kArrayQueue<double>* kq = new kArrayQueue<double>[N];
+   // kArrayQueue<Typename>* kq = new kArrayQueue<double>[N];
    // for( int i = 0; i < N; i++ )
    // {
    //    kq[i].resize( K );
@@ -83,8 +110,9 @@ main( int argc, char* argv[] )
    // parlay::parallel_for( 0, N,
    //                       [&]( size_t i )
    //                       {
-   //                          KD.k_nearest_array( KDroot, &wp[i], 0, kq[i] );
-   //                          kdknn[i] = std::sqrt( kq[i].queryKthElement() );
+   //                          KD.k_nearest_array( KDroot, &wp[i], 0, kq[i]
+   //                          ); kdknn[i] = std::sqrt(
+   //                          kq[i].queryKthElement() );
    //                       } );
 
    //* bounded_queue

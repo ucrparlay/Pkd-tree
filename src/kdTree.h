@@ -11,7 +11,7 @@ class Point
    void
    print()
    {
-      for( int i = 0; i < 2; i++ )
+      for( int i = 0; i < 3; i++ )
       {
          std::cout << x[i] << " ";
       }

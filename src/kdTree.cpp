@@ -51,7 +51,7 @@ void
 KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
                       kBoundedQueue<T>& q )
 {
-   double d, dx, dx2;
+   T d, dx, dx2;
    // root->print();
 
    if( root == nullptr )
@@ -90,7 +90,7 @@ void
 KDtree<T>::k_nearest_array( KDnode<T>* root, Point<T>* nd, int i,
                             kArrayQueue<T>& kq )
 {
-   double d, dx, dx2;
+   T d, dx, dx2;
    // root->print();
 
    if( root == nullptr )
@@ -124,3 +124,8 @@ template class Point<double>;
 template class PointCompare<double>;
 template class KDnode<double>;
 template class KDtree<double>;
+
+template class Point<long>;
+template class PointCompare<long>;
+template class KDnode<long>;
+template class KDtree<long>;

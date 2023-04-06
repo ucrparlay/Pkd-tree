@@ -9,41 +9,13 @@
 #include "kdTree.h"
 #include "kdTreeParallel.h"
 
+using Typename = long;
+
 void
-testSequential( int argc, char* argv[] )
+testSequential( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
 {
-   assert( argc >= 2 );
-
-   int K = 100, LEAVE_WRAP = 16;
-   std::string name( argv[1] );
-   if( argc >= 3 )
-      K = std::stoi( argv[2] );
-   if( argc >= 4 )
-      LEAVE_WRAP = std::stoi( argv[3] );
-
-   name = name.substr( name.rfind( "/" ) + 1 );
-   std::cout << name << " ";
-
    parlay::internal::timer timer;
-
-   auto f = freopen( argv[1], "r", stdin );
-   assert( f != nullptr );
-   Point<double>* wp;
-   KDtree<double> KD;
-   int N, Dim;
-
-   scanf( "%d %d", &N, &Dim );
-   assert( N >= K );
-   wp = (Point<double>*)malloc( N * sizeof( Point<double> ) );
-
-   for( int i = 0; i < N; i++ )
-   {
-      wp[i].id = i;
-      for( int j = 0; j < Dim; j++ )
-      {
-         scanf( "%lf", &wp[i].x[j] );
-      }
-   }
+   KDtree<Typename> KD;
    timer.start();
    KD.init( Dim, LEAVE_WRAP, wp, N );
    timer.stop();
@@ -123,14 +95,62 @@ testParallel( int argc, char* argv[] )
 int
 main( int argc, char* argv[] )
 {
-   // parlay::sequence<int> p = { 5, 10, 6, 4, 3, 2, 6, 7, 9, 3 };
-   // auto s = p.cut( 0, p.size() );
-   // auto m = s.begin() + s.size() / 2;
-   // std::nth_element( s.begin(), m, s.end() );
-   // for( int i = 0; i < 10; i++ )
-   // {
-   //    std::cout << p[i] << std::endl;
-   // }
-   testSequential( argc, argv );
+   assert( argc >= 2 );
+
+   int K = 100, LEAVE_WRAP = 16, N, Dim;
+   Point<Typename>* wp;
+   if( argc >= 4 )
+      K = std::stoi( argv[3] );
+   if( argc >= 5 )
+      LEAVE_WRAP = std::stoi( argv[4] );
+
+   std::string name( argv[1] );
+   if( name.find( "/" ) != std::string::npos )
+   { //* read from file
+      name = name.substr( name.rfind( "/" ) + 1 );
+      std::cout << name << " ";
+      auto f = freopen( argv[1], "r", stdin );
+      assert( f != nullptr );
+
+      scanf( "%d %d", &N, &Dim );
+      assert( N >= K );
+      wp = (Point<Typename>*)malloc( N * sizeof( Point<Typename> ) );
+
+      for( int i = 0; i < N; i++ )
+      {
+         wp[i].id = i;
+         for( int j = 0; j < Dim; j++ )
+         {
+            //! change read type if int
+            scanf( "%lf", &wp[i].x[j] );
+         }
+      }
+   }
+   else
+   { //* construct data byself
+      parlay::random_generator gen( 0 );
+      int box_size = 1000000000;
+      std::uniform_int_distribution<int> dis( 0, box_size );
+      long n = std::stoi( argv[1] );
+      Dim = std::stoi( argv[2] );
+      wp = new Point<Typename>[n];
+      // generate n random points in a cube
+      parlay::parallel_for( 0, n,
+                            [&]( long i )
+                            {
+                               auto r = gen[i];
+                               for( int j = 0; j < Dim; j++ )
+                               {
+                                  wp[i].x[j] = dis( r );
+                               }
+                            } );
+      // for( int i = 0; i < n; i++ )
+      // {
+      //    wp[i].print();
+      //    puts( "" );
+      // }
+   }
+
+   testSequential( Dim, LEAVE_WRAP, wp, N, K );
    return 0;
 }

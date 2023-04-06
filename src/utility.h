@@ -1,7 +1,5 @@
 #pragma once
 
-#include <CGAL/Spatial_searching/internal/bounded_priority_queue.h>
-
 #include <bits/stdc++.h>
 
 #include "parlay/alloc.h"
@@ -16,35 +14,52 @@ template <typename T>
 inline bool
 Gt( const T& a, const T& b )
 {
-   return a - b > eps;
+   if constexpr( std::is_integral_v<T> )
+      return a > b;
+   else if( std::is_floating_point_v<T> )
+   {
+      return a - b > eps;
+   }
 }
 
 template <typename T>
 inline bool
 Lt( const T& a, const T& b )
 {
-   return a - b < -eps;
+   if constexpr( std::is_integral_v<T> )
+      return a < b;
+   else if( std::is_floating_point_v<T> )
+      return a - b < -eps;
 }
 
 template <typename T>
 inline bool
 Eq( const T& a, const T& b )
 {
-   return std::abs( a - b ) < eps;
+   if constexpr( std::is_integral_v<T> )
+      return a == b;
+   else if( std::is_floating_point_v<T> )
+      return std::abs( a - b ) < eps;
 }
 
 template <typename T>
 inline bool
 Geq( const T& a, const T& b )
 {
-   return Gt( a, b ) || Eq( a, b );
+   if constexpr( std::is_integral_v<T> )
+      return a >= b;
+   else if( std::is_floating_point_v<T> )
+      return Gt( a, b ) || Eq( a, b );
 }
 
 template <typename T>
 inline bool
 Leq( const T& a, const T& b )
 {
-   return Lt( a, b ) || Eq( a, b );
+   if constexpr( std::is_integral_v<T> )
+      return a <= b;
+   else if( std::is_floating_point_v<T> )
+      return Lt( a, b ) || Eq( a, b );
 }
 
 template <typename T>

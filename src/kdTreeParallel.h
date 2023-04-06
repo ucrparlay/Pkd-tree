@@ -4,7 +4,7 @@
 
 constexpr int dims = 15; // works for any constant dimension
 using idx = int;         // index of point (int can handle up to 2^31 points)
-using coord = double;    // type of each coordinate
+using coord = int;       // type of each coordinate
 using coords = std::array<coord, dims>;
 struct point
 {
