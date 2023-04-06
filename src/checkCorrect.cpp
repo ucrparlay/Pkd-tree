@@ -10,7 +10,7 @@
 #include <bits/stdc++.h>
 #include <iterator>
 
-using Typename = long;
+using Typename = long long;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
@@ -18,7 +18,8 @@ typedef CGAL::Search_traits_d<Kernel> TreeTraits;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits> Neighbor_search;
 typedef Neighbor_search::Tree Tree;
 
-int N, Dim, Q, K;
+int Dim, Q, K;
+long N;
 
 int
 main( int argc, char* argv[] )
@@ -34,7 +35,7 @@ main( int argc, char* argv[] )
 
       freopen( argv[1], "r", stdin );
 
-      scanf( "%d %d", &N, &Dim );
+      scanf( "%ld %d", &N, &Dim );
       wp = new Point<Typename>[N];
       for( int i = 0; i < N; i++ )
       {
@@ -51,6 +52,7 @@ main( int argc, char* argv[] )
       std::uniform_int_distribution<int> dis( 0, box_size );
       assert( argc >= 3 );
       long n = std::stoi( argv[1] );
+      N = n;
       Dim = std::stoi( argv[2] );
       wp = new Point<Typename>[n];
       // generate n random points in a cube
@@ -67,7 +69,7 @@ main( int argc, char* argv[] )
 
    //* cgal
    std::list<Point_d> points;
-   for( int i = 0; i < N; i++ )
+   for( long i = 0; i < N; i++ )
    {
       //   printf( "%.3Lf\n", *( std::begin( wp[i].x ) + _Dim - 1 ) );
       points.push_back( Point_d( Dim, std::begin( wp[i].x ),
@@ -92,17 +94,19 @@ main( int argc, char* argv[] )
       Neighbor_search search( tree, query, K );
       Neighbor_search::iterator it = search.end();
       it--;
-      cgknn[i] = std::sqrt( it->second );
+      // std::cout << i << " " << it->second << std::endl;
+      cgknn[i] = it->second;
    }
    //* kd query
-   for( int i = 0; i < N; i++ )
-   {
-      Typename ans = KD.query_k_nearest( &wp[i], K );
-      kdknn[i] = std::sqrt( ans );
-   }
+
+   // for( int i = 0; i < N; i++ )
+   // {
+   //    Typename ans = KD.query_k_nearest( &wp[i], K );
+   //    kdknn[i] = ans;
+   // }
 
    //* karray
-   // kArrayQueue<Typename>* kq = new kArrayQueue<double>[N];
+   // kArrayQueue<Typename>* kq = new kArrayQueue<Typename>[N];
    // for( int i = 0; i < N; i++ )
    // {
    //    kq[i].resize( K );
@@ -116,17 +120,17 @@ main( int argc, char* argv[] )
    //                       } );
 
    //* bounded_queue
-   // kBoundedQueue<double>* bq = new kBoundedQueue<double>[N];
-   // for( int i = 0; i < N; i++ )
-   // {
-   //    bq[i].resize( K );
-   // }
-   // parlay::parallel_for( 0, N,
-   //                       [&]( size_t i )
-   //                       {
-   //                          KD.k_nearest( KDroot, &wp[i], 0, bq[i] );
-   //                          kdknn[i] = std::sqrt( bq[i].top() );
-   //                       } );
+   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   for( int i = 0; i < N; i++ )
+   {
+      bq[i].resize( K );
+   }
+   parlay::parallel_for( 0, N,
+                         [&]( size_t i )
+                         {
+                            KD.k_nearest( KDroot, &wp[i], 0, bq[i] );
+                            kdknn[i] = bq[i].top();
+                         } );
 
    //* verify
    parlay::parallel_for( 0, N,
@@ -134,6 +138,8 @@ main( int argc, char* argv[] )
                          {
                             if( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 )
                             {
+                               std::cout << i << " " << cgknn[i] << " "
+                                         << kdknn[i] << std::endl;
                                puts( "wrong" );
                                exit( 1 );
                             }

@@ -69,6 +69,7 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
          //       q.pop();
          // }
       }
+
       return;
    }
 
@@ -129,3 +130,8 @@ template class Point<long>;
 template class PointCompare<long>;
 template class KDnode<long>;
 template class KDtree<long>;
+
+template class Point<long long>;
+template class PointCompare<long long>;
+template class KDnode<long long>;
+template class KDtree<long long>;

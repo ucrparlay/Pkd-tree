@@ -47,7 +47,7 @@ template <typename T>
 inline T
 dist( Point<T>* a, Point<T>* b, int dim )
 {
-   double t, d = 0.0;
+   T t, d = 0;
    while( dim-- )
    {
       t = a->x[dim] - b->x[dim];
@@ -97,25 +97,25 @@ class KDtree
    void
    k_nearest_array( KDnode<T>* root, Point<T>* nd, int i, kArrayQueue<T>& kq );
 
-   double
+   T
    query_k_nearest( Point<T>* nd, int _K )
    {
       this->K = _K;
       kBoundedQueue<T> bq;
       bq.resize( _K );
       this->k_nearest( this->KDroot, nd, 0, bq );
-      double ans = bq.top();
+      T ans = bq.top();
       return ans;
    };
 
-   double
+   T
    query_k_nearest_array( Point<T>* nd, int _K )
    {
       this->K = _K;
       kArrayQueue<T> kq;
       kq.resize( _K );
       this->k_nearest_array( this->KDroot, nd, 0, kq );
-      double ans = kq.queryKthElement();
+      T ans = kq.queryKthElement();
       return ans;
    };
 
