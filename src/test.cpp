@@ -12,28 +12,38 @@
 using Typename = long;
 
 void
-testSequential( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
+testParallelkArray( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
 {
 
    parlay::internal::timer timer;
    KDtree<Typename> KD;
    timer.start();
-   KD.init( Dim, LEAVE_WRAP, wp, N );
+   KDnode<Typename>* KDroot = KD.init( Dim, LEAVE_WRAP, wp, N );
+   kArrayQueue<Typename>* kq = new kArrayQueue<Typename>[N];
+   for( int i = 0; i < N; i++ )
+   {
+      kq[i].resize( K );
+   }
    timer.stop();
    std::cout << timer.total_time() << " ";
    timer.reset();
 
    //* start test
    std::random_shuffle( wp, wp + N );
+
+   timer.reset();
    timer.start();
-   for( int i = 0; i < N; i++ )
-   {
-      // KD.query_k_nearest_array( &wp[i], K );
-      KD.query_k_nearest( &wp[i], K );
-   }
+   parlay::parallel_for( 0, N,
+                         [&]( size_t i )
+                         { KD.k_nearest_array( KDroot, &wp[i], 0, kq[i] ); } );
+
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
+
+   KD.destory( KDroot );
+   delete[] kq;
+   delete[] wp;
 }
 
 void
@@ -49,6 +59,7 @@ testParallel( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
       bq[i].resize( K );
    }
    timer.stop();
+
    std::cout << timer.total_time() << " ";
 
    //* start test
@@ -62,6 +73,10 @@ testParallel( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
+
+   KD.destory( KDroot );
+   delete[] bq;
+   delete[] wp;
 }
 
 int
@@ -108,15 +123,17 @@ main( int argc, char* argv[] )
       Dim = std::stoi( argv[2] );
       wp = new Point<Typename>[n];
       // generate n random points in a cube
-      parlay::parallel_for( 0, n,
-                            [&]( long i )
-                            {
-                               auto r = gen[i];
-                               for( int j = 0; j < Dim; j++ )
-                               {
-                                  wp[i].x[j] = dis( r );
-                               }
-                            } );
+      parlay::parallel_for(
+          0, n,
+          [&]( long i )
+          {
+             auto r = gen[i];
+             for( int j = 0; j < Dim; j++ )
+             {
+                wp[i].x[j] = dis( r );
+             }
+          },
+          1000 );
       // for( int i = 0; i < n; i++ )
       // {
       //    wp[i].print();
@@ -126,7 +143,13 @@ main( int argc, char* argv[] )
       std::cout << name << " ";
    }
 
-   // testSequential( Dim, LEAVE_WRAP, wp, N, K );
-   testParallel( Dim, LEAVE_WRAP, wp, N, K );
+   if( argc >= 6 && std::stoi( argv[5] ) == 0 )
+   {
+      testParallel( Dim, LEAVE_WRAP, wp, N, K );
+   }
+   if( argc >= 6 && std::stoi( argv[5] ) == 1 )
+   {
+      testParallelkArray( Dim, LEAVE_WRAP, wp, N, K );
+   }
    return 0;
 }

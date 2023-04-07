@@ -121,6 +121,22 @@ KDtree<T>::k_nearest_array( KDnode<T>* root, Point<T>* nd, int i,
    k_nearest_array( dx > 0 ? root->right : root->left, nd, i, kq );
 }
 
+template <typename T>
+void
+KDtree<T>::destory( KDnode<T>* root )
+{
+   if( root->isLeaf )
+   {
+      delete[] root->p;
+      return;
+   }
+   destory( root->left );
+   destory( root->right );
+   delete root->left;
+   delete root->right;
+   return;
+}
+
 template class Point<double>;
 template class PointCompare<double>;
 template class KDnode<double>;

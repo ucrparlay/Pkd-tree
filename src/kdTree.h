@@ -119,6 +119,9 @@ class KDtree
       return ans;
    };
 
+   void
+   destory( KDnode<T>* root );
+
  public:
    int DIM;
    int K;
