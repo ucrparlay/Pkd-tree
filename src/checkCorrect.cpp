@@ -25,7 +25,7 @@ int
 main( int argc, char* argv[] )
 {
    std::cout.precision( 5 );
-   Point<Typename>* wp;
+   parlay::sequence<Point<Typename>> wp;
    std::string name( argv[1] );
 
    if( name.find( "/" ) != std::string::npos )
@@ -36,7 +36,7 @@ main( int argc, char* argv[] )
       freopen( argv[1], "r", stdin );
 
       scanf( "%ld %d", &N, &Dim );
-      wp = new Point<Typename>[N];
+      wp.resize( N );
       for( int i = 0; i < N; i++ )
       {
          for( int j = 0; j < Dim; j++ )
@@ -54,7 +54,7 @@ main( int argc, char* argv[] )
       long n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
-      wp = new Point<Typename>[n];
+      wp.resize( N );
       // generate n random points in a cube
       parlay::parallel_for( 0, n,
                             [&]( long i )
@@ -82,7 +82,7 @@ main( int argc, char* argv[] )
    KDnode<Typename>* KDroot = KD.init( Dim, 16, wp, N );
 
    //* query phase
-   std::random_shuffle( wp, wp + N );
+   std::random_shuffle( wp.begin(), wp.begin() + N );
    Typename* cgknn = new Typename[N];
    Typename* kdknn = new Typename[N];
    K = 100;

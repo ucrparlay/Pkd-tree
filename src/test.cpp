@@ -12,9 +12,9 @@
 using Typename = long;
 
 void
-testParallelkArray( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
+testParallelkArray( int Dim, int LEAVE_WRAP,
+                    parlay::sequence<Point<Typename>> wp, int N, int K )
 {
-
    parlay::internal::timer timer;
    KDtree<Typename> KD;
    timer.start();
@@ -27,9 +27,8 @@ testParallelkArray( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
    timer.stop();
    std::cout << timer.total_time() << " ";
    timer.reset();
-
    //* start test
-   std::random_shuffle( wp, wp + N );
+   std::random_shuffle( wp.begin(), wp.begin() + N );
 
    timer.reset();
    timer.start();
@@ -43,11 +42,12 @@ testParallelkArray( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
 
    KD.destory( KDroot );
    delete[] kq;
-   delete[] wp;
+   wp = parlay::sequence<Point<Typename>>();
 }
 
 void
-testParallel( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
+testParallel( int Dim, int LEAVE_WRAP, parlay::sequence<Point<Typename>> wp,
+              int N, int K )
 {
    parlay::internal::timer timer;
    KDtree<Typename> KD;
@@ -63,7 +63,7 @@ testParallel( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
    std::cout << timer.total_time() << " ";
 
    //* start test
-   std::random_shuffle( wp, wp + N );
+   std::random_shuffle( wp.begin(), wp.begin() + N );
 
    timer.reset();
    timer.start();
@@ -76,16 +76,28 @@ testParallel( int Dim, int LEAVE_WRAP, Point<Typename>* wp, int N, int K )
 
    KD.destory( KDroot );
    delete[] bq;
-   delete[] wp;
+   wp = parlay::sequence<Point<Typename>>();
 }
 
 int
 main( int argc, char* argv[] )
 {
+   parlay::sequence<int> p{ 5, 1, 4, 3, 2 };
+   parlay::sequence<bool> flag{ 0, 1, 0, 1, 1 };
+   auto k = parlay::kth_smallest( p, 2 );
+   auto a = p.data();
+   a++;
+   for( auto i : p )
+   {
+      std::cout << i << std::endl;
+   }
+   std::cout << *k << std::endl;
+   return 0;
+
    assert( argc >= 2 );
 
    int K = 100, LEAVE_WRAP = 16, N, Dim;
-   Point<Typename>* wp;
+   parlay::sequence<Point<Typename>> wp;
    if( argc >= 4 )
       K = std::stoi( argv[3] );
    if( argc >= 5 )
@@ -101,8 +113,7 @@ main( int argc, char* argv[] )
 
       scanf( "%d %d", &N, &Dim );
       assert( N >= K );
-      wp = (Point<Typename>*)malloc( N * sizeof( Point<Typename> ) );
-
+      wp.resize( N );
       for( int i = 0; i < N; i++ )
       {
          wp[i].id = i;
@@ -121,7 +132,7 @@ main( int argc, char* argv[] )
       long n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
-      wp = new Point<Typename>[n];
+      wp.resize( N );
       // generate n random points in a cube
       parlay::parallel_for(
           0, n,

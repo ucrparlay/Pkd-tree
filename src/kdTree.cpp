@@ -2,7 +2,8 @@
 
 template <typename T>
 KDnode<T>*
-KDtree<T>::init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len )
+KDtree<T>::init( const int& _DIM, const int& _LEAVE_WRAP,
+                 parlay::sequence<Point<T>> a, int len )
 {
    this->DIM = _DIM;
    this->LEAVE_WRAP = _LEAVE_WRAP;
@@ -12,7 +13,7 @@ KDtree<T>::init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len )
 
 template <typename T>
 KDnode<T>*
-KDtree<T>::make_tree( Point<T>* a, int len, int i )
+KDtree<T>::make_tree( parlay::sequence<Point<T>> a, int len, int i )
 {
    KDnode<T>* root = new KDnode<T>[1];
 
@@ -33,15 +34,19 @@ KDtree<T>::make_tree( Point<T>* a, int len, int i )
       return root;
    }
 
-   std::nth_element( a, a + len / 2, a + len, PointCompare<T>( i ) );
+   // auto pivot = parlay::kth_smallest( a, len / 2, PointCompare<T>( i ) );
+
+   parlay::sort_inplace( a, PointCompare<T>( i ) );
    i = ( i + 1 ) % this->DIM;
 
-   Point<T>* median = a + ( len >> 1 );
+   Point<T>* median = a.begin() + len / 2;
    root->p = new Point<T>[1];
    root->p[0] = *median;
 
-   root->left = make_tree( a, median - a, i );
-   root->right = make_tree( median, a + len - median, i );
+   // assert( *pivot == *median );
+
+   root->left = make_tree( a.subseq( 0, len / 2 ), len / 2, i );
+   root->right = make_tree( a.subseq( len / 2, len ), len - len / 2, i );
 
    return root;
 }

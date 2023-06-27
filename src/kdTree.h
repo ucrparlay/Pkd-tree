@@ -86,10 +86,11 @@ class KDtree
    KDtree() {}
 
    KDnode<T>*
-   init( const int& _DIM, const int& _LEAVE_WRAP, Point<T>* a, int len );
+   init( const int& _DIM, const int& _LEAVE_WRAP, parlay::sequence<Point<T>> a,
+         int len );
 
    KDnode<T>*
-   make_tree( Point<T>* a, int len, int i );
+   make_tree( parlay::sequence<Point<T>> a, int len, int i );
 
    void
    k_nearest( KDnode<T>* root, Point<T>* nd, int i, kBoundedQueue<T>& q );

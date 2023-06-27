@@ -1,9 +1,9 @@
 #!/bin/bash
 
-path="../benchmark/craft_var_node/"
+path="../benchmark/craft_var_node_integer/"
 # Nodes=("2000000")
 # Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
-Nodes=("10000" "50000" "100000" "500000")
+Nodes=("10000" "50000" "100000" "500000" "1000000" "5000000")
 Dims="5"
 tester="checkCorrect"
 resFile="Correct.out"
@@ -11,13 +11,13 @@ resFile="Correct.out"
 for node in ${Nodes[@]}
 do
     files_path="${path}${node}_${Dims}"
+     mkdir -p ${files_path}
     : > "${files_path}/${resFile}"
     echo "-------${files_path}"
     
-    for file in "${files_path}/"*.in
+    for ((i=1;i<=3;i++));
     do
-        file_name="${file##*"/"}"
-        ../build/${tester} $file >> "${files_path}/${resFile}"
+        ../build/${tester} ${node} ${Dims} >> "${files_path}/${resFile}"
     done
 done
 
