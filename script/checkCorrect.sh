@@ -5,7 +5,7 @@ path="../benchmark/craft_var_node_integer/"
 # Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
 Nodes=("10000" "50000" "100000" "500000" "1000000" "5000000")
 Dims="5"
-tester="checkCorrect"
+tester="checkCorrectParallel"
 resFile="Correct.out"
 
 for node in ${Nodes[@]}
