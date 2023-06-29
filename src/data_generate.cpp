@@ -17,13 +17,14 @@ const double EPS = 1e-9;
 long long pnum = 8e5;
 long long dim = 5;
 long long numFile = 3;
-const double dataRange = 1e9;
+using Typename = long;
+const Typename dataRange = 1e9;
 
-std::string path = "../benchmark/craft_var_dim";
+std::string path = "../benchmark/craft_var_node_integer";
 std::default_random_engine generator;
 struct kd_node_t
 {
-   double x[15];
+   Typename x[15];
    struct kd_node_t *left, *right;
    int num; // number of nodes in subtree plus itself
 };
@@ -34,6 +35,13 @@ inline double
 getRealRandom( const double& a, const double& b )
 {
    std::uniform_real_distribution<double> distribution( a, b );
+   return distribution( generator );
+}
+
+inline int
+getIntRandom( const int& a, const int& b )
+{
+   std::uniform_int_distribution<int> distribution( a, b );
    return distribution( generator );
 }
 
@@ -51,9 +59,13 @@ generatePoints( std::ofstream& f )
    for( int i = 0; i < pnum; i++ )
    {
       int idx = 0;
+      Typename a;
       for( int j = 0; j < dim; j++ )
       {
-         double a = getRealRandom( -dataRange, dataRange );
+         if constexpr( std::is_integral_v<Typename> )
+            a = getIntRandom( -dataRange, dataRange );
+         else if( std::is_floating_point_v<Typename> )
+            a = getRealRandom( -dataRange, dataRange );
          node[i].x[j] = a;
          f << std::fixed << a << " ";
       }

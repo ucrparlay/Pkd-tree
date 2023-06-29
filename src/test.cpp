@@ -84,14 +84,11 @@ main( int argc, char* argv[] )
 {
    parlay::sequence<int> p{ 5, 1, 4, 3, 2 };
    parlay::sequence<bool> flag{ 0, 1, 0, 1, 1 };
-   auto k = parlay::kth_smallest( p, 2 );
-   auto a = p.data();
-   a++;
-   for( auto i : p )
+   auto pp = p.cut( 0, 2 );
+   for( auto i : pp )
    {
-      std::cout << i << std::endl;
+      LOG << i << ENDL;
    }
-   std::cout << *k << std::endl;
    return 0;
 
    assert( argc >= 2 );

@@ -34,9 +34,9 @@ KDtree<T>::make_tree( parlay::sequence<Point<T>> a, int len, int i )
       return root;
    }
 
-   // auto pivot = parlay::kth_smallest( a, len / 2, PointCompare<T>( i ) );
-
-   parlay::sort_inplace( a, PointCompare<T>( i ) );
+   // parlay::sort_inplace( a, PointCompare<T>( i ) );
+   std::nth_element( a.begin(), a.begin() + len / 2, a.end(),
+                     PointCompare<T>( i ) );
    i = ( i + 1 ) % this->DIM;
 
    Point<T>* median = a.begin() + len / 2;
@@ -78,7 +78,6 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
       return;
    }
 
-   d = dist( &( root->p[0] ), nd, DIM );
    dx = ( root->p[0] ).x[i] - nd->x[i];
    dx2 = dx * dx;
 

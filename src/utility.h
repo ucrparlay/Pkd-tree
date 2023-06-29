@@ -240,6 +240,7 @@ class kBoundedQueue
    void
    resize( int new_size )
    {
+      m_data.clear();
       if( m_data.size() != new_size )
          m_data.resize( new_size );
       m_count = 0;

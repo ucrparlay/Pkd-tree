@@ -59,6 +59,9 @@ target_link_libraries(test PUBLIC  kdTreeParallel)
 add_library(kdTreeParallel ${source_files})
 target_link_libraries(kdTreeParallel PUBLIC parlay)
 
+add_executable(kdExe ../src/kdTreeParallel.cpp)
+target_link_libraries(kdExe PUBLIC kdTreeParallel)
+
 add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
 
@@ -79,6 +82,9 @@ target_link_libraries(cgal CGAL::CGAL)
 
 add_executable(checkCorrect ../src/checkCorrect.cpp)
 target_link_libraries(checkCorrect PUBLIC  kdTreeParallel CGAL::CGAL)
+
+add_executable(checkCorrectParallel ../src/checkCorrectParallel.cpp)
+target_link_libraries(checkCorrectParallel PUBLIC  kdTreeParallel CGAL::CGAL)
 
 
 FIND_PROGRAM(CLANG_FORMAT "clang-format")

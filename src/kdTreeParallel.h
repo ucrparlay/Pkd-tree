@@ -2,16 +2,19 @@
 
 #include "utility.h"
 
+#define LOG std::cout
+#define ENDL std::endl
+
 constexpr int dims = 15; // works for any constant dimension
 using idx = int;         // index of point (int can handle up to 2^31 points)
-using coord = int;       // type of each coordinate
-using coords = std::array<coord, dims>;
+using coord = long long; // type of each coordinate
+using coords = std::array<coord, dims>; // a coord array with length dims
 struct point
 {
    idx id;
    coords pnt;
 };
-struct pointComparator : point
+struct pointComparator
 {
    pointComparator( size_t index ) : index_( index ) {}
    bool
@@ -102,10 +105,11 @@ struct interior : node
 {
    node* left;
    node* right;
-   interior( node* left, node* right )
-       : node{ false, left->size + right->size,
-               bound_box( left->bounds, right->bounds ), nullptr },
-         left( left ), right( right )
+   coord split;
+   interior( node* _left, node* _right, coord _split )
+       : node{ false, _left->size + _right->size,
+               bound_box( _left->bounds, _right->bounds ), nullptr },
+         left( _left ), right( _right ), split( _split )
    {
       left->parent = this;
       right->parent = this;
@@ -117,7 +121,7 @@ parlay::type_allocator<interior> interior_allocator;
 
 template <typename slice>
 node*
-build( slice P, int i, int DIM )
+build( slice P, int dim, const int DIM )
 {
    int n = P.size();
    if( n <= node_size_cutoff )
@@ -125,46 +129,57 @@ build( slice P, int i, int DIM )
       return leaf_allocator.allocate( parlay::to_sequence( P ) );
    }
    std::nth_element( P.begin(), P.begin() + n / 2, P.end(),
-                     pointComparator( i ) );
-   i = ( i + 1 ) % DIM;
+                     pointComparator( dim ) );
+   dim = ( dim + 1 ) % DIM;
 
    node *L, *R;
-   parlay::par_do( [&]() { L = build( P.cut( 0, n / 2 ), i, DIM ); },
-                   [&]() { R = build( P.cut( n / 2, n ), i, DIM ); } );
-   return interior_allocator.allocate( L, R );
+   // parlay::par_do( [&]() { L = build( P.cut( 0, n / 2 ), dim, DIM ); },
+   //                 [&]() { R = build( P.cut( n / 2, n ), dim, DIM ); } );
+   L = build( P.cut( 0, n / 2 ), dim, DIM );
+   R = build( P.cut( n / 2, n ), dim, DIM );
+   return interior_allocator.allocate( L, R, P[n / 2].pnt[dim] );
 }
 
-node*
-kdTree( const parlay::sequence<coords>& P, long base_size = node_size_cutoff,
-        int DIM = 3 )
-{
-   // tag points with identifiers
-   points pts = parlay::tabulate( P.size(),
-                                  [&]( idx i ) {
-                                     return point{ i, P[i] };
-                                  } );
+//*-------------------for query-----------------------
 
-   // build tree on top of morton ordering
-   return build( pts.cut( 0, P.size() ), 0, DIM );
+coord
+ppDistanceSquared( const point& p, const point& q, int DIM )
+{
+   coord r = 0, diff = 0;
+   for( int i = 0; i < DIM; i++ )
+   {
+      diff = p.pnt[i] - q.pnt[i];
+      r += diff * diff;
+   }
+   return r;
 }
 
 void
-queryKNN( node* T, point q, int k )
+k_nearest( node* T, const point& q, int dim, const int DIM,
+           kBoundedQueue<coord>& bq )
 {
+   coord d, dx, dx2;
    if( T->is_leaf )
    {
-      for( int i = 0; i < T->size; i++ )
+      leaf* TL = static_cast<leaf*>( T );
+      for( int i = 0; i < TL->size; i++ )
       {
-         leaf* TL = static_cast<leaf*>( T );
-         point p = TL->pts[i];
+         d = ppDistanceSquared( q, TL->pts[i], DIM );
+         bq.insert( d );
       }
       return;
    }
 
    interior* TI = static_cast<interior*>( T );
-   long n_left = TI->left->size;
-   long n = T->size;
+   dx = TI->split - q.pnt[dim];
+   dx2 = dx * dx;
 
-   parlay::par_do( [&]() { queryKNN( TI->left, q, k ); },
-                   [&]() { queryKNN( TI->right, q, k ); } );
+   dim = ( dim + 1 ) % DIM;
+
+   k_nearest( dx > 0 ? TI->left : TI->right, q, dim, DIM, bq );
+   if( dx2 > bq.top() && bq.full() )
+   {
+      return;
+   }
+   k_nearest( dx > 0 ? TI->right : TI->left, q, dim, DIM, bq );
 }
