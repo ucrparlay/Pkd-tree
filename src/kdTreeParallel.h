@@ -131,10 +131,9 @@ node* build(slice P, int dim, const int DIM) {
 
   dim = (dim + 1) % DIM;
   node *L, *R;
-  // parlay::par_do( [&]() { L = build( P.cut( 0, n / 2 ), dim, DIM ); },
-  //                 [&]() { R = build( P.cut( n / 2, n ), dim, DIM ); } );
-  L = build(P.cut(0, n / 2), dim, DIM);
-  R = build(P.cut(n / 2, n), dim, DIM);
+  parlay::par_do([&]() { L = build(P.cut(0, n / 2), dim, DIM); }, [&]() { R = build(P.cut(n / 2, n), dim, DIM); });
+  // L = build(P.cut(0, n / 2), dim, DIM);
+  // R = build(P.cut(n / 2, n), dim, DIM);
   // LOG << "cutting plane after recursive " << P[n / 2].pnt[dim - 1] << ENDL;
   return interior_allocator.allocate(L, R, split);
 }
