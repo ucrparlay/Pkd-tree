@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else {
-    K = 2;
+    K = 100;
 
     parlay::random_generator gen(0);
     int box_size = 10;
@@ -71,19 +71,21 @@ int main(int argc, char* argv[]) {
 
   //* kd tree
 
-  KDtree<Typename> KD;
-  parlay::sequence<Point<Typename>> kdPoint;
-  kdPoint.resize(N);
-  parlay::parallel_for(0, N, [&](size_t i) {
-    for (int j = 0; j < Dim; j++) {
-      kdPoint[i].x[j] = wp[i].pnt[j];
-    }
-  });
+  // KDtree<Typename> KD;
+  // parlay::sequence<Point<Typename>> kdPoint;
+  // kdPoint.resize(N);
+  // parlay::parallel_for(0, N, [&](size_t i) {
+  //   for (int j = 0; j < Dim; j++) {
+  //     kdPoint[i].x[j] = wp[i].pnt[j];
+  //   }
+  // });
   // KDnode<Typename>* KDroot = KD.init( Dim, 16, kdPoint, N );
   node* KDParallelRoot = build(wp.cut(0, wp.size()), 0, Dim);
 
   //* query phase
-  // std::random_shuffle( wp.begin(), wp.begin() + N );
+  std::random_shuffle(wp.begin(), wp.begin() + N);
+  // LOG << "begin query" << ENDL;
+
   Typename* cgknn = new Typename[N];
   Typename* kdknn = new Typename[N];
   assert(N >= K);
@@ -100,18 +102,19 @@ int main(int argc, char* argv[]) {
 
   //* kd query
   //* bounded_queue
+  // LOG << "begin kd query" << ENDL;
   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
   for (int i = 0; i < N; i++) {
     bq[i].resize(K);
   }
-  //   for (int i = 0; i < N; i++) {
-  //     // LOG << "xxxxxxxxxxxxxxxxxxxxxxxfor point " << i << " " << wp[i].pnt[0]
-  //     //     << " " << wp[i].pnt[1] << " " << wp[i].pnt[2] << ENDL;
-  //     k_nearest(KDParallelRoot, wp[i], 0, Dim, bq[i]);
-  //     // KD.k_nearest( KDroot, &kdPoint[i], 0, bq[i] );
-  //     kdknn[i] = bq[i].top();
-  //     // LOG << "end, answer is: " << bq[i].top() << ENDL;
-  //   }
+  // for (int i = 0; i < N; i++) {
+  //   // LOG << "xxxxxxxxxxxxxxxxxxxxxxxfor point " << i << " " << wp[i].pnt[0]
+  //   //     << " " << wp[i].pnt[1] << " " << wp[i].pnt[2] << ENDL;
+  //   k_nearest(KDParallelRoot, wp[i], 0, Dim, bq[i]);
+  //   // KD.k_nearest( KDroot, &kdPoint[i], 0, bq[i] );
+  //   kdknn[i] = bq[i].top();
+  //   // LOG << "end, answer is: " << bq[i].top() << ENDL;
+  // }
 
   parlay::parallel_for(0, N, [&](size_t i) {
     k_nearest(KDParallelRoot, wp[i], 0, Dim, bq[i]);

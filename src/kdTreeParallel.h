@@ -21,8 +21,8 @@ struct pointComparator {
 
 using points = parlay::sequence<point>;
 
-// max leaf size of tree
-constexpr int node_size_cutoff = 2;
+//! max leaf size of tree
+constexpr int node_size_cutoff = 16;
 
 // **************************************************************
 // bounding box (min value on each dimension, and max on each)
@@ -113,6 +113,7 @@ node* build(slice P, int dim, const int DIM) {
   if (n <= node_size_cutoff) {
     return leaf_allocator.allocate(parlay::to_sequence(P));
   }
+  // auto mid = parlay::kth_smallest(P, n / 2, pointComparator(dim));
   std::nth_element(P.begin(), P.begin() + n / 2, P.end(), pointComparator(dim));
   coord split = P[n / 2].pnt[dim];
 

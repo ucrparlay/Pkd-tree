@@ -1,37 +1,31 @@
 #!/bin/bash
 
 path="../benchmark/craft_var_node_integer/"
-# Nodes=("2000000")
-# Nodes=("10000" "50000" "100000" "500000" "800000" "1000000" "2000000")
-Nodes=("10000" "50000" "100000" "500000" "1000000" "5000000")
-Dims="5"
+Nodes=("50000" "100000" "500000" "1000000" "5000000" "10000000")
+# Nodes=("100000")
+# Dims=("2" "3" "5" "7" "9")
+Dims=("5")
+K="100"
 tester="checkCorrectParallel"
 resFile="Correct.out"
 
-for node in ${Nodes[@]}
-do
-    files_path="${path}${node}_${Dims}"
-     mkdir -p ${files_path}
-    : > "${files_path}/${resFile}"
-    echo "-------${files_path}"
-    
-    for ((i=1;i<=3;i++));
-    do
-        ../build/${tester} ${node} ${Dims} >> "${files_path}/${resFile}"
+for node in ${Nodes[@]}; do
+    for dim in ${Dims[@]}; do
+        if [ ${node} -ge "10000000" ]; then
+            dim="3"
+        fi
+
+        files_path="${path}${node}_${dim}"
+        mkdir -p ${files_path}
+        : >"${files_path}/${resFile}"
+        echo "-------${files_path}"
+
+        # for ((i = 1; i <= 3; i++)); do
+        #     ../build/${tester} ${node} ${dim} >>"${files_path}/${resFile}"
+        # done
+        for file in "${files_path}/"*.in; do
+            file_name="${file##*"/"}"
+            ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+        done
     done
 done
-
-# path="../benchmark/craft_var_dim/100000_"
-# Dims=("2" "3" "5" "7" "9" "10" "12" "15")
-# for dim in ${Dims[@]}
-# do
-#     files_path="${path}${dim}"
-#     : > "${files_path}/${resFile}"
-#     echo "-------${files_path}"
-
-#     for file in "${files_path}/"*.in
-#     do
-#         file_name="${file##*"/"}"
-#         ../build/${tester} ${file} >> "${files_path}/${resFile}"
-#     done
-# done
