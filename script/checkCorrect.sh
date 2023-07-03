@@ -20,14 +20,14 @@ for node in ${Nodes[@]}; do
         : >"${files_path}/${resFile}"
         echo "-------${files_path}"
 
-        # for ((i = 1; i <= 3; i++)); do
-        #     ((nodes++))
-        #     ../build/${tester} ${node} ${dim} >>"${files_path}/${resFile}"
-        # done
-
-        for file in "${files_path}/"*.in; do
-            file_name="${file##*"/"}"
-            ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+        for ((i = 1; i <= 3; i++)); do
+            ((node++))
+            ../build/${tester} ${node} ${dim} >>"${files_path}/${resFile}"
         done
+
+        # for file in "${files_path}/"*.in; do
+        #     file_name="${file##*"/"}"
+        #     ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+        # done
     done
 done

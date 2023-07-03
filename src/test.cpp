@@ -13,23 +13,24 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
        build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    timer.stop();
 
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   for( int i = 0; i < N; i++ ) {
-      bq[i].resize( K );
-   }
+   //? parallel allocate
+   // kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   // for( int i = 0; i < N; i++ ) {
+   //    bq[i].resize( K );
+   // }
 
    std::cout << timer.total_time() << " ";
 
    //* start test
-   parlay::random_shuffle( wp.cut( 0, N ) );
-   Typename* kdknn = new Typename[N];
+   // parlay::random_shuffle( wp.cut( 0, N ) );
+   // Typename* kdknn = new Typename[N];
 
    timer.reset();
    timer.start();
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
-      kdknn[i] = bq[i].top();
-   } );
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
+   //    kdknn[i] = bq[i].top();
+   // } );
 
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K

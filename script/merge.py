@@ -15,8 +15,8 @@ path = "../benchmark"
 benchDim = "craft_var_dim"
 benchNode = "craft_var_node"
 storePrefix = "data/"
-Nodes = [10000, 50000, 100000, 500000, 800000, 1000000, 2000000]
-Dims = [2, 3, 5, 7, 9, 10, 12, 15, 18, 20, 25]
+Nodes = [10000000,50000000,100000000,500000000,1000000000]
+Dims = [2, 3, 5, 7, 9]
 header = ['solver', 'benchType', 'nodes',
           'dims', 'file', 'buildTime', 'queryTime', 'wrapSize']
 
@@ -59,18 +59,20 @@ if (len(sys.argv) > 1 and int(sys.argv[1]) == 1):
 
     for solver in solverName:
         csvWriter = csvSetup(solver)
+        
+        dim = 3
+        for node in Nodes:
+            P = path+'/'+benchNode+'/' + \
+                str(node)+"_"+str(dim)+'/'+resMap[solver]
+            combine(P, csvWriter, solver, benchNode, node, dim)
 
-        node = 100000
+        node = 1000000
         for dim in Dims:
             P = path+'/'+benchDim+'/' + \
                 str(node)+"_"+str(dim)+'/'+resMap[solver]
             combine(P, csvWriter, solver, benchDim, node, dim)
 
-        dim = 5
-        for node in Nodes:
-            P = path+'/'+benchNode+'/' + \
-                str(node)+"_"+str(dim)+'/'+resMap[solver]
-            combine(P, csvWriter, solver, benchNode, node, dim)
+
 
 # * query time by wrap size
 Wrap = ["2", "4", "8", "16", "32", "64", "128", "256",

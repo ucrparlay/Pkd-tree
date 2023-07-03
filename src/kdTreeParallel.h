@@ -152,6 +152,7 @@ ppDistanceSquared( const point& p, const point& q, int DIM ) {
    return r;
 }
 
+//? parallel query
 void
 k_nearest( node* T, const point& q, int dim, const int DIM,
            kBoundedQueue<coord>& bq ) {

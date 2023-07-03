@@ -26,8 +26,8 @@ for solver in ${Solvers[@]}; do
         : >${dest}
         echo ">>>${dest}"
 
-        for ((i = 1; i <= 2; i++)); do
-            # file_name="${file##*"/"}"
+        for ((i = 1; i <= 3; i++)); do
+            ((node++))
             timeout ${T} ../build/test ${node} ${dim} ${k} >>${dest}
             retval=$?
             if [ ${retval} -eq 124 ]; then

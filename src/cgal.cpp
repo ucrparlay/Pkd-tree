@@ -39,21 +39,20 @@ testCGAL( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " ";
 
    //* start test
-   parlay::random_shuffle( wp.cut( 0, N ) );
-
-   Typename* cgknn = new Typename[N];
+   // parlay::random_shuffle( wp.cut( 0, N ) );
+   // Typename* cgknn = new Typename[N];
 
    timer.reset();
    timer.start();
-   for( int i = 0; i < N; i++ ) {
-      Point_d query( Dim, std::begin( wp[i].pnt ),
-                     std::begin( wp[i].pnt ) + Dim );
-      Neighbor_search search( tree, query, K );
-      Neighbor_search::iterator it = search.end();
-      it--;
-      // std::cout << i << " " << it->second << std::endl;
-      cgknn[i] = it->second;
-   }
+   // for( int i = 0; i < N; i++ ) {
+   //    Point_d query( Dim, std::begin( wp[i].pnt ),
+   //                   std::begin( wp[i].pnt ) + Dim );
+   //    Neighbor_search search( tree, query, K );
+   //    Neighbor_search::iterator it = search.end();
+   //    it--;
+   //    // std::cout << i << " " << it->second << std::endl;
+   //    cgknn[i] = it->second;
+   // }
 
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
