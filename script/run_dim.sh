@@ -1,7 +1,8 @@
 #!/bin/bash
 
-Solvers=("test" "cgal")
-node=1000000
+# Solvers=("test" "cgal")
+Solvers=("cgal")
+node=100000000
 path="../benchmark/craft_var_dim/"
 Dims=(2 3 5 7 9)
 T=1800
@@ -27,14 +28,14 @@ for solver in ${Solvers[@]}; do
         echo ">>>${dest}"
 
         for ((i = 1; i <= 3; i++)); do
-            ((node++))
-            timeout ${T} ../build/test ${node} ${dim} ${k} >>${dest}
+            nodeVar=$(( ${node} + ${i} ))
+            timeout ${T} ../build/${solver} ${nodeVar} ${dim} ${k} >>${dest}
             retval=$?
             if [ ${retval} -eq 124 ]; then
                 echo -e "${node}_${dim}.in -1 -1 -1 -1" >>${dest}
                 echo "timeout ${node}_${dim}"
             else
-                echo "finish ${node}_${dim}"
+                echo "finish ${nodeVar}_${dim}"
             fi
         done
     done

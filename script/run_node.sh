@@ -1,6 +1,7 @@
 #!/bin/bash
 
-Solvers=( "cgal" "test")
+# Solvers=("cgal" "test")
+Solvers=("cgal")
 Node=(10000000 50000000 100000000 500000000 1000000000)
 path="../benchmark/craft_var_node/"
 dim=3
@@ -29,7 +30,7 @@ for solver in ${Solvers[@]}; do
         for ((i = 1; i <= 3; i++)); do
             # file_name="${file##*"/"}"
             ((node++))
-            timeout ${T} ../build/test ${node} ${dim} ${k} >>${dest}
+            timeout ${T} ../build/${solver} ${node} ${dim} ${k} >>${dest}
             retval=$?
             if [ ${retval} -eq 124 ]; then
                 echo -e "${node}_${dim}.in -1 -1 -1 -1" >>${dest}
