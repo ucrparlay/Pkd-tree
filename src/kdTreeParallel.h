@@ -115,48 +115,35 @@ parlay::type_allocator<interior> interior_allocator;
 
 template <typename slice>
 node*
-build( slice P, int dim, const int DIM ) {
-   int n = P.size();
-   // for( auto i : P )
-   // {
-   //    for( int j = 0; j < DIM; j++ )
-   //    {
-   //       LOG << i.pnt[j] << " ";
-   //    }
-   //    puts( "/" );
-   // }
-   // puts( "" );
+build( slice In, slice Out, int dim, const int DIM ) {
+   int n = In.size();
+   assert( In.size() == Out.size() );
 
    if( n <= node_size_cutoff ) {
-      return leaf_allocator.allocate( parlay::to_sequence( P ) );
+      return leaf_allocator.allocate( parlay::to_sequence( In ) );
    }
-   //  auto mid = parlay::kth_smallest( P, n / 2, pointLess( dim ) );
-   //  parlay::filter( P, [&]( point i ) { return i.pnt[dim] < mid->pnt[dim]; }
-   //  );
 
-   std::nth_element( P.begin(), P.begin() + n / 2, P.end(), pointLess( dim ) );
-   coord split = P[n / 2].pnt[dim];
+   auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
+   coord split = mid->pnt[dim];
 
-   // LOG << "cutting plane is: " << P[n / 2].pnt[dim] << ENDL;
-   // LOG << " left points: ";
-   // for( int i = 0; i < n / 2; i++ )
-   // {
-   //    LOG << P[i].pnt[0] << " ";
-   // }
-   // LOG << " right points are: ";
-   // for( int i = n / 2; i < n; i++ )
-   // {
-   //    LOG << P[i].pnt[0] << " ";
-   // }
-   // puts( "" );
+   int ln = parlay::filter_into(
+       In, Out, [&]( point i ) { return i.pnt[dim] < split; } );
+   int rn = parlay::filter_into(
+       In, Out.cut( ln, n ), [&]( point i ) { return i.pnt[dim] >= split; } );
+
+   assert( ln + rn == n );
+   // parlay::copy( Out, In );
+
+   // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+   //                   pointLess( dim ) );
 
    dim = ( dim + 1 ) % DIM;
    node *L, *R;
-   parlay::par_do( [&]() { L = build( P.cut( 0, n / 2 ), dim, DIM ); },
-                   [&]() { R = build( P.cut( n / 2, n ), dim, DIM ); } );
+   parlay::par_do(
+       [&]() { L = build( Out.cut( 0, ln ), In.cut( 0, ln ), dim, DIM ); },
+       [&]() { R = build( Out.cut( ln, n ), In.cut( ln, n ), dim, DIM ); } );
    // L = build(P.cut(0, n / 2), dim, DIM);
    // R = build(P.cut(n / 2, n), dim, DIM);
-   // LOG << "cutting plane after recursive " << P[n / 2].pnt[dim - 1] << ENDL;
    return interior_allocator.allocate( L, R, split );
 }
 
@@ -177,31 +164,10 @@ k_nearest( node* T, const point& q, int dim, const int DIM,
            kBoundedQueue<coord>& bq ) {
    coord d, dx, dx2;
    if( T->is_leaf ) {
-      // puts( " in leaf " );
       leaf* TL = static_cast<leaf*>( T );
       for( int i = 0; i < TL->size; i++ ) {
          d = ppDistanceSquared( q, TL->pts[i], DIM );
-         // if( d == -9016274034791771770 ) {
-         //    puts( "-0------" );
-         //    for( auto j : q.pnt ) {
-         //       LOG << j << " ";
-         //    }
-         //    puts( "" );
-         //    for( auto j : TL->pts[i].pnt ) {
-         //       LOG << j << " ";W
-         //    }
-         //    puts( "" );
-         // }
-         // if( d == 1030654732068163490 ) {
-         //    LOG << "wrong, bq.top is: " << bq.top() << ENDL;
-         // }
-         // if( d == 1031139619390282300 ) {
-         //    LOG << "find correct, bq is full: " << bq.full() << " bq's top "
-         //        << bq.top() << ENDL;
-         // }
          bq.insert( d );
-
-         // LOG << "insert " << d << ENDL;
       }
       return;
    }
@@ -210,18 +176,12 @@ k_nearest( node* T, const point& q, int dim, const int DIM,
    dx = TI->split - q.pnt[dim];
    dx2 = dx * dx;
 
-   // LOG << " interior: cutting plane: " << TI->split << ", dx2 " << dx2 <<
-   // ENDL;
-
    if( ++dim >= DIM )
       dim = 0;
 
-   // puts( "go left" );
    k_nearest( dx > 0 ? TI->left : TI->right, q, dim, DIM, bq );
    if( dx2 > bq.top() && bq.full() ) {
-      // LOG << "return dx2: " << dx2 << " " << bq.top() << ENDL;
       return;
    }
-   // puts( "go right" );
    k_nearest( dx > 0 ? TI->right : TI->left, q, dim, DIM, bq );
 }

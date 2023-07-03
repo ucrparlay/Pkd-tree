@@ -23,18 +23,25 @@ main( int argc, char* argv[] ) {
       }
    }
 
-   int dim = 0;
+   int dim = 1;
+   int n = wp.size();
+   points b( N );
    auto mid = parlay::kth_smallest( wp, wp.size() / 2, pointLess( dim ) );
    LOG << mid->pnt[0] << ENDL;
-   auto P = parlay::filter( wp.cut( 0, wp.size() ), [&]( point i ) {
+
+   int l = parlay::filter_into( wp.cut( 0, n ), b.cut( 0, n ), [&]( point i ) {
       return i.pnt[dim] < mid->pnt[dim];
    } );
-   for( auto i : P ) {
+   parlay::filter_into( wp.cut( 0, n ), b.cut( l, n ), [&]( point i ) {
+      return i.pnt[dim] >= mid->pnt[dim];
+   } );
+   LOG << l << ENDL;
+   for( auto i : b.cut( 0, l ) ) {
       LOG << i.pnt[0] << " " << i.pnt[1] << ENDL;
    }
    return 0;
 
-   node* KDroot = build( wp.cut( 0, wp.size() ), 0, Dim );
+   node* KDroot = build( wp.cut( 0, wp.size() ), b.cut( 0, b.size() ), 0, Dim );
    K = 2;
 
    // kBoundedQueue<coord>* bq = new kBoundedQueue<coord>[N];

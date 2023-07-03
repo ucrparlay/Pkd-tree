@@ -103,7 +103,9 @@ main( int argc, char* argv[] ) {
    //    }
    // } );
    // KDnode<Typename>* KDroot = KD.init( Dim, 8, kdPoint, N );
-   node* KDParallelRoot = build( wp.cut( 0, wp.size() ), 0, Dim );
+   points wo( wp.size() );
+   node* KDParallelRoot =
+       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
 
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;
