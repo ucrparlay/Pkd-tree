@@ -1,5 +1,10 @@
-0.in ok
-1.in ok
-2.in ok
-3.in ok
-4.in ok
+0.in begin query
+ok
+1.in begin query
+ok
+2.in begin query
+ok
+3.in begin query
+ok
+4.in begin query
+ok

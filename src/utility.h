@@ -12,20 +12,17 @@ constexpr double eps = 1e-7;
 
 template <typename T>
 inline bool
-Gt( const T& a, const T& b )
-{
+Gt( const T& a, const T& b ) {
    if constexpr( std::is_integral_v<T> )
       return a > b;
-   else if( std::is_floating_point_v<T> )
-   {
+   else if( std::is_floating_point_v<T> ) {
       return a - b > eps;
    }
 }
 
 template <typename T>
 inline bool
-Lt( const T& a, const T& b )
-{
+Lt( const T& a, const T& b ) {
    if constexpr( std::is_integral_v<T> )
       return a < b;
    else if( std::is_floating_point_v<T> )
@@ -34,8 +31,7 @@ Lt( const T& a, const T& b )
 
 template <typename T>
 inline bool
-Eq( const T& a, const T& b )
-{
+Eq( const T& a, const T& b ) {
    if constexpr( std::is_integral_v<T> )
       return a == b;
    else if( std::is_floating_point_v<T> )
@@ -44,8 +40,7 @@ Eq( const T& a, const T& b )
 
 template <typename T>
 inline bool
-Geq( const T& a, const T& b )
-{
+Geq( const T& a, const T& b ) {
    if constexpr( std::is_integral_v<T> )
       return a >= b;
    else if( std::is_floating_point_v<T> )
@@ -54,8 +49,7 @@ Geq( const T& a, const T& b )
 
 template <typename T>
 inline bool
-Leq( const T& a, const T& b )
-{
+Leq( const T& a, const T& b ) {
    if constexpr( std::is_integral_v<T> )
       return a <= b;
    else if( std::is_floating_point_v<T> )
@@ -63,16 +57,13 @@ Leq( const T& a, const T& b )
 }
 
 template <typename T>
-class kArrayQueue
-{
+class kArrayQueue {
  public:
    //* build a k-nn graph for N points
    void
-   resize( const int& k )
-   {
+   resize( const int& k ) {
       Q = (T*)malloc( 2 * k * sizeof( T ) );
-      for( int i = 0; i < 2 * k; i++ )
-      {
+      for( int i = 0; i < 2 * k; i++ ) {
          Q[i] = std::numeric_limits<T>::max();
       }
       K = k;
@@ -82,16 +73,13 @@ class kArrayQueue
    };
 
    void
-   init( const int& N )
-   {
+   init( const int& N ) {
       Q = (T*)malloc( N * sizeof( T ) );
    }
 
    void
-   set( const int& k )
-   {
-      for( int i = 0; i < 2 * k; i++ )
-      {
+   set( const int& k ) {
+      for( int i = 0; i < 2 * k; i++ ) {
          Q[i] = std::numeric_limits<T>::max();
       }
       K = k;
@@ -101,11 +89,9 @@ class kArrayQueue
    }
 
    void
-   insert( T d )
-   {
+   insert( T d ) {
       Q[load++] = d;
-      if( load == size )
-      {
+      if( load == size ) {
          std::nth_element( Q, Q + K - 1, Q + size );
          load = load / 2;
       }
@@ -113,36 +99,28 @@ class kArrayQueue
    }
 
    T
-   queryKthElement()
-   {
-      if( load < K )
-      {
+   queryKthElement() {
+      if( load < K ) {
          return Q[load];
-      }
-      else
-      {
+      } else {
          std::nth_element( Q, Q + K - 1, Q + size );
          return Q[K - 1];
       }
    }
 
    void
-   destory()
-   {
+   destory() {
       free( Q );
    }
 
    inline const int&
-   getLoad()
-   {
+   getLoad() {
       return load;
    }
 
    void
-   printQueue()
-   {
-      for( int i = 0; i <= K; i++ )
-      {
+   printQueue() {
+      for( int i = 0; i <= K; i++ ) {
          if( Q[i] == DBL_MAX )
             printf( "inf " );
          else
@@ -160,20 +138,16 @@ class kArrayQueue
 };
 
 template <typename T>
-class ArrayQueue
-{
+class ArrayQueue {
  public:
    void
-   init( const int& N )
-   {
+   init( const int& N ) {
       Q = (T*)malloc( N * sizeof( T ) );
    }
 
    void
-   set( const int& k )
-   {
-      for( int i = 0; i < k; i++ )
-      {
+   set( const int& k ) {
+      for( int i = 0; i < k; i++ ) {
          Q[i] = std::numeric_limits<T>::max();
       }
       K = k;
@@ -182,16 +156,13 @@ class ArrayQueue
    }
 
    void
-   insert( T d )
-   {
+   insert( T d ) {
       //* highest to lowest by distance d
-      if( Lt( d, Q[0] ) )
-      {
+      if( Lt( d, Q[0] ) ) {
          Q[0] = d;
          load++;
          load = std::min( load, K );
-         for( int i = 1; i < K && Q[i] > Q[i - 1]; i++ )
-         {
+         for( int i = 1; i < K && Q[i] > Q[i - 1]; i++ ) {
             std::swap( Q[i], Q[i - 1] );
          }
       }
@@ -199,20 +170,17 @@ class ArrayQueue
    }
 
    inline const T&
-   top()
-   {
+   top() {
       return Q[0];
    }
 
    void
-   destory()
-   {
+   destory() {
       free( Q );
    }
 
    inline bool
-   full()
-   {
+   full() {
       return load == K;
    }
 
@@ -223,8 +191,7 @@ class ArrayQueue
 };
 
 template <typename T, typename Compare = std::less<T>>
-class kBoundedQueue
-{
+class kBoundedQueue {
    //* A simplified version of CGAL bounded_priority_queue
    //* https://github.com/CGAL/cgal/blob/v5.4/Spatial_searching/include/CGAL/Spatial_searching/internal/bounded_priority_queue.h
 
@@ -232,14 +199,11 @@ class kBoundedQueue
    kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
 
    kBoundedQueue( int size, const Compare& comp = Compare() )
-       : m_count( 0 ), m_data( size ), m_comp( comp )
-   {
-   }
+       : m_count( 0 ), m_data( size ), m_comp( comp ) {}
 
    /** Sets the max number of elements in the queue */
    void
-   resize( int new_size )
-   {
+   resize( int new_size ) {
       m_data.clear();
       if( m_data.size() != new_size )
          m_data.resize( new_size );
@@ -247,30 +211,24 @@ class kBoundedQueue
    }
 
    inline bool
-   full() const
-   {
+   full() const {
       return m_count == m_data.size();
    }
 
    inline const T&
-   top() const
-   {
+   top() const {
       return m_data[0];
    }
 
    inline void
-   insert( const T& x )
-   {
+   insert( const T& x ) {
       T* data1 = ( &m_data[0] - 1 );
-      if( full() )
-      {
-         if( m_comp( x, top() ) )
-         {
+      if( full() ) {
+         if( m_comp( x, top() ) ) {
             // insert x in the heap at the correct place,
             // going down in the tree.
             unsigned int j( 1 ), k( 2 );
-            while( k <= m_count )
-            {
+            while( k <= m_count ) {
                T* z = &( data1[k] );
                if( ( k < m_count ) && m_comp( *z, data1[k + 1] ) )
                   z = &( data1[++k] );
@@ -283,13 +241,10 @@ class kBoundedQueue
             }
             data1[j] = x;
          }
-      }
-      else
-      {
+      } else {
          // insert element as in a heap
          int i( ++m_count ), j;
-         while( i >= 2 )
-         {
+         while( i >= 2 ) {
             j = i >> 1; // father of i in the tree
             T& y = data1[j];
             if( m_comp( x, y ) )
@@ -301,7 +256,7 @@ class kBoundedQueue
       }
    }
 
- private:
+ public:
    unsigned int m_count;
    std::vector<T> m_data;
    Compare m_comp;
