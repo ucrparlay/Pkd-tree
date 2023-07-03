@@ -21,14 +21,6 @@ struct pointLess {
    }
    size_t index_;
 };
-struct pointGreaterEqual {
-   pointGreaterEqual( size_t index ) : index_( index ) {}
-   bool
-   operator()( const point& p1, const point& p2 ) const {
-      return p1.pnt[index_] >= p2.pnt[index_];
-   }
-   size_t index_;
-};
 
 using points = parlay::sequence<point>;
 
@@ -113,6 +105,7 @@ struct interior : node {
 parlay::type_allocator<leaf> leaf_allocator;
 parlay::type_allocator<interior> interior_allocator;
 
+//? granularity control
 template <typename slice>
 node*
 build( slice In, slice Out, int dim, const int DIM ) {
@@ -184,4 +177,17 @@ k_nearest( node* T, const point& q, int dim, const int DIM,
       return;
    }
    k_nearest( dx > 0 ? TI->right : TI->left, q, dim, DIM, bq );
+}
+
+void
+delete_tree( node* T ) { // delete tree in parallel
+   if( T->is_leaf )
+      leaf_allocator.retire( static_cast<leaf*>( T ) );
+   else {
+      interior* TI = static_cast<interior*>( T );
+      parlay::par_do_if(
+          T->size > 1000, [&] { delete_tree( TI->left ); },
+          [&] { delete_tree( TI->right ); } );
+      interior_allocator.retire( TI );
+   }
 }

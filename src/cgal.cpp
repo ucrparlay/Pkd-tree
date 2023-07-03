@@ -1,43 +1,65 @@
 #include "kdTree.h"
 #include "kdTreeParallel.h"
+#include "utility.h"
+
+#include <CGAL/Cartesian_d.h>
+#include <CGAL/K_neighbor_search.h>
+#include <CGAL/Kernel_d/Point_d.h>
+#include <CGAL/Orthogonal_k_neighbor_search.h>
+#include <CGAL/Search_traits_d.h>
+#include <CGAL/Timer.h>
+#include <CGAL/point_generators_d.h>
+
+using Typename = coord;
+
+typedef CGAL::Cartesian_d<Typename> Kernel;
+typedef Kernel::Point_d Point_d;
+typedef CGAL::Search_traits_d<Kernel> TreeTraits;
+typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits> Neighbor_search;
+typedef Neighbor_search::Tree Tree;
 
 using Typename = long long;
 
 void
-testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
+testCGAL( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
-   points wo( wp.size() );
+
+   //* cgal
+   std::list<Point_d> _points;
+   for( long i = 0; i < N; i++ ) {
+      //   printf( "%.3Lf\n", *( std::begin( wp[i].x ) + _Dim - 1 ) );
+      _points.push_back( Point_d( Dim, std::begin( wp[i].pnt ),
+                                  ( std::begin( wp[i].pnt ) + Dim ) ) );
+   }
 
    timer.start();
-   node* KDParallelRoot =
-       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   Tree tree( _points.begin(), _points.end() );
    timer.stop();
-
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   for( int i = 0; i < N; i++ ) {
-      bq[i].resize( K );
-   }
 
    std::cout << timer.total_time() << " ";
 
    //* start test
    parlay::random_shuffle( wp.cut( 0, N ) );
-   Typename* kdknn = new Typename[N];
+
+   Typename* cgknn = new Typename[N];
 
    timer.reset();
    timer.start();
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
-      kdknn[i] = bq[i].top();
-   } );
+   for( int i = 0; i < N; i++ ) {
+      Point_d query( Dim, std::begin( wp[i].pnt ),
+                     std::begin( wp[i].pnt ) + Dim );
+      Neighbor_search search( tree, query, K );
+      Neighbor_search::iterator it = search.end();
+      it--;
+      // std::cout << i << " " << it->second << std::endl;
+      cgknn[i] = it->second;
+   }
 
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
 
-   delete_tree( KDParallelRoot );
    points().swap( wp );
-   points().swap( wo );
 
    return;
 }
@@ -46,7 +68,7 @@ int
 main( int argc, char* argv[] ) {
    assert( argc >= 2 );
 
-   int K = 100, LEAVE_WRAP = 16, N, Dim;
+   int K = 100, LEAVE_WRAP = 16, N = -1, Dim = -1;
    points wp;
    std::string name( argv[1] );
 
@@ -95,7 +117,7 @@ main( int argc, char* argv[] ) {
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
-   testParallelKDtree( Dim, LEAVE_WRAP, wp, N, K );
+   testCGAL( Dim, LEAVE_WRAP, wp, N, K );
 
    return 0;
 }
