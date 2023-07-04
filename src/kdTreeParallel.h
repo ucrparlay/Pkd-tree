@@ -25,8 +25,8 @@ struct pointLess {
 using points = parlay::sequence<point>;
 
 //! max leaf size of tree
-constexpr int node_size_cutoff = 16;
-
+constexpr int leave_wrap = 16;
+constexpr int serial_build_cutoff = 1000;
 // **************************************************************
 // bounding box (min value on each dimension, and max on each)
 // **************************************************************
@@ -109,34 +109,37 @@ parlay::type_allocator<interior> interior_allocator;
 template <typename slice>
 node*
 build( slice In, slice Out, int dim, const int DIM ) {
-   int n = In.size();
-   assert( In.size() == Out.size() );
+   int n = In.size(), ln, rn;
+   coord split;
 
-   if( n <= node_size_cutoff ) {
+   if( n <= leave_wrap ) {
       return leaf_allocator.allocate( parlay::to_sequence( In ) );
    }
 
-   auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
-   coord split = mid->pnt[dim];
+   if( n <= serial_build_cutoff ) { //* seial run nth element
+      std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+                        pointLess( dim ) );
+      ln = n / 2, rn = n - n / 2;
+      split = In[n / 2].pnt[dim];
+   } else { //* parallel partiton
+      auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
+      split = mid->pnt[dim];
+      int ln = parlay::filter_into(
+          In, Out, [&]( point i ) { return i.pnt[dim] < split; } );
+      int rn = parlay::filter_into( In, Out.cut( ln, n ), [&]( point i ) {
+         return i.pnt[dim] >= split;
+      } );
+      assert( ln + rn == n );
+   }
 
-   int ln = parlay::filter_into(
-       In, Out, [&]( point i ) { return i.pnt[dim] < split; } );
-   int rn = parlay::filter_into(
-       In, Out.cut( ln, n ), [&]( point i ) { return i.pnt[dim] >= split; } );
-
-   assert( ln + rn == n );
-   // parlay::copy( Out, In );
-
-   // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-   //                   pointLess( dim ) );
+   std::swap( In, Out );
 
    dim = ( dim + 1 ) % DIM;
    node *L, *R;
-   parlay::par_do(
-       [&]() { L = build( Out.cut( 0, ln ), In.cut( 0, ln ), dim, DIM ); },
-       [&]() { R = build( Out.cut( ln, n ), In.cut( ln, n ), dim, DIM ); } );
-   // L = build(P.cut(0, n / 2), dim, DIM);
-   // R = build(P.cut(n / 2, n), dim, DIM);
+   parlay::par_do_if(
+       n >= serial_build_cutoff,
+       [&]() { L = build( In.cut( 0, ln ), Out.cut( 0, ln ), dim, DIM ); },
+       [&]() { R = build( In.cut( ln, n ), Out.cut( ln, n ), dim, DIM ); } );
    return interior_allocator.allocate( L, R, split );
 }
 

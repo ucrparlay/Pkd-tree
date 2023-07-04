@@ -4,6 +4,54 @@
 using Typename = long long;
 
 void
+testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
+   parlay::internal::timer timer;
+
+   KDtree<Typename> KD;
+   Point<Typename>* kdPoint;
+   kdPoint = new Point<Typename>[N];
+   parlay::parallel_for( 0, N, [&]( size_t i ) {
+      for( int j = 0; j < Dim; j++ ) {
+         kdPoint[i].x[j] = wp[i].pnt[j];
+      }
+   } );
+
+   timer.start();
+   KDnode<Typename>* KDroot = KD.init( Dim, 16, kdPoint, N );
+   timer.stop();
+
+   //? parallel allocate
+   // kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   // for( int i = 0; i < N; i++ ) {
+   //    bq[i].resize( K );
+   // }
+
+   std::cout << timer.total_time() << " ";
+
+   //* start test
+   // parlay::random_shuffle( wp.cut( 0, N ) );
+   // Typename* kdknn = new Typename[N];
+
+   timer.reset();
+   timer.start();
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    KD.k_nearest( KDroot, &wp[i], 0, bq[i] );
+   //    kdknn[i] = bq[i].top();
+   // } );
+
+   timer.stop();
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
+             << std::endl;
+
+   //* delete
+   KD.destory( KDroot );
+   points().swap( wp );
+   delete[] kdPoint;
+
+   return;
+}
+
+void
 testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
    points wo( wp.size() );
@@ -74,7 +122,12 @@ main( int argc, char* argv[] ) {
       long n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
-      wp.resize( N );
+      try {
+         wp.resize( N );
+      } catch( ... ) {
+         LOG << "catch exception" << ENDL;
+         return 0;
+      }
       // generate n random points in a cube
       parlay::parallel_for(
           0, n,
@@ -89,14 +142,18 @@ main( int argc, char* argv[] ) {
       std::cout << name << " ";
    }
 
-   if( argc >= 4 )
-      K = std::stoi( argv[3] );
-   if( argc >= 5 )
-      LEAVE_WRAP = std::stoi( argv[4] );
-
+   // if( argc >= 4 )
+   //    K = std::stoi( argv[3] );
+   // if( argc >= 5 )
+   //    LEAVE_WRAP = std::stoi( argv[4] );
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
-   testParallelKDtree( Dim, LEAVE_WRAP, wp, N, K );
+   if( argc >= 4 ) {
+      if( std::stoi( argv[3] ) == 1 )
+         testParallelKDtree( Dim, LEAVE_WRAP, wp, N, K );
+      else if( std::stoi( argv[3] ) == 0 )
+         testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+   }
 
    return 0;
 }

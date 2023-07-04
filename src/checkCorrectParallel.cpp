@@ -74,7 +74,7 @@ main( int argc, char* argv[] ) {
       N = n;
       Dim = std::stoi( argv[2] );
       wp.resize( N );
-      // generate n random points in a cube
+      //* generate n random points in a cube
       parlay::parallel_for( 0, n, [&]( long i ) {
          auto r = gen[i];
          for( int j = 0; j < Dim; j++ ) {
@@ -114,7 +114,6 @@ main( int argc, char* argv[] ) {
    // LOG << "begin query" << ENDL;
 
    parlay::random_shuffle( wp.cut( 0, N ) );
-   // std::random_shuffle( wp.begin(), wp.begin() + N );
 
    Typename* cgknn = new Typename[N];
    Typename* kdknn = new Typename[N];
@@ -138,28 +137,6 @@ main( int argc, char* argv[] ) {
    for( int i = 0; i < N; i++ ) {
       bq[i].resize( K );
    }
-   // kBoundedQueue<Typename> bq;
-
-   // for( int i = 0; i < N; i++ ) {
-   //    if( wp[i].pnt[0] == 946632427 ) {
-   //       LOG << i << " " << wp[i].pnt[0] << ENDL;
-   //    }
-   //    bq.resize( K );
-   //    k_nearest( KDParallelRoot, wp[i], 0, Dim, bq );
-   //    // KD.k_nearest( KDroot, &kdPoint[i], 0, bq[i] );
-   //    // if( wp[i].pnt[0] == 946632427 ) {
-   //    //    std::sort( bq.m_data.begin(), bq.m_data.end() );
-   //    //    for( auto i : bq.m_data ) {
-   //    //       LOG << i << " ";
-   //    //    }
-   //    // }
-   //    kdknn[i] = bq.top();
-
-   //    if( wp[i].pnt[0] == 946632427 ) {
-   //       LOG << "end " << ENDL;
-   //       LOG << kdknn[i] << ENDL;
-   //    }
-   // }
 
    parlay::parallel_for( 0, N, [&]( size_t i ) {
       k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
@@ -174,17 +151,7 @@ main( int argc, char* argv[] ) {
          exit( 1 );
       }
    } );
-   // puts( ">>>>>>>>>verify" );
-   // for( int i = 0; i < N; i++ )
-   // {
-   //    LOG << cgknn[i] << " ";
-   // }
-   // puts( "" );
-   // for( int j = 0; j < N; j++ )
-   // {
-   //    LOG << kdknn[j] << " ";
-   // }
-   // puts( "" );
+
    puts( "ok" );
    return 0;
 }

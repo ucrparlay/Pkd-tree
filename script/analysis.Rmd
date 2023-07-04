@@ -26,13 +26,13 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 ```{R}
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
-kd <- read.csv("script/my_kd.csv", header = TRUE)
-cgal <- read.csv("script/cgal.csv", header = TRUE)
+kd <- read.csv("script/data/my_kd.csv", header = TRUE)
+cgal <- read.csv("script/data/cgal.csv", header = TRUE)
 t <- cgal %>% bind_rows(kd,cgal)
 t
 ```
 
- 
+
 ```{R}
 # queryByDim <- t %>%
 #   group_by(solver, benchType, dims) %>%
@@ -66,7 +66,7 @@ gBuildDim <- ggplot(buildByDim, aes(x = dims, y = avg, color = solver, shape = s
   geom_line() +
   theme_gray() +
   labs(y = "Ave build time") +
-  ggtitle("vary node") + 
+  ggtitle("vary dimension") + 
   scale_x_continuous(name = "dims", breaks = seq(2, 26, by = 4), limits = c(2, 26))
 
 # gQueryDim <- ggplot(queryByDim, aes(x = dims, y = avg, color = solver, shape = solver)) +
@@ -81,7 +81,7 @@ gBuildNode <- ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape
   geom_line() +
   theme_gray() +
   labs(y = "Ave build time")+
-  ggtitle("vary dimension")
+  ggtitle("vary node")
 
 # gQueryNode <- ggplot(queryByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
 #   geom_point(size = 3) +
@@ -98,7 +98,8 @@ seq(2,6,by=2) [2,4,6]
 saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), ".jpg")
 saveid
 
-gBuildDim + gQueryDim + gBuildNode + gQueryNode
+gBuildDim + gBuildNode
+# gBuildDim + gQueryDim + gBuildNode + gQueryNode
 ggsave(saveid, width = 12, dpi = 1800)
 ```
 

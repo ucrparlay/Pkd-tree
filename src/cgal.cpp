@@ -109,10 +109,10 @@ main( int argc, char* argv[] ) {
       std::cout << name << " ";
    }
 
-   if( argc >= 4 )
-      K = std::stoi( argv[3] );
-   if( argc >= 5 )
-      LEAVE_WRAP = std::stoi( argv[4] );
+   // if( argc >= 4 )
+   //    K = std::stoi( argv[3] );
+   // if( argc >= 5 )
+   //    LEAVE_WRAP = std::stoi( argv[4] );
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
