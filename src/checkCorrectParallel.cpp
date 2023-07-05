@@ -60,7 +60,7 @@ main( int argc, char* argv[] ) {
       wp.resize( N );
       for( int i = 0; i < N; i++ ) {
          for( int j = 0; j < Dim; j++ ) {
-            scanf( "%lld", &wp[i].pnt[j] );
+            scanf( "%ld", &wp[i].pnt[j] );
          }
       }
    } else {
@@ -70,7 +70,7 @@ main( int argc, char* argv[] ) {
       coord box_size = 10000000;
       std::uniform_int_distribution<int> dis( 0, box_size );
       assert( argc >= 3 );
-      long n = std::stoi( argv[1] );
+      size_t n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
       wp.resize( N );
@@ -145,13 +145,13 @@ main( int argc, char* argv[] ) {
    } );
 
    //* verify
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
+   for( size_t i = 0; i < N; i++ ) {
       if( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
-         std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
          puts( "wrong" );
-         exit( 1 );
+         std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
+         return 0;
       }
-   } );
+   }
 
    puts( "ok" );
    return 0;

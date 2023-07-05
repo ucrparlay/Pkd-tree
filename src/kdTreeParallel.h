@@ -6,8 +6,8 @@
 #define ENDL std::endl
 
 constexpr int dims = 15; // works for any constant dimension
-using idx = int;         // index of point (int can handle up to 2^31 points)
-using coord = long long; // type of each coordinate
+using idx = size_t;      // index of point (int can handle up to 2^31 points)
+using coord = long;      // type of each coordinate
 using coords = std::array<coord, dims>; // a coord array with length dims
 struct point {
    idx id;
@@ -25,10 +25,10 @@ struct pointLess {
 using points = parlay::sequence<point>;
 
 //@param Const variables
-constexpr int LEAVEWRAP = 16;
-constexpr int PIVOT_NUM = 16;
-constexpr int SERIAL_BUILD_CUTOFF = 1000;
-constexpr int FOR_BLOCK_SIZE = 1024;
+constexpr size_t LEAVEWRAP = 16;
+constexpr size_t PIVOT_NUM = 16;
+constexpr size_t SERIAL_BUILD_CUTOFF = 1000;
+constexpr size_t FOR_BLOCK_SIZE = 1024;
 
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
@@ -93,20 +93,25 @@ struct interior : node {
    }
 };
 
+//@ Support Functions
 parlay::type_allocator<leaf>;
 parlay::type_allocator<interior>;
 
-template <typename T, typename slice>
-std::array<T, PIVOT_NUM>
-pick_pivot( slice A, size_t n, int dim );
+template <typename slice>
+std::array<coord, PIVOT_NUM>
+pick_pivots( slice A, size_t n, int dim );
 
 template <typename slice>
-node*
-build( slice In, slice Out, int dim, const int DIM );
-//*-------------------for query-----------------------
+coord
+pick_single_pivot( slice A, size_t n, int dim );
 
 coord
 ppDistanceSquared( const point& p, const point& q, int DIM );
+
+//@ Parallel KD tree cores
+template <typename slice>
+node*
+build( slice In, slice Out, int dim, const int DIM );
 
 void
 k_nearest( node* T, const point& q, int dim, const int DIM,

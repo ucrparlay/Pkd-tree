@@ -1,7 +1,7 @@
 #include "kdTree.h"
 #include "kdTreeParallel.h"
 
-using Typename = long long;
+using Typename = coord;
 
 void
 testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
@@ -95,7 +95,8 @@ int
 main( int argc, char* argv[] ) {
    assert( argc >= 2 );
 
-   int K = 100, LEAVE_WRAP = 16, N, Dim;
+   int K = 100, LEAVE_WRAP = 16, Dim;
+   long N;
    points wp;
    std::string name( argv[1] );
 
@@ -106,13 +107,13 @@ main( int argc, char* argv[] ) {
       auto f = freopen( argv[1], "r", stdin );
       assert( f != nullptr );
 
-      scanf( "%d %d", &N, &Dim );
+      scanf( "%ld %d", &N, &Dim );
       assert( N >= K );
       wp.resize( N );
 
       for( int i = 0; i < N; i++ ) {
          for( int j = 0; j < Dim; j++ ) {
-            scanf( "%lld", &wp[i].pnt[j] );
+            scanf( "%ld", &wp[i].pnt[j] );
          }
       }
    } else { //* construct data byself

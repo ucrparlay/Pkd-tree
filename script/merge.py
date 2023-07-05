@@ -39,17 +39,6 @@ def combine(P, csvWriter, solver, benchName, node, dim):
         else:
             csvWriter.writerow([solver, benchName, node, dim, l[0], l[1], l[2], l[3]])
 
-
-def check(P):
-    lines = open(P, "r").readlines()
-    for line in lines:
-        l = " ".join(line.split())
-        l = l.split(" ")
-        print(l[-1])
-        if l[-1] != "ok":
-            print("wrong", P)
-
-
 def csvSetup(solver):
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
     csvFilePointer.truncate()
@@ -81,20 +70,20 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
             )
             combine(P, csvWriter, solver, benchNode, node, dim)
 
-        # node = 100000000
-        # for dim in Dims:
-        #     P = (
-        #         path
-        #         + "/"
-        #         + benchDim
-        #         + "/"
-        #         + str(node)
-        #         + "_"
-        #         + str(dim)
-        #         + "/"
-        #         + resMap[solver]
-        #     )
-        #     combine(P, csvWriter, solver, benchDim, node, dim)
+        node = 100000000
+        for dim in Dims:
+            P = (
+                path
+                + "/"
+                + benchDim
+                + "/"
+                + str(node)
+                + "_"
+                + str(dim)
+                + "/"
+                + resMap[solver]
+            )
+            combine(P, csvWriter, solver, benchDim, node, dim)
 
 
 # * query time by wrap size
@@ -126,6 +115,16 @@ if len(sys.argv) > 2 and int(sys.argv[2]) == 1:
         combine(P, csvWriter, solver, benchNode, node, dim)
 
 # * check the correctness
+
+def check(P):
+    lines = open(P, "r").readlines()
+    for line in lines:
+        l = " ".join(line.split())
+        l = l.split(" ")
+        print(l[-1])
+        if l[-1] != "ok":
+            print("wrong", P)
+            
 if len(sys.argv) > 3 and int(sys.argv[3]) == 1:
     node = 100000
     for dim in Dims:
