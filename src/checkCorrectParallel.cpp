@@ -93,7 +93,7 @@ main( int argc, char* argv[] ) {
    Tree tree( _points.begin(), _points.end() );
 
    //* kd tree
-
+   //!---------------begin serial kd tree---------------------
    // KDtree<Typename> KD;
    // Point<Typename>* kdPoint;
    // kdPoint = new Point<Typename>[N];
@@ -103,10 +103,11 @@ main( int argc, char* argv[] ) {
    //    }
    // } );
    // KDnode<Typename>* KDroot = KD.init( Dim, 8, kdPoint, N );
+   //!----------------end serial kd tree-----------------------
+
    points wo( wp.size() );
    node* KDParallelRoot =
        build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
-
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;
 

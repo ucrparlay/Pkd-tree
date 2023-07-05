@@ -1,6 +1,5 @@
 #include "kdTree.h"
 #include "kdTreeParallel.h"
-#include "utility.h"
 
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/K_neighbor_search.h>

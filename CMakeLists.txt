@@ -49,18 +49,16 @@ set(source_files
 )
 
 # my kd
-add_library(kdTree INTERFACE)
-target_include_directories(kdTree INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(kdTree INTERFACE kdTreeParallel)
-
-add_executable(test ../src/test.cpp)
-target_link_libraries(test PUBLIC  kdTreeParallel)
+# add_library(kdTree INTERFACE)
+# target_include_directories(kdTree INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+# target_link_libraries(kdTree INTERFACE kdTreeParallel)
 
 add_library(kdTreeParallel ${source_files})
 target_link_libraries(kdTreeParallel PUBLIC parlay)
 
-add_executable(kdExe ../src/kdTreeParallel.cpp)
-target_link_libraries(kdExe PUBLIC kdTreeParallel)
+add_executable(test ../src/test.cpp)
+target_link_libraries(test PUBLIC  kdTreeParallel)
+
 
 add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)

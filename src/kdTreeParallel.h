@@ -24,11 +24,14 @@ struct pointLess {
 
 using points = parlay::sequence<point>;
 
-//! max leaf size of tree
-constexpr int leave_wrap = 16;
-constexpr int serial_build_cutoff = 1000;
+//@param Const variables
+constexpr int LEAVEWRAP = 16;
+constexpr int PIVOT_NUM = 16;
+constexpr int SERIAL_BUILD_CUTOFF = 1000;
+constexpr int FOR_BLOCK_SIZE = 1024;
+
 // **************************************************************
-// bounding box (min value on each dimension, and max on each)
+//! bounding box (min value on each dimension, and max on each)
 // **************************************************************
 using box = std::pair<coords, coords>;
 
@@ -51,25 +54,13 @@ auto maxv = []( coords a, coords b ) {
 };
 
 coords
-center( box& b ) {
-   coords r;
-   for( int i = 0; i < dims; i++ )
-      r[i] = ( b.first[i] + b.second[i] ) / 2;
-   return r;
-}
+center( box& b );
 
 box
-bound_box( const parlay::sequence<point>& P ) {
-   auto pts = parlay::map( P, []( point p ) { return p.pnt; } );
-   auto x = box{ parlay::reduce( pts, parlay::binary_op( minv, coords() ) ),
-                 parlay::reduce( pts, parlay::binary_op( maxv, coords() ) ) };
-   return x;
-}
+bound_box( const parlay::sequence<point>& P );
 
 box
-bound_box( const box& b1, const box& b2 ) {
-   return box{ minv( b1.first, b2.first ), maxv( b1.second, b2.second ) };
-}
+bound_box( const box& b1, const box& b2 );
 
 // **************************************************************
 // Tree structure, leafs and interior extend the base node class
@@ -102,96 +93,24 @@ struct interior : node {
    }
 };
 
-parlay::type_allocator<leaf> leaf_allocator;
-parlay::type_allocator<interior> interior_allocator;
+parlay::type_allocator<leaf>;
+parlay::type_allocator<interior>;
 
-//? granularity control
+template <typename T, typename slice>
+std::array<T, PIVOT_NUM>
+pick_pivot( slice A, size_t n, int dim );
+
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int DIM ) {
-   int n = In.size(), ln, rn;
-   coord split;
-
-   if( n <= leave_wrap ) {
-      return leaf_allocator.allocate( parlay::to_sequence( In ) );
-   }
-
-   if( n <= serial_build_cutoff ) { //* seial run nth element
-      std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                        pointLess( dim ) );
-      ln = n / 2, rn = n - n / 2;
-      split = In[n / 2].pnt[dim];
-   } else { //* parallel partiton
-      auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
-      split = mid->pnt[dim];
-      int ln = parlay::filter_into(
-          In, Out, [&]( point i ) { return i.pnt[dim] < split; } );
-      int rn = parlay::filter_into( In, Out.cut( ln, n ), [&]( point i ) {
-         return i.pnt[dim] >= split;
-      } );
-      assert( ln + rn == n );
-   }
-
-   std::swap( In, Out );
-
-   dim = ( dim + 1 ) % DIM;
-   node *L, *R;
-   parlay::par_do_if(
-       n >= serial_build_cutoff,
-       [&]() { L = build( In.cut( 0, ln ), Out.cut( 0, ln ), dim, DIM ); },
-       [&]() { R = build( In.cut( ln, n ), Out.cut( ln, n ), dim, DIM ); } );
-   return interior_allocator.allocate( L, R, split );
-}
-
+build( slice In, slice Out, int dim, const int DIM );
 //*-------------------for query-----------------------
 
 coord
-ppDistanceSquared( const point& p, const point& q, int DIM ) {
-   coord r = 0, diff = 0;
-   for( int i = 0; i < DIM; i++ ) {
-      diff = p.pnt[i] - q.pnt[i];
-      r += diff * diff;
-   }
-   return r;
-}
+ppDistanceSquared( const point& p, const point& q, int DIM );
 
-//? parallel query
 void
 k_nearest( node* T, const point& q, int dim, const int DIM,
-           kBoundedQueue<coord>& bq ) {
-   coord d, dx, dx2;
-   if( T->is_leaf ) {
-      leaf* TL = static_cast<leaf*>( T );
-      for( int i = 0; i < TL->size; i++ ) {
-         d = ppDistanceSquared( q, TL->pts[i], DIM );
-         bq.insert( d );
-      }
-      return;
-   }
-
-   interior* TI = static_cast<interior*>( T );
-   dx = TI->split - q.pnt[dim];
-   dx2 = dx * dx;
-
-   if( ++dim >= DIM )
-      dim = 0;
-
-   k_nearest( dx > 0 ? TI->left : TI->right, q, dim, DIM, bq );
-   if( dx2 > bq.top() && bq.full() ) {
-      return;
-   }
-   k_nearest( dx > 0 ? TI->right : TI->left, q, dim, DIM, bq );
-}
+           kBoundedQueue<coord>& bq );
 
 void
-delete_tree( node* T ) { // delete tree in parallel
-   if( T->is_leaf )
-      leaf_allocator.retire( static_cast<leaf*>( T ) );
-   else {
-      interior* TI = static_cast<interior*>( T );
-      parlay::par_do_if(
-          T->size > 1000, [&] { delete_tree( TI->left ); },
-          [&] { delete_tree( TI->right ); } );
-      interior_allocator.retire( TI );
-   }
-}
+delete_tree( node* T );
