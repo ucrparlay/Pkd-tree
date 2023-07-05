@@ -91,6 +91,7 @@ build( slice In, slice Out, int dim, const int DIM ) {
    if( n <= SERIAL_BUILD_CUTOFF ) { //* serial run nth element
       std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                         pointLess( dim ) );
+      // std::sort( In.begin(), In.end(), pointLess( dim ) );
       cut = n / 2;
       split = In[n / 2].pnt[dim];
       std::swap( In, Out );
@@ -103,16 +104,16 @@ build( slice In, slice Out, int dim, const int DIM ) {
       auto [sum, offset] =
           parlay::scan( std::move( parlay::to_sequence( flag ).cut( 0, n ) ) );
       cut = offset;
-      parlay::blocked_for( 0, n, FOR_BLOCK_SIZE,
-                           [&]( size_t i, size_t s, size_t t ) {
-                              for( size_t j = s; j < t; j++ ) {
-                                 if( flag[j] ) {
-                                    Out[sum[j]] = In[j];
-                                 } else {
-                                    Out[offset + j - sum[j]] = In[j];
-                                 }
-                              }
-                           } );
+      parlay::parallel_for(
+          0, n,
+          [&]( size_t j ) {
+             if( flag[j] ) {
+                Out[sum[j]] = In[j];
+             } else {
+                Out[offset + j - sum[j]] = In[j];
+             }
+          },
+          FOR_BLOCK_SIZE );
    }
 
    assert( cut != -1 );
@@ -155,7 +156,7 @@ k_nearest( node* T, const point& q, int dim, const int DIM,
 }
 
 void
-delete_tree( node* T ) { // delete tree in parallel
+delete_tree( node* T ) { //* delete tree in parallel
    if( T->is_leaf )
       leaf_allocator.retire( static_cast<leaf*>( T ) );
    else {

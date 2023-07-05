@@ -24,10 +24,10 @@ struct pointLess {
 
 using points = parlay::sequence<point>;
 
-//@param Const variables
+//@ Const variables
 constexpr size_t LEAVEWRAP = 16;
-constexpr size_t PIVOT_NUM = 16;
-constexpr size_t SERIAL_BUILD_CUTOFF = 1000;
+constexpr size_t PIVOT_NUM = 32;
+constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 20;
 constexpr size_t FOR_BLOCK_SIZE = 1024;
 
 // **************************************************************

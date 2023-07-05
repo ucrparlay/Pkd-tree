@@ -67,15 +67,26 @@ target_link_libraries(data_generator PUBLIC kdTreeParallel)
 add_executable(zdtree ../src_x/zdtree/knn.cpp)
 target_link_libraries(zdtree PUBLIC parlay)
 
+add_executable(cgal "../src/cgal.cpp")
 #CGAL 
 find_package( CGAL )
-if ( NOT CGAL_FOUND )
-  message(STATUS "This project requires the CGAL library, and will not be compiled.")
-  return()  
+if(CGAL_FOUND)
+  target_link_libraries(cgal CGAL::CGAL)
 endif()
 
-add_executable(cgal "../src/cgal.cpp")
-target_link_libraries(cgal CGAL::CGAL)
+#TBB
+find_package( TBB REQUIRED )
+if(TBB_FOUND AND NOT TARGET CGAL::TBB_support)
+  if(NOT TARGET Threads::Threads)
+    find_package(Threads REQUIRED)
+  endif()
+  add_library(CGAL::TBB_support INTERFACE IMPORTED)
+  set_target_properties(CGAL::TBB_support PROPERTIES
+    INTERFACE_COMPILE_DEFINITIONS "CGAL_LINKED_WITH_TBB;NOMINMAX"
+    INTERFACE_INCLUDE_DIRECTORIES "${TBB_INCLUDE_DIRS}"
+    INTERFACE_LINK_LIBRARIES "TBB::tbb;TBB::tbbmalloc;Threads::Threads")
+endif()
+
 # target_compile_options(cgal_knn PRIVATE -w)
 
 add_executable(checkCorrect ../src/checkCorrect.cpp)

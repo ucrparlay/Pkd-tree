@@ -9,12 +9,19 @@
 #include <CGAL/Timer.h>
 #include <CGAL/point_generators_d.h>
 
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+
 using Typename = coord;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
-typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits> Neighbor_search;
+typedef CGAL::Median_of_rectangle<TreeTraits> Median_of_rectangle;
+typedef CGAL::Euclidean_distance<TreeTraits> Distance;
+typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
+                                           Median_of_rectangle>
+    Neighbor_search;
 typedef Neighbor_search::Tree Tree;
 
 void
@@ -30,7 +37,10 @@ testCGAL( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    }
 
    timer.start();
-   Tree tree( _points.begin(), _points.end() );
+   Median_of_rectangle median;
+   Tree tree( _points.begin(), _points.end(), median );
+   tree.build();
+   LOG << tree.is_built() << ENDL;
    timer.stop();
 
    std::cout << timer.total_time() << " ";
@@ -74,6 +84,8 @@ main( int argc, char* argv[] ) {
       name = name.substr( name.rfind( "/" ) + 1 );
       std::cout << name << " ";
       auto f = freopen( argv[1], "r", stdin );
+      if( argc >= 3 )
+         K = std::stoi( argv[2] );
       assert( f != nullptr );
 
       scanf( "%ld %d", &N, &Dim );
