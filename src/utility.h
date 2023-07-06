@@ -199,7 +199,9 @@ class kBoundedQueue {
    kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
 
    kBoundedQueue( int size, const Compare& comp = Compare() )
-       : m_count( 0 ), m_data( size ), m_comp( comp ) {}
+       : m_count( 0 ), m_data( size ), m_comp( comp ) {
+      this->resize( size );
+   }
 
    /** Sets the max number of elements in the queue */
    void

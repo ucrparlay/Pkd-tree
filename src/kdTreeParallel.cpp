@@ -99,21 +99,21 @@ build( slice In, slice Out, int dim, const int DIM ) {
       // auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
       // split = mid->pnt[dim]
       split = pick_single_pivot( In, n, dim );
+      // auto sum = parlay::tabulate(
+      //     n, [&]( size_t i ) -> size_t { return In[i].pnt[dim] < split; } );
+      // auto offset = parlay::scan_inplace( sum );
       auto flag = parlay::delayed_map(
           In, [&]( point i ) -> size_t { return i.pnt[dim] < split; } );
       auto [sum, offset] =
-          parlay::scan( std::move( parlay::to_sequence( flag ).cut( 0, n ) ) );
+          parlay::scan( parlay::make_slice( flag.begin(), flag.end() ) );
       cut = offset;
-      parlay::parallel_for(
-          0, n,
-          [&]( size_t j ) {
-             if( flag[j] ) {
-                Out[sum[j]] = In[j];
-             } else {
-                Out[offset + j - sum[j]] = In[j];
-             }
-          },
-          FOR_BLOCK_SIZE );
+      parlay::parallel_for( 0, n, [&]( size_t j ) {
+         if( flag[j] ) {
+            Out[sum[j]] = In[j];
+         } else {
+            Out[offset + j - sum[j]] = In[j];
+         }
+      } );
    }
 
    assert( cut != -1 );

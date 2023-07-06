@@ -42,7 +42,7 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    tree.build();
    timer.stop();
 
-   std::cout << timer.total_time() << " ";
+   std::cout << timer.total_time() << " " << std::flush;
 
    //* start test
    parlay::random_shuffle( wp.cut( 0, N ) );
@@ -90,7 +90,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    tree.build<CGAL::Parallel_tag>();
    timer.stop();
 
-   std::cout << timer.total_time() << " ";
+   std::cout << timer.total_time() << " " << std::flush;
 
    //* start test
    parlay::random_shuffle( wp.cut( 0, N ) );

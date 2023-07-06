@@ -36,13 +36,13 @@ for solver in ${Solvers[@]}; do
             : >${dest}
             echo ">>>${dest}"
 
-            for ((i = 1; i <= 3; i++)); do
+            for ((i = 1; i <= 2; i++)); do
                 nodeVar=$((${node} + ${i}))
                 timeout ${T} ../build/${solver} ${nodeVar} ${dim} ${tag} >>${dest}
 
                 retval=$?
                 if [ ${retval} -eq 124 ]; then
-                    echo -e "${node}_${dim}.in -1 -1 -1 -1" >>${dest}
+                    echo -e "${node}_${dim}.in 1200 -1 -1 -1" >>${dest}
                     echo "timeout ${node}_${dim}"
                 else
                     echo "finish ${nodeVar}_${dim}"
