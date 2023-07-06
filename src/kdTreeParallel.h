@@ -5,12 +5,11 @@
 #define LOG std::cout
 #define ENDL std::endl
 
-constexpr int dims = 15; // works for any constant dimension
+constexpr int dims = 10; // works for any constant dimension
 using idx = size_t;      // index of point (int can handle up to 2^31 points)
 using coord = long;      // type of each coordinate
 using coords = std::array<coord, dims>; // a coord array with length dims
 struct point {
-   idx id;
    coords pnt;
 };
 struct pointLess {

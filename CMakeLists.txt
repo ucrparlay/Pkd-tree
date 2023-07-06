@@ -67,16 +67,13 @@ target_link_libraries(data_generator PUBLIC kdTreeParallel)
 add_executable(zdtree ../src_x/zdtree/knn.cpp)
 target_link_libraries(zdtree PUBLIC parlay)
 
-add_executable(cgal "../src/cgal.cpp")
 #CGAL 
-find_package( CGAL )
-if(CGAL_FOUND)
-  target_link_libraries(cgal CGAL::CGAL)
-endif()
-
+find_package( CGAL REQUIRED)
 #TBB
-find_package( TBB REQUIRED )
+find_package(TBB)
+#copied from CGAL default cmake
 if(TBB_FOUND AND NOT TARGET CGAL::TBB_support)
+  message("here")
   if(NOT TARGET Threads::Threads)
     find_package(Threads REQUIRED)
   endif()
@@ -87,13 +84,17 @@ if(TBB_FOUND AND NOT TARGET CGAL::TBB_support)
     INTERFACE_LINK_LIBRARIES "TBB::tbb;TBB::tbbmalloc;Threads::Threads")
 endif()
 
-# target_compile_options(cgal_knn PRIVATE -w)
+list(APPEND CGAL_3RD_PARTY_LIBRARIES ${TBB_LIBRARIES})
+
+# executables
+add_executable(cgal "../src/cgal.cpp")
+target_link_libraries(cgal PUBLIC CGAL::CGAL CGAL::TBB_support)
 
 add_executable(checkCorrect ../src/checkCorrect.cpp)
-target_link_libraries(checkCorrect PUBLIC  kdTreeParallel CGAL::CGAL)
+target_link_libraries(checkCorrect PUBLIC  kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 
 add_executable(checkCorrectParallel ../src/checkCorrectParallel.cpp)
-target_link_libraries(checkCorrectParallel PUBLIC  kdTreeParallel CGAL::CGAL)
+target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 
 
 FIND_PROGRAM(CLANG_FORMAT "clang-format")

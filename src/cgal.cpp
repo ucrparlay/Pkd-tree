@@ -25,7 +25,7 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
 typedef Neighbor_search::Tree Tree;
 
 void
-testCGAL( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
+testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
 
    //* cgal
@@ -40,32 +40,87 @@ testCGAL( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    Median_of_rectangle median;
    Tree tree( _points.begin(), _points.end(), median );
    tree.build();
-   LOG << tree.is_built() << ENDL;
    timer.stop();
 
    std::cout << timer.total_time() << " ";
 
    //* start test
-   // parlay::random_shuffle( wp.cut( 0, N ) );
-   // Typename* cgknn = new Typename[N];
+   parlay::random_shuffle( wp.cut( 0, N ) );
+   Typename* cgknn = new Typename[N];
 
    timer.reset();
    timer.start();
-   // for( int i = 0; i < N; i++ ) {
-   //    Point_d query( Dim, std::begin( wp[i].pnt ),
-   //                   std::begin( wp[i].pnt ) + Dim );
-   //    Neighbor_search search( tree, query, K );
-   //    Neighbor_search::iterator it = search.end();
-   //    it--;
-   //    // std::cout << i << " " << it->second << std::endl;
-   //    cgknn[i] = it->second;
-   // }
+   for( int i = 0; i < N; i++ ) {
+      Point_d query( Dim, std::begin( wp[i].pnt ),
+                     std::begin( wp[i].pnt ) + Dim );
+      Neighbor_search search( tree, query, K );
+      Neighbor_search::iterator it = search.end();
+      it--;
+      // std::cout << i << " " << it->second << std::endl;
+      cgknn[i] = it->second;
+   }
 
    timer.stop();
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
 
+   std::list<Point_d>().swap( _points );
    points().swap( wp );
+   tree.clear();
+   delete[] cgknn;
+
+   return;
+}
+
+void
+testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
+   parlay::internal::timer timer;
+
+   //* cgal
+   std::list<Point_d> _points;
+   for( long i = 0; i < N; i++ ) {
+      //   printf( "%.3Lf\n", *( std::begin( wp[i].x ) + _Dim - 1 ) );
+      _points.push_back( Point_d( Dim, std::begin( wp[i].pnt ),
+                                  ( std::begin( wp[i].pnt ) + Dim ) ) );
+   }
+
+   timer.start();
+   Median_of_rectangle median;
+   Tree tree( _points.begin(), _points.end(), median );
+   tree.build<CGAL::Parallel_tag>();
+   timer.stop();
+
+   std::cout << timer.total_time() << " ";
+
+   //* start test
+   parlay::random_shuffle( wp.cut( 0, N ) );
+   Typename* cgknn = new Typename[N];
+
+   timer.reset();
+   timer.start();
+
+   tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
+                      [&]( const tbb::blocked_range<std::size_t>& r ) {
+                         for( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                            // Neighbor search can be instantiated from
+                            // several threads at the same time
+                            Point_d query( Dim, std::begin( wp[s].pnt ),
+                                           std::begin( wp[s].pnt ) + Dim );
+                            Neighbor_search search( tree, query, K );
+                            Neighbor_search::iterator it = search.end();
+                            it--;
+                            cgknn[s] = it->second;
+                         }
+                      } );
+
+   timer.stop();
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
+             << std::endl;
+
+   std::list<Point_d>().swap( _points );
+   points().swap( wp );
+   tree.clear();
+   delete[] cgknn;
 
    return;
 }
@@ -125,8 +180,12 @@ main( int argc, char* argv[] ) {
    //    LEAVE_WRAP = std::stoi( argv[4] );
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
-
-   testCGAL( Dim, LEAVE_WRAP, wp, N, K );
+   if( argc >= 4 ) {
+      if( std::stoi( argv[3] ) == 1 )
+         testCGALParallel( Dim, LEAVE_WRAP, wp, N, K );
+      else if( std::stoi( argv[3] ) == 0 )
+         testCGALSerial( Dim, LEAVE_WRAP, wp, N, K );
+   }
 
    return 0;
 }

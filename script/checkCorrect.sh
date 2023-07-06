@@ -60,4 +60,5 @@ for node in ${Nodes[@]}; do
     done
 done
 
+echo "Well done :)"
 echo "OK, Well done :)" >>"log.in"
