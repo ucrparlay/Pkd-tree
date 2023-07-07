@@ -62,7 +62,7 @@ main( int argc, char* argv[] ) {
       freopen( argv[1], "r", stdin );
       K = std::stoi( argv[2] );
 
-      scanf( "%ld %d", &N, &Dim );
+      scanf( "%ld%d", &N, &Dim );
       wp.resize( N );
       for( int i = 0; i < N; i++ ) {
          for( int j = 0; j < Dim; j++ ) {

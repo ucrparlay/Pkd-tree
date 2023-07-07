@@ -64,16 +64,15 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::random_shuffle( wp.cut( 0, N ) );
    Typename* kdknn = new Typename[N];
 
+   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   for( int i = 0; i < N; i++ ) {
+      bq[i].resize( K );
+   }
    timer.reset();
    timer.start();
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   // for( int i = 0; i < N; i++ ) {
-   //    bq[i].resize( K );
-   // }
-   parlay::type_allocator<kBoundedQueue<Typename>> alloc_queue;
 
    parlay::parallel_for( 0, N, [&]( size_t i ) {
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, *alloc_queue.allocate( K ) );
+      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
       kdknn[i] = bq[i].top();
    } );
 
@@ -106,7 +105,7 @@ main( int argc, char* argv[] ) {
       auto f = freopen( argv[1], "r", stdin );
       assert( f != nullptr );
 
-      scanf( "%ld %d", &N, &Dim );
+      scanf( "%ld%d", &N, &Dim );
       assert( N >= K );
       wp.resize( N );
 

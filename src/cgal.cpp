@@ -17,13 +17,24 @@ using Typename = coord;
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
-typedef CGAL::Median_of_rectangle<TreeTraits> Median_of_rectangle;
 typedef CGAL::Euclidean_distance<TreeTraits> Distance;
+
+//@ median tree
+typedef CGAL::Median_of_rectangle<TreeTraits> Median_of_rectangle;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
                                            Median_of_rectangle>
-    Neighbor_search;
-typedef Neighbor_search::Tree Tree;
+    Neighbor_search_Median;
+typedef Neighbor_search_Median::Tree Tree_Median;
 
+//@ midpoint tree
+typedef CGAL::Midpoint_of_rectangle<TreeTraits> Midpoint_of_rectangle;
+typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
+                                           Midpoint_of_rectangle>
+    Neighbor_search_Midpoint;
+typedef Neighbor_search_Midpoint::Tree Tree_Midpoint;
+
+//@ begin function
+template <typename Splitter, typename Tree, typename Neighbor_search>
 void
 testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
@@ -37,8 +48,8 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    }
 
    timer.start();
-   Median_of_rectangle median;
-   Tree tree( _points.begin(), _points.end(), median );
+   Splitter split;
+   Tree tree( _points.begin(), _points.end(), split );
    tree.build();
    timer.stop();
 
@@ -54,7 +65,7 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
       Point_d query( Dim, std::begin( wp[i].pnt ),
                      std::begin( wp[i].pnt ) + Dim );
       Neighbor_search search( tree, query, K );
-      Neighbor_search::iterator it = search.end();
+      auto it = search.end();
       it--;
       // std::cout << i << " " << it->second << std::endl;
       cgknn[i] = it->second;
@@ -72,6 +83,7 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    return;
 }
 
+template <typename Splitter, typename Tree, typename Neighbor_search>
 void
 testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
@@ -85,9 +97,9 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    }
 
    timer.start();
-   Median_of_rectangle median;
-   Tree tree( _points.begin(), _points.end(), median );
-   tree.build<CGAL::Parallel_tag>();
+   Splitter split;
+   Tree tree( _points.begin(), _points.end(), split );
+   tree.template build<CGAL::Parallel_tag>();
    timer.stop();
 
    std::cout << timer.total_time() << " " << std::flush;
@@ -107,7 +119,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
                             Point_d query( Dim, std::begin( wp[s].pnt ),
                                            std::begin( wp[s].pnt ) + Dim );
                             Neighbor_search search( tree, query, K );
-                            Neighbor_search::iterator it = search.end();
+                            auto it = search.end();
                             it--;
                             cgknn[s] = it->second;
                          }
@@ -182,9 +194,11 @@ main( int argc, char* argv[] ) {
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
    if( argc >= 4 ) {
       if( std::stoi( argv[3] ) == 1 )
-         testCGALParallel( Dim, LEAVE_WRAP, wp, N, K );
+         testCGALParallel<Median_of_rectangle, Tree_Median,
+                          Neighbor_search_Median>( Dim, LEAVE_WRAP, wp, N, K );
       else if( std::stoi( argv[3] ) == 0 )
-         testCGALSerial( Dim, LEAVE_WRAP, wp, N, K );
+         testCGALSerial<Median_of_rectangle, Tree_Median,
+                        Neighbor_search_Median>( Dim, LEAVE_WRAP, wp, N, K );
    }
 
    return 0;

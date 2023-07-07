@@ -200,7 +200,7 @@ class kBoundedQueue {
 
    kBoundedQueue( int size, const Compare& comp = Compare() )
        : m_count( 0 ), m_data( size ), m_comp( comp ) {
-      this->resize( size );
+      // a.allocate( size );
    }
 
    /** Sets the max number of elements in the queue */
@@ -260,6 +260,6 @@ class kBoundedQueue {
 
  public:
    unsigned int m_count;
-   std::vector<T> m_data;
+   parlay::sequence<T> m_data;
    Compare m_comp;
 };
