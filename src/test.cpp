@@ -75,7 +75,7 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    timer.start();
 
    parlay::parallel_for( 0, N, [&]( size_t i ) {
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
+      k_nearest( KDParallelRoot, wp[i], Dim, bq[i] );
       kdknn[i] = bq[i].top();
    } );
 
@@ -107,6 +107,7 @@ main( int argc, char* argv[] ) {
       name = name.substr( name.rfind( "/" ) + 1 );
       std::cout << name << " ";
       auto f = freopen( argv[1], "r", stdin );
+      K = std::stoi( argv[2] );
       assert( f != nullptr );
 
       scanf( "%ld%d", &N, &Dim );
@@ -145,14 +146,22 @@ main( int argc, char* argv[] ) {
       std::cout << name << " ";
    }
 
-   // auto flag =
-   //     parlay::delayed_map( wp, [&]( point i ) { return i.pnt[1] < 3; } );
-   // auto [s, len] = parlay::internal::split_two(
-   //     wp.cut( 0, N ), parlay::make_slice( flag.begin(), flag.end() ) );
-   // for( auto i : s ) {
-   //    LOG << i.pnt[0] << " " << i.pnt[1] << ENDL;
+   // points B( N );
+   // std::array<coord, PIVOT_NUM> pivots{ 2, 4 };
+   // auto sums = partition( wp.cut( 0, N ), B.cut( 0, N ), N, pivots, 1 );
+   // for( int i = 0; i < N; i++ ) {
+   //    LOG << B[i].pnt[0] << " " << B[i].pnt[1] << ENDL;
    // }
-   // LOG << len << ENDL;
+   // puts( "->>>" );
+   // for( int i = 0; i < PIVOT_NUM; i++ ) {
+   //    LOG << sums[i] << " ";
+   // }
+   // puts( "" );
+   // int tot = 0;
+   // for( int i = 0; i <= PIVOT_NUM / 2; i++ ) {
+   //    tot += sums[i];
+   // }
+   // LOG << tot << ENDL;
    // return 0;
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );

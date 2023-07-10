@@ -138,7 +138,7 @@ main( int argc, char* argv[] ) {
    // }
    parlay::parallel_for( 0, N, [&]( size_t i ) {
       bq[i].resize( K );
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
+      k_nearest( KDParallelRoot, wp[i], Dim, bq[i] );
       kdknn[i] = bq[i].top();
    } );
 

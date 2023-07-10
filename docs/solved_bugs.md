@@ -4,6 +4,7 @@ In memory of solved bugs.
 - `WA`: The self-made input number is too large, resulting the long long overflow.
 - `WA`: Partition use n/2 for median split, rather than actual number which is smaller than the split.
 - `RE`: Forget to update split value after parallel; use NEW same name variable within if.
+- `WA`: when build multiple layers of tree at once, the cutting dimension will remain unchanged within these levels.
 
 
 

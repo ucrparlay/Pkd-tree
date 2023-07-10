@@ -25,8 +25,9 @@ using points = parlay::sequence<point>;
 
 //@ Const variables
 constexpr size_t LEAVE_WRAP = 16;
-constexpr size_t PIVOT_NUM = 1;
-constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 20;
+constexpr size_t BUILD_DEPTH_ONCE = 4;
+constexpr size_t PIVOT_NUM = BUILD_DEPTH_ONCE >> 1 | 1;
+constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 10;
 constexpr size_t FOR_BLOCK_SIZE = 512;
 //@ block param in partition
 constexpr int log2_base = 12;
@@ -86,10 +87,11 @@ struct interior : node {
    node* left;
    node* right;
    coord split;
-   interior( node* _left, node* _right, coord _split )
+   int cut_dim;
+   interior( node* _left, node* _right, coord _split, int _cut_dim )
        : node{ false, _left->size + _right->size,
                bound_box( _left->bounds, _right->bounds ), nullptr },
-         left( _left ), right( _right ), split( _split ) {
+         left( _left ), right( _right ), split( _split ), cut_dim( _cut_dim ) {
       left->parent = this;
       right->parent = this;
    }
@@ -102,6 +104,11 @@ parlay::type_allocator<interior>;
 template <typename slice>
 std::array<coord, PIVOT_NUM>
 pick_pivots( slice A, const size_t& n, const int& dim );
+
+template <typename slice>
+std::array<int, PIVOT_NUM>
+partition( slice A, slice B, const size_t& n,
+           const std::array<coord, PIVOT_NUM>& pivots, const int& dim );
 
 template <typename slice>
 coord
@@ -118,8 +125,7 @@ build( slice In, slice Out, int dim, const int& DIM,
        std::array<int, PIVOT_NUM> sums );
 
 void
-k_nearest( node* T, const point& q, int dim, const int DIM,
-           kBoundedQueue<coord>& bq );
+k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq );
 
 void
 delete_tree( node* T );
