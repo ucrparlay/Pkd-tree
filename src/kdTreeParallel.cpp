@@ -167,52 +167,39 @@ build( slice In, slice Out, int dim, const int& DIM,
       split = pivots[pn / 2];
       lpn = pn / 2;
       rpn = pn - lpn - 1;
-      // LOG << "n is: " << n << ENDL;
 
       auto check = [&]() {
          bool flag = true;
          size_t tot = 0;
-         // LOG << "pn is: " << pn << ENDL;
          for( int i = 0; i <= pn / 2; i++ ) {
             tot += sums[i];
          }
-         // LOG << "tot " << tot << " lpn " << split << ENDL;
          parlay::parallel_for( 0, tot, [&]( size_t i ) {
             if( Out[i].pnt[cut_dim] >= split )
                __sync_bool_compare_and_swap( &flag, true, false );
          } );
-         // LOG << "flag is: " << flag << ENDL;
          parlay::parallel_for( tot, n, [&]( size_t i ) {
             if( Out[i].pnt[cut_dim] < split )
                __sync_bool_compare_and_swap( &flag, true, false );
          } );
-         // LOG << "flag is: " << flag << ENDL;
          return flag;
       };
-      assert( check() );
+      // assert( check() );
 
-      // LOG << "lpn rpn: " << lpn << " " << rpn << ENDL;
       for( int i = 0; i < lpn; i++ ) {
          cut += sums[i];
-
          lp[i] = pivots[i];
          lsum[i] = sums[i];
-         // LOG << "lp[i]: " << lp[i] << " lsums[i] " << lsum[i] << ENDL;
       }
       cut += sums[lpn];
-      // LOG << "cut " << cut << ENDL;
 
       for( int i = 0; i < rpn; i++ ) {
          rp[i] = pivots[lpn + i + 1];
          rsum[i] = sums[lpn + i + 1];
       }
-      // puts( "--------------------" );
    }
 
    node *L, *R;
-   // L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, lp, lpn, lsum );
-   // R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, rp, rpn, rsum );
-
    parlay::par_do_if(
        n > SERIAL_BUILD_CUTOFF,
        [&]() {
@@ -223,7 +210,6 @@ build( slice In, slice Out, int dim, const int& DIM,
           R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, rp, rpn,
                      rsum );
        } );
-
    return interior_allocator.allocate( L, R, split, cut_dim );
 }
 

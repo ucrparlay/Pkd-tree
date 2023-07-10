@@ -64,30 +64,30 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " " << std::flush;
 
    //* start test
-   parlay::random_shuffle( wp.cut( 0, N ) );
-   Typename* kdknn = new Typename[N];
+   // parlay::random_shuffle( wp.cut( 0, N ) );
+   // Typename* kdknn = new Typename[N];
 
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   for( int i = 0; i < N; i++ ) {
-      bq[i].resize( K );
-   }
-   timer.reset();
-   timer.start();
+   // kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   // for( int i = 0; i < N; i++ ) {
+   //    bq[i].resize( K );
+   // }
+   // timer.reset();
+   // timer.start();
 
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      k_nearest( KDParallelRoot, wp[i], Dim, bq[i] );
-      kdknn[i] = bq[i].top();
-   } );
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    k_nearest( KDParallelRoot, wp[i], Dim, bq[i] );
+   //    kdknn[i] = bq[i].top();
+   // } );
 
-   timer.stop();
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-             << std::endl;
+   // timer.stop();
+   // std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
+   //           << std::endl;
 
-   delete_tree( KDParallelRoot );
-   points().swap( wp );
-   points().swap( wo );
-   delete[] bq;
-   delete[] kdknn;
+   // delete_tree( KDParallelRoot );
+   // points().swap( wp );
+   // points().swap( wo );
+   // delete[] bq;
+   // delete[] kdknn;
 
    return;
 }
@@ -145,24 +145,6 @@ main( int argc, char* argv[] ) {
       name = std::to_string( n ) + "_" + std::to_string( Dim ) + ".in";
       std::cout << name << " ";
    }
-
-   // points B( N );
-   // std::array<coord, PIVOT_NUM> pivots{ 2, 4 };
-   // auto sums = partition( wp.cut( 0, N ), B.cut( 0, N ), N, pivots, 1 );
-   // for( int i = 0; i < N; i++ ) {
-   //    LOG << B[i].pnt[0] << " " << B[i].pnt[1] << ENDL;
-   // }
-   // puts( "->>>" );
-   // for( int i = 0; i < PIVOT_NUM; i++ ) {
-   //    LOG << sums[i] << " ";
-   // }
-   // puts( "" );
-   // int tot = 0;
-   // for( int i = 0; i <= PIVOT_NUM / 2; i++ ) {
-   //    tot += sums[i];
-   // }
-   // LOG << tot << ENDL;
-   // return 0;
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 

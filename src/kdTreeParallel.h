@@ -25,12 +25,14 @@ using points = parlay::sequence<point>;
 
 //@ Const variables
 constexpr size_t LEAVE_WRAP = 16;
-constexpr size_t BUILD_DEPTH_ONCE = 4;
-constexpr size_t PIVOT_NUM = BUILD_DEPTH_ONCE >> 1 | 1;
-constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 10;
-constexpr size_t FOR_BLOCK_SIZE = 512;
+constexpr size_t BUILD_DEPTH_ONCE = 10;
+constexpr size_t PIVOT_NUM = BUILD_DEPTH_ONCE;
+// constexpr size_t PIVOT_NUM =
+//     BUILD_DEPTH_ONCE % 2 == 1 ? BUILD_DEPTH_ONCE : BUILD_DEPTH_ONCE | 1;
+constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 14;
+constexpr size_t FOR_BLOCK_SIZE = 1 << 9;
 //@ block param in partition
-constexpr int log2_base = 12;
+constexpr int log2_base = 9;
 constexpr int BLOCK_SIZE = 1 << log2_base;
 
 // **************************************************************
