@@ -144,14 +144,18 @@ build( slice In, slice Out, int dim, const int& DIM,
    if( n <= LEAVE_WRAP ) {
       return leaf_allocator.allocate( parlay::to_sequence( In ) );
    }
+
    if( n <= SERIAL_BUILD_CUTOFF ) { //* serial run nth element
-      dim = ( dim + 1 ) % DIM;
-      cut_dim = dim;
-      std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                        pointLess( dim ) );
-      cut = n / 2;
-      split = In[n / 2].pnt[dim];
+      if( pn == 0 ) {
+         dim = ( dim + 1 ) % DIM;
+         cut_dim = dim;
+         std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+                           pointLess( dim ) );
+         cut = n / 2;
+         split = In[n / 2].pnt[dim];
+      }
       std::swap( In, Out );
+
    } else { //* parallel partitons
       if( pn == 0 ) {
          dim = ( dim + 1 ) % DIM;
@@ -164,27 +168,12 @@ build( slice In, slice Out, int dim, const int& DIM,
          std::swap( In, Out );
          cut_dim = dim;
       }
+   }
+
+   if( pn != 0 ) {
       split = pivots[pn / 2];
       lpn = pn / 2;
       rpn = pn - lpn - 1;
-
-      auto check = [&]() {
-         bool flag = true;
-         size_t tot = 0;
-         for( int i = 0; i <= pn / 2; i++ ) {
-            tot += sums[i];
-         }
-         parlay::parallel_for( 0, tot, [&]( size_t i ) {
-            if( Out[i].pnt[cut_dim] >= split )
-               __sync_bool_compare_and_swap( &flag, true, false );
-         } );
-         parlay::parallel_for( tot, n, [&]( size_t i ) {
-            if( Out[i].pnt[cut_dim] < split )
-               __sync_bool_compare_and_swap( &flag, true, false );
-         } );
-         return flag;
-      };
-      // assert( check() );
 
       for( int i = 0; i < lpn; i++ ) {
          cut += sums[i];

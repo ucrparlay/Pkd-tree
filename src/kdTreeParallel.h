@@ -25,7 +25,7 @@ using points = parlay::sequence<point>;
 
 //@ Const variables
 constexpr size_t LEAVE_WRAP = 16;
-constexpr size_t BUILD_DEPTH_ONCE = 10;
+constexpr size_t BUILD_DEPTH_ONCE = 16;
 constexpr size_t PIVOT_NUM = BUILD_DEPTH_ONCE;
 // constexpr size_t PIVOT_NUM =
 //     BUILD_DEPTH_ONCE % 2 == 1 ? BUILD_DEPTH_ONCE : BUILD_DEPTH_ONCE | 1;
