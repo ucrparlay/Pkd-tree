@@ -44,6 +44,7 @@ template <typename T>
 array<int, np>
 partition( T* A, T* B, size_t n, array<T, np>& pivots ) {
    size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
+   //@ offset[i][k]:= # elements smaller than the k-th pivots in block i
    auto offset = new array<int, np>[num_block] {};
    cilk_for( size_t i = 0; i < num_block; i++ ) {
       for( size_t j = i << log2_base; j < min( ( i + 1 ) << log2_base, n );
@@ -63,6 +64,9 @@ partition( T* A, T* B, size_t n, array<T, np>& pivots ) {
          }
       }
    }
+   //* calculate all elements that is smaller than a pivot i
+   //@ now offset is the cmulative # of elements smaller than k-th pivots in
+   //@ first i-th block
    array<int, np> sums{};
    for( size_t i = 0; i < num_block; i++ ) {
       auto t = offset[i];
@@ -112,14 +116,14 @@ quicksort_( T* A, T* B, size_t n ) {
    auto pivots = pick_pivot( A, n );
    auto sums = partition( A, B, n, pivots );
    int tot = sums[0];
-   cilk_spawn quicksort_( A, B, sums[0] );
+   cilk_spawn quicksort_( A, B, sums[0] ); //* first block
    for( int i = 1; i < np; i++ ) {
       if( pivots[i] != pivots[i - 1] ) {
          cilk_spawn quicksort_( A + tot, B + tot, sums[i] );
       }
       tot += sums[i];
    }
-   quicksort_( A + tot, B + tot, n - tot );
+   quicksort_( A + tot, B + tot, n - tot ); //* last block
    cilk_sync;
 }
 

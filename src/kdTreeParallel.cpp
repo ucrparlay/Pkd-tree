@@ -91,29 +91,26 @@ build( slice In, slice Out, int dim, const int DIM ) {
    if( n <= SERIAL_BUILD_CUTOFF ) { //* serial run nth element
       std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                         pointLess( dim ) );
-      // std::sort( In.begin(), In.end(), pointLess( dim ) );
       cut = n / 2;
       split = In[n / 2].pnt[dim];
       std::swap( In, Out );
    } else { //* parallel partiton
-      // auto mid = parlay::kth_smallest( In, n / 2, pointLess( dim ) );
-      // split = mid->pnt[dim]
       split = pick_single_pivot( In, n, dim );
-      // auto sum = parlay::tabulate(
-      //     n, [&]( size_t i ) -> size_t { return In[i].pnt[dim] < split; } );
-      // auto offset = parlay::scan_inplace( sum );
       auto flag = parlay::delayed_map(
           In, [&]( point i ) -> size_t { return i.pnt[dim] < split; } );
       auto [sum, offset] =
-          parlay::scan( parlay::make_slice( flag.begin(), flag.end() ) );
+          parlay::scan( std::move( parlay::to_sequence( flag ).cut( 0, n ) ) );
       cut = offset;
-      parlay::parallel_for( 0, n, [&]( size_t j ) {
-         if( flag[j] ) {
-            Out[sum[j]] = In[j];
-         } else {
-            Out[offset + j - sum[j]] = In[j];
-         }
-      } );
+      parlay::parallel_for(
+          0, n,
+          [&]( size_t j ) {
+             if( flag[j] ) {
+                Out[sum[j]] = In[j];
+             } else {
+                Out[offset + j - sum[j]] = In[j];
+             }
+          },
+          FOR_BLOCK_SIZE );
    }
 
    assert( cut != -1 );

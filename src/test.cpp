@@ -91,6 +91,7 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
 
 int
 main( int argc, char* argv[] ) {
+
    assert( argc >= 2 );
 
    int K = 100, LEAVE_WRAP = 16, Dim;
@@ -141,10 +142,16 @@ main( int argc, char* argv[] ) {
       std::cout << name << " ";
    }
 
-   // if( argc >= 4 )
-   //    K = std::stoi( argv[3] );
-   // if( argc >= 5 )
-   //    LEAVE_WRAP = std::stoi( argv[4] );
+   // auto flag =
+   //     parlay::delayed_map( wp, [&]( point i ) { return i.pnt[1] < 3; } );
+   // auto [s, len] = parlay::internal::split_two(
+   //     wp.cut( 0, N ), parlay::make_slice( flag.begin(), flag.end() ) );
+   // for( auto i : s ) {
+   //    LOG << i.pnt[0] << " " << i.pnt[1] << ENDL;
+   // }
+   // LOG << len << ENDL;
+   // return 0;
+
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
    if( argc >= 4 ) {

@@ -26,8 +26,8 @@ using points = parlay::sequence<point>;
 //@ Const variables
 constexpr size_t LEAVEWRAP = 16;
 constexpr size_t PIVOT_NUM = 32;
-constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 16;
-constexpr size_t FOR_BLOCK_SIZE = 1024;
+constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 20;
+constexpr size_t FOR_BLOCK_SIZE = 512;
 
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
