@@ -54,8 +54,11 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    points wo( wp.size() );
 
    timer.start();
-   node* KDParallelRoot =
-       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   std::array<coord, PIVOT_NUM> pivots;
+   std::array<int, PIVOT_NUM> sums;
+
+   node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
+                                 0, Dim, pivots, 0, sums );
    timer.stop();
 
    std::cout << timer.total_time() << " " << std::flush;

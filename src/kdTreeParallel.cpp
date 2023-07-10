@@ -37,16 +37,37 @@ ppDistanceSquared( const point& p, const point& q, int DIM ) {
 }
 
 template <typename slice>
-std::array<coord, PIVOT_NUM>
-pick_pivots( slice A, size_t n, int dim ) {
-   int size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
+coord
+pick_single_pivot( slice A, const size_t& n, const int& dim ) {
+   size_t size = PIVOT_NUM << 1 | 1;
    coord arr[size];
-   for( int i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample in A
+   for( size_t i = 0; i < size; i++ ) {
+      arr[i] = A[i * ( n / size )].pnt[dim];
    }
    std::sort( arr, arr + size );
    std::array<coord, PIVOT_NUM> pivots;
-   for( int i = 0; i < PIVOT_NUM; i++ ) {
+   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
+      pivots[i] = arr[i << 1 | 1];
+   }
+   if( arr[0] == arr[1] ) {
+      pivots[0] = pivots[1];
+   } else if( arr[3] == arr[4] ) {
+      pivots[1] = pivots[0];
+   }
+   return pivots[PIVOT_NUM >> 1];
+}
+
+template <typename slice>
+std::array<coord, PIVOT_NUM>
+pick_pivots( slice A, const size_t& n, const int& dim ) {
+   size_t size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
+   coord arr[size];
+   for( size_t i = 0; i < size; i++ ) {
+      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample cutting dimension in A
+   }
+   std::sort( arr, arr + size );
+   std::array<coord, PIVOT_NUM> pivots;
+   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
       pivots[i] = arr[i << 1 | 1]; //* pick PIVOT_NUM within cadidates
    }
    if( arr[0] == arr[1] ) {
@@ -58,34 +79,81 @@ pick_pivots( slice A, size_t n, int dim ) {
 }
 
 template <typename slice>
-coord
-pick_single_pivot( slice A, size_t n, int dim ) {
-   int size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
-   coord arr[size];
-   for( int i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample in A
+std::array<int, PIVOT_NUM>
+partition( slice A, slice B, const size_t& n,
+           const std::array<coord, PIVOT_NUM>& pivots, const int& dim ) {
+   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
+   auto offset = new std::array<int, PIVOT_NUM>[num_block] {};
+   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
+      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
+           j++ ) {
+         for( int k = 0; k < PIVOT_NUM; k++ ) {
+            if( k == 0 ) {
+               if( A[j].pnt[dim] < pivots[k] ) {
+                  offset[i][k]++;
+                  break;
+               }
+            } else {
+               if( A[j].pnt[dim] <= pivots[k] ) {
+                  offset[i][k]++;
+                  break;
+               }
+            }
+         }
+      }
+   } );
+
+   std::array<int, PIVOT_NUM> sums{};
+   for( size_t i = 0; i < num_block; i++ ) {
+      auto t = offset[i];
+      offset[i] = sums;
+      for( int j = 0; j < PIVOT_NUM; j++ ) {
+         sums[j] += t[j];
+      }
    }
-   std::sort( arr, arr + size );
-   std::array<coord, PIVOT_NUM> pivots;
-   for( int i = 0; i < PIVOT_NUM; i++ ) {
-      pivots[i] = arr[i << 1 | 1]; //* pick PIVOT_NUM within cadidates
-   }
-   if( arr[0] == arr[1] ) {
-      pivots[0] = pivots[1];
-   } else if( arr[3] == arr[4] ) {
-      pivots[1] = pivots[0];
-   }
-   return pivots[PIVOT_NUM >> 1];
+   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
+      std::array<int, PIVOT_NUM + 1> v;
+      int tot = 0, s_offset = 0;
+      for( int k = 0; k < PIVOT_NUM; k++ ) {
+         v[k] = tot + offset[i][k];
+         tot += sums[k];
+         s_offset += offset[i][k];
+      }
+      v[PIVOT_NUM] = tot + ( ( i << log2_base ) - s_offset );
+      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
+           j++ ) {
+         int k;
+         for( k = 0; k < PIVOT_NUM; k++ ) {
+            if( k == 0 ) {
+               if( A[j].pnt[dim] < pivots[k] ) {
+                  break;
+               }
+            } else {
+               if( A[j].pnt[dim] <= pivots[k] ) {
+                  break;
+               }
+            }
+         }
+         B[v[k]++] = A[j];
+      }
+   } );
+   delete offset;
+   return sums;
 }
 
 //@ Parallel KD tree cores
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int DIM ) {
-   size_t n = In.size(), cut = -1;
+build( slice In, slice Out, int dim, const int& DIM,
+       std::array<coord, PIVOT_NUM> pivots, int pn,
+       std::array<int, PIVOT_NUM> sums ) {
+   size_t n = In.size(), cut = 0;
    coord split;
+   int lpn = 0, rpn = 0;
+   std::array<coord, PIVOT_NUM> lp, rp;
+   std::array<int, PIVOT_NUM> lsum, rsum;
 
-   if( n <= LEAVEWRAP ) {
+   if( n <= LEAVE_WRAP ) {
       return leaf_allocator.allocate( parlay::to_sequence( In ) );
    }
    if( n <= SERIAL_BUILD_CUTOFF ) { //* serial run nth element
@@ -94,23 +162,51 @@ build( slice In, slice Out, int dim, const int DIM ) {
       cut = n / 2;
       split = In[n / 2].pnt[dim];
       std::swap( In, Out );
-   } else { //* parallel partiton
-      split = pick_single_pivot( In, n, dim );
-      auto flag = parlay::delayed_map(
-          In, [&]( point i ) -> size_t { return i.pnt[dim] < split; } );
-      auto [sum, offset] =
-          parlay::scan( std::move( parlay::to_sequence( flag ).cut( 0, n ) ) );
-      cut = offset;
-      parlay::parallel_for(
-          0, n,
-          [&]( size_t j ) {
-             if( flag[j] ) {
-                Out[sum[j]] = In[j];
-             } else {
-                Out[offset + j - sum[j]] = In[j];
-             }
-          },
-          FOR_BLOCK_SIZE );
+   } else { //* parallel partitons
+      size_t tot = 0;
+      assert( pn == 0 );
+      if( pn == 0 ) {
+         pivots = pick_pivots( In, n, dim ); // TODO: choose splits
+         pn = PIVOT_NUM;
+         sums = partition( In, Out, n, pivots, dim );
+         assert( In.size() != 0 && Out.size() != 0 );
+      } else {
+         std::swap( In, Out );
+      }
+      split = pivots[pn / 2];
+
+      auto check = [&]() {
+         bool flag = true;
+         for( int i = 0; i < sums[0]; i++ ) {
+            if( Out[i].pnt[dim] >= split )
+               flag = false;
+         }
+         return flag;
+      };
+      auto check1 = [&]() {
+         bool flag = true;
+         for( int i = sums[0]; i < n; i++ ) {
+            if( Out[i].pnt[dim] < split )
+               flag = false;
+         }
+         return flag;
+      };
+      assert( check1() && check() );
+
+      lpn = pn / 2;
+      rpn = pn - lpn - 1;
+      for( int i = 0; i <= lpn; i++ ) {
+         cut += sums[i];
+
+         if( i != lpn )
+            lp[i] = pivots[i];
+         lsum[i] = sums[i];
+      }
+      for( int i = 0; i < rpn; i++ ) {
+         rp[i] = pivots[lpn + i + 1];
+         rsum[i] = sums[lpn + i + 1];
+      }
+      assert( cut == sums[0] );
    }
 
    assert( cut != -1 );
@@ -118,8 +214,14 @@ build( slice In, slice Out, int dim, const int DIM ) {
    dim = ( dim + 1 ) % DIM;
    parlay::par_do_if(
        n > SERIAL_BUILD_CUTOFF,
-       [&]() { L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM ); },
-       [&]() { R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM ); } );
+       [&]() {
+          L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, lp, lpn,
+                     lsum );
+       },
+       [&]() {
+          R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, rp, rpn,
+                     rsum );
+       } );
 
    return interior_allocator.allocate( L, R, split );
 }
@@ -169,4 +271,6 @@ delete_tree( node* T ) { //* delete tree in parallel
 template node*
 build<parlay::slice<point*, point*>>( parlay::slice<point*, point*> In,
                                       parlay::slice<point*, point*> Out,
-                                      int dim, const int DIM );
+                                      int dim, const int& DIM,
+                                      std::array<coord, PIVOT_NUM> pivots,
+                                      int pn, std::array<int, PIVOT_NUM> sums );

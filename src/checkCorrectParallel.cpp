@@ -113,8 +113,12 @@ main( int argc, char* argv[] ) {
    //!----------------end serial kd tree-----------------------
 
    points wo( wp.size() );
-   node* KDParallelRoot =
-       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   std::array<coord, PIVOT_NUM> pivots;
+   std::array<int, PIVOT_NUM> sums;
+
+   node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
+                                 0, Dim, pivots, 0, sums );
+   LOG << "finish build" << ENDL << std::flush;
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;
 
@@ -125,8 +129,21 @@ main( int argc, char* argv[] ) {
    Typename* cgknn = new Typename[N];
    Typename* kdknn = new Typename[N];
    assert( N >= K );
+   //* kd query
+   //* bounded_queue
+   LOG << "begin kd query" << ENDL;
+   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   // for( int i = 0; i < N; i++ ) {
+   //    bq[i].resize( K );
+   // }
+   parlay::parallel_for( 0, N, [&]( size_t i ) {
+      bq[i].resize( K );
+      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
+      kdknn[i] = bq[i].top();
+   } );
 
    //* cgal query
+   LOG << "begin tbb  query" << ENDL << std::flush;
 
    tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
                       [&]( const tbb::blocked_range<std::size_t>& r ) {
@@ -141,19 +158,6 @@ main( int argc, char* argv[] ) {
                             cgknn[s] = it->second;
                          }
                       } );
-
-   //* kd query
-   //* bounded_queue
-   // LOG << "begin kd query" << ENDL;
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   // for( int i = 0; i < N; i++ ) {
-   //    bq[i].resize( K );
-   // }
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      bq[i].resize( K );
-      k_nearest( KDParallelRoot, wp[i], 0, Dim, bq[i] );
-      kdknn[i] = bq[i].top();
-   } );
 
    //* verify
    for( size_t i = 0; i < N; i++ ) {

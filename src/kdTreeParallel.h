@@ -24,10 +24,13 @@ struct pointLess {
 using points = parlay::sequence<point>;
 
 //@ Const variables
-constexpr size_t LEAVEWRAP = 16;
-constexpr size_t PIVOT_NUM = 32;
+constexpr size_t LEAVE_WRAP = 16;
+constexpr size_t PIVOT_NUM = 1;
 constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 20;
 constexpr size_t FOR_BLOCK_SIZE = 512;
+//@ block param in partition
+constexpr int log2_base = 12;
+constexpr int BLOCK_SIZE = 1 << log2_base;
 
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
@@ -98,11 +101,11 @@ parlay::type_allocator<interior>;
 
 template <typename slice>
 std::array<coord, PIVOT_NUM>
-pick_pivots( slice A, size_t n, int dim );
+pick_pivots( slice A, const size_t& n, const int& dim );
 
 template <typename slice>
 coord
-pick_single_pivot( slice A, size_t n, int dim );
+pick_single_pivot( slice A, const size_t& n, const int& dim );
 
 coord
 ppDistanceSquared( const point& p, const point& q, int DIM );
@@ -110,7 +113,9 @@ ppDistanceSquared( const point& p, const point& q, int DIM );
 //@ Parallel KD tree cores
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int DIM );
+build( slice In, slice Out, int dim, const int& DIM,
+       std::array<coord, PIVOT_NUM> pivots, int pn,
+       std::array<int, PIVOT_NUM> sums );
 
 void
 k_nearest( node* T, const point& q, int dim, const int DIM,
