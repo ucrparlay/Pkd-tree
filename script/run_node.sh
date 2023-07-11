@@ -5,7 +5,7 @@ Node=(10000000 50000000 100000000 500000000 1000000000)
 path="../benchmark/craft_var_node/"
 SerialTag=(0 1)
 dim=3
-T=1800
+T=3600
 k=100
 wrap=16
 
@@ -18,10 +18,12 @@ for solver in ${Solvers[@]}; do
             if [[ ${tag} == 0 ]]; then
                 resFile="res_serial.out"
             else
+                continue
                 resFile="res_parallel.out"
             fi
         elif [[ ${solver} == "cgal" ]]; then
             if [[ ${tag} == 0 ]]; then
+                continue
                 resFile="cgal_res_serial.out"
             else
                 resFile="cgal_res_parallel.out"

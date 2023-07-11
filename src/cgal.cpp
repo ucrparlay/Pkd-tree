@@ -40,12 +40,14 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
 
    //* cgal
-   std::list<Point_d> _points;
-   for( long i = 0; i < N; i++ ) {
-      //   printf( "%.3Lf\n", *( std::begin( wp[i].x ) + _Dim - 1 ) );
-      _points.push_back( Point_d( Dim, std::begin( wp[i].pnt ),
-                                  ( std::begin( wp[i].pnt ) + Dim ) ) );
-   }
+   std::vector<Point_d> _points( N );
+   parlay::parallel_for(
+       0, N,
+       [&]( size_t i ) {
+          _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
+                                ( std::begin( wp[i].pnt ) + Dim ) );
+       },
+       FOR_BLOCK_SIZE );
 
    timer.start();
    Splitter split;
@@ -75,10 +77,10 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
 
-   std::list<Point_d>().swap( _points );
-   points().swap( wp );
-   tree.clear();
-   delete[] cgknn;
+   // std::list<Point_d>().swap( _points );
+   // points().swap( wp );
+   // tree.clear();
+   // delete[] cgknn;
 
    return;
 }
@@ -87,20 +89,23 @@ template <typename Splitter, typename Tree, typename Neighbor_search>
 void
 testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
-
+   puts( "here" );
    //* cgal
-   std::list<Point_d> _points;
-   for( long i = 0; i < N; i++ ) {
-      //   printf( "%.3Lf\n", *( std::begin( wp[i].x ) + _Dim - 1 ) );
-      _points.push_back( Point_d( Dim, std::begin( wp[i].pnt ),
-                                  ( std::begin( wp[i].pnt ) + Dim ) ) );
-   }
+   std::vector<Point_d> _points( N );
+   parlay::parallel_for(
+       0, N,
+       [&]( size_t i ) {
+          _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
+                                ( std::begin( wp[i].pnt ) + Dim ) );
+       },
+       FOR_BLOCK_SIZE );
 
    timer.start();
    Splitter split;
    Tree tree( _points.begin(), _points.end(), split );
    tree.template build<CGAL::Parallel_tag>();
    timer.stop();
+   std::vector<Point_d>().swap( _points );
 
    std::cout << timer.total_time() << " " << std::flush;
 
@@ -129,10 +134,10 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
              << std::endl;
 
-   std::list<Point_d>().swap( _points );
-   points().swap( wp );
-   tree.clear();
-   delete[] cgknn;
+   // std::list<Point_d>().swap( _points );
+   // points().swap( wp );
+   // tree.clear();
+   // delete[] cgknn;
 
    return;
 }

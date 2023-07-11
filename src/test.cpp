@@ -15,6 +15,7 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
          kdPoint[i].x[j] = wp[i].pnt[j];
       }
    } );
+   points().swap( wp );
 
    timer.start();
    KDnode<Typename>* KDroot = KD.init( Dim, 16, kdPoint, N );
@@ -23,7 +24,7 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " " << std::flush;
 
    //* start test
-   parlay::random_shuffle( wp.cut( 0, N ) );
+   parlay::random_shuffle( parlay::make_slice( kdPoint, kdPoint + N ) );
    Typename* kdknn = new Typename[N];
 
    timer.reset();
@@ -40,10 +41,9 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
              << std::endl;
 
    //* delete
-   KD.destory( KDroot );
-   points().swap( wp );
-   delete[] kdPoint;
-   delete[] kdknn;
+   // KD.destory( KDroot );
+   // delete[] kdPoint;
+   // delete[] kdknn;
 
    return;
 }
