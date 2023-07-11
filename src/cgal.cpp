@@ -69,13 +69,12 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
       Neighbor_search search( tree, query, K );
       auto it = search.end();
       it--;
-      // std::cout << i << " " << it->second << std::endl;
       cgknn[i] = it->second;
    }
 
    timer.stop();
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-             << std::endl;
+   std::cout << timer.total_time() << " " << -1 << " " << -1 << std::endl
+             << std::flush;
 
    // std::list<Point_d>().swap( _points );
    // points().swap( wp );
@@ -131,8 +130,8 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
                       } );
 
    timer.stop();
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-             << std::endl;
+   std::cout << timer.total_time() << " " << -1 << " " << -1 << std::endl
+             << std::flush;
 
    // std::list<Point_d>().swap( _points );
    // points().swap( wp );

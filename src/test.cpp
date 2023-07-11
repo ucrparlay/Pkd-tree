@@ -57,7 +57,8 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, size_t N, int K ) {
 
    aveDeep = 0.0;
    traverseSerialTree( KDroot, 1 );
-   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl;
+   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl
+             << std::flush;
 
    //* delete
    // KD.destory( KDroot );
@@ -100,8 +101,9 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    } );
 
    timer.stop();
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-             << std::endl;
+   // TODO change ave deep and ave visnUm
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K << std::endl
+             << std::flush;
 
    // delete_tree( KDParallelRoot );
    // points().swap( wp );
