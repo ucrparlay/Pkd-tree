@@ -44,10 +44,10 @@ KDtree<T>::make_tree( Point<T>* a, int len, int i ) {
 
 template <typename T>
 void
-KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
-                      kBoundedQueue<T>& q ) {
+KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i, kBoundedQueue<T>& q,
+                      size_t& visNodeNum ) {
    T d, dx, dx2;
-   // root->print();
+   visNodeNum++;
 
    if( root == nullptr )
       return;
@@ -55,14 +55,7 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
       for( int i = 0; i < root->num; i++ ) {
          d = dist( &( root->p[i] ), nd, DIM );
          q.insert( d );
-         // if( q.size() < K || Lt( d, q.top() ) )
-         // {
-         //    q.push( d );
-         //    if( q.size() > K )
-         //       q.pop();
-         // }
       }
-
       return;
    }
 
@@ -73,10 +66,10 @@ KDtree<T>::k_nearest( KDnode<T>* root, Point<T>* nd, int i,
    if( ++i >= DIM )
       i = 0;
 
-   k_nearest( dx > 0 ? root->left : root->right, nd, i, q );
+   k_nearest( dx > 0 ? root->left : root->right, nd, i, q, visNodeNum );
    if( Gt( dx2, q.top() ) && q.full() )
       return;
-   k_nearest( dx > 0 ? root->right : root->left, nd, i, q );
+   k_nearest( dx > 0 ? root->right : root->left, nd, i, q, visNodeNum );
 }
 
 template <typename T>

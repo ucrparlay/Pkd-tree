@@ -25,7 +25,8 @@ header = [
     "file",
     "buildTime",
     "queryTime",
-    "wrapSize",
+    "aveDeep",
+    "aveQueryVisNodeNum",
 ]
 
 
@@ -37,7 +38,10 @@ def combine(P, csvWriter, solver, benchName, node, dim):
         if solver == "cgal":
             csvWriter.writerow([solver, benchName, node, dim, l[0], l[1], l[2], -1])
         else:
-            csvWriter.writerow([solver, benchName, node, dim, l[0], l[1], l[2], l[3]])
+            csvWriter.writerow(
+                [solver, benchName, node, dim, l[0], l[1], l[2], l[3], l[4]]
+            )
+
 
 def csvSetup(solver):
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
@@ -116,6 +120,7 @@ if len(sys.argv) > 2 and int(sys.argv[2]) == 1:
 
 # * check the correctness
 
+
 def check(P):
     lines = open(P, "r").readlines()
     for line in lines:
@@ -124,7 +129,8 @@ def check(P):
         print(l[-1])
         if l[-1] != "ok":
             print("wrong", P)
-            
+
+
 if len(sys.argv) > 3 and int(sys.argv[3]) == 1:
     node = 100000
     for dim in Dims:

@@ -79,7 +79,8 @@ class KDtree {
    make_tree( Point<T>* a, int len, int i );
 
    void
-   k_nearest( KDnode<T>* root, Point<T>* nd, int i, kBoundedQueue<T>& q );
+   k_nearest( KDnode<T>* root, Point<T>* nd, int i, kBoundedQueue<T>& q,
+              size_t& visNodeNum );
 
    void
    k_nearest_array( KDnode<T>* root, Point<T>* nd, int i, kArrayQueue<T>& kq );
@@ -89,7 +90,8 @@ class KDtree {
       this->K = _K;
       kBoundedQueue<T> bq;
       bq.resize( _K );
-      this->k_nearest( this->KDroot, nd, 0, bq );
+      size_t visNodeNUm = 0;
+      this->k_nearest( this->KDroot, nd, 0, bq, visNodeNUm );
       T ans = bq.top();
       return ans;
    };

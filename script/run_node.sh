@@ -44,7 +44,7 @@ for solver in ${Solvers[@]}; do
 
                 retval=$?
                 if [ ${retval} -eq 124 ]; then
-                    echo -e "${node}_${dim}.in 1200 -1 -1 -1" >>${dest}
+                    echo -e "${node}_${dim}.in ${T} -1 -1 -1" >>${dest}
                     echo "timeout ${node}_${dim}"
                 else
                     echo "finish ${node}_${dim}"

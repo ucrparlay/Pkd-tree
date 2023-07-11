@@ -204,7 +204,10 @@ build( slice In, slice Out, int dim, const int& DIM,
 
 //? parallel query
 void
-k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq ) {
+k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq,
+           size_t& visNodeNum ) {
+   visNodeNum++;
+
    coord d, dx, dx2;
    if( T->is_leaf ) {
       leaf* TL = static_cast<leaf*>( T );
@@ -220,11 +223,11 @@ k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq ) {
    dx = TI->split - q.pnt[dim];
    dx2 = dx * dx;
 
-   k_nearest( dx > 0 ? TI->left : TI->right, q, DIM, bq );
+   k_nearest( dx > 0 ? TI->left : TI->right, q, DIM, bq, visNodeNum );
    if( dx2 > bq.top() && bq.full() ) {
       return;
    }
-   k_nearest( dx > 0 ? TI->right : TI->left, q, DIM, bq );
+   k_nearest( dx > 0 ? TI->right : TI->left, q, DIM, bq, visNodeNum );
 }
 
 void

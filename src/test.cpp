@@ -3,8 +3,21 @@
 
 using Typename = coord;
 
+double aveDeep = 0.0;
+
 void
-testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
+traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
+   if( KDroot->isLeaf ) {
+      aveDeep += deep;
+      return;
+   }
+   traverseSerialTree( KDroot->left, deep + 1 );
+   traverseSerialTree( KDroot->right, deep + 1 );
+   return;
+}
+
+void
+testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, size_t N, int K ) {
    parlay::internal::timer timer;
 
    KDtree<Typename> KD;
@@ -18,7 +31,7 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    points().swap( wp );
 
    timer.start();
-   KDnode<Typename>* KDroot = KD.init( Dim, 16, kdPoint, N );
+   KDnode<Typename>* KDroot = KD.init( Dim, LEAVE_WRAP, kdPoint, N );
    timer.stop();
 
    std::cout << timer.total_time() << " " << std::flush;
@@ -30,15 +43,21 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    timer.reset();
    timer.start();
    kBoundedQueue<Typename> bq;
+   double aveVisNum = 0.0;
    for( size_t i = 0; i < N; i++ ) {
+      size_t visNodeNum = 0;
       bq.resize( K );
-      KD.k_nearest( KDroot, &kdPoint[i], 0, bq );
+      KD.k_nearest( KDroot, &kdPoint[i], 0, bq, visNodeNum );
       kdknn[i] = bq.top();
+      aveVisNum += ( 1.0 * visNodeNum ) / N;
    }
 
    timer.stop();
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-             << std::endl;
+   std::cout << timer.total_time() << " " << std::flush;
+
+   aveDeep = 0.0;
+   traverseSerialTree( KDroot, 1 );
+   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl;
 
    //* delete
    // KD.destory( KDroot );
@@ -64,24 +83,25 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    std::cout << timer.total_time() << " " << std::flush;
 
    //* start test
-   // parlay::random_shuffle( wp.cut( 0, N ) );
-   // Typename* kdknn = new Typename[N];
+   parlay::random_shuffle( wp.cut( 0, N ) );
+   Typename* kdknn = new Typename[N];
 
-   // kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   // for( int i = 0; i < N; i++ ) {
-   //    bq[i].resize( K );
-   // }
-   // timer.reset();
-   // timer.start();
+   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   for( int i = 0; i < N; i++ ) {
+      bq[i].resize( K );
+   }
+   timer.reset();
+   timer.start();
 
-   // parlay::parallel_for( 0, N, [&]( size_t i ) {
-   //    k_nearest( KDParallelRoot, wp[i], Dim, bq[i] );
-   //    kdknn[i] = bq[i].top();
-   // } );
+   parlay::parallel_for( 0, N, [&]( size_t i ) {
+      size_t visNodeNum = 0;
+      k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+      kdknn[i] = bq[i].top();
+   } );
 
-   // timer.stop();
-   // std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
-   //           << std::endl;
+   timer.stop();
+   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K
+             << std::endl;
 
    // delete_tree( KDParallelRoot );
    // points().swap( wp );

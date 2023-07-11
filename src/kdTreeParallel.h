@@ -127,7 +127,8 @@ build( slice In, slice Out, int dim, const int& DIM,
        std::array<int, PIVOT_NUM> sums );
 
 void
-k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq );
+k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq,
+           size_t& visNodeNum );
 
 void
 delete_tree( node* T );
