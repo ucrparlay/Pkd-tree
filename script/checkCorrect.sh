@@ -36,7 +36,7 @@ echo "finish node test"
 
 #* check dim
 for node in ${Nodes[@]}; do
-    if [ ${node} -ne 1000000 ]; then
+    if [ ${node} -ne 5000000 ]; then
         continue
     fi
 

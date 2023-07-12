@@ -1,10 +1,10 @@
 #!/bin/bash
 
-Solvers=("test" "cgal")
-node=100000000
-path="../benchmark/craft_var_dim/"
-Dims=(2 3 5 7 9)
+Solvers=("cgal" "test")
+Node=(10000000 50000000 100000000 500000000 1000000000)
+path="../benchmark/ss_varden/"
 SerialTag=(0 1)
+dim=3
 T=3600
 k=100
 wrap=16
@@ -30,24 +30,23 @@ for solver in ${Solvers[@]}; do
             fi
         fi
 
-        #* dim main body
-        for dim in ${Dims[@]}; do
+        #* node main body
+        for node in ${Node[@]}; do
             files_path="${path}${node}_${dim}"
             mkdir -p ${files_path}
             dest="${files_path}/${resFile}"
             : >${dest}
             echo ">>>${dest}"
 
-            for ((i = 1; i <= 2; i++)); do
-                nodeVar=$((${node} + ${i}))
-                timeout ${T} ../build/${solver} ${nodeVar} ${dim} ${tag} >>${dest}
+            for file in "${files_path}/"*.in; do
+                timeout ${T} ../build/${solver} ${file} ${K} ${tag} >>${dest}
 
                 retval=$?
                 if [ ${retval} -eq 124 ]; then
                     echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
                     echo "timeout ${node}_${dim}"
                 else
-                    echo "finish ${nodeVar}_${dim}"
+                    echo "finish ${node}_${dim}"
                 fi
             done
         done
