@@ -74,11 +74,11 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    points wo( wp.size() );
 
    timer.start();
-   std::array<coord, PIVOT_NUM> pivots;
-   std::array<int, PIVOT_NUM> sums;
+   splitter_s pivots;
+   std::array<uint32_t, BUCKET_NUM> sums;
 
    node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
-                                 0, Dim, pivots, 0, sums );
+                                 0, Dim, pivots, PIVOT_NUM + 1, sums );
    timer.stop();
 
    std::cout << timer.total_time() << " " << std::flush;
@@ -116,6 +116,10 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
 
 int
 main( int argc, char* argv[] ) {
+
+   // auto p = splitter( 0, 1 );
+   // LOG << p.first << " " << p.second << ENDL;
+   // return 0;
 
    assert( argc >= 2 );
 

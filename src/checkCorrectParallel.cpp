@@ -116,11 +116,11 @@ main( int argc, char* argv[] ) {
    //!----------------end serial kd tree-----------------------
 
    points wo( wp.size() );
-   std::array<coord, PIVOT_NUM> pivots;
-   std::array<int, PIVOT_NUM> sums;
+   splitter_s pivots;
+   std::array<uint32_t, BUCKET_NUM> sums;
 
    node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
-                                 0, Dim, pivots, 0, sums );
+                                 0, Dim, pivots, BUCKET_NUM + 1, sums );
    LOG << "finish build" << ENDL << std::flush;
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;

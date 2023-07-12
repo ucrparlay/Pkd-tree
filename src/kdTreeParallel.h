@@ -22,18 +22,20 @@ struct pointLess {
 };
 
 using points = parlay::sequence<point>;
-
+//@ take the value of a point in specific dimension
+using splitter = std::pair<coord, int>;
+using splitter_s = parlay::sequence<splitter>;
 //@ Const variables
-constexpr size_t LEAVE_WRAP = 16;
-constexpr size_t BUILD_DEPTH_ONCE = 16;
-constexpr size_t PIVOT_NUM = BUILD_DEPTH_ONCE;
-// constexpr size_t PIVOT_NUM =
-//     BUILD_DEPTH_ONCE % 2 == 1 ? BUILD_DEPTH_ONCE : BUILD_DEPTH_ONCE | 1;
-constexpr size_t SERIAL_BUILD_CUTOFF = 1 << 14;
-constexpr size_t FOR_BLOCK_SIZE = 1 << 9;
+constexpr uint32_t BUILD_DEPTH_ONCE = 1; //* last layer is leaf, no pivots
+constexpr uint32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1; //* 2^i -1
+constexpr uint32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
+//@ general
+constexpr uint32_t LEAVE_WRAP = 16;
+constexpr uint32_t SERIAL_BUILD_CUTOFF = 1 << 14;
+constexpr uint32_t FOR_BLOCK_SIZE = 1 << 9;
 //@ block param in partition
-constexpr int log2_base = 9;
-constexpr int BLOCK_SIZE = 1 << log2_base;
+constexpr uint32_t log2_base = 9;
+constexpr uint32_t BLOCK_SIZE = 1 << log2_base;
 
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
@@ -85,6 +87,7 @@ struct leaf : node {
          pts( pts ) {}
 };
 
+// todo replace split and cut_dim by splitter
 struct interior : node {
    node* left;
    node* right;
@@ -104,11 +107,7 @@ parlay::type_allocator<leaf>;
 parlay::type_allocator<interior>;
 
 template <typename slice>
-std::array<coord, PIVOT_NUM>
-pick_pivots( slice A, const size_t& n, const int& dim );
-
-template <typename slice>
-std::array<int, PIVOT_NUM>
+std::array<uint32_t, PIVOT_NUM>
 partition( slice A, slice B, const size_t& n,
            const std::array<coord, PIVOT_NUM>& pivots, const int& dim );
 
@@ -117,17 +116,16 @@ coord
 pick_single_pivot( slice A, const size_t& n, const int& dim );
 
 coord
-ppDistanceSquared( const point& p, const point& q, int DIM );
+ppDistanceSquared( const point& p, const point& q, int& DIM );
 
 //@ Parallel KD tree cores
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int& DIM,
-       std::array<coord, PIVOT_NUM> pivots, int pn,
-       std::array<int, PIVOT_NUM> sums );
+build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
+       int pivotIndex, std::array<uint32_t, BUCKET_NUM> sums );
 
 void
-k_nearest( node* T, const point& q, const int DIM, kBoundedQueue<coord>& bq,
+k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
            size_t& visNodeNum );
 
 void
