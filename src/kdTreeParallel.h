@@ -26,6 +26,7 @@ using points = parlay::sequence<point>;
 using splitter = std::pair<coord, int>;
 using splitter_s = parlay::sequence<splitter>;
 //@ Const variables
+//@ uint32t handle up to 4e9 at least
 constexpr uint32_t BUILD_DEPTH_ONCE = 1; //* last layer is leaf, no pivots
 constexpr uint32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1; //* 2^i -1
 constexpr uint32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;

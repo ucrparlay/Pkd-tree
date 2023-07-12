@@ -71,10 +71,15 @@ main( int argc, char* argv[] ) {
       }
    } else {
       K = 100;
-
-      parlay::random_generator gen( 0 );
       coord box_size = 10000000;
+
+      std::random_device rd;       // a seed source for the random number engine
+      std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
+      std::uniform_int_distribution<int> distrib( 1, box_size );
+
+      parlay::random_generator gen( distrib( gen_mt ) );
       std::uniform_int_distribution<int> dis( 0, box_size );
+
       assert( argc >= 3 );
       size_t n = std::stoi( argv[1] );
       N = n;

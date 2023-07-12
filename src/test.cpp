@@ -146,18 +146,20 @@ main( int argc, char* argv[] ) {
          }
       }
    } else { //* construct data byself
-      parlay::random_generator gen( 0 );
-      int box_size = 10000000;
+      K = 100;
+      coord box_size = 10000000;
+
+      std::random_device rd;       // a seed source for the random number engine
+      std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
+      std::uniform_int_distribution<int> distrib( 1, box_size );
+
+      parlay::random_generator gen( distrib( gen_mt ) );
       std::uniform_int_distribution<int> dis( 0, box_size );
+
       long n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
-      try {
-         wp.resize( N );
-      } catch( ... ) {
-         LOG << "catch exception" << ENDL;
-         return 0;
-      }
+      wp.resize( N );
       // generate n random points in a cube
       parlay::parallel_for(
           0, n,
@@ -171,6 +173,11 @@ main( int argc, char* argv[] ) {
       name = std::to_string( n ) + "_" + std::to_string( Dim ) + ".in";
       std::cout << name << " ";
    }
+
+   for( int i = 0; i < 10; i++ ) {
+      LOG << wp[i].pnt[0] << " " << wp[i].pnt[1] << " " << ENDL;
+   }
+   return 0;
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 

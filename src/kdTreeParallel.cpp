@@ -134,6 +134,7 @@ void
 divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
                int& bucket, const int& DIM ) {
    if( deep > BUILD_DEPTH_ONCE ) {
+      //! todo sometimes splitter can be -1
       pivots[idx] = splitter( -1, bucket++ );
       return;
    }
@@ -155,6 +156,7 @@ splitter_s
 pick_pivots( slice In, const size_t& n, const int& dim, const int& DIM ) {
    size_t size = (size_t)std::log2( n ) * PIVOT_NUM;
    assert( size < n );
+   assert( n / size > 2.0 );
    points arr = points::uninitialized( size );
    for( size_t i = 0; i < size; i++ ) {
       arr[i] = In[i * ( n / size )];
@@ -251,8 +253,8 @@ node*
 build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
        int pivotIndex, std::array<uint32_t, BUCKET_NUM> sums ) {
    size_t n = In.size(), cut = 0;
-   coord split;
-   int cut_dim;
+   coord split = -1;
+   int cut_dim = -1;
 
    if( n <= LEAVE_WRAP ) {
       return leaf_allocator.allocate( parlay::to_sequence( In ) );
@@ -296,7 +298,7 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
    }
 
    if( pivotIndex <= PIVOT_NUM ) {
-      puts( "already divided" );
+      // puts( "already divided" );
       assert( pivots[pivotIndex].second == dim );
       split = pivots[pivotIndex].first;
       cut = count_left_right( pivotIndex * 2, pivots, sums );
@@ -304,17 +306,45 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
    }
 
    auto good_partition = [&]() {
+      if( n <= SERIAL_BUILD_CUTOFF )
+         return true;
       bool flag = true;
-      parlay::parallel_for( 0, cut, [&]( size_t i ) {
+      // parlay::parallel_for( 0, cut, [&]( size_t i ) {
+      //    if( Out[i].pnt[dim] >= split ) {
+      //       __sync_bool_compare_and_swap( &flag, true, false );
+      //    }
+      // } );
+      for( int i = 0; i < cut; i++ ) {
          if( Out[i].pnt[dim] >= split ) {
-            __sync_bool_compare_and_swap( &flag, true, false );
+            flag = false;
+            LOG << "should be less" << Out[i].pnt[dim] << " " << split << ENDL;
+            break;
          }
-      } );
-      parlay::parallel_for( cut, n, [&]( size_t i ) {
-         if( Out[i].pnt[dim] < split ) {
-            __sync_bool_compare_and_swap( &flag, true, false );
+      }
+      // parlay::parallel_for( cut, n, [&]( size_t i ) {
+      //    if( Out[i].pnt[dim] < split ) {
+      //       __sync_bool_compare_and_swap( &flag, true, false );
+      //    }
+      // } );
+      for( int i = 0; i < cut; i++ ) {
+         if( Out[i].pnt[dim] >= split ) {
+            flag = false;
+            LOG << "should be greater-eq" << Out[i].pnt[dim] << " " << split
+                << ENDL;
+            break;
          }
-      } );
+      }
+      // if( flag == false ) {
+      //    for( int i = 0; i < n; i++ ) {
+      //       LOG << Out[i].pnt[dim] << " ";
+      //    }
+      //    LOG << "cut num: " << cut << ENDL;
+      //    if( n <= SERIAL_BUILD_CUTOFF ) {
+      //       puts( "in serial" );
+      //       LOG << n << ENDL;
+      //    } else
+      //       puts( "in parallel" );
+      // }
       return flag;
    };
    assert( good_partition() );
@@ -322,20 +352,20 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
    node *L, *R;
    cut_dim = dim;
    dim = ( dim + 1 ) % DIM;
-   L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
-              2 * pivotIndex, sums );
-   R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
-              2 * pivotIndex + 1, sums );
-   // parlay::par_do_if(
-   //     n > SERIAL_BUILD_CUTOFF,
-   //     [&]() {
-   //        L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
-   //                   2 * pivotIndex, sums );
-   //     },
-   //     [&]() {
-   //        R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
-   //                   2 * pivotIndex + 1, sums );
-   //     } );
+   // L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
+   //            2 * pivotIndex, sums );
+   // R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
+   //            2 * pivotIndex + 1, sums );
+   parlay::par_do_if(
+       n > SERIAL_BUILD_CUTOFF,
+       [&]() {
+          L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
+                     2 * pivotIndex, sums );
+       },
+       [&]() {
+          R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
+                     2 * pivotIndex + 1, sums );
+       } );
    return interior_allocator.allocate( L, R, split, cut_dim );
 }
 
