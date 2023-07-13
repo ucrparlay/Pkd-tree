@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 option(DEBUG "" ON)
 option(CILKPLUS "" OFF)
 option(OPENCILK "" OFF)
-option(SERIAL "" OFF)
+option(SERIAL "" ON)
 option(STDALLOC "" OFF)
 option(CGAL "" ON)
 

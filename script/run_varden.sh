@@ -1,12 +1,12 @@
 #!/bin/bash
 
 Solvers=("cgal" "test")
-Node=(10000000 50000000 100000000 500000000 1000000000)
+Node=(10000000 50000000 100000000)
 path="../benchmark/ss_varden/"
 SerialTag=(0 1)
 dim=3
 T=3600
-k=100
+K=100
 wrap=16
 
 resFile=""
@@ -16,9 +16,9 @@ for solver in ${Solvers[@]}; do
         #* decide output file
         if [[ ${solver} == "test" ]]; then
             if [[ ${tag} == 0 ]]; then
+                continue
                 resFile="res_serial.out"
             else
-                continue
                 resFile="res_parallel.out"
             fi
         elif [[ ${solver} == "cgal" ]]; then
@@ -26,6 +26,7 @@ for solver in ${Solvers[@]}; do
                 continue
                 resFile="cgal_res_serial.out"
             else
+                continue
                 resFile="cgal_res_parallel.out"
             fi
         fi
@@ -39,6 +40,7 @@ for solver in ${Solvers[@]}; do
             echo ">>>${dest}"
 
             for file in "${files_path}/"*.in; do
+                # echo ${file}
                 timeout ${T} ../build/${solver} ${file} ${K} ${tag} >>${dest}
 
                 retval=$?

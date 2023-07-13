@@ -223,7 +223,7 @@ class kBoundedQueue {
    }
 
    inline void
-   insert( const T& x ) {
+   insert( const T x ) {
       T* data1 = ( &m_data[0] - 1 );
       if( full() ) {
          if( m_comp( x, top() ) ) {

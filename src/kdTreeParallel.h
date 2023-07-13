@@ -27,17 +27,16 @@ using splitter = std::pair<coord, uint16_t>;
 using splitter_s = parlay::sequence<splitter>;
 //@ Const variables
 //@ uint32t handle up to 4e9 at least
-constexpr uint32_t BUILD_DEPTH_ONCE = 7; //* last layer is leaf, no pivots
+constexpr uint32_t BUILD_DEPTH_ONCE = 4; //* last layer is leaf, no pivots
 constexpr uint32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1; //* 2^i -1
 constexpr uint32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
 //@ general
 constexpr uint32_t LEAVE_WRAP = 32;
 constexpr uint32_t SERIAL_BUILD_CUTOFF = 1 << 16;
-constexpr uint32_t FOR_BLOCK_SIZE = 1 << 9;
 //@ block param in partition
 constexpr uint32_t log2_base = 9;
+constexpr uint32_t FOR_BLOCK_SIZE = 1 << log2_base;
 constexpr uint32_t BLOCK_SIZE = 1 << log2_base;
-
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
 // **************************************************************

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 Solvers=("cgal" "test")
-Node=(10000000 50000000 100000000 500000000 1000000000)
+Node=(100000000)
+# Node=(10000000 50000000 100000000 500000000 1000000000)
 path="../benchmark/craft_var_node/"
 SerialTag=(0 1)
 dim=3
@@ -16,10 +17,10 @@ for solver in ${Solvers[@]}; do
         #* decide output file
         if [[ ${solver} == "test" ]]; then
             if [[ ${tag} == 0 ]]; then
+                continue
                 resFile="res_serial.out"
             else
-                continue
-                resFile="res_parallel.out"
+                resFile="res_parallel_one_core.out"
             fi
         elif [[ ${solver} == "cgal" ]]; then
             if [[ ${tag} == 0 ]]; then
@@ -39,7 +40,7 @@ for solver in ${Solvers[@]}; do
             : >${dest}
             echo ">>>${dest}"
 
-            for ((i = 1; i <= 2; i++)); do
+            for ((i = 1; i <= 1; i++)); do
                 nodeVar=$((${node} + ${i}))
                 timeout ${T} ../build/${solver} ${nodeVar} ${dim} ${tag} >>${dest}
 

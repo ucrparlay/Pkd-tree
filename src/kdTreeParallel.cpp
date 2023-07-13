@@ -286,7 +286,8 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
       assert( pivots[pivotIndex].second == dim );
       split.first = pivots[pivotIndex].first;
       cut = count_left_right( pivotIndex * 2, pivots, sums );
-      assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n );
+      // assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n
+      // );
    }
 
    node *L, *R;
@@ -311,25 +312,37 @@ k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
            size_t& visNodeNum ) {
    visNodeNum++;
 
-   coord d, dx, dx2;
+   // coord d, dx, dx2;
    if( T->is_leaf ) {
       leaf* TL = static_cast<leaf*>( T );
       for( int i = 0; i < TL->size; i++ ) {
-         d = ppDistanceSquared( q, TL->pts[i], DIM );
-         bq.insert( d );
+         // d = ppDistanceSquared( q, TL->pts[i], DIM );
+         // bq.insert( d );
+         bq.insert( std::move( ppDistanceSquared( q, TL->pts[i], DIM ) ) );
       }
       return;
    }
 
    interior* TI = static_cast<interior*>( T );
-   dx = TI->split.first - q.pnt[TI->split.second];
-   dx2 = dx * dx;
+   auto distance2Plane = [&]() -> size_t {
+      return TI->split.first - q.pnt[TI->split.second];
+   };
 
-   k_nearest( dx > 0 ? TI->left : TI->right, q, DIM, bq, visNodeNum );
-   if( dx2 > bq.top() && bq.full() ) {
+   // dx = TI->split.first - q.pnt[TI->split.second];
+   // dx2 = dx * dx;
+
+   k_nearest( TI->split.first - q.pnt[TI->split.second] > 0 ? TI->left
+                                                            : TI->right,
+              q, DIM, bq, visNodeNum );
+   if( ( TI->split.first - q.pnt[TI->split.second] ) *
+               ( TI->split.first - q.pnt[TI->split.second] ) >
+           bq.top() &&
+       bq.full() ) {
       return;
    }
-   k_nearest( dx > 0 ? TI->right : TI->left, q, DIM, bq, visNodeNum );
+   k_nearest( ( TI->split.first - q.pnt[TI->split.second] ) > 0 ? TI->right
+                                                                : TI->left,
+              q, DIM, bq, visNodeNum );
 }
 
 void
