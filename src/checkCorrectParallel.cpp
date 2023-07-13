@@ -71,10 +71,15 @@ main( int argc, char* argv[] ) {
       }
    } else {
       K = 100;
-
-      parlay::random_generator gen( 0 );
       coord box_size = 10000000;
+
+      std::random_device rd;       // a seed source for the random number engine
+      std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
+      std::uniform_int_distribution<int> distrib( 1, box_size );
+
+      parlay::random_generator gen( distrib( gen_mt ) );
       std::uniform_int_distribution<int> dis( 0, box_size );
+
       assert( argc >= 3 );
       size_t n = std::stoi( argv[1] );
       N = n;
@@ -116,11 +121,11 @@ main( int argc, char* argv[] ) {
    //!----------------end serial kd tree-----------------------
 
    points wo( wp.size() );
-   std::array<coord, PIVOT_NUM> pivots;
-   std::array<int, PIVOT_NUM> sums;
+   splitter_s pivots;
+   std::array<uint32_t, BUCKET_NUM> sums;
 
    node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
-                                 0, Dim, pivots, 0, sums );
+                                 0, Dim, pivots, BUCKET_NUM + 1, sums );
    LOG << "finish build" << ENDL << std::flush;
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;

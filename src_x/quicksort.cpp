@@ -44,7 +44,7 @@ template <typename T>
 array<int, np>
 partition( T* A, T* B, size_t n, array<T, np>& pivots ) {
    size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
-   //@ offset[i][k]:= # elements smaller than the k-th pivots in block i
+   //@ offset[i][k]:= # elements in the k-th bucket in block i
    auto offset = new array<int, np>[num_block] {};
    cilk_for( size_t i = 0; i < num_block; i++ ) {
       for( size_t j = i << log2_base; j < min( ( i + 1 ) << log2_base, n );

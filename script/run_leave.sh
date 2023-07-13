@@ -9,23 +9,19 @@ resFile="res_"
 T="1800"
 
 #* run integer
-for wrap in ${Wrap[@]}
-do
-    for k in ${K[@]}
-    do
+for wrap in ${Wrap[@]}; do
+    for k in ${K[@]}; do
         files_path="${path}${node}_${Dims}"
         mkdir -p ${files_path}
         dest="${files_path}/${resFile}${wrap}_${k}.out"
-        : > ${dest}
+        : >${dest}
         echo ">>>${dest}"
-        
-        for ((i=1;i<=2;i++));
-        do
-            timeout ${T} ../build/${tester} ${node} ${Dims} ${k} ${wrap} >> ${dest}
+
+        for ((i = 1; i <= 2; i++)); do
+            timeout ${T} ../build/${tester} ${node} ${Dims} ${k} ${wrap} >>${dest}
             retval=$?
-            if [ ${retval} -eq 124 ]
-            then
-                echo -e "${node}_${Dims} -1 -1 -1 -1 -1" >> ${dest}
+            if [ ${retval} -eq 124 ]; then
+                echo -e "${node}_${Dims} -1 -1 -1 -1 -1" >>${dest}
                 echo "timeout ${file_name}"
             else
                 echo "finish ${file_name}"
