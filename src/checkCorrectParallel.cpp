@@ -36,10 +36,10 @@ check( KDnode<Typename>* a, node* b, int dim ) {
 
    interior* TI = static_cast<interior*>( b );
    bool flag = true;
-   if( a->p[0].x[dim] != TI->split ) {
+   if( a->p[0].x[dim] != TI->split.first ) {
       flag = false;
       LOG << " find different cutting plane: " << a->p[0].x[dim] << " "
-          << TI->split << ENDL;
+          << TI->split.first << ENDL;
    }
 
    if( ++dim >= Dim )

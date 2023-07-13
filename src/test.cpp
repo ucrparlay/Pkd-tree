@@ -17,6 +17,18 @@ traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
 }
 
 void
+traverseParallelTree( node* root, int deep ) {
+   if( root->is_leaf ) {
+      aveDeep += deep;
+      return;
+   }
+   interior* TI = static_cast<interior*>( root );
+   traverseParallelTree( TI->left, deep + 1 );
+   traverseParallelTree( TI->right, deep + 1 );
+   return;
+}
+
+void
 testSerialKDtree( int Dim, int LEAVE_WRAP, points wp, size_t N, int K ) {
    parlay::internal::timer timer;
 
@@ -91,6 +103,8 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    for( int i = 0; i < N; i++ ) {
       bq[i].resize( K );
    }
+   double aveVisNum = 0.0;
+
    timer.reset();
    timer.start();
 
@@ -98,11 +112,15 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
       size_t visNodeNum = 0;
       k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
       kdknn[i] = bq[i].top();
+      aveVisNum += ( 1.0 * visNodeNum ) / N;
    } );
 
    timer.stop();
-   // TODO change ave deep and ave visnUm
-   std::cout << timer.total_time() << " " << LEAVE_WRAP << " " << K << std::endl
+   std::cout << timer.total_time() << " " << std::flush;
+
+   aveDeep = 0.0;
+   traverseParallelTree( KDParallelRoot, 1 );
+   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl
              << std::flush;
 
    // delete_tree( KDParallelRoot );
@@ -173,11 +191,6 @@ main( int argc, char* argv[] ) {
       name = std::to_string( n ) + "_" + std::to_string( Dim ) + ".in";
       std::cout << name << " ";
    }
-
-   for( int i = 0; i < 10; i++ ) {
-      LOG << wp[i].pnt[0] << " " << wp[i].pnt[1] << " " << ENDL;
-   }
-   return 0;
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 

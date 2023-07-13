@@ -152,8 +152,9 @@ divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
 
 //@ starting at dimesion dim and pick pivots in a rotation manner
 template <typename slice>
-splitter_s
-pick_pivots( slice In, const size_t& n, const int& dim, const int& DIM ) {
+void
+pick_pivots( slice In, const size_t& n, splitter_s& pivots, const int& dim,
+             const int& DIM ) {
    size_t size = (size_t)std::log2( n ) * PIVOT_NUM;
    assert( size < n );
    assert( n / size > 2.0 );
@@ -161,12 +162,12 @@ pick_pivots( slice In, const size_t& n, const int& dim, const int& DIM ) {
    for( size_t i = 0; i < size; i++ ) {
       arr[i] = In[i * ( n / size )];
    }
-   // todo pass reference
-   splitter_s pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
+   pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
    int bucket = 0;
    divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM );
    assert( bucket == BUCKET_NUM );
-   return pivots;
+   points().swap( arr );
+   return;
 }
 
 inline int
@@ -187,9 +188,10 @@ find_bucket( const point& p, const splitter_s& pivots, const int& dim,
 }
 
 template <typename slice>
-std::array<uint32_t, BUCKET_NUM>
+void
 partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
-           const int& dim, const int& DIM ) {
+           std::array<uint32_t, BUCKET_NUM>& sums, const int& dim,
+           const int& DIM ) {
    size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
    auto offset = new std::array<uint32_t, BUCKET_NUM>[num_block] {};
    parlay::parallel_for( 0, num_block, [&]( size_t i ) {
@@ -207,7 +209,7 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
       }
    } );
 
-   std::array<uint32_t, BUCKET_NUM> sums{};
+   sums = std::array<uint32_t, BUCKET_NUM>{};
    for( size_t i = 0; i < num_block; i++ ) {
       auto t = offset[i];
       offset[i] = sums;
@@ -232,8 +234,7 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
    } );
 
    delete offset;
-   // todo pass by reference
-   return sums;
+   return;
 }
 
 inline size_t
@@ -253,8 +254,7 @@ node*
 build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
        int pivotIndex, std::array<uint32_t, BUCKET_NUM> sums ) {
    size_t n = In.size(), cut = 0;
-   coord split = -1;
-   int cut_dim = -1;
+   splitter split;
 
    if( n <= LEAVE_WRAP ) {
       return leaf_allocator.allocate( parlay::to_sequence( In ) );
@@ -265,31 +265,15 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
          std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                            pointLess( dim ) );
          cut = n / 2;
-         split = In[n / 2].pnt[dim];
+         split.first = In[n / 2].pnt[dim];
          pivotIndex = PIVOT_NUM + 1;
       }
       std::swap( In, Out );
    } else { //* parallel partitons
       if( pivotIndex > PIVOT_NUM ) {
-         pivots = pick_pivots( In, n, dim, DIM );
-
-         auto legal_pivots = [&]() {
-            int td = dim;
-            for( int i = 1; i <= PIVOT_NUM; i++ ) {
-               if( pivots[i].second != dim )
-                  return false;
-               td = ( td + 1 ) % DIM;
-            }
-            for( int i = PIVOT_NUM + 1; i < PIVOT_NUM + BUCKET_NUM + 1; i++ ) {
-               if( pivots[i].first != -1 )
-                  return false;
-            }
-            return true;
-         };
-         assert( legal_pivots() );
-
+         pick_pivots( In, n, pivots, dim, DIM );
          pivotIndex = 1;
-         sums = partition( In, Out, n, pivots, dim, DIM );
+         partition( In, Out, n, pivots, sums, dim, DIM );
          // pivots = pivots.pop_tail( BUCKET_NUM );
          assert( In.size() != 0 && Out.size() != 0 );
       } else {
@@ -300,62 +284,14 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
    if( pivotIndex <= PIVOT_NUM ) {
       // puts( "already divided" );
       assert( pivots[pivotIndex].second == dim );
-      split = pivots[pivotIndex].first;
+      split.first = pivots[pivotIndex].first;
       cut = count_left_right( pivotIndex * 2, pivots, sums );
       assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n );
    }
 
-   auto good_partition = [&]() {
-      if( n <= SERIAL_BUILD_CUTOFF )
-         return true;
-      bool flag = true;
-      // parlay::parallel_for( 0, cut, [&]( size_t i ) {
-      //    if( Out[i].pnt[dim] >= split ) {
-      //       __sync_bool_compare_and_swap( &flag, true, false );
-      //    }
-      // } );
-      for( int i = 0; i < cut; i++ ) {
-         if( Out[i].pnt[dim] >= split ) {
-            flag = false;
-            LOG << "should be less" << Out[i].pnt[dim] << " " << split << ENDL;
-            break;
-         }
-      }
-      // parlay::parallel_for( cut, n, [&]( size_t i ) {
-      //    if( Out[i].pnt[dim] < split ) {
-      //       __sync_bool_compare_and_swap( &flag, true, false );
-      //    }
-      // } );
-      for( int i = 0; i < cut; i++ ) {
-         if( Out[i].pnt[dim] >= split ) {
-            flag = false;
-            LOG << "should be greater-eq" << Out[i].pnt[dim] << " " << split
-                << ENDL;
-            break;
-         }
-      }
-      // if( flag == false ) {
-      //    for( int i = 0; i < n; i++ ) {
-      //       LOG << Out[i].pnt[dim] << " ";
-      //    }
-      //    LOG << "cut num: " << cut << ENDL;
-      //    if( n <= SERIAL_BUILD_CUTOFF ) {
-      //       puts( "in serial" );
-      //       LOG << n << ENDL;
-      //    } else
-      //       puts( "in parallel" );
-      // }
-      return flag;
-   };
-   assert( good_partition() );
-
    node *L, *R;
-   cut_dim = dim;
+   split.second = dim;
    dim = ( dim + 1 ) % DIM;
-   // L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
-   //            2 * pivotIndex, sums );
-   // R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
-   //            2 * pivotIndex + 1, sums );
    parlay::par_do_if(
        n > SERIAL_BUILD_CUTOFF,
        [&]() {
@@ -366,7 +302,7 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
           R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
                      2 * pivotIndex + 1, sums );
        } );
-   return interior_allocator.allocate( L, R, split, cut_dim );
+   return interior_allocator.allocate( L, R, split );
 }
 
 //? parallel query
@@ -386,8 +322,7 @@ k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
    }
 
    interior* TI = static_cast<interior*>( T );
-   int dim = TI->cut_dim;
-   dx = TI->split - q.pnt[dim];
+   dx = TI->split.first - q.pnt[TI->split.second];
    dx2 = dx * dx;
 
    k_nearest( dx > 0 ? TI->left : TI->right, q, DIM, bq, visNodeNum );
