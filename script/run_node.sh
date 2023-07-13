@@ -26,6 +26,7 @@ for solver in ${Solvers[@]}; do
                 continue
                 resFile="cgal_res_serial.out"
             else
+                continue
                 resFile="cgal_res_parallel.out"
             fi
         fi
