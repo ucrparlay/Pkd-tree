@@ -47,7 +47,7 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       FOR_BLOCK_SIZE );
+       BLOCK_SIZE );
 
    timer.start();
    Splitter split;
@@ -97,7 +97,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       FOR_BLOCK_SIZE );
+       BLOCK_SIZE );
 
    timer.start();
    Splitter split;

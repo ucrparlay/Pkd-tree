@@ -112,25 +112,25 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    //* start test
    // sametree( KDParallelRoot, 0, Dim );
    parlay::random_shuffle( wp.cut( 0, N ) );
-   Typename* kdknn = new Typename[N];
+   // Typename* kdknn = new Typename[N];
 
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   for( int i = 0; i < N; i++ ) {
-      bq[i].resize( K );
-   }
-   parlay::sequence<double> visNum =
-       parlay::sequence<double>::uninitialized( N );
+   // kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   // for( int i = 0; i < N; i++ ) {
+   //    bq[i].resize( K );
+   // }
+   // parlay::sequence<double> visNum =
+   //     parlay::sequence<double>::uninitialized( N );
    double aveVisNum = 0.0;
 
    timer.reset();
    timer.start();
 
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      size_t visNodeNum = 0;
-      k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
-      kdknn[i] = bq[i].top();
-      visNum[i] = ( 1.0 * visNodeNum ) / N;
-   } );
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    size_t visNodeNum = 0;
+   //    k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+   //    kdknn[i] = bq[i].top();
+   //    visNum[i] = ( 1.0 * visNodeNum ) / N;
+   // } );
 
    timer.stop();
    std::cout << timer.total_time() << " " << std::flush;

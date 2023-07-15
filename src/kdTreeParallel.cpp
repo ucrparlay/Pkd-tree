@@ -37,99 +37,6 @@ ppDistanceSquared( const point& p, const point& q, const int& DIM ) {
 }
 
 template <typename slice>
-coord
-pick_single_pivot( slice A, const size_t& n, const int& dim ) {
-   size_t size = PIVOT_NUM << 1 | 1;
-   coord arr[size];
-   for( size_t i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim];
-   }
-   std::sort( arr, arr + size );
-   std::array<coord, PIVOT_NUM> pivots;
-   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
-      pivots[i] = arr[i << 1 | 1];
-   }
-   if( arr[0] == arr[1] ) {
-      pivots[0] = pivots[1];
-   } else if( arr[3] == arr[4] ) {
-      pivots[1] = pivots[0];
-   }
-   return pivots[PIVOT_NUM >> 1];
-}
-
-template <typename slice>
-std::array<coord, PIVOT_NUM>
-pick_pivots_one_dimension( slice A, const size_t& n, const int& dim ) {
-   size_t size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
-   coord arr[size];
-   for( size_t i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample cutting dimension in A
-   }
-   std::sort( arr, arr + size );
-   std::array<coord, PIVOT_NUM> pivots;
-   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
-      pivots[i] = arr[i << 1 | 1]; //* pick PIVOT_NUM within cadidates
-   }
-   if( arr[0] == arr[1] ) {
-      pivots[0] = pivots[1];
-   } else if( arr[3] == arr[4] ) {
-      pivots[1] = pivots[0];
-   }
-   return pivots;
-}
-
-template <typename slice>
-std::array<int, PIVOT_NUM>
-partition_one_dimension( slice A, slice B, const size_t& n,
-                         const std::array<coord, PIVOT_NUM>& pivots,
-                         const int& dim ) {
-   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
-   auto offset = new std::array<int, PIVOT_NUM>[num_block] {};
-   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
-           j++ ) {
-         for( int k = 0; k < PIVOT_NUM; k++ ) {
-            if( A[j].pnt[dim] < pivots[k] ) {
-               offset[i][k]++;
-               break;
-            }
-         }
-      }
-   } );
-
-   std::array<int, PIVOT_NUM> sums{};
-   for( size_t i = 0; i < num_block; i++ ) {
-      auto t = offset[i];
-      offset[i] = sums;
-      for( int j = 0; j < PIVOT_NUM; j++ ) {
-         sums[j] += t[j];
-      }
-   }
-   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      std::array<int, PIVOT_NUM + 1> v;
-      int tot = 0, s_offset = 0;
-      for( int k = 0; k < PIVOT_NUM; k++ ) {
-         v[k] = tot + offset[i][k];
-         tot += sums[k];
-         s_offset += offset[i][k];
-      }
-      v[PIVOT_NUM] = tot + ( ( i << log2_base ) - s_offset );
-      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
-           j++ ) {
-         int k;
-         for( k = 0; k < PIVOT_NUM; k++ ) {
-            if( A[j].pnt[dim] < pivots[k] ) {
-               break;
-            }
-         }
-         B[v[k]++] = A[j];
-      }
-   } );
-   delete offset;
-   return sums;
-}
-
-template <typename slice>
 void
 divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
                int& bucket, const int& DIM ) {
@@ -192,18 +99,12 @@ void
 partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
            std::array<uint32_t, BUCKET_NUM>& sums, const int& dim,
            const int& DIM ) {
-   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> log2_base;
+   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
    auto offset = new std::array<uint32_t, BUCKET_NUM>[num_block] {};
    parlay::parallel_for( 0, num_block, [&]( size_t i ) {
       int k;
-      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
+      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
            j++ ) {
-         // for( int k = 0; k < PIVOT_NUM; k++ ) {
-         //    if( A[j].pnt[dim] < pivots[k] ) {
-         //       offset[i][k]++;
-         //       break;
-         //    }
-         // }
          k = find_bucket( A[j], pivots, dim, DIM );
          offset[i][k]++;
       }
@@ -225,8 +126,8 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
          tot += sums[k];
          s_offset += offset[i][k];
       }
-      v[BUCKET_NUM - 1] = tot + ( ( i << log2_base ) - s_offset );
-      for( size_t j = i << log2_base; j < std::min( ( i + 1 ) << log2_base, n );
+      v[BUCKET_NUM - 1] = tot + ( ( i << LOG2_BASE ) - s_offset );
+      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
            j++ ) {
          int k = find_bucket( A[j], pivots, dim, DIM );
          B[v[k]++] = A[j];
@@ -286,8 +187,7 @@ build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
       assert( pivots[pivotIndex].second == dim );
       split.first = pivots[pivotIndex].first;
       cut = count_left_right( pivotIndex * 2, pivots, sums );
-      // assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n
-      // );
+      assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n );
    }
 
    node *L, *R;
@@ -365,3 +265,97 @@ build<parlay::slice<point*, point*>>( parlay::slice<point*, point*> In,
                                       int dim, const int& DIM,
                                       splitter_s pivots, int pivotIndex,
                                       std::array<uint32_t, BUCKET_NUM> sums );
+
+//*----------------------------USELESS------------------------------------
+template <typename slice>
+coord
+pick_single_pivot( slice A, const size_t& n, const int& dim ) {
+   size_t size = PIVOT_NUM << 1 | 1;
+   coord arr[size];
+   for( size_t i = 0; i < size; i++ ) {
+      arr[i] = A[i * ( n / size )].pnt[dim];
+   }
+   std::sort( arr, arr + size );
+   std::array<coord, PIVOT_NUM> pivots;
+   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
+      pivots[i] = arr[i << 1 | 1];
+   }
+   if( arr[0] == arr[1] ) {
+      pivots[0] = pivots[1];
+   } else if( arr[3] == arr[4] ) {
+      pivots[1] = pivots[0];
+   }
+   return pivots[PIVOT_NUM >> 1];
+}
+
+template <typename slice>
+std::array<coord, PIVOT_NUM>
+pick_pivots_one_dimension( slice A, const size_t& n, const int& dim ) {
+   size_t size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
+   coord arr[size];
+   for( size_t i = 0; i < size; i++ ) {
+      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample cutting dimension in A
+   }
+   std::sort( arr, arr + size );
+   std::array<coord, PIVOT_NUM> pivots;
+   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
+      pivots[i] = arr[i << 1 | 1]; //* pick PIVOT_NUM within cadidates
+   }
+   if( arr[0] == arr[1] ) {
+      pivots[0] = pivots[1];
+   } else if( arr[3] == arr[4] ) {
+      pivots[1] = pivots[0];
+   }
+   return pivots;
+}
+
+template <typename slice>
+std::array<int, PIVOT_NUM>
+partition_one_dimension( slice A, slice B, const size_t& n,
+                         const std::array<coord, PIVOT_NUM>& pivots,
+                         const int& dim ) {
+   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
+   auto offset = new std::array<int, PIVOT_NUM>[num_block] {};
+   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
+      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
+           j++ ) {
+         for( int k = 0; k < PIVOT_NUM; k++ ) {
+            if( A[j].pnt[dim] < pivots[k] ) {
+               offset[i][k]++;
+               break;
+            }
+         }
+      }
+   } );
+
+   std::array<int, PIVOT_NUM> sums{};
+   for( size_t i = 0; i < num_block; i++ ) {
+      auto t = offset[i];
+      offset[i] = sums;
+      for( int j = 0; j < PIVOT_NUM; j++ ) {
+         sums[j] += t[j];
+      }
+   }
+   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
+      std::array<int, PIVOT_NUM + 1> v;
+      int tot = 0, s_offset = 0;
+      for( int k = 0; k < PIVOT_NUM; k++ ) {
+         v[k] = tot + offset[i][k];
+         tot += sums[k];
+         s_offset += offset[i][k];
+      }
+      v[PIVOT_NUM] = tot + ( ( i << LOG2_BASE ) - s_offset );
+      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
+           j++ ) {
+         int k;
+         for( k = 0; k < PIVOT_NUM; k++ ) {
+            if( A[j].pnt[dim] < pivots[k] ) {
+               break;
+            }
+         }
+         B[v[k]++] = A[j];
+      }
+   } );
+   delete offset;
+   return sums;
+}

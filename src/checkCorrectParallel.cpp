@@ -102,7 +102,7 @@ main( int argc, char* argv[] ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       FOR_BLOCK_SIZE );
+       BLOCK_SIZE );
    Median_of_rectangle median;
    Tree tree( _points.begin(), _points.end(), median );
    tree.build<CGAL::Parallel_tag>();

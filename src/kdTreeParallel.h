@@ -34,9 +34,8 @@ constexpr uint32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
 constexpr uint32_t LEAVE_WRAP = 32;
 constexpr uint32_t SERIAL_BUILD_CUTOFF = 1 << 16;
 //@ block param in partition
-constexpr uint32_t log2_base = 9;
-constexpr uint32_t FOR_BLOCK_SIZE = 1 << log2_base;
-constexpr uint32_t BLOCK_SIZE = 1 << log2_base;
+constexpr uint32_t LOG2_BASE = 9;
+constexpr uint32_t BLOCK_SIZE = 1 << LOG2_BASE;
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
 // **************************************************************
@@ -91,8 +90,6 @@ struct leaf : node {
 struct interior : node {
    node* left;
    node* right;
-   // coord split;
-   // int cut_dim;
    splitter split;
    interior( node* _left, node* _right, splitter _split )
        : node{ false, _left->size + _right->size,
