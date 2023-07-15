@@ -5,9 +5,9 @@
 #define LOG std::cout
 #define ENDL std::endl
 
-constexpr int dims = 10; // works for any constant dimension
-using idx = size_t;      // index of point (int can handle up to 2^31 points)
-using coord = long;      // type of each coordinate
+constexpr uint_fast32_t dims = 5; // works for any constant dimension
+using idx = size_t; // index of point (int can handle up to 2^31 points)
+using coord = long; // type of each coordinate
 using coords = std::array<coord, dims>; // a coord array with length dims
 struct point {
    coords pnt;
@@ -23,19 +23,19 @@ struct pointLess {
 
 using points = parlay::sequence<point>;
 //@ take the value of a point in specific dimension
-using splitter = std::pair<coord, uint16_t>;
+using splitter = std::pair<coord, uint_fast32_t>;
 using splitter_s = parlay::sequence<splitter>;
 //@ Const variables
 //@ uint32t handle up to 4e9 at least
-constexpr uint32_t BUILD_DEPTH_ONCE = 4; //* last layer is leaf, no pivots
-constexpr uint32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1; //* 2^i -1
-constexpr uint32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
+constexpr uint_fast32_t BUILD_DEPTH_ONCE = 5; //* last layer is leaf, no pivots
+constexpr uint_fast32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1; //* 2^i -1
+constexpr uint_fast32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
 //@ general
-constexpr uint32_t LEAVE_WRAP = 32;
-constexpr uint32_t SERIAL_BUILD_CUTOFF = 1 << 16;
+constexpr uint_fast32_t LEAVE_WRAP = 32;
+constexpr uint_fast32_t SERIAL_BUILD_CUTOFF = 1 << 10;
 //@ block param in partition
-constexpr uint32_t LOG2_BASE = 9;
-constexpr uint32_t BLOCK_SIZE = 1 << LOG2_BASE;
+constexpr uint_fast32_t LOG2_BASE = 10;
+constexpr uint_fast32_t BLOCK_SIZE = 1 << LOG2_BASE;
 // **************************************************************
 //! bounding box (min value on each dimension, and max on each)
 // **************************************************************
@@ -105,7 +105,7 @@ parlay::type_allocator<leaf>;
 parlay::type_allocator<interior>;
 
 template <typename slice>
-std::array<uint32_t, PIVOT_NUM>
+std::array<uint_fast32_t, PIVOT_NUM>
 partition( slice A, slice B, const size_t& n,
            const std::array<coord, PIVOT_NUM>& pivots, const int& dim );
 
@@ -119,8 +119,7 @@ ppDistanceSquared( const point& p, const point& q, int& DIM );
 //@ Parallel KD tree cores
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
-       int pivotIndex, std::array<uint32_t, BUCKET_NUM> sums );
+build( slice In, slice Out, int dim, const int& DIM );
 
 void
 k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,

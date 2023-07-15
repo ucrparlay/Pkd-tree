@@ -6,20 +6,6 @@ using Typename = coord;
 double aveDeep = 0.0;
 
 void
-sametree( node* T, int dim, const int& DIM ) {
-   if( T->is_leaf ) {
-      return;
-   }
-   interior* TI = static_cast<interior*>( T );
-   assert( TI->split.second == dim );
-   dim = ( dim + 1 ) % DIM;
-   parlay::par_do_if(
-       T->size > SERIAL_BUILD_CUTOFF, [&]() { sametree( TI->left, dim, DIM ); },
-       [&]() { sametree( TI->right, dim, DIM ); } );
-   return;
-}
-
-void
 traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
    if( KDroot->isLeaf ) {
       aveDeep += deep;
@@ -101,10 +87,10 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
 
    timer.start();
    splitter_s pivots;
-   std::array<uint32_t, BUCKET_NUM> sums;
+   std::array<uint_fast32_t, BUCKET_NUM> sums;
 
-   node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
-                                 0, Dim, pivots, PIVOT_NUM + 1, sums );
+   node* KDParallelRoot =
+       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    timer.stop();
 
    std::cout << timer.total_time() << " " << std::flush;
@@ -118,8 +104,8 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    // for( int i = 0; i < N; i++ ) {
    //    bq[i].resize( K );
    // }
-   // parlay::sequence<double> visNum =
-   //     parlay::sequence<double>::uninitialized( N );
+   parlay::sequence<double> visNum =
+       parlay::sequence<double>::uninitialized( N );
    double aveVisNum = 0.0;
 
    timer.reset();

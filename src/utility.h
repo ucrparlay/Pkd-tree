@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bits/stdc++.h>
+#include <unistd.h>
 
 #include "parlay/alloc.h"
 #include "parlay/delayed.h"

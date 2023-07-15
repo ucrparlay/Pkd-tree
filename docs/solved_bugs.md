@@ -6,6 +6,7 @@ In memory of solved bugs.
 - `RE`: Forget to update split value after parallel; use NEW same name variable within if.
 - `WA`: When build multiple layers of tree at once, the cutting dimension will remain unchanged within these levels.
 - `Not-Bug`: When use `n-th element` on $k$-th dimension, sometimes both left and right would contain points with same coordiantes in dimension $k$. This is ok, sicne the KD tree will ONLY skip the right subtree if the distance to the cutting plane is larger than the best candidate. It is same to do so. 
+- `RE`: Use uninitialized parlay::sequence
 
 
 

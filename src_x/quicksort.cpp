@@ -8,8 +8,8 @@ constexpr int log2_base = 12;
 constexpr int BLOCK_SIZE = 1 << log2_base;
 constexpr int np = 16; // num_pivot
 
-inline uint32_t
-hash32( uint32_t a ) {
+inline uint_fast32_t
+hash32( uint_fast32_t a ) {
    a = ( a + 0x7ed55d16 ) + ( a << 12 );
    a = ( a ^ 0xc761c23c ) ^ ( a >> 19 );
    a = ( a + 0x165667b1 ) + ( a << 5 );

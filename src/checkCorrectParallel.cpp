@@ -28,25 +28,19 @@ typedef Neighbor_search::Tree Tree;
 int Dim, Q, K;
 long N;
 
-bool
-check( KDnode<Typename>* a, node* b, int dim ) {
-   if( b->is_leaf ) {
-      return true;
+void
+checkTreeSameSequential( node* T, int dim, const int& DIM ) {
+   if( T->is_leaf ) {
+      return;
    }
-
-   interior* TI = static_cast<interior*>( b );
-   bool flag = true;
-   if( a->p[0].x[dim] != TI->split.first ) {
-      flag = false;
-      LOG << " find different cutting plane: " << a->p[0].x[dim] << " "
-          << TI->split.first << ENDL;
-   }
-
-   if( ++dim >= Dim )
-      dim = 0;
-
-   return flag && ( !b->is_leaf && !a->isLeaf ) &&
-          check( a->left, TI->left, dim ) && check( a->right, TI->right, dim );
+   interior* TI = static_cast<interior*>( T );
+   assert( TI->split.second == dim );
+   dim = ( dim + 1 ) % DIM;
+   parlay::par_do_if(
+       T->size > SERIAL_BUILD_CUTOFF,
+       [&]() { checkTreeSameSequential( TI->left, dim, DIM ); },
+       [&]() { checkTreeSameSequential( TI->right, dim, DIM ); } );
+   return;
 }
 
 int
@@ -71,7 +65,7 @@ main( int argc, char* argv[] ) {
       }
    } else {
       K = 100;
-      coord box_size = 10000000;
+      coord box_size = 1000000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
@@ -108,25 +102,15 @@ main( int argc, char* argv[] ) {
    tree.build<CGAL::Parallel_tag>();
 
    //* kd tree
-   //!---------------begin serial kd tree---------------------
-   // KDtree<Typename> KD;
-   // Point<Typename>* kdPoint;
-   // kdPoint = new Point<Typename>[N];
-   // parlay::parallel_for( 0, N, [&]( size_t i ) {
-   //    for( int j = 0; j < Dim; j++ ) {
-   //       kdPoint[i].x[j] = wp[i].pnt[j];
-   //    }
-   // } );
-   // KDnode<Typename>* KDroot = KD.init( Dim, 8, kdPoint, N );
-   //!----------------end serial kd tree-----------------------
 
    points wo( wp.size() );
-   splitter_s pivots;
-   std::array<uint32_t, BUCKET_NUM> sums;
 
-   node* KDParallelRoot = build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ),
-                                 0, Dim, pivots, BUCKET_NUM + 1, sums );
+   node* KDParallelRoot =
+       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    LOG << "finish build" << ENDL << std::flush;
+
+   checkTreeSameSequential( KDParallelRoot, 0, Dim );
+
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;
 

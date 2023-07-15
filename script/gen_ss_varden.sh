@@ -1,6 +1,8 @@
 #!/bin/bash
 #* source: https://sites.google.com/view/approxdbscan
 
+download=0
+
 while getopts "w:g:n:d:v:" option; do
     case $option in
     w)
@@ -30,9 +32,8 @@ fi
 echo "${download} ${gnum} ${node} ${dim} ${varDensity}"
 
 vardenPath="../src_x/DBSCAN"
-outPath="../benchmark/ss_varden/"
+outPath="/ssd0/zmen002/kdtree/ss_varden/"
 
-mkdir "../benchmark/ss_varden/"
 mkdir ${outPath}${node}_${dim}
 
 for gi in $(seq 1 1 ${gnum}); do

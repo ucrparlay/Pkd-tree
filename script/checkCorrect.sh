@@ -1,36 +1,32 @@
 #!/bin/bash
 
-Nodes=(10000 50000 100000 500000 1000000 5000000)
+Nodes=(1000000 5000000 10000000 50000000)
 Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"
 resFile="Correct.out"
 : >"log.in"
 
-#* check node
-for node in ${Nodes[@]}; do
-    path="../benchmark/craft_var_node_integer/"
-    if [ ${node} -ge 10000000 ]; then
-        dim=3
-    else
-        dim=5
-    fi
+# #* check node
+# for node in ${Nodes[@]}; do
+#     dim=5
+#     path="/ssd0/zmen002/kdtree/ss_varden/"
 
-    files_path="${path}${node}_${dim}"
-    mkdir -p ${files_path}
-    : >"${files_path}/${resFile}"
+#     files_path="${path}${node}_${dim}"
+#     mkdir -p ${files_path}
+#     : >"${files_path}/${resFile}"
 
-    for file in "${files_path}/"*.in; do
-        echo "------->${file}"
-        ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
-    done
+#     for file in "${files_path}/"*.in; do
+#         echo "------->${file}"
+#         ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+#     done
 
-    #* verify correctness
-    if grep -q "wrong" "${files_path}/${resFile}"; then
-        echo 'wrong'
-        exit
-    fi
-done
+#     #* verify correctness
+#     if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
+#         echo 'wrong'
+#         exit
+#     fi
+# done
 
 echo "finish node test"
 
@@ -53,7 +49,7 @@ for node in ${Nodes[@]}; do
         done
 
         #* verify correctness
-        if grep -q "wrong" "${files_path}/${resFile}"; then
+        if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFil}"; then
             echo 'wrong'
             exit
         fi

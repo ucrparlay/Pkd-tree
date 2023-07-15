@@ -36,12 +36,15 @@ ppDistanceSquared( const point& p, const point& q, const int& DIM ) {
    return r;
 }
 
+//@ cut and then rotate
 template <typename slice>
 void
 divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
                int& bucket, const int& DIM ) {
    if( deep > BUILD_DEPTH_ONCE ) {
-      //! todo sometimes splitter can be -1
+      //! sometimes splitter can be -1
+      //! never use pivots[idx].first to check whether it is in bucket; instead,
+      //! use idx > PIVOT_NUM
       pivots[idx] = splitter( -1, bucket++ );
       return;
    }
@@ -77,7 +80,7 @@ pick_pivots( slice In, const size_t& n, splitter_s& pivots, const int& dim,
    return;
 }
 
-inline int
+inline uint_fast32_t
 find_bucket( const point& p, const splitter_s& pivots, const int& dim,
              const int& DIM ) {
    int k = 1, d = dim;
@@ -97,20 +100,21 @@ find_bucket( const point& p, const splitter_s& pivots, const int& dim,
 template <typename slice>
 void
 partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
-           std::array<uint32_t, BUCKET_NUM>& sums, const int& dim,
+           parlay::sequence<uint_fast32_t>& sums, const int& dim,
            const int& DIM ) {
    size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
-   auto offset = new std::array<uint32_t, BUCKET_NUM>[num_block] {};
+   parlay::sequence<parlay::sequence<uint_fast32_t>> offset(
+       num_block, parlay::sequence<uint_fast32_t>( BUCKET_NUM ) );
+   assert( offset.size() == num_block && offset[0].size() == BUCKET_NUM &&
+           offset[0][0] == 0 );
    parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      int k;
       for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
            j++ ) {
-         k = find_bucket( A[j], pivots, dim, DIM );
-         offset[i][k]++;
+         offset[i][std::move( find_bucket( A[j], pivots, dim, DIM ) )]++;
       }
    } );
 
-   sums = std::array<uint32_t, BUCKET_NUM>{};
+   sums = parlay::sequence<uint_fast32_t>( BUCKET_NUM );
    for( size_t i = 0; i < num_block; i++ ) {
       auto t = offset[i];
       offset[i] = sums;
@@ -118,8 +122,9 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
          sums[j] += t[j];
       }
    }
+
    parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      std::array<uint32_t, BUCKET_NUM> v;
+      auto v = parlay::sequence<uint_fast32_t>::uninitialized( BUCKET_NUM );
       int tot = 0, s_offset = 0;
       for( int k = 0; k < BUCKET_NUM - 1; k++ ) {
          v[k] = tot + offset[i][k];
@@ -129,81 +134,69 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
       v[BUCKET_NUM - 1] = tot + ( ( i << LOG2_BASE ) - s_offset );
       for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
            j++ ) {
-         int k = find_bucket( A[j], pivots, dim, DIM );
-         B[v[k]++] = A[j];
+         B[v[std::move( find_bucket( A[j], pivots, dim, DIM ) )]++] = A[j];
       }
    } );
 
-   delete offset;
+   decltype( offset )().swap( offset );
    return;
 }
 
-inline size_t
-count_left_right( int k, const splitter_s& pivots,
-                  const std::array<uint32_t, BUCKET_NUM>& sums ) {
-   if( k > PIVOT_NUM ) {
-      assert( k - PIVOT_NUM - 1 < BUCKET_NUM );
-      return sums[pivots[k].second];
+node*
+build_inner_tree( uint_fast32_t idx, splitter_s& pivots,
+                  parlay::sequence<node*>& treeNodes ) {
+   if( idx > PIVOT_NUM ) {
+      assert( idx - PIVOT_NUM - 1 < BUCKET_NUM );
+      return treeNodes[idx - PIVOT_NUM - 1];
    }
-   return count_left_right( k * 2, pivots, sums ) +
-          count_left_right( k * 2 + 1, pivots, sums );
+   node *L, *R;
+   L = build_inner_tree( idx * 2, pivots, treeNodes );
+   R = build_inner_tree( idx * 2 + 1, pivots, treeNodes );
+   return interior_allocator.allocate( L, R, pivots[idx] );
 }
 
 //@ Parallel KD tree cores
 template <typename slice>
 node*
-build( slice In, slice Out, int dim, const int& DIM, splitter_s pivots,
-       int pivotIndex, std::array<uint32_t, BUCKET_NUM> sums ) {
-   size_t n = In.size(), cut = 0;
-   splitter split;
+build( slice In, slice Out, int dim, const int& DIM ) {
+   size_t n = In.size();
 
    if( n <= LEAVE_WRAP ) {
-      return leaf_allocator.allocate( parlay::to_sequence( In ) );
+      return leaf_allocator.allocate( std::move( parlay::to_sequence( In ) ) );
    }
 
-   if( n <= SERIAL_BUILD_CUTOFF ) { //* serial run nth element
-      if( pivotIndex > PIVOT_NUM ) {
-         std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                           pointLess( dim ) );
-         cut = n / 2;
-         split.first = In[n / 2].pnt[dim];
-         pivotIndex = PIVOT_NUM + 1;
-      }
-      std::swap( In, Out );
-   } else { //* parallel partitons
-      if( pivotIndex > PIVOT_NUM ) {
-         pick_pivots( In, n, pivots, dim, DIM );
-         pivotIndex = 1;
-         partition( In, Out, n, pivots, sums, dim, DIM );
-         // pivots = pivots.pop_tail( BUCKET_NUM );
-         assert( In.size() != 0 && Out.size() != 0 );
-      } else {
-         std::swap( In, Out );
-      }
+   //* serial run nth element
+   if( n <= SERIAL_BUILD_CUTOFF ) {
+      std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+                        pointLess( dim ) );
+      size_t cut = n / 2;
+      splitter split = splitter( In[n / 2].pnt[dim], dim );
+      dim = ( dim + 1 ) % DIM;
+      node *L, *R;
+      L = build( In.cut( 0, cut ), Out.cut( 0, cut ), dim, DIM );
+      R = build( In.cut( cut, n ), Out.cut( cut, n ), dim, DIM );
+      return interior_allocator.allocate( L, R, split );
    }
 
-   if( pivotIndex <= PIVOT_NUM ) {
-      // puts( "already divided" );
-      assert( pivots[pivotIndex].second == dim );
-      split.first = pivots[pivotIndex].first;
-      cut = count_left_right( pivotIndex * 2, pivots, sums );
-      assert( cut + count_left_right( pivotIndex * 2 + 1, pivots, sums ) == n );
-   }
-
-   node *L, *R;
-   split.second = dim;
-   dim = ( dim + 1 ) % DIM;
-   parlay::par_do_if(
-       n > SERIAL_BUILD_CUTOFF,
-       [&]() {
-          L = build( Out.cut( 0, cut ), In.cut( 0, cut ), dim, DIM, pivots,
-                     2 * pivotIndex, sums );
+   //* parallel partitons
+   splitter_s pivots;
+   parlay::sequence<uint_fast32_t> sums;
+   pick_pivots( In, n, pivots, dim, DIM );
+   partition( In, Out, n, pivots, sums, dim, DIM );
+   auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
+   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
+   parlay::parallel_for(
+       0, BUCKET_NUM,
+       [&]( size_t i ) {
+          size_t start = 0;
+          for( int j = 0; j < i; j++ ) {
+             start += sums[j];
+          }
+          treeNodes[i] = build( Out.cut( start, start + sums[i] ),
+                                In.cut( start, start + sums[i] ), dim, DIM );
        },
-       [&]() {
-          R = build( Out.cut( cut, n ), In.cut( cut, n ), dim, DIM, pivots,
-                     2 * pivotIndex + 1, sums );
-       } );
-   return interior_allocator.allocate( L, R, split );
+       1 );
+   return build_inner_tree( 1, pivots, treeNodes );
 }
 
 //? parallel query
@@ -262,9 +255,7 @@ delete_tree( node* T ) { //* delete tree in parallel
 template node*
 build<parlay::slice<point*, point*>>( parlay::slice<point*, point*> In,
                                       parlay::slice<point*, point*> Out,
-                                      int dim, const int& DIM,
-                                      splitter_s pivots, int pivotIndex,
-                                      std::array<uint32_t, BUCKET_NUM> sums );
+                                      int dim, const int& DIM );
 
 //*----------------------------USELESS------------------------------------
 template <typename slice>
