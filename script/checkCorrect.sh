@@ -7,26 +7,26 @@ tester="checkCorrectParallel"
 resFile="Correct.out"
 : >"log.in"
 
-# #* check node
-# for node in ${Nodes[@]}; do
-#     dim=5
-#     path="/ssd0/zmen002/kdtree/ss_varden/"
+#* check node
+for node in ${Nodes[@]}; do
+    dim=5
+    path="/ssd0/zmen002/kdtree/ss_varden/"
 
-#     files_path="${path}${node}_${dim}"
-#     mkdir -p ${files_path}
-#     : >"${files_path}/${resFile}"
+    files_path="${path}${node}_${dim}"
+    mkdir -p ${files_path}
+    : >"${files_path}/${resFile}"
 
-#     for file in "${files_path}/"*.in; do
-#         echo "------->${file}"
-#         ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
-#     done
+    for file in "${files_path}/"*.in; do
+        echo "------->${file}"
+        ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+    done
 
-#     #* verify correctness
-#     if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
-#         echo 'wrong'
-#         exit
-#     fi
-# done
+    #* verify correctness
+    if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
+        echo 'wrong'
+        exit
+    fi
+done
 
 echo "finish node test"
 
@@ -49,7 +49,7 @@ for node in ${Nodes[@]}; do
         done
 
         #* verify correctness
-        if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFil}"; then
+        if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
             echo 'wrong'
             exit
         fi

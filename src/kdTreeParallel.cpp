@@ -143,7 +143,7 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
 }
 
 node*
-build_inner_tree( uint_fast32_t idx, splitter_s& pivots,
+build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
                   parlay::sequence<node*>& treeNodes ) {
    if( idx > PIVOT_NUM ) {
       assert( idx - PIVOT_NUM - 1 < BUCKET_NUM );
@@ -169,12 +169,11 @@ build( slice In, slice Out, int dim, const int& DIM ) {
    if( n <= SERIAL_BUILD_CUTOFF ) {
       std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                         pointLess( dim ) );
-      size_t cut = n / 2;
       splitter split = splitter( In[n / 2].pnt[dim], dim );
       dim = ( dim + 1 ) % DIM;
       node *L, *R;
-      L = build( In.cut( 0, cut ), Out.cut( 0, cut ), dim, DIM );
-      R = build( In.cut( cut, n ), Out.cut( cut, n ), dim, DIM );
+      L = build( In.cut( 0, n / 2 ), Out.cut( 0, n / 2 ), dim, DIM );
+      R = build( In.cut( n / 2, n ), Out.cut( n / 2, n ), dim, DIM );
       return interior_allocator.allocate( L, R, split );
    }
 
@@ -205,37 +204,22 @@ k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
            size_t& visNodeNum ) {
    visNodeNum++;
 
-   // coord d, dx, dx2;
    if( T->is_leaf ) {
       leaf* TL = static_cast<leaf*>( T );
       for( int i = 0; i < TL->size; i++ ) {
-         // d = ppDistanceSquared( q, TL->pts[i], DIM );
-         // bq.insert( d );
          bq.insert( std::move( ppDistanceSquared( q, TL->pts[i], DIM ) ) );
       }
       return;
    }
 
    interior* TI = static_cast<interior*>( T );
-   auto distance2Plane = [&]() -> size_t {
-      return TI->split.first - q.pnt[TI->split.second];
-   };
+   auto dx = [&]() { return TI->split.first - q.pnt[TI->split.second]; };
 
-   // dx = TI->split.first - q.pnt[TI->split.second];
-   // dx2 = dx * dx;
-
-   k_nearest( TI->split.first - q.pnt[TI->split.second] > 0 ? TI->left
-                                                            : TI->right,
-              q, DIM, bq, visNodeNum );
-   if( ( TI->split.first - q.pnt[TI->split.second] ) *
-               ( TI->split.first - q.pnt[TI->split.second] ) >
-           bq.top() &&
-       bq.full() ) {
+   k_nearest( dx() > 0 ? TI->left : TI->right, q, DIM, bq, visNodeNum );
+   if( dx() * dx() > bq.top() && bq.full() ) {
       return;
    }
-   k_nearest( ( TI->split.first - q.pnt[TI->split.second] ) > 0 ? TI->right
-                                                                : TI->left,
-              q, DIM, bq, visNodeNum );
+   k_nearest( dx() > 0 ? TI->right : TI->left, q, DIM, bq, visNodeNum );
 }
 
 void
