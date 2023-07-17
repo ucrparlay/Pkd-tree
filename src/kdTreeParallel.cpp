@@ -1,33 +1,12 @@
 #include "kdTreeParallel.h"
 
 //@ Find Bounding Box
-coords
-center( box& b ) {
-   coords r;
-   for( int i = 0; i < dims; i++ )
-      r[i] = ( b.first[i] + b.second[i] ) / 2;
-   return r;
-}
-
-box
-bound_box( const parlay::sequence<point>& P ) {
-   auto pts = parlay::map( P, []( point p ) { return p.pnt; } );
-   auto x = box{ parlay::reduce( pts, parlay::binary_op( minv, coords() ) ),
-                 parlay::reduce( pts, parlay::binary_op( maxv, coords() ) ) };
-   return x;
-}
-
-box
-bound_box( const box& b1, const box& b2 ) {
-   return box{ minv( b1.first, b2.first ), maxv( b1.second, b2.second ) };
-}
-
-parlay::type_allocator<leaf> leaf_allocator;
-parlay::type_allocator<interior> interior_allocator;
 
 //@ Support Functions
+template <typename point>
 inline coord
-ppDistanceSquared( const point& p, const point& q, const int& DIM ) {
+ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
+                                          const int& DIM ) {
    coord r = 0, diff = 0;
    for( int i = 0; i < DIM; i++ ) {
       diff = p.pnt[i] - q.pnt[i];
@@ -37,10 +16,11 @@ ppDistanceSquared( const point& p, const point& q, const int& DIM ) {
 }
 
 //@ cut and then rotate
-template <typename slice>
+template <typename point>
 void
-divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
-               int& bucket, const int& DIM ) {
+ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, int dim,
+                                      int idx, int deep, int& bucket,
+                                      const int& DIM ) {
    if( deep > BUILD_DEPTH_ONCE ) {
       //! sometimes splitter can be -1
       //! never use pivots[idx].first to check whether it is in bucket; instead,
@@ -61,10 +41,11 @@ divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,
 }
 
 //@ starting at dimesion dim and pick pivots in a rotation manner
-template <typename slice>
+template <typename point>
 void
-pick_pivots( slice In, const size_t& n, splitter_s& pivots, const int& dim,
-             const int& DIM ) {
+ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
+                                    splitter_s& pivots, const int& dim,
+                                    const int& DIM ) {
    size_t size = (size_t)std::log2( n ) * PIVOT_NUM;
    assert( size < n );
    assert( n / size > 2.0 );
@@ -80,9 +61,10 @@ pick_pivots( slice In, const size_t& n, splitter_s& pivots, const int& dim,
    return;
 }
 
+template <typename point>
 inline uint_fast32_t
-find_bucket( const point& p, const splitter_s& pivots, const int& dim,
-             const int& DIM ) {
+ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots,
+                                    const int& dim, const int& DIM ) {
    int k = 1, d = dim;
    while( k <= PIVOT_NUM ) {
       assert( d == pivots[k].second );
@@ -97,11 +79,12 @@ find_bucket( const point& p, const splitter_s& pivots, const int& dim,
    return pivots[k].second;
 }
 
-template <typename slice>
+template <typename point>
 void
-partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
-           parlay::sequence<uint_fast32_t>& sums, const int& dim,
-           const int& DIM ) {
+ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
+                                  const splitter_s& pivots,
+                                  parlay::sequence<uint_fast32_t>& sums,
+                                  const int& dim, const int& DIM ) {
    size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
    parlay::sequence<parlay::sequence<uint_fast32_t>> offset(
        num_block, parlay::sequence<uint_fast32_t>( BUCKET_NUM ) );
@@ -142,9 +125,10 @@ partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
    return;
 }
 
-node*
-build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
-                  parlay::sequence<node*>& treeNodes ) {
+template <typename point>
+ParallelKDtree<point>::node*
+ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
+                                         parlay::sequence<node*>& treeNodes ) {
    if( idx > PIVOT_NUM ) {
       assert( idx - PIVOT_NUM - 1 < BUCKET_NUM );
       return treeNodes[idx - PIVOT_NUM - 1];
@@ -156,9 +140,9 @@ build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
 }
 
 //@ Parallel KD tree cores
-template <typename slice>
-node*
-build( slice In, slice Out, int dim, const int& DIM ) {
+template <typename point>
+ParallelKDtree<point>::node*
+ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
    size_t n = In.size();
 
    if( n <= LEAVE_WRAP ) {
@@ -199,9 +183,11 @@ build( slice In, slice Out, int dim, const int& DIM ) {
 }
 
 //? parallel query
+template <typename point>
 void
-k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
-           size_t& visNodeNum ) {
+ParallelKDtree<point>::k_nearest( node* T, const point& q, const int& DIM,
+                                  kBoundedQueue<coord>& bq,
+                                  size_t& visNodeNum ) {
    visNodeNum++;
 
    if( T->is_leaf ) {
@@ -222,8 +208,9 @@ k_nearest( node* T, const point& q, const int& DIM, kBoundedQueue<coord>& bq,
    k_nearest( dx() > 0 ? TI->right : TI->left, q, DIM, bq, visNodeNum );
 }
 
+template <typename point>
 void
-delete_tree( node* T ) { //* delete tree in parallel
+ParallelKDtree<point>::delete_tree( node* T ) { //* delete tree in parallel
    if( T->is_leaf )
       leaf_allocator.retire( static_cast<leaf*>( T ) );
    else {
@@ -236,101 +223,9 @@ delete_tree( node* T ) { //* delete tree in parallel
 }
 
 //@ Template declation
-template node*
-build<parlay::slice<point*, point*>>( parlay::slice<point*, point*> In,
-                                      parlay::slice<point*, point*> Out,
-                                      int dim, const int& DIM );
-
-//*----------------------------USELESS------------------------------------
-template <typename slice>
-coord
-pick_single_pivot( slice A, const size_t& n, const int& dim ) {
-   size_t size = PIVOT_NUM << 1 | 1;
-   coord arr[size];
-   for( size_t i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim];
-   }
-   std::sort( arr, arr + size );
-   std::array<coord, PIVOT_NUM> pivots;
-   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
-      pivots[i] = arr[i << 1 | 1];
-   }
-   if( arr[0] == arr[1] ) {
-      pivots[0] = pivots[1];
-   } else if( arr[3] == arr[4] ) {
-      pivots[1] = pivots[0];
-   }
-   return pivots[PIVOT_NUM >> 1];
-}
-
-template <typename slice>
-std::array<coord, PIVOT_NUM>
-pick_pivots_one_dimension( slice A, const size_t& n, const int& dim ) {
-   size_t size = PIVOT_NUM << 1 | 1; //* 2*PIVOT_NUM+1 size
-   coord arr[size];
-   for( size_t i = 0; i < size; i++ ) {
-      arr[i] = A[i * ( n / size )].pnt[dim]; //* sample cutting dimension in A
-   }
-   std::sort( arr, arr + size );
-   std::array<coord, PIVOT_NUM> pivots;
-   for( size_t i = 0; i < PIVOT_NUM; i++ ) {
-      pivots[i] = arr[i << 1 | 1]; //* pick PIVOT_NUM within cadidates
-   }
-   if( arr[0] == arr[1] ) {
-      pivots[0] = pivots[1];
-   } else if( arr[3] == arr[4] ) {
-      pivots[1] = pivots[0];
-   }
-   return pivots;
-}
-
-template <typename slice>
-std::array<int, PIVOT_NUM>
-partition_one_dimension( slice A, slice B, const size_t& n,
-                         const std::array<coord, PIVOT_NUM>& pivots,
-                         const int& dim ) {
-   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
-   auto offset = new std::array<int, PIVOT_NUM>[num_block] {};
-   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
-           j++ ) {
-         for( int k = 0; k < PIVOT_NUM; k++ ) {
-            if( A[j].pnt[dim] < pivots[k] ) {
-               offset[i][k]++;
-               break;
-            }
-         }
-      }
-   } );
-
-   std::array<int, PIVOT_NUM> sums{};
-   for( size_t i = 0; i < num_block; i++ ) {
-      auto t = offset[i];
-      offset[i] = sums;
-      for( int j = 0; j < PIVOT_NUM; j++ ) {
-         sums[j] += t[j];
-      }
-   }
-   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-      std::array<int, PIVOT_NUM + 1> v;
-      int tot = 0, s_offset = 0;
-      for( int k = 0; k < PIVOT_NUM; k++ ) {
-         v[k] = tot + offset[i][k];
-         tot += sums[k];
-         s_offset += offset[i][k];
-      }
-      v[PIVOT_NUM] = tot + ( ( i << LOG2_BASE ) - s_offset );
-      for( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
-           j++ ) {
-         int k;
-         for( k = 0; k < PIVOT_NUM; k++ ) {
-            if( A[j].pnt[dim] < pivots[k] ) {
-               break;
-            }
-         }
-         B[v[k]++] = A[j];
-      }
-   } );
-   delete offset;
-   return sums;
-}
+template class ParallelKDtree<point2D>;
+template class ParallelKDtree<point3D>;
+template class ParallelKDtree<point5D>;
+template class ParallelKDtree<point7D>;
+template class ParallelKDtree<point9D>;
+template class ParallelKDtree<point10D>;

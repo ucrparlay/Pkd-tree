@@ -14,6 +14,7 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 using Typename = coord;
+using points = parlay::sequence<point10D>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
@@ -28,18 +29,19 @@ typedef Neighbor_search::Tree Tree;
 int Dim, Q, K;
 long N;
 
+template <typename tree>
 void
-checkTreeSameSequential( node* T, int dim, const int& DIM ) {
+checkTreeSameSequential( typename tree::node* T, int dim, const int& DIM ) {
    if( T->is_leaf ) {
       return;
    }
-   interior* TI = static_cast<interior*>( T );
+   typename tree::interior* TI = static_cast<typename tree::interior*>( T );
    assert( TI->split.second == dim );
    dim = ( dim + 1 ) % DIM;
    parlay::par_do_if(
-       T->size > SERIAL_BUILD_CUTOFF,
-       [&]() { checkTreeSameSequential( TI->left, dim, DIM ); },
-       [&]() { checkTreeSameSequential( TI->right, dim, DIM ); } );
+       T->size > 1000,
+       [&]() { checkTreeSameSequential<tree>( TI->left, dim, DIM ); },
+       [&]() { checkTreeSameSequential<tree>( TI->right, dim, DIM ); } );
    return;
 }
 
@@ -65,7 +67,7 @@ main( int argc, char* argv[] ) {
       }
    } else {
       K = 100;
-      coord box_size = 1000000;
+      size_t box_size = 1000000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
@@ -96,20 +98,22 @@ main( int argc, char* argv[] ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       BLOCK_SIZE );
+       1000 );
    Median_of_rectangle median;
    Tree tree( _points.begin(), _points.end(), median );
    tree.build<CGAL::Parallel_tag>();
 
    //* kd tree
 
+   using pkdtree = ParallelKDtree<point10D>;
+   pkdtree pkd;
    points wo( wp.size() );
 
-   node* KDParallelRoot =
-       build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   auto KDParallelRoot =
+       pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    LOG << "finish build" << ENDL << std::flush;
 
-   checkTreeSameSequential( KDParallelRoot, 0, Dim );
+   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
 
    // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
    // return 0;
@@ -131,7 +135,7 @@ main( int argc, char* argv[] ) {
    parlay::parallel_for( 0, N, [&]( size_t i ) {
       size_t visNodeNum = 0;
       bq[i].resize( K );
-      k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+      pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
       kdknn[i] = bq[i].top();
    } );
 

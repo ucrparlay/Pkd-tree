@@ -33,6 +33,8 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
     Neighbor_search_Midpoint;
 typedef Neighbor_search_Midpoint::Tree Tree_Midpoint;
 
+using points = parlay::sequence<point10D>;
+
 //@ begin function
 template <typename Splitter, typename Tree, typename Neighbor_search>
 void
@@ -47,7 +49,7 @@ testCGALSerial( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       BLOCK_SIZE );
+       1000 );
 
    timer.start();
    Splitter split;
@@ -97,7 +99,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
           _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
                                 ( std::begin( wp[i].pnt ) + Dim ) );
        },
-       BLOCK_SIZE );
+       1000 );
 
    timer.start();
    Splitter split;

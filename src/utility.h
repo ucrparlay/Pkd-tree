@@ -9,6 +9,39 @@
 #include "parlay/sequence.h"
 #include "parlay/utilities.h"
 
+//*---------- point definition ------------------
+using coord = long; // type of each coordinate
+
+struct point2D {
+   using coords = std::array<coord, 2>;
+   coords pnt;
+};
+struct point3D {
+   using coords = std::array<coord, 3>;
+   coords pnt;
+};
+struct point5D {
+   using coords = std::array<coord, 5>;
+   coords pnt;
+};
+struct point7D {
+   using coords = std::array<coord, 7>;
+   coords pnt;
+};
+struct point9D {
+   using coords = std::array<coord, 9>;
+   coords pnt;
+};
+struct point10D {
+   using coords = std::array<coord, 10>;
+   coords pnt;
+};
+struct point15D {
+   using coords = std::array<coord, 15>;
+   coords pnt;
+};
+
+//*----------- double precision comparision ----------------
 constexpr double eps = 1e-7;
 
 template <typename T>
