@@ -104,7 +104,6 @@ main( int argc, char* argv[] ) {
    tree.build<CGAL::Parallel_tag>();
 
    //* kd tree
-
    using pkdtree = ParallelKDtree<point10D>;
    pkdtree pkd;
    points wo( wp.size() );

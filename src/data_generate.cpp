@@ -18,7 +18,7 @@ long long pnum = 8e5;
 long long dim = 5;
 long long numFile = 3;
 using Typename = long;
-const Typename dataRange = 1e5;
+const Typename dataRange = 1e6;
 
 std::string path = "../benchmark/craft_var_node_integer";
 std::default_random_engine generator;

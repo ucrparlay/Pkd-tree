@@ -41,62 +41,10 @@ class ParallelKDtree {
  private:
    int Dims;
 
-   // **************************************************************
-   //! bounding box (min value on each dimension, and max on each)
-   // **************************************************************
-
    // TODO: handle double precision
 
    // Given two points, return the min. value on each dimension
    // minv[i] = smaller value of two points on i-th dimension
-
-   coords
-   center( box& b ) {
-      coords r;
-      for( int i = 0; i < Dims; i++ )
-         r[i] = ( b.first[i] + b.second[i] ) / 2;
-      return r;
-   }
-
-   box
-   bound_box_from_points( const parlay::sequence<point>& P ) {
-      auto minv = [&]( coords a, coords b ) {
-         coords r;
-         for( int i = 0; i < Dims; i++ )
-            r[i] = std::min( a[i], b[i] );
-         return r;
-      };
-
-      auto maxv = [&]( coords a, coords b ) {
-         coords r;
-         for( int i = 0; i < Dims; i++ )
-            r[i] = std::max( a[i], b[i] );
-         return r;
-      };
-      auto pts = parlay::map( P, []( point p ) { return p.pnt; } );
-      auto x =
-          box{ parlay::reduce( pts, parlay::binary_op( minv, coords() ) ),
-               parlay::reduce( pts, parlay::binary_op( maxv, coords() ) ) };
-      return x;
-   }
-
-   box
-   bound_box_from_boxes( const box& b1, const box& b2 ) {
-      auto minv = [&]( coords a, coords b ) {
-         coords r;
-         for( int i = 0; i < Dims; i++ )
-            r[i] = std::min( a[i], b[i] );
-         return r;
-      };
-
-      auto maxv = [&]( coords a, coords b ) {
-         coords r;
-         for( int i = 0; i < Dims; i++ )
-            r[i] = std::max( a[i], b[i] );
-         return r;
-      };
-      return box( minv( b1.first, b2.first ), maxv( b1.second, b2.second ) );
-   }
 
    // **************************************************************
    // Tree structure, leafs and interior extend the base node class

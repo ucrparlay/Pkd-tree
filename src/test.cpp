@@ -29,23 +29,12 @@ traverseParallelTree( typename tree::node* root, int deep ) {
    return;
 }
 
-template <typename tree>
 void
-testSerialKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, size_t N,
+testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t N,
                   int K ) {
-   using points = typename tree::points;
    parlay::internal::timer timer;
 
    KDtree<Typename> KD;
-   Point<Typename>* kdPoint;
-   kdPoint = new Point<Typename>[N];
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      for( int j = 0; j < Dim; j++ ) {
-         kdPoint[i].x[j] = wp[i].pnt[j];
-      }
-   } );
-   points pts;
-   pts.swap( wp );
 
    timer.start();
    KDnode<Typename>* KDroot = KD.init( Dim, LEAVE_WRAP, kdPoint, N );
@@ -95,7 +84,6 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
    points wo( wp.size() );
    tree pkd;
    timer.start();
-
    node* KDParallelRoot =
        pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    timer.stop();
@@ -144,13 +132,10 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
 
 int
 main( int argc, char* argv[] ) {
-   ;
    assert( argc >= 2 );
-   using tree = ParallelKDtree<point3D>;
-   tree pkd;
    int K = 100, LEAVE_WRAP = 16, Dim;
    long N;
-   tree::points wp;
+   Point<Typename>* wp;
    std::string name( argv[1] );
 
    //* initialize points
@@ -163,16 +148,15 @@ main( int argc, char* argv[] ) {
 
       scanf( "%ld%d", &N, &Dim );
       assert( N >= K );
-      wp.resize( N );
-
+      wp = new Point<Typename>[N];
       for( int i = 0; i < N; i++ ) {
          for( int j = 0; j < Dim; j++ ) {
-            scanf( "%ld", &wp[i].pnt[j] );
+            scanf( "%ld", &wp[i].x[j] );
          }
       }
    } else { //* construct data byself
       K = 100;
-      coord box_size = 10000000;
+      coord box_size = 1000000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
@@ -184,14 +168,14 @@ main( int argc, char* argv[] ) {
       long n = std::stoi( argv[1] );
       N = n;
       Dim = std::stoi( argv[2] );
-      wp.resize( N );
+      wp = new Point<Typename>[N];
       // generate n random points in a cube
       parlay::parallel_for(
           0, n,
           [&]( long i ) {
              auto r = gen[i];
              for( int j = 0; j < Dim; j++ ) {
-                wp[i].pnt[j] = dis( r );
+                wp[i].x[j] = dis( r );
              }
           },
           1000 );
@@ -202,15 +186,53 @@ main( int argc, char* argv[] ) {
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
    if( argc >= 4 ) {
-      if( std::stoi( argv[3] ) == 1 )
-         testParallelKDtree<tree>( Dim, LEAVE_WRAP, wp, N, K );
-      else if( std::stoi( argv[3] ) == 0 )
-         testSerialKDtree<tree>( Dim, LEAVE_WRAP, wp, N, K );
+      if( std::stoi( argv[3] ) == 0 )
+         testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+      else if( Dim == 3 ) {
+         auto pts = parlay::tabulate(
+             N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
+         delete[] wp;
+         testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N,
+                                                      K );
+      } else if( Dim == 5 ) {
+         auto pts = parlay::tabulate(
+             N, [&]( size_t i ) -> point5D { return point5D( wp[i].x ); } );
+         delete[] wp;
+         testParallelKDtree<ParallelKDtree<point5D>>( Dim, LEAVE_WRAP, pts, N,
+                                                      K );
+      } else if( Dim == 7 ) {
+         auto pts = parlay::tabulate(
+             N, [&]( size_t i ) -> point7D { return point7D( wp[i].x ); } );
+         delete[] wp;
+         testParallelKDtree<ParallelKDtree<point7D>>( Dim, LEAVE_WRAP, pts, N,
+                                                      K );
+      }
    }
 
    return 0;
 }
 
 template void
+testParallelKDtree<ParallelKDtree<point3D>>( int Dim, int LEAVE_WRAP,
+                                             ParallelKDtree<point3D>::points wp,
+                                             int N, int K );
+template void
+testParallelKDtree<ParallelKDtree<point5D>>( int Dim, int LEAVE_WRAP,
+                                             ParallelKDtree<point5D>::points wp,
+                                             int N, int K );
+template void
+testParallelKDtree<ParallelKDtree<point7D>>( int Dim, int LEAVE_WRAP,
+                                             ParallelKDtree<point7D>::points wp,
+                                             int N, int K );
+
+template void
 traverseParallelTree<ParallelKDtree<point3D>>(
     ParallelKDtree<point3D>::node* root, int deep );
+
+template void
+traverseParallelTree<ParallelKDtree<point5D>>(
+    ParallelKDtree<point5D>::node* root, int deep );
+
+template void
+traverseParallelTree<ParallelKDtree<point7D>>(
+    ParallelKDtree<point7D>::node* root, int deep );

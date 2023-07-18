@@ -18,14 +18,32 @@ struct point2D {
 };
 struct point3D {
    using coords = std::array<coord, 3>;
+   point3D() {}
+   point3D( const coords& _pnt ) : pnt( _pnt ){};
+   point3D( coord* x ) {
+      for( int i = 0; i < 3; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point5D {
    using coords = std::array<coord, 5>;
+   point5D() {}
+   point5D( const coords& _pnt ) : pnt( _pnt ){};
+   point5D( coord* x ) {
+      for( int i = 0; i < 5; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point7D {
    using coords = std::array<coord, 7>;
+   point7D() {}
+   point7D( const coords& _pnt ) : pnt( _pnt ){};
+   point7D( coord* x ) {
+      for( int i = 0; i < 7; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point9D {

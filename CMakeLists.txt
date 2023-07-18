@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 option(DEBUG "" ON)
 option(CILKPLUS "" OFF)
 option(OPENCILK "" OFF)
-option(SERIAL "" ON)
+option(SERIAL "" OFF)
 option(STDALLOC "" OFF)
 option(CGAL "" ON)
 
@@ -62,7 +62,7 @@ add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
 
 # parlay::zd tree
-add_executable(zdtree ../src_x/zdtree/knn.cpp)
+add_executable(zdtree ../src_x/zdtree.cpp)
 target_link_libraries(zdtree PUBLIC parlay)
 
 # CGAL
@@ -90,8 +90,10 @@ if(CGAL)
   list(APPEND CGAL_3RD_PARTY_LIBRARIES ${TBB_LIBRARIES})
 
   # executables
-  add_executable(cgal "../src/cgal.cpp")
+  add_executable(cgal "../src_x/cgal.cpp")
   target_link_libraries(cgal PUBLIC CGAL::CGAL CGAL::TBB_support)
+  target_include_directories(cgal INTERFACE kdTreeParallel)
+
 
   add_executable(checkCorrect ../src/checkCorrect.cpp)
   target_link_libraries(checkCorrect PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
