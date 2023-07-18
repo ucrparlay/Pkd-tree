@@ -2,7 +2,7 @@
 
 Solvers=("cgal" "test")
 Node=(10000000 50000000 100000000)
-path="../benchmark/ss_varden/"
+path="/ssd0/zmen002/kdtree/ss_varden/"
 SerialTag=(0 1)
 dim=3
 T=3600
@@ -20,6 +20,7 @@ for solver in ${Solvers[@]}; do
                 resFile="res_serial.out"
             else
                 resFile="res_parallel.out"
+                # resFile="res_parallel_one_core.out"
             fi
         elif [[ ${solver} == "cgal" ]]; then
             if [[ ${tag} == 0 ]]; then
@@ -29,19 +30,25 @@ for solver in ${Solvers[@]}; do
                 continue
                 resFile="cgal_res_parallel.out"
             fi
+        elif [[ ${solver} == "zdtree" ]]; then
+            if [[ ${tag} == 1 ]]; then
+                resfile="zdtree.out"
+            else
+                continue
+            fi
         fi
 
         #* node main body
         for node in ${Node[@]}; do
             files_path="${path}${node}_${dim}"
-            mkdir -p ${files_path}
-            dest="${files_path}/${resFile}"
+            log_path="../benchmark/ss_varden/${node}_${dim}"
+            mkdir -p ${log_path}
+            dest="${log_path}/${resFile}"
             : >${dest}
             echo ">>>${dest}"
 
-            for file in "${files_path}/"*.in; do
-                # echo ${file}
-                timeout ${T} ../build/${solver} ${file} ${K} ${tag} >>${dest}
+            for ((i = 1; i <= 2; i++)); do
+                timeout ${T} numactl -i all ../build/${solver} "${files_path}/${i}.in" ${k} ${tag} >>${dest}
 
                 retval=$?
                 if [ ${retval} -eq 124 ]; then

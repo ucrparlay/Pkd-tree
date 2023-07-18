@@ -89,7 +89,6 @@ template <typename Splitter, typename Tree, typename Neighbor_search>
 void
 testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    parlay::internal::timer timer;
-   puts( "here" );
    //* cgal
    std::vector<Point_d> _points( N );
    parlay::parallel_for(
@@ -171,7 +170,7 @@ main( int argc, char* argv[] ) {
       }
    } else { //* construct data byself
       K = 100;
-      coord box_size = 1000000;
+      coord box_size = 10000000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()

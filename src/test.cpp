@@ -156,7 +156,7 @@ main( int argc, char* argv[] ) {
       }
    } else { //* construct data byself
       K = 100;
-      coord box_size = 1000000;
+      coord box_size = 10000000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()
@@ -186,9 +186,15 @@ main( int argc, char* argv[] ) {
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
    if( argc >= 4 ) {
-      if( std::stoi( argv[3] ) == 0 )
+      if( std::stoi( argv[3] ) == 0 ) //* serial run
          testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-      else if( Dim == 3 ) {
+      else if( Dim == 2 ) {
+         auto pts = parlay::tabulate(
+             N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
+         delete[] wp;
+         testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N,
+                                                      K );
+      } else if( Dim == 3 ) {
          auto pts = parlay::tabulate(
              N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
          delete[] wp;

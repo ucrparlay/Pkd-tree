@@ -3,9 +3,9 @@
 
 download=0
 
-while getopts "w:g:n:d:v:" option; do
+while getopts "d:g:n:d:v:" option; do
     case $option in
-    w)
+    d)
         download=$OPTARG
         ;;
     g)

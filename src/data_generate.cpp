@@ -18,9 +18,10 @@ long long pnum = 8e5;
 long long dim = 5;
 long long numFile = 3;
 using Typename = long;
-const Typename dataRange = 1e6;
+const Typename dataRange = 1e7;
 
-std::string path = "../benchmark/craft_var_node_integer";
+// std::string path = "../benchmark/craft_var_node_integer";
+std::string path = "/ssd0/zmen002/kdtree/uniform";
 std::default_random_engine generator;
 struct kd_node_t {
    Typename x[15];
@@ -89,7 +90,7 @@ main( int argc, char* argv[] ) {
    node = (kd_node_t*)malloc( pnum * sizeof( kd_node_t ) );
 
    for( long long i = 0; i < numFile; i++ ) {
-      std::string newpath = path + toString( i ) + ".in";
+      std::string newpath = path + toString( i + 1 ) + ".in";
       std::cout << newpath << std::endl;
       f.open( newpath );
       generatePoints( f );

@@ -14,6 +14,12 @@ using coord = long; // type of each coordinate
 
 struct point2D {
    using coords = std::array<coord, 2>;
+   point2D() {}
+   point2D( const coords& _pnt ) : pnt( _pnt ){};
+   point2D( coord* x ) {
+      for( int i = 0; i < 2; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point3D {
@@ -48,10 +54,22 @@ struct point7D {
 };
 struct point9D {
    using coords = std::array<coord, 9>;
+   point9D() {}
+   point9D( const coords& _pnt ) : pnt( _pnt ){};
+   point9D( coord* x ) {
+      for( int i = 0; i < 9; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point10D {
    using coords = std::array<coord, 10>;
+   point10D() {}
+   point10D( const coords& _pnt ) : pnt( _pnt ){};
+   point10D( coord* x ) {
+      for( int i = 0; i < 10; i++ )
+         pnt[i] = x[i];
+   }
    coords pnt;
 };
 struct point15D {

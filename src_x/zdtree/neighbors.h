@@ -20,8 +20,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-bool report_stats = true;
-int algorithm_version = 2;
+bool report_stats = false;
+int algorithm_version = 0;
 // 0=root based, 1=bit based, >2=map based
 
 #include <math.h>
@@ -39,7 +39,7 @@ int algorithm_version = 2;
 template <int max_k, class vtx>
 void
 ANN( parlay::sequence<vtx*>& v, int k ) {
-   timer t( "ANN", report_stats );
+   // timer t;
 
    {
       using knn_tree = k_nearest_neighbors<vtx, max_k>;
@@ -48,26 +48,30 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
       using box_delta = std::pair<box, double>;
       using point = typename vtx::pointT;
 
+      parlay::internal::timer t;
+      t.start();
       box whole_box = knn_tree::o_tree::get_box( v );
 
-      // create sequences for insertion and deletion
+      //* create sequences for insertion and deletion
       size_t size = v.size();
       size_t p = .5 * size;
-      parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>( p );
-      parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>( p );
-      parlay::parallel_for(
-          0, size,
-          [&]( size_t i ) {
-             if( i < p )
-                v1[i] = v[i];
-             else
-                v2[i - p] = v[i];
-          },
-          1 );
+      // parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>( p );
+      // parlay::sequence<vtx*> v2 = parlay::sequence<vtx*>( p );
+      // parlay::parallel_for(
+      //     0, size,
+      //     [&]( size_t i ) {
+      //        if( i < p )
+      //           v1[i] = v[i];
+      //        else
+      //           v2[i - p] = v[i];
+      //     },
+      //     1 );
 
-      // build tree with optional box
+      //* build tree with optional box
+
       knn_tree T( v, whole_box );
-      t.next( "build tree" );
+      t.stop();
+      std::cout << t.total_time() << " ";
 
       auto less = [&]( point a, point b ) {
          int d = a.dimension();
@@ -82,16 +86,16 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
          return false;
       };
 
-      auto points =
-          parlay::tabulate( v.size(), [&]( size_t i ) { return v[i]->pt; } );
-      auto ordered_points = parlay::remove_duplicates_ordered( points, less );
-      std::cout << points.size() << std::endl;
-      std::cout << ordered_points.size() << std::endl;
+      // auto points =
+      //     parlay::tabulate( v.size(), [&]( size_t i ) { return v[i]->pt; } );
+      // auto ordered_points = parlay::remove_duplicates_ordered( points, less
+      // ); std::cout << points.size() << std::endl; std::cout <<
+      // ordered_points.size() << std::endl;
 
-      // prelims for insert/delete
-      int dims = v[0]->pt.dimension();
-      node* root = T.tree.get();
-      box_delta bd = T.get_box_delta( dims );
+      //* prelims for insert/delete
+      // int dims = v[0]->pt.dimension();
+      // node* root = T.tree.get();
+      // box_delta bd = T.get_box_delta( dims );
 
       // batch-dynamic deletion
       // T.batch_delete(v2, root, bd.first, bd.second);
@@ -105,14 +109,18 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
          std::cout << "depth = " << T.tree->depth() << std::endl;
 
       if( algorithm_version == 0 ) { // this is for starting from root
-         // this reorders the vertices for locality
+         //* this reorders the vertices for locality
          // parlay::sequence<vtx*> vr = T.vertices();
          // t.next("flatten tree");
 
-         // find nearest k neighbors for each point
+         //* find nearest k neighbors for each point
+         t.reset(), t.start();
          size_t n = v.size();
          parlay::parallel_for(
              0, n, [&]( size_t i ) { T.k_nearest( v[i], k ); }, 1 );
+         t.stop();
+         std::cout << t.total_time() << " "
+                   << "-1 -1" << std::endl;
       } else if( algorithm_version == 1 ) {
          parlay::sequence<vtx*> vr = T.vertices();
          t.next( "flatten tree" );
@@ -125,18 +133,18 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
             T.k_nearest_leaf(
                 vr[i], T.find_leaf( vr[i]->pt, root, bd.first, bd.second ), k );
          } );
-      } else { //(algorithm_version == 2) this is for starting from leaf,
-               //finding leaf
+      } else { //* (algorithm_version == 2) this is for starting from leaf,
+               //* finding leaf
          // using map()
          auto f = [&]( vtx* p, node* n ) {
             return T.k_nearest_leaf( p, n, k );
          };
 
-         // find nearest k neighbors for each point
+         //* find nearest k neighbors for each point
          T.tree->map( f );
       }
 
-      t.next( "try all" );
+      // t.next( "try all" );
       if( report_stats ) {
          auto s = parlay::delayed_seq<size_t>(
              v.size(), [&]( size_t i ) { return v[i]->counter; } );
@@ -155,6 +163,6 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
                    << std::endl;
          t.next( "stats" );
       }
-      t.next( "delete tree" );
+      // t.next( "delete tree" );
    };
 }
