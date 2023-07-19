@@ -25,7 +25,6 @@ testZdtree( parlay::sequence<point>& pts, const int k, const int dimension ) {
        n, [&]( size_t i ) -> vtx { return vtx( pts[i], i ); } );
    auto v = parlay::tabulate( n, [&]( size_t i ) -> vtx* { return &vv[i]; } );
    vv.clear(), decltype( vv )().swap( vv );
-
    ANN<maxK>( v, k );
 
    // int m = n * k;
@@ -66,7 +65,7 @@ main( int argc, char* argv[] ) {
       }
    } else { //* construct data byself
       K = 100;
-      coord box_size = 10000000;
+      coord box_size = 10000;
 
       std::random_device rd;       // a seed source for the random number engine
       std::mt19937 gen_mt( rd() ); // mersenne_twister_engine seeded with rd()

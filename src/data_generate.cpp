@@ -21,7 +21,7 @@ using Typename = long;
 const Typename dataRange = 1e7;
 
 // std::string path = "../benchmark/craft_var_node_integer";
-std::string path = "/ssd0/zmen002/kdtree/uniform";
+std::string path = "/data9/zmen002/kdtree/uniform";
 std::default_random_engine generator;
 struct kd_node_t {
    Typename x[15];

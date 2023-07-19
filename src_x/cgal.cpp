@@ -115,7 +115,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
    timer.reset();
    timer.start();
 
-   tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
+   tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, N ),
                       [&]( const tbb::blocked_range<std::size_t>& r ) {
                          for( std::size_t s = r.begin(); s != r.end(); ++s ) {
                             // Neighbor search can be instantiated from

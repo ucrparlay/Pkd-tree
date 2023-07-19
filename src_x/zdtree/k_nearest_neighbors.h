@@ -64,6 +64,7 @@ struct k_nearest_neighbors {
 
    k_nearest_neighbors( parlay::sequence<vtx*>& V, box b ) {
       // TODO add safety check
+
       box points_box = o_tree::get_box( V );
       int dims = V[0]->pt.dimension();
       bool ll_bad = false;
@@ -82,6 +83,7 @@ struct k_nearest_neighbors {
          abort();
       }
       set_box( b );
+
       tree = o_tree::build( V );
    }
 

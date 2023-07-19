@@ -80,9 +80,11 @@ struct oct_tree {
       // uses a delayed sequence to avoid making a copy
       auto pts = parlay::delayed_seq<box>(
           n, [&]( size_t i ) { return box( V[i]->pt, V[i]->pt ); } );
+
       box identity = pts[0];
       box final =
           parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
+
       return ( final );
    }
 

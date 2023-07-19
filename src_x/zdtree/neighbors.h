@@ -50,9 +50,11 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
 
       parlay::internal::timer t;
       t.start();
-      box whole_box = knn_tree::o_tree::get_box( v );
+
+      // box whole_box = knn_tree::o_tree::get_box( v );
 
       //* create sequences for insertion and deletion
+
       size_t size = v.size();
       size_t p = .5 * size;
       // parlay::sequence<vtx*> v1 = parlay::sequence<vtx*>( p );
@@ -69,7 +71,8 @@ ANN( parlay::sequence<vtx*>& v, int k ) {
 
       //* build tree with optional box
 
-      knn_tree T( v, whole_box );
+      // knn_tree T( v, whole_box );
+      knn_tree T( v );
       t.stop();
       std::cout << t.total_time() << " ";
 

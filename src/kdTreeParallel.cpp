@@ -48,7 +48,7 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
                                     const int& DIM ) {
    size_t size = (size_t)std::log2( n ) * PIVOT_NUM;
    assert( size < n );
-   assert( n / size > 2.0 );
+   assert( 1.0 * n / size > 2.0 );
    points arr = points::uninitialized( size );
    for( size_t i = 0; i < size; i++ ) {
       arr[i] = In[i * ( n / size )];

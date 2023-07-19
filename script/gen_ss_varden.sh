@@ -3,9 +3,9 @@
 
 download=0
 
-while getopts "d:g:n:d:v:" option; do
+while getopts "w:g:n:d:v:" option; do
     case $option in
-    d)
+    w)
         download=$OPTARG
         ;;
     g)
@@ -32,7 +32,7 @@ fi
 echo "${download} ${gnum} ${node} ${dim} ${varDensity}"
 
 vardenPath="../src_x/DBSCAN"
-outPath="/ssd0/zmen002/kdtree/ss_varden/"
+outPath="/data9/zmen002/kdtree/ss_varden/"
 
 mkdir ${outPath}${node}_${dim}
 
