@@ -46,7 +46,10 @@ void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
                                     splitter_s& pivots, const int& dim,
                                     const int& DIM ) {
-   size_t size = (size_t)std::log2( n ) * PIVOT_NUM;
+   size_t size = 1.0 * n / ( std::log2( n ) * PIVOT_NUM ) < 2.0
+                     ? PIVOT_NUM
+                     : (size_t)std::log2( n ) * PIVOT_NUM;
+
    assert( size < n );
    assert( 1.0 * n / size > 2.0 );
    points arr = points::uninitialized( size );
@@ -68,11 +71,7 @@ ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots,
    int k = 1, d = dim;
    while( k <= PIVOT_NUM ) {
       assert( d == pivots[k].second );
-      if( p.pnt[d] < pivots[k].first ) {
-         k = k * 2;
-      } else {
-         k = k * 2 + 1;
-      }
+      k = p.pnt[d] < pivots[k].first ? k << 1 : k << 1 | 1;
       d = ( d + 1 ) % DIM;
    }
    assert( pivots[k].first == -1 );

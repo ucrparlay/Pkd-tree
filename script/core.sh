@@ -59,7 +59,7 @@ echo ">>>${dest}"
 exe="../build/${solver}"
 if [[ ${solver} == "zdtree" ]]; then
     export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
-    exe="/home/zmen002/pbbsbench/benchmarks/nearestNeighbors/octTree/neighbors"
+    exe="/home/zmen002/pbbsbench_x/benchmarks/nearestNeighbors/octTree/neighbors"
 fi
 
 for ((i = 1; i <= ${insNum}; i++)); do
