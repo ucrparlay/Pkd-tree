@@ -29,8 +29,12 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, int dim,
       return;
    }
    int n = In.size();
+   // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),pointLess( dim
+   // ) );
    std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                     pointLess( dim ) );
+                     [&]( const point& p1, const point& p2 ) {
+                        return p1.pnt[dim] < p2.pnt[dim];
+                     } );
    pivots[idx] = splitter( In[n / 2].pnt[dim], dim );
    dim = ( dim + 1 ) % DIM;
    divide_rotate( In.cut( 0, n / 2 ), pivots, dim, 2 * idx, deep + 1, bucket,
@@ -46,7 +50,7 @@ void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
                                     splitter_s& pivots, const int& dim,
                                     const int& DIM ) {
-   size_t size = 1.0 * n / ( std::log2( n ) * PIVOT_NUM ) < 2.0
+   size_t size = std::log2( n ) < 1.0 * PIVOT_NUM
                      ? PIVOT_NUM
                      : (size_t)std::log2( n ) * PIVOT_NUM;
 
@@ -60,7 +64,7 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
    int bucket = 0;
    divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM );
    assert( bucket == BUCKET_NUM );
-   points().swap( arr );
+   // points().swap( arr );
    return;
 }
 
@@ -120,7 +124,7 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
       }
    } );
 
-   decltype( offset )().swap( offset );
+   // decltype( offset )().swap( offset );
    return;
 }
 
@@ -150,8 +154,12 @@ ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
 
    //* serial run nth element
    if( n <= SERIAL_BUILD_CUTOFF ) {
+      // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),pointLess(
+      // dim ) );
       std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                        pointLess( dim ) );
+                        [&]( const point& p1, const point& p2 ) {
+                           return p1.pnt[dim] < p2.pnt[dim];
+                        } );
       splitter split = splitter( In[n / 2].pnt[dim], dim );
       dim = ( dim + 1 ) % DIM;
       node *L, *R;

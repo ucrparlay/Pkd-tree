@@ -21,7 +21,7 @@ class ParallelKDtree {
    static constexpr uint_fast32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
    //@ general
    static constexpr uint_fast32_t LEAVE_WRAP = 32;
-   static constexpr uint_fast32_t SERIAL_BUILD_CUTOFF = 1 << 8;
+   static constexpr uint_fast32_t SERIAL_BUILD_CUTOFF = 1 << 10;
    //@ block param in partition
    static constexpr uint_fast32_t LOG2_BASE = 10;
    static constexpr uint_fast32_t BLOCK_SIZE = 1 << LOG2_BASE;
