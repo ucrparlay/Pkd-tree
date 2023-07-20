@@ -20,14 +20,13 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include <algorithm>
-#include <iostream>
-
 #include "geometry.h"
 #include "get_time.h"
 #include "parlay/alloc.h"
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include <algorithm>
+#include <iostream>
 
 // vtx must support v->pt
 // and v->pt must support pt.dimension(), pt[i],
@@ -35,6 +34,7 @@
 //    pt1.minCoords(pt2), pt1.maxCoords(pt2),
 template <typename vtx>
 struct oct_tree {
+
    using point = typename vtx::pointT;
    using uint = unsigned int;
    using box = std::pair<point, point>;
@@ -77,18 +77,20 @@ struct oct_tree {
          return box( x.first.minCoords( y.first ),
                      x.second.maxCoords( y.second ) );
       };
+
       // uses a delayed sequence to avoid making a copy
       auto pts = parlay::delayed_seq<box>(
           n, [&]( size_t i ) { return box( V[i]->pt, V[i]->pt ); } );
-
       box identity = pts[0];
+      puts( "begin running reduce" );
+
       box final =
           parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
-
       return ( final );
    }
 
    struct node {
+
     public:
       bool flag = false;
       int bit;
@@ -620,8 +622,8 @@ struct oct_tree {
           n, [&]( size_t i ) -> indexed_point {
              return std::pair( interleave_bits( V[i]->pt, b.first, Delta ),
                                V[i] );
-          } ); // make this not a delayed sequence, tabulate instead, so that
-               // we can use t.next()
+          } ); // make this not a delayed sequence, tabulate instead, so that we
+               // can use t.next()
 
       auto less = []( indexed_point a, indexed_point b ) {
          return a.first < b.first;
@@ -650,8 +652,8 @@ struct oct_tree {
           n, [&]( size_t i ) -> indexed_point {
              return std::pair( interleave_bits( V[i]->pt, b.first, Delta ),
                                V[i] );
-          } ); // make this not a delayed sequence, tabulate instead, so that
-               // we can use t.next()
+          } ); // make this not a delayed sequence, tabulate instead, so that we
+               // can use t.next()
 
       auto less = []( indexed_point a, indexed_point b ) {
          return a.first < b.first;
@@ -675,6 +677,7 @@ struct oct_tree {
       if( bit == 0 || n < node_cutoff ) {
          return node::new_leaf( Pts, bit );
       } else {
+
          // this was extracted to lookup_bit but left as is here since the less
          // function requires mask and val
          size_t val = ( (size_t)1 ) << ( bit - 1 );

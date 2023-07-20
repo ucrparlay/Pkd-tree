@@ -56,12 +56,18 @@ dest="${log_path}/${resFile}"
 : >${dest}
 echo ">>>${dest}"
 
+exe="../build/${solver}"
+if [[ ${solver} == "zdtree" ]]; then
+    export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
+    exe="/home/zmen002/pbbsbench/benchmarks/nearestNeighbors/octTree/neighbors"
+fi
+
 for ((i = 1; i <= ${insNum}; i++)); do
     if [[ ${serial} == 1 ]]; then
-        PARLAY_NUM_THREADS=1 numactl -i all ../build/${solver} "${files_path}/${i}.in" ${k} ${tag} >>${dest}
+        PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
         continue
     fi
-    numactl -i all ../build/${solver} "${files_path}/${i}.in" ${k} ${tag} >>${dest}
+    numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
 
     retval=$?
     if [ ${retval} -eq 124 ]; then

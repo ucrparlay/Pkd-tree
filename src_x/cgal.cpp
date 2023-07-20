@@ -1,4 +1,5 @@
 #include "../src/kdTreeParallel.h"
+#include "../src/parse_command_line.h"
 
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/K_neighbor_search.h>
@@ -143,20 +144,24 @@ testCGALParallel( int Dim, int LEAVE_WRAP, points wp, int N, int K ) {
 
 int
 main( int argc, char* argv[] ) {
-   assert( argc >= 2 );
+   commandLine P( argc, argv,
+                  "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
+                  "<parallelTag>] [-p <inFile>]" );
+   char* iFile = P.getOptionValue( "-p" );
+   int K = P.getOptionIntValue( "-k", 100 );
+   int Dim = P.getOptionIntValue( "-d", 3 );
+   long N = P.getOptionLongValue( "-n", -1 );
+   int tag = P.getOptionIntValue( "-t", 1 );
 
-   int K = 100, LEAVE_WRAP = 16, Dim = -1;
-   long N = -1;
    points wp;
-   std::string name( argv[1] );
+   int LEAVE_WRAP = 16;
 
    //* initialize points
-   if( name.find( "/" ) != std::string::npos ) { //* read from file
+   if( iFile != NULL ) { //* read from file
+      std::string name( iFile );
       name = name.substr( name.rfind( "/" ) + 1 );
       std::cout << name << " ";
-      auto f = freopen( argv[1], "r", stdin );
-      if( argc >= 3 )
-         K = std::stoi( argv[2] );
+      auto f = freopen( iFile, "r", stdin );
       assert( f != nullptr );
 
       scanf( "%ld %d", &N, &Dim );
@@ -179,13 +184,10 @@ main( int argc, char* argv[] ) {
       parlay::random_generator gen( distrib( gen_mt ) );
       std::uniform_int_distribution<int> dis( 0, box_size );
 
-      long n = std::stoi( argv[1] );
-      N = n;
-      Dim = std::stoi( argv[2] );
-      wp.resize( N );
       // generate n random points in a cube
+      wp.resize( N );
       parlay::parallel_for(
-          0, n,
+          0, N,
           [&]( long i ) {
              auto r = gen[i];
              for( int j = 0; j < Dim; j++ ) {
@@ -193,7 +195,8 @@ main( int argc, char* argv[] ) {
              }
           },
           1000 );
-      name = std::to_string( n ) + "_" + std::to_string( Dim ) + ".in";
+      std::string name =
+          std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
       std::cout << name << " ";
    }
 
@@ -203,14 +206,12 @@ main( int argc, char* argv[] ) {
    //    LEAVE_WRAP = std::stoi( argv[4] );
 
    assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
-   if( argc >= 4 ) {
-      if( std::stoi( argv[3] ) == 1 )
-         testCGALParallel<Median_of_rectangle, Tree_Median,
-                          Neighbor_search_Median>( Dim, LEAVE_WRAP, wp, N, K );
-      else if( std::stoi( argv[3] ) == 0 )
-         testCGALSerial<Median_of_rectangle, Tree_Median,
-                        Neighbor_search_Median>( Dim, LEAVE_WRAP, wp, N, K );
-   }
+   if( tag == 1 )
+      testCGALParallel<Median_of_rectangle, Tree_Median,
+                       Neighbor_search_Median>( Dim, LEAVE_WRAP, wp, N, K );
+   else if( tag == 0 )
+      testCGALSerial<Median_of_rectangle, Tree_Median, Neighbor_search_Median>(
+          Dim, LEAVE_WRAP, wp, N, K );
 
    return 0;
 }

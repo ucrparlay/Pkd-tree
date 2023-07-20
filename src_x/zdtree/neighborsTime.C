@@ -97,6 +97,10 @@ main( int argc, char* argv[] ) {
    if( d < 2 || d > 3 )
       P.badArgument();
 
+   std::string name( iFile );
+   name = name.substr( name.rfind( "/" ) + 1 );
+   std::cout << name << " ";
+
    if( d == 2 ) {
       parlay::sequence<point2> PIn = readPointsFromFile<point2>( iFile );
       if( k == 1 )

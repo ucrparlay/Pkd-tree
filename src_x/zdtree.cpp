@@ -1,4 +1,6 @@
 #include "../src/kdTreeParallel.h"
+#include "zdtree/geometry.h"
+#include "zdtree/geometryIO.h"
 #include "zdtree/neighbors.h"
 
 using points = parlay::sequence<point10D>;
@@ -21,10 +23,13 @@ void
 testZdtree( parlay::sequence<point>& pts, const int k, const int dimension ) {
    size_t n = pts.size();
    using vtx = vertex<point, maxK>;
+   int dimensions = pts[0].dimension();
    auto vv = parlay::tabulate(
        n, [&]( size_t i ) -> vtx { return vtx( pts[i], i ); } );
    auto v = parlay::tabulate( n, [&]( size_t i ) -> vtx* { return &vv[i]; } );
+
    vv.clear(), decltype( vv )().swap( vv );
+
    ANN<maxK>( v, k );
 
    // int m = n * k;
@@ -40,7 +45,7 @@ int
 main( int argc, char* argv[] ) {
    assert( argc >= 2 );
 
-   int K = 100, LEAVE_WRAP = 16, Dim = -1;
+   int K = 100, LEAVE_WRAP = 16, Dim = 3;
    long N = -1;
    points wp;
    std::string name( argv[1] );
@@ -54,15 +59,16 @@ main( int argc, char* argv[] ) {
          K = std::stoi( argv[2] );
       assert( f != nullptr );
 
-      scanf( "%ld %d", &N, &Dim );
-      assert( N >= K );
-      wp.resize( N );
+      // scanf( "%ld %d", &N, &Dim );
+      // assert( N >= K );
+      // wp.resize( N );
 
-      for( int i = 0; i < N; i++ ) {
-         for( int j = 0; j < Dim; j++ ) {
-            scanf( "%ld", &wp[i].pnt[j] );
-         }
-      }
+      // for( int i = 0; i < N; i++ ) {
+      //    for( int j = 0; j < Dim; j++ ) {
+      //       scanf( "%ld", &wp[i].pnt[j] );
+      //    }
+      // }
+      fclose( f );
    } else { //* construct data byself
       K = 100;
       coord box_size = 10000;
@@ -95,20 +101,33 @@ main( int argc, char* argv[] ) {
    if( argc >= 4 ) {
       int serialTag = std::stoi( argv[3] );
       if( Dim == 2 ) {
-         auto pts = parlay::tabulate( N, [&]( size_t i ) -> point2 {
-            return point2( wp[i].pnt[0], wp[i].pnt[1] );
-         } );
-         wp.clear(), points().swap( wp );
-         testZdtree<100, point2>( pts, K, Dim ); //! only valid for k=100
+         parlay::sequence<point2> PIn = readPointsFromFile<point2>( argv[1] );
+         testZdtree<100>( PIn, K, Dim );
       } else if( Dim == 3 ) {
-         auto pts = parlay::tabulate( N, [&]( size_t i ) -> point3 {
-            return point3( wp[i].pnt[0], wp[i].pnt[1], wp[i].pnt[2] );
-         } );
-         wp.clear(), points().swap( wp );
-         testZdtree<100, point3>( pts, K, Dim ); //! only valid for k=100
+         puts( "here" );
+         parlay::sequence<point3> PIn = readPointsFromFile<point3>( argv[1] );
+         testZdtree<100>( PIn, K, Dim ); //! only valid for k=100
       } else {
          throw( "bad dimension in Zd tree" );
          abort();
       }
    }
+   //    int serialTag = std::stoi( argv[3] );
+   //    if( Dim == 2 ) {
+   //       auto pts = parlay::tabulate( N, [&]( size_t i ) -> point2 {
+   //          return point2( wp[i].pnt[0], wp[i].pnt[1] );
+   //       } );
+   //       wp.clear(), points().swap( wp );
+   //       testZdtree<100, point2>( pts, K, Dim ); //! only valid for k=100
+   //    } else if( Dim == 3 ) {
+   //       auto pts = parlay::tabulate( N, [&]( size_t i ) -> point3 {
+   //          return point3( wp[i].pnt[0], wp[i].pnt[1], wp[i].pnt[2] );
+   //       } );
+   //       wp.clear(), points().swap( wp );
+   //       testZdtree<100, point3>( pts, K, Dim ); //! only valid for k=100
+   //    } else {
+   //       throw( "bad dimension in Zd tree" );
+   //       abort();
+   //    }
+   // }
 }

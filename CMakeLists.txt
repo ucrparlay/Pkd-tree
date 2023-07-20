@@ -62,8 +62,8 @@ add_executable(data_generator ../src/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
 
 # parlay::zd tree
-add_executable(zdtree ../src_x/zdtree.cpp)
-target_link_libraries(zdtree PUBLIC parlay)
+# add_executable(zdtree ../src_x/zdtree.cpp)
+# target_link_libraries(zdtree PUBLIC parlay)
 
 # CGAL
 if(CGAL)

@@ -32,11 +32,23 @@ fi
 echo "${download} ${gnum} ${node} ${dim} ${varDensity}"
 
 vardenPath="../src_x/DBSCAN"
-outPath="/data9/zmen002/kdtree/ss_varden/"
+outPath="/ssd0/zmen002/kdtree/ss_varden/"
 
 mkdir ${outPath}${node}_${dim}
 
 for gi in $(seq 1 1 ${gnum}); do
+    oldPath="${outPath}${node}_${dim}/${gi}.in"
+    newPath="${outPath}${node}_${dim}/$new{gi}.in"
+
     sleep 2
-    ./${vardenPath} -algo 0 -ds ${outPath}${node}_${dim}/${gi}.in -n ${node} -d ${dim} -vd ${varDensity}
+    ./${vardenPath} -algo 0 -ds ${oldPath} -n ${node} -d ${dim} -vd ${varDensity}
+
+    # while IFS= read -r line; do
+    #     echo ${line}
+    # done <${oldPath}
+    # head -10 ${oldPath}
+    python3.9 wash_varden.py ${oldPath} ${newPath}
+
+    rm ${oldPath}
+    mv ${newPath} ${oldPath}
 done

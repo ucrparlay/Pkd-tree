@@ -22,16 +22,14 @@
 
 int queue_cutoff = 50;
 
-#include <math.h>
-
-#include <algorithm>
-#include <queue>
-
 #include "geometry.h"
 #include "oct_tree.h"
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "qknn.hpp"
+#include <algorithm>
+#include <math.h>
+#include <queue>
 
 // A k-nearest neighbor structure
 // requires vertexT to have pointT and vectT typedefs
@@ -64,7 +62,6 @@ struct k_nearest_neighbors {
 
    k_nearest_neighbors( parlay::sequence<vtx*>& V, box b ) {
       // TODO add safety check
-
       box points_box = o_tree::get_box( V );
       int dims = V[0]->pt.dimension();
       bool ll_bad = false;
@@ -83,7 +80,6 @@ struct k_nearest_neighbors {
          abort();
       }
       set_box( b );
-
       tree = o_tree::build( V );
    }
 
@@ -98,8 +94,8 @@ struct k_nearest_neighbors {
       vtx* vertex;           // the vertex for which we are trying to find a NN
       vtx* neighbors[max_k]; // the current k nearest neighbors (nearest last)
       double distances[max_k]; // distance to current k nearest neighbors
-      double max_distance;     // needed since we may need to update our biggest
-                               // boi without a vector
+      double max_distance; // needed since we may need to update our biggest boi
+                           // without a vector
       int k;
       int dimensions;
       size_t leaf_cnt;
@@ -239,6 +235,7 @@ struct k_nearest_neighbors {
 
       void
       k_nearest_fromLeaf( node* T ) {
+
          node* current = T; // this will be the node that node*T points to
          if( current->is_leaf() ) {
             if( report_stats )

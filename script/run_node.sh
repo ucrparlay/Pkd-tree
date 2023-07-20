@@ -1,17 +1,17 @@
 #!/bin/bash
 
-Solvers=("cgal")
-# Node=(100000)
-Node=(10000000 50000000 100000000 500000000 1000000000)
+Solvers=("cgal" "test" "zdtree")
+Node=(100000)
+# Node=(10000000 50000000 100000000 500000000 1000000000)
 declare -A datas
 # datas["/ssd0/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
-datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 
 Tag=(0 1)
 dim=3
 k=100
 onecore=0
-insNum=2
+insNum=1
 
 resFile=""
 
