@@ -1,6 +1,7 @@
+#include "common/geometryIO.h"
+#include "common/parse_command_line.h"
 #include "kdTree.h"
 #include "kdTreeParallel.h"
-#include "parse_command_line.h"
 
 using Typename = coord;
 
@@ -146,22 +147,29 @@ main( int argc, char* argv[] ) {
    Point<Typename>* wp;
 
    //* initialize points
-   if( iFile != NULL ) { //* read from file
+   if( iFile != NULL ) {
       std::string name( iFile );
       name = name.substr( name.rfind( "/" ) + 1 );
       std::cout << name << " ";
-      auto f = freopen( iFile, "r", stdin );
-      assert( f != nullptr );
 
-      scanf( "%ld%d", &N, &Dim );
-      assert( N >= K );
-      wp = new Point<Typename>[N];
-      for( int i = 0; i < N; i++ ) {
+      //* read from file
+      parlay::sequence<char> S = readStringFromFile( iFile );
+      parlay::sequence<char*> W = stringToWords( S );
+      N = atol( W[0] ), Dim = atoi( W[1] );
+      assert( N >= 0 && Dim >= 1 && N >= K );
+
+      auto pts = W.cut( 2, W.size() );
+      assert( pts.size() % Dim == 0 );
+      size_t n = pts.size() / Dim;
+      auto a = parlay::tabulate(
+          Dim * n, [&]( size_t i ) -> coord { return atol( pts[i] ); } );
+      wp = new Point<coord>[N];
+      parlay::parallel_for( 0, n, [&]( size_t i ) {
          for( int j = 0; j < Dim; j++ ) {
-            scanf( "%ld", &wp[i].x[j] );
+            wp[i].x[j] = a[i * Dim + j];
          }
-      }
-      fclose( f );
+      } );
+      decltype( a )().swap( a );
    } else { //* construct data byself
       K = 100;
       coord box_size = 10000000;
@@ -195,9 +203,9 @@ main( int argc, char* argv[] ) {
       testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
    else if( Dim == 2 ) {
       auto pts = parlay::tabulate(
-          N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
+          N, [&]( size_t i ) -> point2D { return point2D( wp[i].x ); } );
       delete[] wp;
-      testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N, K );
+      testParallelKDtree<ParallelKDtree<point2D>>( Dim, LEAVE_WRAP, pts, N, K );
    } else if( Dim == 3 ) {
       auto pts = parlay::tabulate(
           N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );

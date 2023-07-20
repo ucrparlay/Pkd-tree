@@ -7,10 +7,9 @@ template <typename point>
 inline coord
 ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
                                           const int& DIM ) {
-   coord r = 0, diff = 0;
+   coord r = 0;
    for( int i = 0; i < DIM; i++ ) {
-      diff = p.pnt[i] - q.pnt[i];
-      r += diff * diff;
+      r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
    }
    return r;
 }

@@ -1,5 +1,5 @@
+#include "../src/common/parse_command_line.h"
 #include "../src/kdTreeParallel.h"
-#include "../src/parse_command_line.h"
 
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/K_neighbor_search.h>
@@ -158,6 +158,7 @@ main( int argc, char* argv[] ) {
 
    //* initialize points
    if( iFile != NULL ) { //* read from file
+
       std::string name( iFile );
       name = name.substr( name.rfind( "/" ) + 1 );
       std::cout << name << " ";

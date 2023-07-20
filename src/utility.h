@@ -16,6 +16,10 @@ struct point2D {
    using coords = std::array<coord, 2>;
    point2D() {}
    point2D( const coords& _pnt ) : pnt( _pnt ){};
+   point2D( parlay::slice<coord*, coord*> x ) {
+      for( int i = 0; i < 2; i++ )
+         pnt[i] = x[i];
+   }
    point2D( coord* x ) {
       for( int i = 0; i < 2; i++ )
          pnt[i] = x[i];
@@ -26,6 +30,10 @@ struct point3D {
    using coords = std::array<coord, 3>;
    point3D() {}
    point3D( const coords& _pnt ) : pnt( _pnt ){};
+   point3D( parlay::slice<coord*, coord*> x ) {
+      for( int i = 0; i < 3; i++ )
+         pnt[i] = x[i];
+   }
    point3D( coord* x ) {
       for( int i = 0; i < 3; i++ )
          pnt[i] = x[i];
