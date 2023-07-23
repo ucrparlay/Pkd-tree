@@ -170,7 +170,6 @@ main( int argc, char* argv[] ) {
       parlay::sequence<char> S = readStringFromFile( iFile );
       parlay::sequence<char*> W = stringToWords( S );
       N = atol( W[0] ), Dim = atoi( W[1] );
-      LOG << N << " " << Dim << ENDL;
       assert( N >= 0 && Dim >= 1 && N >= K );
 
       auto pts = W.cut( 2, W.size() );
