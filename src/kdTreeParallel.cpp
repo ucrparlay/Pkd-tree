@@ -130,8 +130,8 @@ ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
    node *L, *R;
    L = build_inner_tree( idx << 1, pivots, treeNodes );
    R = build_inner_tree( idx << 1 | 1, pivots, treeNodes );
-   return interior_allocator.allocate( L, R, pivots[idx] );
-   // return alloc_interior_node( L, R, pivots[idx] );
+   // return interior_allocator.allocate( L, R, pivots[idx] );
+   return alloc_interior_node( L, R, pivots[idx] );
 }
 
 //@ Parallel KD tree cores
@@ -141,8 +141,8 @@ ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
    size_t n = In.size();
 
    if( n <= LEAVE_WRAP ) {
-      // return alloc_leaf_node( In );
-      return leaf_allocator.allocate( In );
+      return alloc_leaf_node( In );
+      // return leaf_allocator.allocate( In );
    }
 
    //* serial run nth element
@@ -156,8 +156,8 @@ ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
       node *L, *R;
       L = build( In.cut( 0, n / 2 ), Out.cut( 0, n / 2 ), dim, DIM );
       R = build( In.cut( n / 2, n ), Out.cut( n / 2, n ), dim, DIM );
-      return interior_allocator.allocate( L, R, split );
-      // return alloc_interior_node( L, R, split );
+      // return interior_allocator.allocate( L, R, split );
+      return alloc_interior_node( L, R, split );
    }
 
    //* parallel partitons
@@ -212,14 +212,11 @@ void
 ParallelKDtree<point>::delete_tree( node* T ) { //* delete tree in parallel
    if( T->is_leaf ) {
       leaf_allocator.retire( static_cast<leaf*>( T ) );
-      // leaf* TI = static_cast<leaf*>( T );
-      // leaf_alloctor::free( TI );
    } else {
       interior* TI = static_cast<interior*>( T );
       parlay::par_do_if(
           T->size > 1000, [&] { delete_tree( TI->left ); },
           [&] { delete_tree( TI->right ); } );
-      // interior_alloctor::free( TI )
       interior_allocator.retire( TI );
    }
 }

@@ -85,6 +85,32 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
    using node = typename tree::node;
    parlay::internal::timer timer;
 
+   points wo, wx;
+   tree pkd;
+
+   //* ---------------------------begin------------------------------
+   node* KDParallelRoot;
+   int rounds = 3;
+   double aveBuild = time_loop(
+       rounds, 1.0,
+       [&]() {
+          wo = points::uninitialized( wp.size() );
+          wx = points::uninitialized( wp.size() );
+          parlay::copy( wp, wx );
+          parlay::random_shuffle( wx.cut( 0, N ) );
+       },
+       [&]() {
+          KDParallelRoot = pkd.build( wx.cut( 0, wp.size() ),
+                                      wo.cut( 0, wo.size() ), 0, Dim );
+       },
+       [&]() { pkd.delete_tree( KDParallelRoot ); } );
+
+   LOG << aveBuild << " " << std::flush;
+   points().swap( wo );
+   points().swap( wx );
+
+   // return;
+   //* ------------------------start test----------------------------
    Typename* kdknn = new Typename[N];
    kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
    for( int i = 0; i < N; i++ ) {
@@ -92,23 +118,7 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
    }
    parlay::sequence<double> visNum =
        parlay::sequence<double>::uninitialized( N );
-   points wo( wp.size() );
-   tree pkd;
 
-   //* ---------------------------begin------------------------------
-   node* KDParallelRoot;
-   int rounds = 3;
-   double aveBuild = time_loop(
-       rounds, 1.0, [&]() { parlay::random_shuffle( wp.cut( 0, N ) ); },
-       [&]() {
-          KDParallelRoot = pkd.build( wp.cut( 0, wp.size() ),
-                                      wo.cut( 0, wo.size() ), 0, Dim );
-       },
-       [&]() { pkd.delete_tree( KDParallelRoot ); } );
-
-   LOG << aveBuild << " " << std::flush;
-
-   //* ------------------------start test----------------------------
    double aveQuery = time_loop(
        rounds, 1.0,
        [&]() {
@@ -147,7 +157,7 @@ main( int argc, char* argv[] ) {
    long N = P.getOptionLongValue( "-n", -1 );
    int tag = P.getOptionIntValue( "-t", 1 );
 
-   int LEAVE_WRAP = 16;
+   int LEAVE_WRAP = 32;
    Point<Typename>* wp;
 
    //* initialize points

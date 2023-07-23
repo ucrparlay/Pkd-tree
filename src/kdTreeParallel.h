@@ -72,9 +72,6 @@ class ParallelKDtree {
    //@ Support Functions
    parlay::type_allocator<leaf> leaf_allocator;
    parlay::type_allocator<interior> interior_allocator;
-   // using leaf_alloctor = parlay::type_allocator<leaf>;
-   // using interior_alloctor = parlay::type_allocator<interior>;
-   // int Dim;
 
    leaf*
    alloc_leaf_node( slice In ) {

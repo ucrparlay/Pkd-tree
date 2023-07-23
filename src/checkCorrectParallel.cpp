@@ -108,18 +108,32 @@ main( int argc, char* argv[] ) {
    puts( "build kd tree" );
    using pkdtree = ParallelKDtree<point10D>;
    pkdtree pkd;
-   points wo( wp.size() );
+   points wo, wx;
 
    // auto KDParallelRoot =
    //     pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    pkdtree::node* KDParallelRoot;
    time_loop(
-       3, 1.0, [&]() { parlay::random_shuffle( wp.cut( 0, N ) ); },
+       3, 1.0,
        [&]() {
-          KDParallelRoot = pkd.build( wp.cut( 0, wp.size() ),
+          wo = points::uninitialized( wp.size() );
+          wx = points::uninitialized( wp.size() );
+          parlay::copy( wp, wx );
+          parlay::random_shuffle( wx.cut( 0, N ) );
+       },
+       [&]() {
+          KDParallelRoot = pkd.build( wx.cut( 0, wp.size() ),
                                       wo.cut( 0, wo.size() ), 0, Dim );
        },
-       [&]() { pkd.delete_tree( KDParallelRoot ); } );
+       [&]() {
+          //  puts( "delete" );
+          pkd.delete_tree( KDParallelRoot );
+       } );
+   // wo = points::uninitialized( wp.size() );
+   // wx = points::uninitialized( wp.size() );
+   // parlay::copy( wp, wx );
+   // KDParallelRoot =
+   //     pkd.build( wx.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
    LOG << "finish build" << ENDL << std::flush;
 
    checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
@@ -138,9 +152,13 @@ main( int argc, char* argv[] ) {
    //* bounded_queue
    LOG << "begin kd query" << ENDL;
    kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   // for( int i = 0; i < N; i++ ) {
-   //    bq[i].resize( K );
-   // }
+   // parlay::sequence<kBoundedQueue<Typename>> bq( N );
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    auto o = parlay::type_allocator<kBoundedQueue<Typename>>::alloc();
+   //    new( o ) kBoundedQueue<Typename>( K );
+   //    bq[i] = *o;
+   // } );
+
    parlay::parallel_for( 0, N, [&]( size_t i ) {
       size_t visNodeNum = 0;
       bq[i].resize( K );

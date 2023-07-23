@@ -286,6 +286,7 @@ class kBoundedQueue {
    kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
 
    kBoundedQueue( int size, const Compare& comp = Compare() )
+       //  : m_count( 0 ), m_comp( comp ) {
        : m_count( 0 ), m_data( size ), m_comp( comp ) {
       // a.allocate( size );
    }
@@ -351,7 +352,8 @@ class kBoundedQueue {
    }
 
  public:
-   unsigned int m_count;
+   unsigned int m_count = 0;
    parlay::sequence<T> m_data;
+   // std::array<T, 100> m_data;
    Compare m_comp;
 };

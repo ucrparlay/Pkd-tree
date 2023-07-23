@@ -11,12 +11,13 @@ time_loop( int rounds, double delay, F initf, G runf, H endf ) {
       runf();
       endf();
    }
-   for( int i = 0; i < rounds; i++ ) {
+   for( int i = 1; i <= rounds; i++ ) {
       initf();
       t.start();
       runf();
+      // t.next( "" );
       t.next_time();
-      if( i != rounds - 1 )
+      if( i < rounds )
          endf();
    }
    return t.total_time() / rounds;
