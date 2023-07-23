@@ -1,4 +1,5 @@
 
+#include "../src/common/time_loop.h"
 #include "kdTree.h"
 #include "kdTreeParallel.h"
 
@@ -104,12 +105,21 @@ main( int argc, char* argv[] ) {
    tree.build<CGAL::Parallel_tag>();
 
    //* kd tree
+   puts( "build kd tree" );
    using pkdtree = ParallelKDtree<point10D>;
    pkdtree pkd;
    points wo( wp.size() );
 
-   auto KDParallelRoot =
-       pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   // auto KDParallelRoot =
+   //     pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
+   pkdtree::node* KDParallelRoot;
+   time_loop(
+       3, 1.0, [&]() { parlay::random_shuffle( wp.cut( 0, N ) ); },
+       [&]() {
+          KDParallelRoot = pkd.build( wp.cut( 0, wp.size() ),
+                                      wo.cut( 0, wo.size() ), 0, Dim );
+       },
+       [&]() { pkd.delete_tree( KDParallelRoot ); } );
    LOG << "finish build" << ENDL << std::flush;
 
    checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );

@@ -28,8 +28,6 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, int dim,
       return;
    }
    int n = In.size();
-   // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),pointLess( dim
-   // ) );
    std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                      [&]( const point& p1, const point& p2 ) {
                         return p1.pnt[dim] < p2.pnt[dim];
@@ -49,12 +47,8 @@ void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
                                     splitter_s& pivots, const int& dim,
                                     const int& DIM ) {
-   size_t size = std::log2( n ) < 1.0 * PIVOT_NUM
-                     ? PIVOT_NUM
-                     : (size_t)std::log2( n ) * PIVOT_NUM;
-
+   size_t size = std::min( n, (size_t)32 * BUCKET_NUM );
    assert( size < n );
-   assert( 1.0 * n / size > 2.0 );
    points arr = points::uninitialized( size );
    for( size_t i = 0; i < size; i++ ) {
       arr[i] = In[i * ( n / size )];
@@ -63,7 +57,6 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n,
    int bucket = 0;
    divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM );
    assert( bucket == BUCKET_NUM );
-   // points().swap( arr );
    return;
 }
 
@@ -71,7 +64,7 @@ template <typename point>
 inline uint_fast32_t
 ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots,
                                     const int& dim, const int& DIM ) {
-   int k = 1, d = dim;
+   uint_fast16_t k = 1, d = dim;
    while( k <= PIVOT_NUM ) {
       assert( d == pivots[k].second );
       k = p.pnt[d] < pivots[k].first ? k << 1 : k << 1 | 1;
@@ -123,12 +116,11 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
       }
    } );
 
-   // decltype( offset )().swap( offset );
    return;
 }
 
 template <typename point>
-ParallelKDtree<point>::node*
+typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
                                          parlay::sequence<node*>& treeNodes ) {
    if( idx > PIVOT_NUM ) {
@@ -136,25 +128,25 @@ ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
       return treeNodes[idx - PIVOT_NUM - 1];
    }
    node *L, *R;
-   L = build_inner_tree( idx * 2, pivots, treeNodes );
-   R = build_inner_tree( idx * 2 + 1, pivots, treeNodes );
+   L = build_inner_tree( idx << 1, pivots, treeNodes );
+   R = build_inner_tree( idx << 1 | 1, pivots, treeNodes );
    return interior_allocator.allocate( L, R, pivots[idx] );
+   // return alloc_interior_node( L, R, pivots[idx] );
 }
 
 //@ Parallel KD tree cores
 template <typename point>
-ParallelKDtree<point>::node*
+typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
    size_t n = In.size();
 
    if( n <= LEAVE_WRAP ) {
-      return leaf_allocator.allocate( std::move( parlay::to_sequence( In ) ) );
+      // return alloc_leaf_node( In );
+      return leaf_allocator.allocate( In );
    }
 
    //* serial run nth element
    if( n <= SERIAL_BUILD_CUTOFF ) {
-      // std::nth_element( In.begin(), In.begin() + n / 2, In.end(),pointLess(
-      // dim ) );
       std::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                         [&]( const point& p1, const point& p2 ) {
                            return p1.pnt[dim] < p2.pnt[dim];
@@ -165,6 +157,7 @@ ParallelKDtree<point>::build( slice In, slice Out, int dim, const int& DIM ) {
       L = build( In.cut( 0, n / 2 ), Out.cut( 0, n / 2 ), dim, DIM );
       R = build( In.cut( n / 2, n ), Out.cut( n / 2, n ), dim, DIM );
       return interior_allocator.allocate( L, R, split );
+      // return alloc_interior_node( L, R, split );
    }
 
    //* parallel partitons
@@ -217,13 +210,16 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const int& DIM,
 template <typename point>
 void
 ParallelKDtree<point>::delete_tree( node* T ) { //* delete tree in parallel
-   if( T->is_leaf )
+   if( T->is_leaf ) {
       leaf_allocator.retire( static_cast<leaf*>( T ) );
-   else {
+      // leaf* TI = static_cast<leaf*>( T );
+      // leaf_alloctor::free( TI );
+   } else {
       interior* TI = static_cast<interior*>( T );
       parlay::par_do_if(
           T->size > 1000, [&] { delete_tree( TI->left ); },
           [&] { delete_tree( TI->right ); } );
+      // interior_alloctor::free( TI )
       interior_allocator.retire( TI );
    }
 }

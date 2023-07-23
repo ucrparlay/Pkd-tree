@@ -36,10 +36,6 @@ class ParallelKDtree {
       }
       size_t index_;
    };
-
- private:
-   int Dims;
-
    // TODO: handle double precision
 
    // Given two points, return the min. value on each dimension
@@ -56,11 +52,14 @@ class ParallelKDtree {
 
    struct leaf : node {
       points pts;
-      leaf( points pts )
-          : node{ true, static_cast<size_t>( pts.size() ) }, pts( pts ) {}
+      leaf( slice In ) : node{ true, static_cast<size_t>( In.size() ) } {
+         pts = points::uninitialized( In.size() );
+         for( int i = 0; i < In.size(); i++ ) {
+            pts[i] = In[i];
+         }
+      }
    };
 
-   // todo replace split and cut_dim by splitter
    struct interior : node {
       node* left;
       node* right;
@@ -70,37 +69,26 @@ class ParallelKDtree {
             right( _right ), split( _split ) {}
    };
 
-   // struct node {
-   //    bool is_leaf;
-   //    size_t size;
-   //    box bounds;
-   //    node* parent;
-   // };
-   // struct leaf : node {
-   //    points pts;
-   //    leaf( points pts )
-   //        : node{ true, static_cast<size_t>( pts.size() ),
-   //                bound_box_from_points( pts ), nullptr },
-   //          pts( pts ) {}
-   // };
-   // // todo replace split and cut_dim by splitter
-   // struct interior : node {
-   //    node* left;
-   //    node* right;
-   //    splitter split;
-   //    interior( node* _left, node* _right, splitter _split )
-   //        : node{ false, _left->size + _right->size,
-   //                bound_box_from_boxes( _left->bounds, _right->bounds ),
-   //                nullptr },
-   //          left( _left ), right( _right ), split( _split ) {
-   //       left->parent = this;
-   //       right->parent = this;
-   //    }
-   // };
-
    //@ Support Functions
    parlay::type_allocator<leaf> leaf_allocator;
    parlay::type_allocator<interior> interior_allocator;
+   // using leaf_alloctor = parlay::type_allocator<leaf>;
+   // using interior_alloctor = parlay::type_allocator<interior>;
+   // int Dim;
+
+   leaf*
+   alloc_leaf_node( slice In ) {
+      leaf* o = parlay::type_allocator<leaf>::alloc();
+      new( o ) leaf( In );
+      return o;
+   }
+
+   interior*
+   alloc_interior_node( node* L, node* R, const splitter& split ) {
+      interior* o = parlay::type_allocator<interior>::alloc();
+      new( o ) interior( L, R, split );
+      return o;
+   }
 
    void
    divide_rotate( slice In, splitter_s& pivots, int dim, int idx, int deep,

@@ -1,5 +1,6 @@
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
+#include "common/time_loop.h"
 #include "kdTree.h"
 #include "kdTreeParallel.h"
 
@@ -83,51 +84,54 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
    using points = typename tree::points;
    using node = typename tree::node;
    parlay::internal::timer timer;
-   points wo( wp.size() );
-   tree pkd;
-   timer.start();
-   node* KDParallelRoot =
-       pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
-   timer.stop();
 
-   std::cout << timer.total_time() << " " << std::flush;
-
-   //* start test
-   parlay::random_shuffle( wp.cut( 0, N ) );
    Typename* kdknn = new Typename[N];
-
    kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
    for( int i = 0; i < N; i++ ) {
       bq[i].resize( K );
    }
    parlay::sequence<double> visNum =
        parlay::sequence<double>::uninitialized( N );
-   double aveVisNum = 0.0;
+   points wo( wp.size() );
+   tree pkd;
 
-   timer.reset();
-   timer.start();
+   //* ---------------------------begin------------------------------
+   node* KDParallelRoot;
+   int rounds = 3;
+   double aveBuild = time_loop(
+       rounds, 1.0, [&]() { parlay::random_shuffle( wp.cut( 0, N ) ); },
+       [&]() {
+          KDParallelRoot = pkd.build( wp.cut( 0, wp.size() ),
+                                      wo.cut( 0, wo.size() ), 0, Dim );
+       },
+       [&]() { pkd.delete_tree( KDParallelRoot ); } );
 
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      size_t visNodeNum = 0;
-      pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
-      kdknn[i] = bq[i].top();
-      visNum[i] = ( 1.0 * visNodeNum ) / N;
-   } );
+   LOG << aveBuild << " " << std::flush;
 
-   timer.stop();
-   std::cout << timer.total_time() << " " << std::flush;
+   //* ------------------------start test----------------------------
+   double aveQuery = time_loop(
+       rounds, 1.0,
+       [&]() {
+          parlay::parallel_for( 0, N, [&]( size_t i ) { bq[i].reset(); } );
+       },
+       [&]() {
+          double aveVisNum = 0.0;
+          parlay::parallel_for( 0, N, [&]( size_t i ) {
+             size_t visNodeNum = 0;
+             pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+             kdknn[i] = bq[i].top();
+             visNum[i] = ( 1.0 * visNodeNum ) / N;
+          } );
+       },
+       [&]() {} );
+
+   LOG << aveQuery << " " << std::flush;
 
    aveDeep = 0.0;
    traverseParallelTree<tree>( KDParallelRoot, 1 );
-   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " "
-             << parlay::reduce( visNum.cut( 0, N ) ) << std::endl
-             << std::flush;
-
-   // delete_tree( KDParallelRoot );
-   // points().swap( wp );
-   // points().swap( wo );
-   // delete[] bq;
-   // delete[] kdknn;
+   LOG << aveDeep / ( N / LEAVE_WRAP ) << " "
+       << parlay::reduce( visNum.cut( 0, N ) ) << std::endl
+       << std::flush;
 
    return;
 }
@@ -156,6 +160,7 @@ main( int argc, char* argv[] ) {
       parlay::sequence<char> S = readStringFromFile( iFile );
       parlay::sequence<char*> W = stringToWords( S );
       N = atol( W[0] ), Dim = atoi( W[1] );
+      LOG << N << " " << Dim << ENDL;
       assert( N >= 0 && Dim >= 1 && N >= K );
 
       auto pts = W.cut( 2, W.size() );

@@ -67,7 +67,7 @@ for ((i = 1; i <= ${insNum}; i++)); do
         PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
         continue
     fi
-    numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
+    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
 
     retval=$?
     if [ ${retval} -eq 124 ]; then

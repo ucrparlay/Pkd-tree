@@ -270,6 +270,15 @@ class ArrayQueue {
 
 template <typename T, typename Compare = std::less<T>>
 class kBoundedQueue {
+   /*
+    * A priority queue with fixed maximum capacity.
+    * While the queue has not reached its maximum capacity, elements are
+    * inserted as they will be in a heap, the root (top()) being such that
+    * Compare(top(),x)=false for any x in the queue.
+    * Once the queue is full, trying to insert x in the queue will have no
+    * effect if Compare(x,top())=false. Otherwise, the element at the root of
+    * the heap is removed and x is inserted so as to keep the heap property.
+    */
    //* A simplified version of CGAL bounded_priority_queue
    //* https://github.com/CGAL/cgal/blob/v5.4/Spatial_searching/include/CGAL/Spatial_searching/internal/bounded_priority_queue.h
 
@@ -287,6 +296,11 @@ class kBoundedQueue {
       m_data.clear();
       if( m_data.size() != new_size )
          m_data.resize( new_size );
+      m_count = 0;
+   }
+
+   void
+   reset() {
       m_count = 0;
    }
 
