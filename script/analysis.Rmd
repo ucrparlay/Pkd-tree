@@ -19,7 +19,7 @@ theme_set(theme_light())
 # setwd("/home/zmen002/KDtree/")
 
 # options(scipen = 999)
-# options(digits = 10, nsmall = 3)
+options(digits = 5, nsmall = 3)
 ```
 header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 
@@ -27,7 +27,7 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
 kd <- read.csv("script/data/test.csv", header = TRUE)
-# cgal <- read.csv("script/data/cgal.csv", header = TRUE)
+cgal <- read.csv("script/data/cgal.csv", header = TRUE)
 zd<-read.csv("script/data/zdtree.csv", header=TRUE)
 t <-  bind_rows(zd,kd,cgal)
 # View(t)
@@ -35,56 +35,65 @@ t <-  bind_rows(zd,kd,cgal)
 kd1core <- read.csv("script/data/test_one_core.csv", header = TRUE)
 zd1core <- read.csv("script/data/zdtree_one_core.csv", header = TRUE)
 t1core <- bind_rows(kd1core,zd1core)
-# View(t1core)
-```
 
-```{R}
-l1 <- t %>% select(benchType, nodes, dims)
-l2 <- t1core %>% select(benchType,nodes,dims)
-a <- intersect(l1,l2)
-b <- bind_rows(t,t1core) %>% filter(solver != 'cgal') %>% 
-  filter( benchType %in% a$benchType & nodes %in% a$nodes & dims %in% a$dims) %>%
-  group_by(benchType)
+t <- bind_rows(t,t1core)
+
+# View(t1core)
 ```
 
 define functions 
 ```{R}
-compute <- function(t, name){
-buildByNodes <- t %>%
+computeAve <- function(t, name){
+build <- t %>%
   group_by(solver, benchType, nodes) %>%
   summarise(avg = mean(buildTime), .groups = "drop") %>%
   filter(benchType == name) %>%
-  select(solver, nodes, avg)
+  select(solver, benchType, nodes, avg)
 
-queryByNodes <- t %>%
+query <- t %>%
   group_by(solver, benchType, nodes) %>%
   summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
   filter(benchType == name) %>%
-  select(solver, nodes, avg)
+  select(solver, benchType, nodes, avg)
 
-return (c(buildByNodes, queryByNodes))
+return (list(build, query))
 }
-```
-
-```{R}
-list[build, query] <- compute(t,"ss_varden")
-View(build)
 ```
 
 plot the graph
 ```{R}
-gBuildNode <- ggplot(buildByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
+plot <- function(buildData, queryData, name) {
+gBuild <- ggplot(buildData, aes(x = nodes, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +
   geom_line() +
+  # geom_label(aes(nodes+.1,avg+.1,label=avg,size=4)) +
   theme_gray() +
-  labs(y = "Ave build time")+
-  ggtitle("vary node")
+  labs(y = "Ave build time") +
+  ggtitle(name)
 
-gQueryNode <- ggplot(queryByNodes, aes(x = nodes, y = avg, color = solver, shape = solver)) +
+gQuery <- ggplot(queryData, aes(x = nodes, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +
   geom_line() +
   theme_gray() +
-  labs(y = "Ave query time")
+  labs(y = "Ave query time") + 
+  ggtitle(name)
+
+  return (list(gBuild, gQuery))
+}
+```
+
+
+```{R}
+list[buildVarden, queryVarden] <- computeAve(t,"ss_varden")
+list[buildUniform, queryUniform] <- computeAve(t, "uniform")
+list[gBuildVarden, gQueryVarden] <- plot(buildVarden,queryVarden, "ss_varden")
+list[gBuildUniform, gQueryUniform] <- plot(buildUniform,queryUniform, "uniform")
+
+sortedBuild <- bind_rows(buildVarden,buildUniform) %>% group_by(benchType) %>% arrange(nodes,avg,.by_group=TRUE)
+sortedQuery <- bind_rows(queryVarden,queryUniform) %>% group_by(benchType) %>% arrange(nodes,avg,.by_group=TRUE)
+sortedQuery$avg<-round(sortedQuery$avg, digits=9)
+write.csv(sortedBuild, "script/data/summarize_build.csv")
+write.csv(sortedQuery, "script/data/summarize_query.csv")
 ```
 
 summarize the plot info: https://ggplot2-book.org/arranging-plots.html
@@ -95,7 +104,7 @@ seq(2,6,by=2) [2,4,6]
 saveid <- paste0("script/plot/", substr(system("git rev-parse HEAD", intern = TRUE), 0, 7), ".jpg")
 saveid
 
-gBuildNode + gQueryNode
+gBuildVarden + gQueryVarden + gBuildUniform + gQueryUniform
 ggsave(saveid, width = 12, dpi = 1800)
 ```
 
