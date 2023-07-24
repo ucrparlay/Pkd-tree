@@ -79,8 +79,9 @@ testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t N,
 
 template <typename tree>
 void
-testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
-                    int K ) {
+testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
+                    typename tree::points& wp, const int& N, const int& K,
+                    const int& rounds ) {
    using points = typename tree::points;
    using node = typename tree::node;
    parlay::internal::timer timer;
@@ -90,13 +91,12 @@ testParallelKDtree( int Dim, int LEAVE_WRAP, typename tree::points wp, int N,
 
    //* ---------------------------begin------------------------------
    node* KDParallelRoot;
-   int rounds = 3;
    double aveBuild = time_loop(
        rounds, 1.0,
        [&]() {
           wo = points::uninitialized( wp.size() );
           wx = points::uninitialized( wp.size() );
-          parlay::copy( wp, wx );
+          parlay::copy( wp.cut( 0, wp.size() ), wx.cut( 0, wp.size() ) );
           parlay::random_shuffle( wx.cut( 0, N ) );
        },
        [&]() {
@@ -150,12 +150,13 @@ int
 main( int argc, char* argv[] ) {
    commandLine P( argc, argv,
                   "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
-                  "<parallelTag>] [-p <inFile>]" );
+                  "<parallelTag>] [-p <inFile>] [-r {1,...,5}]" );
    char* iFile = P.getOptionValue( "-p" );
    int K = P.getOptionIntValue( "-k", 100 );
    int Dim = P.getOptionIntValue( "-d", 3 );
    long N = P.getOptionLongValue( "-n", -1 );
    int tag = P.getOptionIntValue( "-t", 1 );
+   int rounds = P.getOptionIntValue( "-r", 3 );
 
    int LEAVE_WRAP = 32;
    Point<Typename>* wp;
@@ -219,48 +220,27 @@ main( int argc, char* argv[] ) {
       auto pts = parlay::tabulate(
           N, [&]( size_t i ) -> point2D { return point2D( wp[i].x ); } );
       delete[] wp;
-      testParallelKDtree<ParallelKDtree<point2D>>( Dim, LEAVE_WRAP, pts, N, K );
+      testParallelKDtree<ParallelKDtree<point2D>>( Dim, LEAVE_WRAP, pts, N, K,
+                                                   rounds );
    } else if( Dim == 3 ) {
       auto pts = parlay::tabulate(
           N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
       delete[] wp;
-      testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N, K );
+      testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N, K,
+                                                   rounds );
    } else if( Dim == 5 ) {
       auto pts = parlay::tabulate(
           N, [&]( size_t i ) -> point5D { return point5D( wp[i].x ); } );
       delete[] wp;
-      testParallelKDtree<ParallelKDtree<point5D>>( Dim, LEAVE_WRAP, pts, N, K );
+      testParallelKDtree<ParallelKDtree<point5D>>( Dim, LEAVE_WRAP, pts, N, K,
+                                                   rounds );
    } else if( Dim == 7 ) {
       auto pts = parlay::tabulate(
           N, [&]( size_t i ) -> point7D { return point7D( wp[i].x ); } );
       delete[] wp;
-      testParallelKDtree<ParallelKDtree<point7D>>( Dim, LEAVE_WRAP, pts, N, K );
+      testParallelKDtree<ParallelKDtree<point7D>>( Dim, LEAVE_WRAP, pts, N, K,
+                                                   rounds );
    }
 
    return 0;
 }
-
-template void
-testParallelKDtree<ParallelKDtree<point3D>>( int Dim, int LEAVE_WRAP,
-                                             ParallelKDtree<point3D>::points wp,
-                                             int N, int K );
-template void
-testParallelKDtree<ParallelKDtree<point5D>>( int Dim, int LEAVE_WRAP,
-                                             ParallelKDtree<point5D>::points wp,
-                                             int N, int K );
-template void
-testParallelKDtree<ParallelKDtree<point7D>>( int Dim, int LEAVE_WRAP,
-                                             ParallelKDtree<point7D>::points wp,
-                                             int N, int K );
-
-template void
-traverseParallelTree<ParallelKDtree<point3D>>(
-    ParallelKDtree<point3D>::node* root, int deep );
-
-template void
-traverseParallelTree<ParallelKDtree<point5D>>(
-    ParallelKDtree<point5D>::node* root, int deep );
-
-template void
-traverseParallelTree<ParallelKDtree<point7D>>(
-    ParallelKDtree<point7D>::node* root, int deep );

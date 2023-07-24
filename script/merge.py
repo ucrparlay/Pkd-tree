@@ -12,7 +12,7 @@ import csv
 print(os.getcwd())
 
 path = "../benchmark"
-benchmarks = ["ss_varden", "uniform"]
+benchmarks = ["ss_varden", "uniform", "uniform_bigint"]
 storePrefix = "data/"
 Nodes = [10000000, 50000000, 100000000, 500000000]
 Dims = [2, 3, 5, 7, 9]
@@ -37,6 +37,8 @@ def combine(P, csvWriter, solver, benchName, node, dim):
     for line in lines:
         l = " ".join(line.split())
         l = l.split(" ")
+        while len(l)<5 :
+            l.append("-1")
         csvWriter.writerow([solver, benchName, node, dim, l[0], l[1], l[2], l[3], l[4]])
 
 
@@ -50,11 +52,13 @@ def csvSetup(solver):
 
 # * merge the result
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
-    solverName = ["test", "cgal", "zdtree"]
+    solverName = ["test", "cgal", "zdtree", "test_one_core", "zdtree_one_core"]
     resMap = {
         "test": "res_parallel.out",
+        "test_one_core": "res_parallel_one_core.out",
         "cgal": "cgal_res_parallel.out",
         "zdtree": "zdtree.out",
+        "zdtree_one_core": "zdtree_one_core.out",
     }
 
     for solver in solverName:
@@ -104,47 +108,3 @@ if len(sys.argv) > 2 and int(sys.argv[2]) == 1:
     for wrap in Wrap:
         P = path + "/" + benchNode + "/500000_5/res_" + wrap + ".out"
         combine(P, csvWriter, solver, benchNode, node, dim)
-
-# * check the correctness
-
-
-def check(P):
-    lines = open(P, "r").readlines()
-    for line in lines:
-        l = " ".join(line.split())
-        l = l.split(" ")
-        print(l[-1])
-        if l[-1] != "ok":
-            print("wrong", P)
-
-
-if len(sys.argv) > 3 and int(sys.argv[3]) == 1:
-    node = 100000
-    for dim in Dims:
-        P = (
-            path
-            + "/"
-            + benchDim
-            + "/"
-            + str(node)
-            + "_"
-            + str(dim)
-            + "/"
-            + "Correct.out"
-        )
-        check(P)
-
-    dim = 5
-    for node in Nodes:
-        P = (
-            path
-            + "/"
-            + benchNode
-            + "/"
-            + str(node)
-            + "_"
-            + str(dim)
-            + "/"
-            + "Correct.out"
-        )
-        check(P)

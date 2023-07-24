@@ -46,6 +46,102 @@ checkTreeSameSequential( typename tree::node* T, int dim, const int& DIM ) {
    return;
 }
 
+void
+runCGAL( points& wp, Typename* cgknn ) {
+   //* cgal
+   std::vector<Point_d> _points( N );
+   parlay::parallel_for(
+       0, N,
+       [&]( size_t i ) {
+          _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
+                                ( std::begin( wp[i].pnt ) + Dim ) );
+       },
+       1000 );
+   Median_of_rectangle median;
+   Tree tree( _points.begin(), _points.end(), median );
+   tree.build<CGAL::Parallel_tag>();
+
+   //* cgal query
+   LOG << "begin tbb  query" << ENDL << std::flush;
+
+   tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
+                      [&]( const tbb::blocked_range<std::size_t>& r ) {
+                         for( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                            // Neighbor search can be instantiated from
+                            // several threads at the same time
+                            Point_d query( Dim, std::begin( wp[s].pnt ),
+                                           std::begin( wp[s].pnt ) + Dim );
+                            Neighbor_search search( tree, query, K );
+                            Neighbor_search::iterator it = search.end();
+                            it--;
+                            cgknn[s] = it->second;
+                         }
+                      } );
+}
+
+void
+runKDParallel( points& wp, Typename* kdknn ) {
+   //* kd tree
+   puts( "build kd tree" );
+   using pkdtree = ParallelKDtree<point10D>;
+   pkdtree pkd;
+   points wo, wx;
+
+   pkdtree::node* KDParallelRoot;
+   time_loop(
+       3, 1.0,
+       [&]() {
+          wo = points::uninitialized( wp.size() );
+          wx = points::uninitialized( wp.size() );
+          parlay::copy( wp.cut( 0, wp.size() ), wx.cut( 0, wp.size() ) );
+          parlay::random_shuffle( wx.cut( 0, N ) );
+       },
+       [&]() {
+          KDParallelRoot = pkd.build( wx.cut( 0, wp.size() ),
+                                      wo.cut( 0, wo.size() ), 0, Dim );
+       },
+       [&]() { pkd.delete_tree( KDParallelRoot ); } );
+   LOG << "finish build" << ENDL << std::flush;
+
+   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
+
+   //* query phase
+
+   parlay::random_shuffle( wp.cut( 0, N ) );
+
+   assert( N >= K );
+   //* kd query
+   //* bounded_queue
+   LOG << "begin kd query" << ENDL;
+   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
+   for( int i = 0; i < N; i++ ) {
+      bq[i].resize( K );
+   }
+   // parlay::sequence<kBoundedQueue<Typename>> bq( N );
+   // parlay::parallel_for( 0, N, [&]( size_t i ) {
+   //    auto o = parlay::type_allocator<kBoundedQueue<Typename>>::alloc();
+   //    new( o ) kBoundedQueue<Typename>( K );
+   //    bq[i] = *o;
+   // } );
+
+   double aveQuery = time_loop(
+       3, 1.0,
+       [&]() {
+          parlay::parallel_for( 0, N, [&]( size_t i ) { bq[i].reset(); } );
+       },
+       [&]() {
+          double aveVisNum = 0.0;
+          parlay::parallel_for( 0, N, [&]( size_t i ) {
+             size_t visNodeNum = 0;
+             pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+             kdknn[i] = bq[i].top();
+          } );
+       },
+       [&]() {} );
+
+   return;
+}
+
 int
 main( int argc, char* argv[] ) {
    std::cout.precision( 5 );
@@ -91,97 +187,11 @@ main( int argc, char* argv[] ) {
       } );
    }
 
-   //* cgal
-   std::vector<Point_d> _points( N );
-   parlay::parallel_for(
-       0, N,
-       [&]( size_t i ) {
-          _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
-                                ( std::begin( wp[i].pnt ) + Dim ) );
-       },
-       1000 );
-   Median_of_rectangle median;
-   Tree tree( _points.begin(), _points.end(), median );
-   tree.build<CGAL::Parallel_tag>();
-
-   //* kd tree
-   puts( "build kd tree" );
-   using pkdtree = ParallelKDtree<point10D>;
-   pkdtree pkd;
-   points wo, wx;
-
-   // auto KDParallelRoot =
-   //     pkd.build( wp.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
-   pkdtree::node* KDParallelRoot;
-   time_loop(
-       3, 1.0,
-       [&]() {
-          wo = points::uninitialized( wp.size() );
-          wx = points::uninitialized( wp.size() );
-          parlay::copy( wp, wx );
-          parlay::random_shuffle( wx.cut( 0, N ) );
-       },
-       [&]() {
-          KDParallelRoot = pkd.build( wx.cut( 0, wp.size() ),
-                                      wo.cut( 0, wo.size() ), 0, Dim );
-       },
-       [&]() {
-          //  puts( "delete" );
-          pkd.delete_tree( KDParallelRoot );
-       } );
-   // wo = points::uninitialized( wp.size() );
-   // wx = points::uninitialized( wp.size() );
-   // parlay::copy( wp, wx );
-   // KDParallelRoot =
-   //     pkd.build( wx.cut( 0, wp.size() ), wo.cut( 0, wo.size() ), 0, Dim );
-   LOG << "finish build" << ENDL << std::flush;
-
-   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
-
-   // LOG << check( KDroot, KDParallelRoot, 0 ) << ENDL;
-   // return 0;
-
-   //* query phase
-
-   parlay::random_shuffle( wp.cut( 0, N ) );
-
    Typename* cgknn = new Typename[N];
    Typename* kdknn = new Typename[N];
-   assert( N >= K );
-   //* kd query
-   //* bounded_queue
-   LOG << "begin kd query" << ENDL;
-   kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[N];
-   // parlay::sequence<kBoundedQueue<Typename>> bq( N );
-   // parlay::parallel_for( 0, N, [&]( size_t i ) {
-   //    auto o = parlay::type_allocator<kBoundedQueue<Typename>>::alloc();
-   //    new( o ) kBoundedQueue<Typename>( K );
-   //    bq[i] = *o;
-   // } );
 
-   parlay::parallel_for( 0, N, [&]( size_t i ) {
-      size_t visNodeNum = 0;
-      bq[i].resize( K );
-      pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
-      kdknn[i] = bq[i].top();
-   } );
-
-   //* cgal query
-   LOG << "begin tbb  query" << ENDL << std::flush;
-
-   tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
-                      [&]( const tbb::blocked_range<std::size_t>& r ) {
-                         for( std::size_t s = r.begin(); s != r.end(); ++s ) {
-                            // Neighbor search can be instantiated from
-                            // several threads at the same time
-                            Point_d query( Dim, std::begin( wp[s].pnt ),
-                                           std::begin( wp[s].pnt ) + Dim );
-                            Neighbor_search search( tree, query, K );
-                            Neighbor_search::iterator it = search.end();
-                            it--;
-                            cgknn[s] = it->second;
-                         }
-                      } );
+   runCGAL( wp, cgknn );
+   runKDParallel( wp, kdknn );
 
    //* verify
    for( size_t i = 0; i < N; i++ ) {

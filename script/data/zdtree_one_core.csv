@@ -1,0 +1,7 @@
+solver,benchType,nodes,dims,file,buildTime,queryTime,aveDeep,aveQueryVisNodeNum
+zdtree_one_core,uniform,10000000,3,1.in,2.99349,151.786,-1,-1
+zdtree_one_core,uniform,10000000,3,2.in,2.98667,152.042,-1,-1
+zdtree_one_core,uniform,50000000,3,1.in,16.3328,737.581,-1,-1
+zdtree_one_core,uniform,50000000,3,2.in,15.6321,737.79,-1,-1
+zdtree_one_core,uniform,100000000,3,1.in,34.7203,1568.97,-1,-1
+zdtree_one_core,uniform,100000000,3,2.in,34.618,-1,-1,-1

@@ -1,17 +1,17 @@
 #!/bin/bash
 
 Solvers=("test")
-Node=(100000000)
-# Node=(10000000 50000000 100000000 500000000)
+Cores=(8 24 48 96)
+# Node=(100000)
+Node=(1000000000)
 declare -A datas
-# datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/ssd0/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 
 Tag=(0 1)
 dim=3
 k=100
-onecore=1
-insNum=2
+onecore=0
+insNum=1
 
 resFile=""
 
@@ -23,11 +23,8 @@ for solver in ${Solvers[@]}; do
                 continue
                 resFile="res_serial.out"
             else
-                if [[ ${onecore} == 0 ]]; then
-                    resFile="res_parallel.out"
-                else
-                    resFile="res_parallel_one_core.out"
-                fi
+                resFile="res_parallel.out"
+                # resFile="res_parallel_one_core.out"
             fi
         elif [[ ${solver} == "cgal" ]]; then
             if [[ ${tag} == 0 ]]; then
@@ -40,17 +37,15 @@ for solver in ${Solvers[@]}; do
             if [[ ${tag} == 0 ]]; then
                 continue
             else
-                if [[ ${onecore} == 0 ]]; then
-                    resFile="zdtree.out"
-                else
-                    resFile="zdtree_one_core.out"
-                fi
+                resFile="zdtree.out"
             fi
         fi
 
         for dataPath in "${!datas[@]}"; do
             for node in ${Node[@]}; do
-                . ./core.sh --solver ${solver} --tag ${tag} --dataPath ${dataPath} --logPath ${datas[${dataPath}]} --serial ${onecore} --node ${node} --dim ${dim} --insNum ${insNum} --core 96 --
+                for core in ${Cores[@]}; do
+                    . ./core.sh --solver ${solver} --tag ${tag} --dataPath ${dataPath} --logPath ${datas[${dataPath}]} --serial ${onecore} --node ${node} --dim ${dim} --insNum ${insNum} --core ${core} --
+                done
             done
         done
     done

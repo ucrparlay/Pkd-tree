@@ -27,25 +27,48 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
 kd <- read.csv("script/data/test.csv", header = TRUE)
-cgal <- read.csv("script/data/cgal.csv", header = TRUE)
+# cgal <- read.csv("script/data/cgal.csv", header = TRUE)
 zd<-read.csv("script/data/zdtree.csv", header=TRUE)
 t <-  bind_rows(zd,kd,cgal)
 # View(t)
+
+kd1core <- read.csv("script/data/test_one_core.csv", header = TRUE)
+zd1core <- read.csv("script/data/zdtree_one_core.csv", header = TRUE)
+t1core <- bind_rows(kd1core,zd1core)
+# View(t1core)
 ```
 
-
 ```{R}
-queryByNodes <- t %>%
-  group_by(solver, benchType, nodes) %>%
-  summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
-  filter(benchType == "ss_varden") %>%
-  select(solver, nodes, avg)
+l1 <- t %>% select(benchType, nodes, dims)
+l2 <- t1core %>% select(benchType,nodes,dims)
+a <- intersect(l1,l2)
+b <- bind_rows(t,t1core) %>% filter(solver != 'cgal') %>% 
+  filter( benchType %in% a$benchType & nodes %in% a$nodes & dims %in% a$dims) %>%
+  group_by(benchType)
+```
 
+define functions 
+```{R}
+compute <- function(t, name){
 buildByNodes <- t %>%
   group_by(solver, benchType, nodes) %>%
   summarise(avg = mean(buildTime), .groups = "drop") %>%
-  filter(benchType == "ss_varden") %>%
+  filter(benchType == name) %>%
   select(solver, nodes, avg)
+
+queryByNodes <- t %>%
+  group_by(solver, benchType, nodes) %>%
+  summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
+  filter(benchType == name) %>%
+  select(solver, nodes, avg)
+
+return (c(buildByNodes, queryByNodes))
+}
+```
+
+```{R}
+list[build, query] <- compute(t,"ss_varden")
+View(build)
 ```
 
 plot the graph

@@ -2,39 +2,30 @@
 
 folder="KDtree"
 
-while true; do
-    case "$1" in
-    --s)
-        shift
-        src=$1
+while getopts "s:d:f:n:" option; do
+    case $option in
+    s)
+        src=$OPTARG
         ;;
-    --d)
-        shift
-        dest=$1
+    d)
+        dest=$OPTARG
         ;;
-    --folder)
-        shift
-        folder=$1
+    f)
+        folder=$OPTARG
         ;;
-    --name)
-        shift
-        name=$1
-        ;;
-    --)
-        shift
-        break
+    n)
+        name=$OPTARG
         ;;
     esac
-    shift
 done
 
-if [[ ${folder} == "KDtree" ]]; then 
+if [[ ${folder} == "KDtree" ]]; then
     scp -r "zmen002@${src}.cs.ucr.edu:~/KDtree/${name}" "zmen002@${dest}.cs.ucr.edu:~/KDtree/"
-else 
+else
     if [[ ${src} == "cheetah" ]]; then
         srcDisk="ssd0"
         destDisk="data9"
-    else 
+    else
         srcDisk="data9"
         destDisk="ssd0"
     fi

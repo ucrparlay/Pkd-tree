@@ -1,5 +1,6 @@
 #!/bin/bash
 # POSIX
+ccore=192
 
 while true; do
     case "$1" in
@@ -35,6 +36,11 @@ while true; do
         shift
         insNum=$1
         ;;
+    --core)
+        shift
+        tmp=$1
+        ccore=$((tmp * 2))
+        ;;
     --)
         shift
         break
@@ -64,10 +70,10 @@ fi
 
 for ((i = 1; i <= ${insNum}; i++)); do
     if [[ ${serial} == 1 ]]; then
-        PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
+        PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 >>${dest}
         continue
     fi
-    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
+    PARLAY_NUM_THREADS=${ccore} numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
 
     retval=$?
     if [ ${retval} -eq 124 ]; then
