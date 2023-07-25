@@ -22,7 +22,7 @@ for node in ${Nodes[@]}; do
     done
 
     #* verify correctness
-    if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
+    if grep -c "wrong" "${files_path}/${resFile}" || grep -c "dumped" "${files_path}/${resFile}"; then
         echo 'wrong'
         exit
     fi

@@ -1,12 +1,12 @@
-finish build
-begin kd query
 begin tbb  query
-ok
-finish build
-begin kd query
+build kd tree
+0.056705 begin kd query
+4.0694 26.98 109.33ok
 begin tbb  query
-ok
-finish build
-begin kd query
+build kd tree
+0.056104 begin kd query
+4.0207 26.961 109.19ok
 begin tbb  query
-ok
+build kd tree
+0.055327 begin kd query
+4.0381 27.069 109.47ok
