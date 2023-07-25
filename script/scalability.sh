@@ -1,9 +1,9 @@
 #!/bin/bash
 
-Solvers=("test")
-Cores=(8 24 48 96)
+Solvers=("zdtree")
+Cores=(1 8 16 24 48 96)
 # Node=(100000)
-Node=(1000000000)
+Node=(100000000 500000000)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 
@@ -41,12 +41,29 @@ for solver in ${Solvers[@]}; do
             fi
         fi
 
-        for dataPath in "${!datas[@]}"; do
-            for node in ${Node[@]}; do
-                for core in ${Cores[@]}; do
-                    . ./core.sh --solver ${solver} --tag ${tag} --dataPath ${dataPath} --logPath ${datas[${dataPath}]} --serial ${onecore} --node ${node} --dim ${dim} --insNum ${insNum} --core ${core} --
+        exe="../build/${solver}"
+        if [[ ${solver} == "zdtree" ]]; then
+            export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
+            exe="/home/zmen002/pbbsbench_x/benchmarks/nearestNeighbors/octTree/neighbors"
+        fi
+
+        for core in ${Cores[@]}; do
+            for dataPath in "${!datas[@]}"; do
+                for node in ${Node[@]}; do
+                    logPath=${datas[${dataPath}]}
+
+                    files_path="${dataPath}${node}_${dim}"
+                    log_path="${logPath}${node}_${dim}"
+                    mkdir -p ${log_path}
+                    dest="${log_path}/${core}_${resFile}"
+                    : >${dest}
+                    echo ">>>${dest}"
+                    for ((i = 1; i <= ${insNum}; i++)); do
+                        PARLAY_NUM_THREADS=${core} numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 3 >>${dest}
+                    done
                 done
             done
         done
+
     done
 done
