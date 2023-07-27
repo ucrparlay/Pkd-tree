@@ -32,7 +32,7 @@ fi
 echo "${download} ${gnum} ${node} ${dim} ${varDensity}"
 
 vardenPath="../src_x/DBSCAN"
-outPath="/data9/zmen002/kdtree/ss_varden/"
+outPath="/ssd0/zmen002/kdtree/ss_varden/"
 
 mkdir ${outPath}${node}_${dim}
 

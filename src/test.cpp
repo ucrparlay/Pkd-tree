@@ -36,30 +36,44 @@ void testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t
   std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl
             << std::flush;
 
-  //* delete
-  // KD.destory( KDroot );
-  // delete[] kdPoint;
-  // delete[] kdknn;
-
   return;
 }
 
-template<typename tree>
+template<typename point>
 void testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
-                         const typename tree::points& wp, const int& N, const int& K,
-                         const int& rounds ) {
+                         parlay::sequence<point>& wp, const size_t& N, const int& K,
+                         const int& rounds, const string& insertFile, const int& tag ) {
+  using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
+  using interior = typename tree::interior;
+  using leaf = typename tree::leaf;
+  using node_tag = typename tree::node_tag;
+  using node_tags = typename tree::node_tags;
   assert( N == wp.size() );
   tree pkd;
 
   buildTree( Dim, wp, rounds, pkd );
-  return;
 
-  Typename* kdknn = new Typename[N];
+  points wi = points::uninitialized( N );
+  Typename* kdknn;
+  if ( tag == 1 ) {
+    size_t tmpn;
+    int tmpd;
+    read_points<point>( insertFile.c_str(), wi, tmpn, tmpd, K );
+    assert( wi.size() == N && tmpn == N && tmpd == Dim );
+    size_t len = ( N / 2 ) / rounds;
+
+    batchInsert( pkd, wi, Dim, rounds, len );
+
+    wp.append( wi );
+    kdknn = new Typename[N + N / 2 + 1];
+  } else {
+    kdknn = new Typename[N];
+  }
+
   queryKNN( Dim, wp, rounds, pkd, kdknn, K );
-  std::cout << std::endl;
-
+  puts( "" );
   return;
 }
 
@@ -70,87 +84,62 @@ int main( int argc, char* argv[] ) {
   char* iFile = P.getOptionValue( "-p" );
   int K = P.getOptionIntValue( "-k", 100 );
   int Dim = P.getOptionIntValue( "-d", 3 );
-  long N = P.getOptionLongValue( "-n", -1 );
+  size_t N = P.getOptionLongValue( "-n", -1 );
   int tag = P.getOptionIntValue( "-t", 1 );
   int rounds = P.getOptionIntValue( "-r", 3 );
 
   int LEAVE_WRAP = 32;
-  Point<Typename>* wp;
+  parlay::sequence<point15D> wp;
+  std::string name, insertFile;
 
   //* initialize points
   if ( iFile != NULL ) {
-    std::string name( iFile );
+    name = std::string( iFile );
     name = name.substr( name.rfind( "/" ) + 1 );
     std::cout << name << " ";
-
-    //* read from file
-    parlay::sequence<char> S = readStringFromFile( iFile );
-    parlay::sequence<char*> W = stringToWords( S );
-    N = atol( W[0] ), Dim = atoi( W[1] );
-    assert( N >= 0 && Dim >= 1 && N >= K );
-
-    auto pts = W.cut( 2, W.size() );
-    assert( pts.size() % Dim == 0 );
-    size_t n = pts.size() / Dim;
-    auto a =
-        parlay::tabulate( Dim * n, [&]( size_t i ) -> coord { return atol( pts[i] ); } );
-    wp = new Point<coord>[N];
-    parlay::parallel_for( 0, n, [&]( size_t i ) {
-      for ( int j = 0; j < Dim; j++ ) {
-        wp[i].x[j] = a[i * Dim + j];
-      }
-    } );
-    decltype( a )().swap( a );
+    read_points<point15D>( iFile, wp, N, Dim, K );
   } else {  //* construct data byself
     K = 100;
-    coord box_size = 10000000;
-
-    std::random_device rd;        // a seed source for the random number engine
-    std::mt19937 gen_mt( rd() );  // mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<int> distrib( 1, box_size );
-
-    parlay::random_generator gen( distrib( gen_mt ) );
-    std::uniform_int_distribution<int> dis( 0, box_size );
-
-    wp = new Point<Typename>[N];
-    // generate n random points in a cube
-    parlay::parallel_for(
-        0, N,
-        [&]( long i ) {
-          auto r = gen[i];
-          for ( int j = 0; j < Dim; j++ ) {
-            wp[i].x[j] = dis( r );
-          }
-        },
-        1000 );
+    generate_random_points<point15D>( wp, 1000000, N, Dim );
     std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
     std::cout << name << " ";
   }
 
+  if ( tag == 1 ) {
+    int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
+    id = ( id + 1 ) % 3;  //! MOD graph number used to test
+    if ( !id ) id++;
+    int pos = std::string( iFile ).rfind( "/" ) + 1;
+    insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
+    LOG << insertFile << ENDL;
+  }
+
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
-  if ( tag == 0 )  //* serial run
-    testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-  else if ( Dim == 2 ) {
-    auto pts =
-        parlay::tabulate( N, [&]( size_t i ) -> point2D { return point2D( wp[i].x ); } );
-    delete[] wp;
-    testParallelKDtree<ParallelKDtree<point2D>>( Dim, LEAVE_WRAP, pts, N, K, rounds );
+  if ( tag == -1 ) {
+    //* serial run
+    // todo rewrite test serial code
+    // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+  } else if ( Dim == 2 ) {
+    auto pts = parlay::tabulate(
+        N, [&]( size_t i ) -> point2D { return point2D( wp[i].pnt.begin() ); } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<point2D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 3 ) {
-    auto pts =
-        parlay::tabulate( N, [&]( size_t i ) -> point3D { return point3D( wp[i].x ); } );
-    delete[] wp;
-    testParallelKDtree<ParallelKDtree<point3D>>( Dim, LEAVE_WRAP, pts, N, K, rounds );
+    auto pts = parlay::tabulate(
+        N, [&]( size_t i ) -> point3D { return point3D( wp[i].pnt.begin() ); } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<point3D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 5 ) {
-    auto pts =
-        parlay::tabulate( N, [&]( size_t i ) -> point5D { return point5D( wp[i].x ); } );
-    delete[] wp;
-    testParallelKDtree<ParallelKDtree<point5D>>( Dim, LEAVE_WRAP, pts, N, K, rounds );
+    auto pts = parlay::tabulate(
+        N, [&]( size_t i ) -> point5D { return point5D( wp[i].pnt.begin() ); } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<point5D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 7 ) {
-    auto pts =
-        parlay::tabulate( N, [&]( size_t i ) -> point7D { return point7D( wp[i].x ); } );
-    delete[] wp;
-    testParallelKDtree<ParallelKDtree<point7D>>( Dim, LEAVE_WRAP, pts, N, K, rounds );
+    auto pts = parlay::tabulate(
+        N, [&]( size_t i ) -> point7D { return point7D( wp[i].pnt.begin() ); } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<point7D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   }
 
   return 0;

@@ -1,31 +1,35 @@
 #!/bin/bash
 
-Nodes=(1000000 5000000 10000000 50000000)
+Nodes=(1000000 5000000 8000000 10000000 50000000)
 Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"
 resFile="Correct.out"
-: >"log.in"
+dest="log.in"
+: >${dest}
+tag=1
+
+Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
-for node in ${Nodes[@]}; do
-    dim=5
-    path="/ssd0/zmen002/kdtree/ss_varden/"
+for path in ${Paths[@]}; do
+    for node in ${Nodes[@]}; do
+        dim=5
 
-    files_path="${path}${node}_${dim}"
-    mkdir -p ${files_path}
-    : >"${files_path}/${resFile}"
+        files_path="${path}${node}_${dim}"
+        : >"log.in"
 
-    for file in "${files_path}/"*.in; do
-        echo "------->${file}"
-        ../build/${tester} ${file} ${K} >>"${files_path}/${resFile}"
+        for file in "${files_path}/"*.in; do
+            echo "------->${file}"
+            ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 >>${dest}
+        done
+
+        #* verify correctness
+        if grep -c "wrong" ${dest} || grep -c "dumped" ${dest}; then
+            echo 'wrong'
+            exit
+        fi
     done
-
-    #* verify correctness
-    if grep -c "wrong" "${files_path}/${resFile}" || grep -c "dumped" "${files_path}/${resFile}"; then
-        echo 'wrong'
-        exit
-    fi
 done
 
 echo "finish node test"
@@ -39,17 +43,15 @@ for node in ${Nodes[@]}; do
     path="../benchmark/craft_var_dim_integer/"
     for dim in ${Dims[@]}; do
         files_path="${path}${node}_${dim}"
-        mkdir -p ${files_path}
-        : >"${files_path}/${resFile}"
         echo "------->${files_path}"
 
         for ((i = 1; i <= 3; i++)); do
             nodeVar=$((${node} + ${i}))
-            ../build/${tester} ${nodeVar} ${dim} >>"${files_path}/${resFile}"
+            ../build/${tester} -n ${nodeVar} -d ${dim} -t ${tag} -r 2 >>${dest}
         done
 
         #* verify correctness
-        if grep -c "wrong" "${files_path}/${resFile}" || grep -c "Assertion" "${files_path}/${resFile}"; then
+        if grep -c "wrong" ${dest} || grep -c "dumped" ${dest}; then
             echo 'wrong'
             exit
         fi

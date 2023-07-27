@@ -12,7 +12,8 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using points = parlay::sequence<point10D>;
+using point = point10D;
+using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
@@ -23,10 +24,11 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance, Median_of_recta
     Neighbor_search;
 typedef Neighbor_search::Tree Tree;
 
-int Dim, Q, K;
-long N;
+int Dim, K, tag, rounds;
+bool insert;
+size_t N;
 
-void runCGAL( const points& wp, Typename* cgknn ) {
+void runCGAL( points& wp, points& wi, Typename* cgknn ) {
   //* cgal
   std::vector<Point_d> _points( N );
   parlay::parallel_for(
@@ -40,10 +42,25 @@ void runCGAL( const points& wp, Typename* cgknn ) {
   Tree tree( _points.begin(), _points.end(), median );
   tree.build<CGAL::Parallel_tag>();
 
+  if ( tag == 1 ) {
+    _points.resize( wi.size() );
+    parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
+      _points[j] =
+          Point_d( Dim, std::begin( wi[j].pnt ), ( std::begin( wi[j].pnt ) + Dim ) );
+    } );
+    tree.insert( _points.begin(), _points.end() );
+    tree.build<CGAL::Parallel_tag>();
+    assert( tree.size() == wp.size() + wi.size() );
+    wp.append( wi );
+    assert( tree.size() == wp.size() );
+    puts( "finish insert to cgal" );
+  }
+
   //* cgal query
   LOG << "begin tbb  query" << ENDL << std::flush;
+  assert( tree.is_built() );
 
-  tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, _points.size() ),
+  tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
                      [&]( const tbb::blocked_range<std::size_t>& r ) {
                        for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
                          // Neighbor search can be instantiated from
@@ -56,20 +73,27 @@ void runCGAL( const points& wp, Typename* cgknn ) {
                          cgknn[s] = it->second;
                        }
                      } );
+
+  wp.pop_tail( wi.size() );
+  assert( wp.size() == N );
 }
 
-void runKDParallel( const points& wp, Typename* kdknn ) {
+void runKDParallel( points& wp, points& wi, Typename* kdknn ) {
   //* kd tree
   puts( "build kd tree" );
-  using pkdtree = ParallelKDtree<point10D>;
+  using pkdtree = ParallelKDtree<point>;
   pkdtree pkd;
-  points wo, wx;
   size_t n = wp.size();
-  int rounds = 3;
 
   buildTree( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
+
+  if ( tag == 1 ) {
+    batchInsert( pkd, wi, Dim, 2, wi.size() / 2 );
+    wp.append( wi );
+    puts( "inserted points to batch" );
+  }
 
   //* query phase
 
@@ -81,54 +105,54 @@ void runKDParallel( const points& wp, Typename* kdknn ) {
 }
 
 int main( int argc, char* argv[] ) {
-  std::cout.precision( 5 );
-  points wp;
-  std::string name( argv[1] );
+  commandLine P( argc, argv,
+                 "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
+                 "<parallelTag>] [-p <inFile>] [-r {1,...,5}]" );
+  char* iFile = P.getOptionValue( "-p" );
+  K = P.getOptionIntValue( "-k", 100 );
+  Dim = P.getOptionIntValue( "-d", 3 );
+  N = P.getOptionLongValue( "-n", -1 );
+  tag = P.getOptionIntValue( "-t", 0 );
+  rounds = P.getOptionIntValue( "-r", 3 );
 
-  if ( name.find( "/" ) != std::string::npos ) {
-    name = name.substr( name.rfind( "/" ) + 1 );
-    std::cout << name << " ";
-
-    freopen( argv[1], "r", stdin );
-    K = std::stoi( argv[2] );
-
-    scanf( "%ld%d", &N, &Dim );
-    wp.resize( N );
-    for ( int i = 0; i < N; i++ ) {
-      for ( int j = 0; j < Dim; j++ ) {
-        scanf( "%ld", &wp[i].pnt[j] );
-      }
-    }
-  } else {
-    K = 100;
-    size_t box_size = 1000000;
-
-    std::random_device rd;        // a seed source for the random number engine
-    std::mt19937 gen_mt( rd() );  // mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<int> distrib( 1, box_size );
-
-    parlay::random_generator gen( distrib( gen_mt ) );
-    std::uniform_int_distribution<int> dis( 0, box_size );
-
-    assert( argc >= 3 );
-    size_t n = std::stoi( argv[1] );
-    N = n;
-    Dim = std::stoi( argv[2] );
-    wp.resize( N );
-    //* generate n random points in a cube
-    parlay::parallel_for( 0, n, [&]( long i ) {
-      auto r = gen[i];
-      for ( int j = 0; j < Dim; j++ ) {
-        wp[i].pnt[j] = dis( r );
-      }
-    } );
+  if ( tag == 0 ) {
+    puts( "build and query" );
+  } else if ( tag == 1 ) {
+    puts( "build, insert and query" );
   }
 
-  Typename* cgknn = new Typename[N];
-  Typename* kdknn = new Typename[N];
+  int LEAVE_WRAP = 32;
+  points wp;
 
-  runCGAL( wp, cgknn );
-  runKDParallel( wp, kdknn );
+  //* initialize points
+  if ( iFile != NULL ) {
+    std::string name( iFile );
+    name = name.substr( name.rfind( "/" ) + 1 );
+    std::cout << name << " ";
+    read_points<point>( iFile, wp, N, Dim, K );
+  } else {  //* construct data byself
+    K = 100;
+    generate_random_points<point>( wp, 100000, N, Dim );
+    assert( wp.size() == N );
+    std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
+    std::cout << name << " ";
+  }
+
+  Typename* cgknn;
+  Typename* kdknn;
+  points wi;
+
+  if ( tag == 0 ) {
+    cgknn = new Typename[N];
+    kdknn = new Typename[N];
+  } else if ( tag == 1 ) {
+    generate_random_points<point>( wi, 1000, N / 2, Dim );
+    cgknn = new Typename[N + wi.size()];
+    kdknn = new Typename[N + wi.size()];
+  }
+
+  runCGAL( wp, wi, cgknn );
+  runKDParallel( wp, wi, kdknn );
 
   //* verify
   for ( size_t i = 0; i < N; i++ ) {
@@ -140,6 +164,6 @@ int main( int argc, char* argv[] ) {
     }
   }
 
-  puts( "ok" );
+  puts( "\nok" );
   return 0;
 }

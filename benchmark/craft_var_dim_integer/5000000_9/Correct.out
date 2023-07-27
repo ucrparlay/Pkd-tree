@@ -1,12 +1,19 @@
-finish build
-begin kd query
+build, insert and query
+5000001_9.in finish insert to cgal
 begin tbb  query
-ok
-finish build
+build kd tree
+0.09488 0.0616025 inserted points to batch
 begin kd query
-begin tbb  query
+987.841 34.7488 13129
 ok
-finish build
+build, insert and query
+5000002_9.in finish insert to cgal
+begin tbb  query
+build kd tree
+0.096972 0.0634765 inserted points to batch
 begin kd query
-begin tbb  query
+981.374 34.9481 13184.5
 ok
+build, insert and query
+5000003_9.in finish insert to cgal
+begin tbb  query
