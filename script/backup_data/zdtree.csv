@@ -1,5 +1,0 @@
-solver,benchType,nodes,dims,file,buildTime,queryTime,aveDeep,aveQueryVisNodeNum
-zdtree,ss_varden,10000000,3,1.in,0.176034,4.83728,-1,-1
-zdtree,ss_varden,50000000,3,1.in,0.861248,92.1447,-1,-1
-zdtree,ss_varden,100000000,3,1.in,1.66336,102.353,-1,-1
-zdtree,ss_varden,500000000,3,1.in,6.03502,379.197,-1,-1

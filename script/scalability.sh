@@ -1,17 +1,18 @@
 #!/bin/bash
 
-Solvers=("zdtree")
+Solvers=("zdtree" "test")
 Cores=(1 8 16 24 48 96)
 # Node=(100000)
-Node=(100000000 500000000)
+Node=(10000000 50000000 100000000 500000000)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
+datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
 Tag=(0 1)
 dim=3
 k=100
 onecore=0
-insNum=1
+insNum=2
 
 resFile=""
 
@@ -64,6 +65,5 @@ for solver in ${Solvers[@]}; do
                 done
             done
         done
-
     done
 done

@@ -1,16 +1,16 @@
 #!/bin/bash
 
 Solvers=("test")
-Node=(100000000)
-# Node=(10000000 50000000 100000000 500000000)
+# Node=(100000000)
+Node=(10000000 50000000 100000000 500000000)
 declare -A datas
-# datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/ssd0/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 Tag=(0 1)
 dim=3
 k=100
-onecore=1
+onecore=0
 insNum=2
 
 resFile=""
