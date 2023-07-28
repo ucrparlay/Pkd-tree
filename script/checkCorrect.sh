@@ -5,7 +5,8 @@ Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"
 resFile="Correct.out"
-dest="log.in"
+dest="logger.in"
+out="log.in"
 : >${dest}
 tag=1
 
@@ -17,7 +18,6 @@ for path in ${Paths[@]}; do
         dim=5
 
         files_path="${path}${node}_${dim}"
-        : >"log.in"
 
         for file in "${files_path}/"*.in; do
             echo "------->${file}"
@@ -25,7 +25,7 @@ for path in ${Paths[@]}; do
         done
 
         #* verify correctness
-        if grep -c "wrong" ${dest} || grep -c "dumped" ${dest}; then
+        if grep -c "wrong" ${dest} || grep -c "dumped" ${out}; then
             echo 'wrong'
             exit
         fi
@@ -51,7 +51,7 @@ for node in ${Nodes[@]}; do
         done
 
         #* verify correctness
-        if grep -c "wrong" ${dest} || grep -c "dumped" ${dest}; then
+        if grep -c "wrong" ${dest} || grep -c "dumped" ${out}; then
             echo 'wrong'
             exit
         fi

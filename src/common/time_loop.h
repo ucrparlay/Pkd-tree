@@ -7,16 +7,15 @@ double time_loop( int rounds, double delay, F initf, G runf, H endf ) {
   // will skip if delay is zero
   while ( t.total_time() < delay ) {
     initf();
-    // runf();
+    runf();
     endf();
   }
   for ( int i = 1; i <= rounds; i++ ) {
     initf();
     t.start();
     runf();
-    // t.next( "" );
     t.next_time();
-    if ( i < rounds ) endf();
+    endf();
   }
   return t.total_time() / rounds;
 }
