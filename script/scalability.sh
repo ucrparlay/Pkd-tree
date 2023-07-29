@@ -12,7 +12,7 @@ tag=0
 dim=3
 k=100
 onecore=0
-insNum=2
+insNum=1
 
 resFile=""
 
@@ -60,8 +60,11 @@ for solver in ${Solvers[@]}; do
                 echo ">>>${dest}"
 
                 step=$((96 / core))
+                echo $step
                 for ((i = 1; i <= ${insNum}; i++)); do
-                    PARLAY_NUM_THREADS=${core} taskset -c 0-95:${step} numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 3 >>${dest}
+                    #! NUMA control would slow down the serial process dramatically.
+                    #! e.g., in zd tree, the sort would be 30% slower and 40% slower for build the tree
+                    PARLAY_NUM_THREADS=${core} taskset -c 0-95:${step} ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 2 >>${dest}
                 done
             done
         done

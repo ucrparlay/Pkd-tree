@@ -96,6 +96,7 @@ void ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
         }
     }
 
+    // todo try change to counting sort
     parlay::parallel_for( 0, num_block, [&]( size_t i ) {
         auto v = parlay::sequence<uint_fast32_t>::uninitialized( BUCKET_NUM );
         int tot = 0, s_offset = 0;
