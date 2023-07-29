@@ -50,29 +50,43 @@ void testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
     using leaf = typename tree::leaf;
     using node_tag = typename tree::node_tag;
     using node_tags = typename tree::node_tags;
-    assert( N == wp.size() );
-    tree pkd;
 
+    if ( N != wp.size() ) {
+        puts( "input parameter N is different to input points size" );
+        abort();
+    }
+
+    tree pkd;
     points wi;
     Typename* kdknn;
-    if ( tag == 1 ) {
-        wi = points::uninitialized( N );
-        auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-        assert( wi.size() == N && N == nn && nd == Dim );
-        kdknn = new Typename[N + N / 2 + 1];
-    } else {
-        kdknn = new Typename[N];
-    }
 
     //* begin test
     buildTree<point>( Dim, wp, rounds, pkd );
 
-    if ( tag == 1 ) {
-        assert( wp.size() == N );
+    //* batch insert
+    if ( tag >= 1 ) {
+        auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+        if ( nd != Dim ) {
+            puts( "read inserted points dimension wrong" );
+            abort();
+        }
+
         batchInsert<point>( pkd, wp, wi, Dim, rounds );
+
         wp.append( wi );
+        kdknn = new Typename[N + wi.size()];
+    } else {
+        kdknn = new Typename[N];
+        std::cout << "-1 " << std::flush;
     }
 
+    //* batch delete
+    if ( tag >= 2 ) {
+    } else {
+        std::cout << "-1 " << std::flush;
+    }
+
+    // todo update size of kdknn in the end
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
 
     std::cout << std::endl;
