@@ -62,6 +62,7 @@ void testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
 
     //* begin test
     buildTree<point>( Dim, wp, rounds, pkd );
+    return;
 
     //* batch insert
     if ( tag >= 1 ) {

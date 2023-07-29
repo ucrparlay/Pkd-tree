@@ -1,12 +1,12 @@
 #!/bin/bash
 
-Solvers=("test")
+Solvers=("zdtree" "test")
 Cores=(1 4 8 16 24 48 96)
 # Node=(100000)
-Node=(10000000 50000000 100000000 500000000)
+Node=(100000000 500000000)
 declare -A datas
-datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
-datas["/ssd0/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
+datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
+datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
 tag=0
 dim=3
@@ -58,6 +58,7 @@ for solver in ${Solvers[@]}; do
                 dest="${log_path}/${core}_${resFile}"
                 : >${dest}
                 echo ">>>${dest}"
+
                 step=$((96 / core))
                 for ((i = 1; i <= ${insNum}; i++)); do
                     PARLAY_NUM_THREADS=${core} taskset -c 0-95:${step} numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 3 >>${dest}
