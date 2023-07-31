@@ -29,144 +29,171 @@ bool insert;
 size_t N;
 
 void runCGAL( points& wp, points& wi, Typename* cgknn ) {
-    //* cgal
-    std::vector<Point_d> _points( N );
-    parlay::parallel_for(
-        0, N,
-        [&]( size_t i ) {
-            _points[i] = Point_d( Dim, std::begin( wp[i].pnt ),
-                                  ( std::begin( wp[i].pnt ) + Dim ) );
-        },
-        1000 );
-    Median_of_rectangle median;
-    Tree tree( _points.begin(), _points.end(), median );
+  //* cgal
+  std::vector<Point_d> _points( N );
+  parlay::parallel_for(
+      0, N,
+      [&]( size_t i ) {
+        _points[i] =
+            Point_d( Dim, std::begin( wp[i].pnt ), ( std::begin( wp[i].pnt ) + Dim ) );
+      },
+      1000 );
+  Median_of_rectangle median;
+  Tree tree( _points.begin(), _points.end(), median );
+  tree.build<CGAL::Parallel_tag>();
+
+  if ( tag == 1 ) {
+    _points.resize( wi.size() );
+    parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
+      _points[j] =
+          Point_d( Dim, std::begin( wi[j].pnt ), ( std::begin( wi[j].pnt ) + Dim ) );
+    } );
+    tree.insert( _points.begin(), _points.end() );
     tree.build<CGAL::Parallel_tag>();
+    assert( tree.size() == wp.size() + wi.size() );
+    wp.append( wi );
+    assert( tree.size() == wp.size() );
+    puts( "finish insert to cgal" );
+  }
 
-    if ( tag == 1 ) {
-        _points.resize( wi.size() );
-        parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
-            _points[j] = Point_d( Dim, std::begin( wi[j].pnt ),
-                                  ( std::begin( wi[j].pnt ) + Dim ) );
-        } );
-        tree.insert( _points.begin(), _points.end() );
-        tree.build<CGAL::Parallel_tag>();
-        assert( tree.size() == wp.size() + wi.size() );
-        wp.append( wi );
-        assert( tree.size() == wp.size() );
-        puts( "finish insert to cgal" );
-    }
+  //* cgal query
+  LOG << "begin tbb  query" << ENDL << std::flush;
+  assert( tree.is_built() );
 
-    //* cgal query
-    LOG << "begin tbb  query" << ENDL << std::flush;
-    assert( tree.is_built() );
+  tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
+                     [&]( const tbb::blocked_range<std::size_t>& r ) {
+                       for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                         // Neighbor search can be instantiated from
+                         // several threads at the same time
+                         Point_d query( Dim, std::begin( wp[s].pnt ),
+                                        std::begin( wp[s].pnt ) + Dim );
+                         Neighbor_search search( tree, query, K );
+                         Neighbor_search::iterator it = search.end();
+                         it--;
+                         cgknn[s] = it->second;
+                       }
+                     } );
 
-    tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
-                       [&]( const tbb::blocked_range<std::size_t>& r ) {
-                           for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
-                               // Neighbor search can be instantiated from
-                               // several threads at the same time
-                               Point_d query( Dim, std::begin( wp[s].pnt ),
-                                              std::begin( wp[s].pnt ) + Dim );
-                               Neighbor_search search( tree, query, K );
-                               Neighbor_search::iterator it = search.end();
-                               it--;
-                               cgknn[s] = it->second;
-                           }
-                       } );
-
-    wp.pop_tail( wi.size() );
-    assert( wp.size() == N );
+  wp.pop_tail( wi.size() );
+  assert( wp.size() == N );
 }
 
 void runKDParallel( points& wp, points& wi, Typename* kdknn ) {
-    //* kd tree
-    puts( "build kd tree" );
-    using pkdtree = ParallelKDtree<point>;
-    pkdtree pkd;
-    size_t n = wp.size();
+  //* kd tree
+  puts( "build kd tree" );
+  using pkdtree = ParallelKDtree<point>;
+  pkdtree pkd;
+  size_t n = wp.size();
 
-    buildTree<point>( Dim, wp, rounds, pkd );
-    pkdtree::node* KDParallelRoot = pkd.get_root();
-    checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
+  buildTree<point>( Dim, wp, rounds, pkd );
+  pkdtree::node* KDParallelRoot = pkd.get_root();
+  checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
+  assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
 
-    if ( tag == 1 ) {
-        batchInsert<point>( pkd, wp, wi, Dim, 2 );
-        assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
-        wp.append( wi );
-        puts( "inserted points to batch" );
-    }
+  if ( tag == 1 ) {
+    batchInsert<point>( pkd, wp, wi, Dim, 2 );
+    LOG << "finish insert" << ENDL;
 
-    //* query phase
+    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    wp.append( wi );
+  }
 
-    assert( N >= K );
-    LOG << "begin kd query" << ENDL;
-    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
+  //* query phase
 
-    return;
+  assert( N >= K );
+  LOG << "begin kd query" << ENDL;
+  queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
+
+  return;
 }
 
 int main( int argc, char* argv[] ) {
-    commandLine P( argc, argv,
-                   "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
-                   "<parallelTag>] [-p <inFile>] [-r {1,...,5}]" );
-    char* iFile = P.getOptionValue( "-p" );
-    K = P.getOptionIntValue( "-k", 100 );
-    Dim = P.getOptionIntValue( "-d", 3 );
-    N = P.getOptionLongValue( "-n", -1 );
-    tag = P.getOptionIntValue( "-t", 0 );
-    rounds = P.getOptionIntValue( "-r", 3 );
+  commandLine P( argc, argv,
+                 "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
+                 "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-i <_insertFile>]" );
+  char* iFile = P.getOptionValue( "-p" );
+  K = P.getOptionIntValue( "-k", 100 );
+  Dim = P.getOptionIntValue( "-d", 3 );
+  N = P.getOptionLongValue( "-n", -1 );
+  tag = P.getOptionIntValue( "-t", 0 );
+  rounds = P.getOptionIntValue( "-r", 3 );
+  char* _insertFile = P.getOptionValue( "-i" );
 
-    if ( tag == 0 ) {
-        puts( "build and query" );
-    } else if ( tag == 1 ) {
-        puts( "build, insert and query" );
+  if ( tag == 0 ) {
+    puts( "build and query" );
+  } else if ( tag == 1 ) {
+    puts( "build, insert and query" );
+  }
+
+  int LEAVE_WRAP = 32;
+  points wp;
+  std::string name, insertFile;
+
+  //* initialize points
+  if ( iFile != NULL ) {
+    name = std::string( iFile );
+    name = name.substr( name.rfind( "/" ) + 1 );
+    std::cout << name << " ";
+    auto [n, d] = read_points<point>( iFile, wp, K );
+    N = n;
+    assert( Dim == d );
+  } else {  //* construct data byself
+    K = 100;
+    generate_random_points<point>( wp, 10000, N, Dim );
+    assert( wp.size() == N );
+    std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
+    std::cout << name << " ";
+  }
+
+  Typename* cgknn;
+  Typename* kdknn;
+  points wi;
+
+  if ( tag == 1 && iFile != NULL ) {
+    if ( _insertFile == NULL ) {
+      int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
+      id = ( id + 1 ) % 5;  //! MOD graph number used to test
+      if ( !id ) id++;
+      int pos = std::string( iFile ).rfind( "/" ) + 1;
+      insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
+    } else {
+      insertFile = std::string( _insertFile );
     }
+    std::cout << insertFile << ENDL;
+  }
 
-    int LEAVE_WRAP = 32;
-    points wp;
-
-    //* initialize points
-    if ( iFile != NULL ) {
-        std::string name( iFile );
-        name = name.substr( name.rfind( "/" ) + 1 );
-        std::cout << name << " ";
-        auto [n, d] = read_points<point>( iFile, wp, K );
-        N = n;
-        assert( Dim == d );
-    } else {  //* construct data byself
-        K = 100;
-        generate_random_points<point>( wp, 100000, N, Dim );
-        assert( wp.size() == N );
-        std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
-        std::cout << name << " ";
+  if ( tag == 0 ) {
+    cgknn = new Typename[N];
+    kdknn = new Typename[N];
+  } else if ( tag == 1 && iFile == NULL ) {
+    generate_random_points<point>( wi, 1000000, N / 5, Dim );
+    LOG << "insert " << N / 5 << " points" << ENDL;
+    cgknn = new Typename[N + wi.size()];
+    kdknn = new Typename[N + wi.size()];
+  } else if ( tag == 1 && iFile != NULL ) {
+    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+    if ( nd != Dim || nn != N ) {
+      puts( "read inserted points dimension wrong" );
+      abort();
     }
+    puts( "insert points from file" );
+    cgknn = new Typename[N + wi.size()];
+    kdknn = new Typename[N + wi.size()];
+  }
 
-    Typename* cgknn;
-    Typename* kdknn;
-    points wi;
+  runCGAL( wp, wi, cgknn );
+  runKDParallel( wp, wi, kdknn );
 
-    if ( tag == 0 ) {
-        cgknn = new Typename[N];
-        kdknn = new Typename[N];
-    } else if ( tag == 1 ) {
-        generate_random_points<point>( wi, 1000, N / 2, Dim );
-        cgknn = new Typename[N + wi.size()];
-        kdknn = new Typename[N + wi.size()];
+  //* verify
+  for ( size_t i = 0; i < N; i++ ) {
+    if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
+      puts( "" );
+      puts( "wrong" );
+      std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
+      return 0;
     }
+  }
 
-    runCGAL( wp, wi, cgknn );
-    runKDParallel( wp, wi, kdknn );
-
-    //* verify
-    for ( size_t i = 0; i < N; i++ ) {
-        if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
-            puts( "" );
-            puts( "wrong" );
-            std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
-            return 0;
-        }
-    }
-
-    puts( "\nok" );
-    return 0;
+  puts( "\nok" );
+  return 0;
 }

@@ -33,7 +33,7 @@ FixNamespaceComments: 'true'
 IncludeBlocks: Preserve
 IndentCaseLabels: 'true'
 IndentPPDirectives: None
-IndentWidth: '4'
+IndentWidth: '2'
 IndentWrappedFunctionNames: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'true'
 Language: Cpp
@@ -57,7 +57,7 @@ SpacesInContainerLiterals: 'false'
 SpacesInParentheses: 'true'
 SpacesInSquareBrackets: 'false'
 Standard: Auto
-TabWidth: '4'
+TabWidth: '2'
 UseTab: Never
 
 ...

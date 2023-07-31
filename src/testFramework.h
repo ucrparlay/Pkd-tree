@@ -145,21 +145,21 @@ void batchInsert( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
     pkd.delete_tree();
 
-    double aveInsert = time_loop(
-        rounds, 1.0,
-        [&]() {
-            parlay::copy( WP, wp ), parlay::copy( WI, wi );
-            pkd.build( parlay::make_slice( wp ), DIM );
-        },
-        [&]() { pkd.batchInsert( parlay::make_slice( wi ), DIM ); },
-        [&]() { pkd.delete_tree(); } );
+    // double aveInsert = time_loop(
+    //     rounds, 1.0,
+    //     [&]() {
+    //         parlay::copy( WP, wp ), parlay::copy( WI, wi );
+    //         pkd.build( parlay::make_slice( wp ), DIM );
+    //     },
+    //     [&]() { pkd.batchInsert( parlay::make_slice( wi ), DIM ); },
+    //     [&]() { pkd.delete_tree(); } );
 
     //* set status to be finish insert
     parlay::copy( WP, wp ), parlay::copy( WI, wi );
     pkd.build( parlay::make_slice( wp ), DIM );
     pkd.batchInsert( parlay::make_slice( wi ), DIM );
 
-    LOG << aveInsert << " " << std::flush;
+    // LOG << aveInsert << " " << std::flush;
 
     return;
 }
