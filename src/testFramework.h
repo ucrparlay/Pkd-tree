@@ -174,10 +174,11 @@ void queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
-  kBoundedQueue<Typename>* bq = new kBoundedQueue<Typename>[n];
-  for ( int i = 0; i < n; i++ ) {
-    bq[i].resize( K );
-  }
+  parlay::sequence<coord> array_queue( K * n );
+  parlay::sequence<kBoundedQueue<Typename>> bq =
+      parlay::sequence<kBoundedQueue<Typename>>::uninitialized( n );
+  parlay::parallel_for(
+      0, n, [&]( size_t i ) { bq[i].resize( array_queue.cut( i * K, i * K + K ) ); } );
   parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
 
   node* KDParallelRoot = pkd.get_root();

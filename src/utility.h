@@ -278,17 +278,12 @@ class kBoundedQueue {
  public:
   kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
 
-  kBoundedQueue( int size, const Compare& comp = Compare() )
-      //  : m_count( 0 ), m_comp( comp ) {
-      :
-      m_count( 0 ), m_data( size ), m_comp( comp ) {
-    // a.allocate( size );
-  }
+  kBoundedQueue( parlay::slice<T*, T*> data_slice, const Compare& comp = Compare() ) :
+      m_count( 0 ), m_data( data_slice ), m_comp( comp ) {}
 
   /** Sets the max number of elements in the queue */
-  void resize( int new_size ) {
-    m_data.clear();
-    if ( m_data.size() != new_size ) m_data.resize( new_size );
+  void resize( parlay::slice<T*, T*> data_slice ) {
+    m_data = data_slice;
     m_count = 0;
   }
 
@@ -331,8 +326,8 @@ class kBoundedQueue {
   }
 
  public:
-  unsigned int m_count = 0;
-  parlay::sequence<T> m_data;
-  // std::array<T, 100> m_data;
+  uint_fast32_t m_count = 0;
+  parlay::slice<T*, T*> m_data;
+  // parlay::sequence<T> m_data;
   Compare m_comp;
 };
