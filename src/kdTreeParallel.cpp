@@ -302,35 +302,41 @@ void ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
 }
 
 template<typename point>
-NODE<point>* ParallelKDtree<point>::update_inner_tree(
-    uint_fast32_t idx, const node_tags& tags, parlay::sequence<node*>& treeNodes ) {
+NODE<point>* ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx,
+                                                       const node_tags& tags,
+                                                       parlay::sequence<node*>& treeNodes,
+                                                       int& p,
+                                                       const tag_nodes& rev_tag ) {
   //! order below matters
   //! tree nodes can be in bucket, so be sure to release space first
-  if ( tags[idx].second > BUCKET_NUM ) {
-    assert( !( tags[idx].first->is_leaf ) );
-    // LOG << "begin delete tree" << ENDL << std::flush;
-    delete_tree_recursive( tags[idx].first );
-    // LOG << "end delete tree" << ENDL << std::flush;
-    return treeNodes[tags[idx].second - BUCKET_NUM - 1];
-  }
   if ( tags[idx].first->is_leaf ) {
-    if ( !treeNodes[tags[idx].second]->is_leaf ) {
+    assert( rev_tag[p] == idx );
+    if ( !treeNodes[p]->is_leaf ) {
       assert( tags[idx].first != NULL );
-      assert( tags[idx].first != treeNodes[tags[idx].second] );
-      // LOG << "begin delete leaf" << ENDL << std::flush;
+      assert( tags[idx].first != treeNodes[p] );
       free_leaf( tags[idx].first );
-      // LOG << "end delete leaf" << ENDL << std::flush;
     }
-    return treeNodes[tags[idx].second];
+    return treeNodes[p++];
   }
+
+  if ( tags[idx].second > BUCKET_NUM ) {
+    assert( rev_tag[p] == idx );
+    assert( tags[idx].second == BUCKET_NUM + 1 );
+    assert( !( tags[idx].first->is_leaf ) );
+    assert( tags[idx].first != treeNodes[p] );
+    delete_tree_recursive( tags[idx].first );
+    return treeNodes[p++];
+  }
+
   if ( idx > PIVOT_NUM ) {
-    return treeNodes[tags[idx].second];
+    assert( rev_tag[p] == idx );
+    return treeNodes[p++];
   }
 
   assert( tags[idx].second == BUCKET_NUM );
   node *L, *R;
-  L = update_inner_tree( idx << 1, tags, treeNodes );
-  R = update_inner_tree( idx << 1 | 1, tags, treeNodes );
+  L = update_inner_tree( idx << 1, tags, treeNodes, p, rev_tag );
+  R = update_inner_tree( idx << 1 | 1, tags, treeNodes, p, rev_tag );
   update_interior( tags[idx].first, L, R );
   return tags[idx].first;
 }
@@ -406,84 +412,47 @@ NODE<point>* ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, sli
   IT.reset_tags_num();
   IT.assign_node_tag( T, dim, DIM, 1, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
-  int nt = IT.tagsNum;
 
   seieve_points( In, Out, n, IT.tags, IT.sums, dim, DIM, IT.tagsNum, 1 );
 
-  IT.reset_tags_num();
   IT.tag_inbalance_node();
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
-  assert( nt == IT.tagsNum );
-
   auto treeNodes = parlay::sequence<node*>::uninitialized( IT.tagsNum );
-  // for ( int i = 0; i < IT.tagsNum; i++ ) {
-  //   size_t s = 0, pos, len;
-  //   for ( int j = 0; j < i; j++ ) {
-  //     s += IT.reduce_sums( IT.rev_tag[j] );
-  //     assert( IT.reduce_sums( IT.rev_tag[j] ) == IT.sums[j] );
-  //   }
-  //   len = IT.reduce_sums( IT.rev_tag[i] );
-  //   if ( IT.tags[IT.rev_tag[i]].second < BUCKET_NUM ) {
-  //     treeNodes[i] = batchInsert_recusive( IT.tags[IT.rev_tag[i]].first,
-  //                                          Out.cut( s, s + len ), In.cut( s, s + len ),
-  //                                          IT.tags[IT.rev_tag[i]].first->dim, DIM );
-  //   } else {
-  //     std::cout << "rebuild " << len + IT.tags[IT.rev_tag[i]].first->size << std::endl
-  //               << std::flush;
-  //     assert( IT.tags[IT.rev_tag[i]].second != BUCKET_NUM );
-  //     points wx = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size + len );
-  //     points wo = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size + len );
-  //     flatten( IT.tags[IT.rev_tag[i]].first,
-  //              wx.cut( 0, IT.tags[IT.rev_tag[i]].first->size ) );
-  //     LOG << "finish flatten" << ENDL;
-  //     parlay::parallel_for(
-  //         0, len,
-  //         [&]( size_t j ) { wx[IT.tags[IT.rev_tag[i]].first->size + j] = Out[s + j]; },
-  //         BLOCK_SIZE );
-  //     treeNodes[i] =
-  //         build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), dim, DIM
-  //         );
-  //     LOG << "end rebuild" << ENDL;
-  //   }
-  // }
-
   parlay::parallel_for(
       0, IT.tagsNum,
       [&]( size_t i ) {
-        size_t s = 0, pos, len;
+        size_t s = 0;
         for ( int j = 0; j < i; j++ ) {
-          s += IT.reduce_sums( IT.rev_tag[j] );
-          assert( IT.reduce_sums( IT.rev_tag[j] ) == IT.sums[j] );
+          s += IT.sums_tree[IT.rev_tag[j]];
         }
-        len = IT.reduce_sums( IT.rev_tag[i] );
 
-        if ( IT.tags[IT.rev_tag[i]].second < BUCKET_NUM ) {
+        if ( IT.tags[IT.rev_tag[i]].second < BUCKET_NUM ) {  //* continue sieve
           treeNodes[i] = batchInsert_recusive(
-              IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + len ), In.cut( s, s + len ),
+              IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
+              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
               IT.tags[IT.rev_tag[i]].first->dim, DIM );
-        } else {
-          std::cout << "rebuild " << len + IT.tags[IT.rev_tag[i]].first->size << std::endl
-                    << std::flush;
-          assert( IT.tags[IT.rev_tag[i]].second != BUCKET_NUM );
-          points wx = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size + len );
-          points wo = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size + len );
+        } else {  //* launch rebuild subtree
+          assert( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 );
+          points wx = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size +
+                                             IT.sums_tree[IT.rev_tag[i]] );
+          points wo = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size +
+                                             IT.sums_tree[IT.rev_tag[i]] );
           flatten( IT.tags[IT.rev_tag[i]].first,
                    wx.cut( 0, IT.tags[IT.rev_tag[i]].first->size ) );
-          LOG << "finish flatten" << ENDL;
           parlay::parallel_for(
-              0, len,
+              0, IT.sums_tree[IT.rev_tag[i]],
               [&]( size_t j ) {
                 wx[IT.tags[IT.rev_tag[i]].first->size + j] = Out[s + j];
               },
               BLOCK_SIZE );
           treeNodes[i] = build_recursive( parlay::make_slice( wx ),
                                           parlay::make_slice( wo ), dim, DIM );
-          LOG << "end rebuild" << ENDL;
         }
       },
       1 );
 
-  return update_inner_tree( 1, IT.tags, treeNodes );
+  int beatles = 0;
+  return update_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag );
 }
 
 template<typename point>

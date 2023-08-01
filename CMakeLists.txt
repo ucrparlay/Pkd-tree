@@ -31,7 +31,7 @@ endif()
 
 if(DEBUG)
   set(CMAKE_BUILD_TYPE "Debug")
-  add_compile_options(-O3 -mcx16 -march=native)
+  add_compile_options(-g3 -mcx16 -march=native)
 else()
   set(CMAKE_BUILD_TYPE "Release")
   add_compile_options(-O3 -mcx16 -march=native)
