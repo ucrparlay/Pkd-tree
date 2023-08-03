@@ -11,7 +11,7 @@ In memory of solved bugs.
 - `RE`: Access uninitialized memory (directly throw core dumped)
 - `RE`: Array idx out of allocate arrange (throw RE when program returns)
 - `RE`: Retag changes the defaut mapping of bucket.
-- `RE`: Run Parallel deletion is not thread safe (endless running rebuild)
+- `RE`: Access previously deleted pointer
 
 
 

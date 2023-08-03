@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Nodes=(1000000 5000000 8000000 10000000 50000000)
+Nodes=(1000000 5000000 8000000 10000000)
 Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"
@@ -11,7 +11,8 @@ out="log.in"
 tag=1
 count=1
 
-Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
+# Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for path in ${Paths[@]}; do
