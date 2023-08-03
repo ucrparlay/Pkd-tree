@@ -63,7 +63,6 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   //* begin test
   buildTree<point>( Dim, wp, rounds, pkd );
-  return;
 
   //* batch insert
   if ( tag >= 1 ) {

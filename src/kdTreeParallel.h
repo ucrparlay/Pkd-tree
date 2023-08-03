@@ -7,11 +7,6 @@
 
 template<typename point>
 class ParallelKDtree {
-
-  // **************************************************************
-  // Tree structure, leafs and interior extend the base node class
-  // **************************************************************
-
  public:
   using slice = parlay::slice<point*, point*>;
   using points = parlay::sequence<point>;
@@ -99,6 +94,7 @@ class ParallelKDtree {
       assert( TI->size == TI->left->size + TI->right->size );
       return true;
     }
+
     void
     assert_size_by_idx( int idx ) const {
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) return;
@@ -113,9 +109,8 @@ class ParallelKDtree {
     }
 
     void
-    assign_node_tag( node* T, uint_fast8_t dim, const uint_fast8_t& DIM, int deep,
-                     int idx ) {
-      if ( T->is_leaf || deep > BUILD_DEPTH_ONCE ) {
+    assign_node_tag( node* T, int idx ) {
+      if ( T->is_leaf || idx > PIVOT_NUM ) {
         assert( tagsNum < BUCKET_NUM );
         tags[idx] = node_tag( T, tagsNum++ );
         return;
@@ -123,9 +118,8 @@ class ParallelKDtree {
       //* BUCKET ID in [0, BUCKET_NUM)
       tags[idx] = node_tag( T, BUCKET_NUM );
       interior* TI = static_cast<interior*>( T );
-      dim = ( dim + 1 ) % DIM;
-      assign_node_tag( TI->left, dim, DIM, deep + 1, idx << 1 );
-      assign_node_tag( TI->right, dim, DIM, deep + 1, idx << 1 | 1 );
+      assign_node_tag( TI->left, idx << 1 );
+      assign_node_tag( TI->right, idx << 1 | 1 );
       return;
     }
 
@@ -178,24 +172,17 @@ class ParallelKDtree {
 
     void
     pick_tag( int idx ) {
-      // if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
-      //   rev_tag[tagsNum++] = idx;
-      //   return;
-      // }
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
         tags[idx].second = BUCKET_NUM + 1;
         rev_tag[tagsNum++] = idx;
         return;
       }
-
       assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
       interior* TI = static_cast<interior*>( tags[idx].first );
-
       if ( Gt( std::abs( 100.0 * ( TI->left->size + sums_tree[idx << 1] ) /
                              ( TI->size + sums_tree[idx] ) -
                          50 ),
                INBALANCE_RATIO * 1.0 ) ) {
-        // if ( 0 ) {
         tags[idx].second = BUCKET_NUM + 2;
         rev_tag[tagsNum++] = idx;
         return;
@@ -207,7 +194,6 @@ class ParallelKDtree {
 
     void
     tag_inbalance_node() {
-      sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
       reduce_sums( 1 );
       reset_tags_num();
       pick_tag( 1 );
@@ -218,7 +204,8 @@ class ParallelKDtree {
     //@ variables
     node_tags tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
     parlay::sequence<uint_fast32_t> sums;
-    mutable parlay::sequence<uint_fast32_t> sums_tree;
+    mutable parlay::sequence<uint_fast32_t> sums_tree =
+        parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
     mutable tag_nodes rev_tag = tag_nodes::uninitialized( BUCKET_NUM );
     int tagsNum;
   };
@@ -295,6 +282,7 @@ class ParallelKDtree {
 
   void
   build( slice In, const uint_fast8_t& DIM );
+
   node*
   build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM );
 
@@ -314,35 +302,20 @@ class ParallelKDtree {
 
   inline void
   update_interior( node* T, node* L, node* R );
-  void
-  assign_node_tag( node_tags& tags, node* T, uint_fast8_t dim, const uint_fast8_t& DIM,
-                   int deep, int idx, int& bucket );
+
   void
   seieve_points( slice A, slice B, const size_t& n, const node_tags& tags,
-                 parlay::sequence<uint_fast32_t>& sums, const uint_fast8_t& dim,
-                 const uint_fast8_t& DIM, const int& tagsNum, const bool seieve );
+                 parlay::sequence<uint_fast32_t>& sums, const int& tagsNum );
+
   inline uint_fast32_t
-  retrive_tag( const point& p, const node_tags& tags, const uint_fast8_t& dim,
-               const uint_fast8_t& DIM );
-  inline node*
-  retrive_node( const uint_fast32_t& id, const node_tags& tags, uint_fast8_t dim,
-                uint_fast32_t idx, const uint_fast8_t& DIM );
-  void
-  retag_inbalance_node( node_tags& tags, const parlay::sequence<uint_fast32_t>& sums,
-                        tag_nodes& tnodes, const uint_fast8_t& dim,
-                        const uint_fast8_t& DIM, int& bucket );
-  inline bool
-  inbalance_node( const node* T );
-  uint_fast32_t
-  reduce_cadidates( const node_tags& tags, const parlay::sequence<uint_fast32_t>& sums,
-                    const uint_fast8_t& dim, const uint_fast8_t& DIM, node* T );
+  retrive_tag( const point& p, const node_tags& tags );
+
   node*
   update_inner_tree( uint_fast32_t idx, const node_tags& tags,
                      parlay::sequence<node*>& treeNodes, int& p,
                      const tag_nodes& rev_tag );
   node*
-  batchInsert_recusive( node* T, slice In, slice Out, uint_fast8_t dim,
-                        const uint_fast8_t& DIM );
+  batchInsert_recusive( node* T, slice In, slice Out, const uint_fast8_t& DIM );
 
   node*
   delete_tree();

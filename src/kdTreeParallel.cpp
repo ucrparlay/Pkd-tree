@@ -243,16 +243,13 @@ ParallelKDtree<point>::update_interior( NODE<point>* T, NODE<point>* L, NODE<poi
 
 template<typename point>
 uint_fast32_t
-ParallelKDtree<point>::retrive_tag( const point& p, const node_tags& tags,
-                                    const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
-  uint_fast32_t k = 1, d = dim;
+ParallelKDtree<point>::retrive_tag( const point& p, const node_tags& tags ) {
+  uint_fast32_t k = 1;
   interior* TI;
 
   while ( k <= PIVOT_NUM && ( !tags[k].first->is_leaf ) ) {
     TI = static_cast<interior*>( tags[k].first );
-    assert( TI->split.second == d );
-    k = p.pnt[d] < TI->split.first ? k << 1 : k << 1 | 1;
-    d = ( d + 1 ) % DIM;
+    k = p.pnt[TI->split.second] < TI->split.first ? k << 1 : k << 1 | 1;
   }
   assert( tags[k].second < BUCKET_NUM );
   return tags[k].second;
@@ -263,8 +260,7 @@ void
 ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
                                       const node_tags& tags,
                                       parlay::sequence<uint_fast32_t>& sums,
-                                      const uint_fast8_t& dim, const uint_fast8_t& DIM,
-                                      const int& tagsNum, const bool seieve ) {
+                                      const int& tagsNum ) {
   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
   parlay::sequence<parlay::sequence<uint_fast32_t>> offset(
       num_block, parlay::sequence<uint_fast32_t>( tagsNum ) );
@@ -273,7 +269,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
     uint_fast32_t k;
     for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n ); j++ ) {
-      k = retrive_tag( A[j], tags, dim, DIM );
+      k = retrive_tag( A[j], tags );
       offset[i][k]++;
     }
   } );
@@ -287,13 +283,8 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
     }
   }
 
-  if ( !seieve ) {  //* just calculate candidate
-    return;
-  }
-
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-    // auto v = parlay::sequence<uint_fast32_t>::uninitialized( tagsNum );
-    auto v = parlay::sequence<uint_fast32_t>( tagsNum );
+    auto v = parlay::sequence<uint_fast32_t>::uninitialized( tagsNum );
     int tot = 0, s_offset = 0;
     for ( int k = 0; k < tagsNum - 1; k++ ) {
       v[k] = tot + offset[i][k];
@@ -303,7 +294,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
     v[tagsNum - 1] = tot + ( ( i << LOG2_BASE ) - s_offset );
     uint_fast32_t k;
     for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n ); j++ ) {
-      k = retrive_tag( A[j], tags, dim, DIM );
+      k = retrive_tag( A[j], tags );
       B[v[k]++] = A[j];
     }
   } );
@@ -363,7 +354,7 @@ ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx, const node_tags& ta
 template<typename point>
 NODE<point>*
 ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
-                                             uint_fast8_t dim, const uint_fast8_t& DIM ) {
+                                             const uint_fast8_t& DIM ) {
   size_t n = In.size();
 
   if ( n == 0 ) return T;
@@ -385,42 +376,41 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
       }
       parlay::parallel_for(
           0, n, [&]( size_t i ) { wx[TL->size + i] = In[i]; }, BLOCK_SIZE );
-
+      uint_fast8_t d = T->dim;
       free_leaf( T );
-
-      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), dim,
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
                               DIM );
     }
   }
 
   if ( n <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
-
-    assert( dim == TI->split.second );
     auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
-      return p.pnt[dim] < TI->split.first;
+      return p.pnt[TI->split.second] < TI->split.first;
     } );
-    int len = pos - In.begin();
-    assert( len == std::distance( In.begin(), pos ) );
+    assert( pos - In.begin() == std::distance( In.begin(), pos ) );
 
     //* rebuild
-    if ( Gt( std::abs( 100.0 * ( TI->left->size + len ) / ( TI->size + n ) - 50 ),
+    if ( Gt( std::abs( 100.0 * ( TI->left->size + pos - In.begin() ) / ( TI->size + n ) -
+                       50 ),
              INBALANCE_RATIO * 1.0 ) ) {
       points wx = points::uninitialized( T->size + In.size() );
       points wo = points::uninitialized( T->size + In.size() );
       // flatten_and_delete( T, wx.cut( 0, T->size ) );
+      uint_fast8_t d = T->dim;
       flatten( T, wx.cut( 0, T->size ) );
       delete_tree_recursive( T );
       parlay::parallel_for(
           0, n, [&]( size_t j ) { wx[T->size + j] = In[j]; }, BLOCK_SIZE );
-      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), dim,
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
                               DIM );
     }
     //* continue
-    dim = ( dim + 1 ) % DIM;
     node *L, *R;
-    L = batchInsert_recusive( TI->left, In.cut( 0, len ), Out.cut( 0, len ), dim, DIM );
-    R = batchInsert_recusive( TI->right, In.cut( len, n ), Out.cut( len, n ), dim, DIM );
+    L = batchInsert_recusive( TI->left, In.cut( 0, pos - In.begin() ),
+                              Out.cut( 0, pos - In.begin() ), DIM );
+    R = batchInsert_recusive( TI->right, In.cut( pos - In.begin(), n ),
+                              Out.cut( pos - In.begin(), n ), DIM );
     update_interior( T, L, R );
     assert( T->size == L->size + R->size && TI->split.second >= 0 &&
             TI->is_leaf == false );
@@ -431,10 +421,10 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
   InnerTree IT;
   assert( IT.rev_tag.size() == BUCKET_NUM );
   IT.reset_tags_num();
-  IT.assign_node_tag( T, dim, DIM, 1, 1 );
+  IT.assign_node_tag( T, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
 
-  seieve_points( In, Out, n, IT.tags, IT.sums, dim, DIM, IT.tagsNum, 1 );
+  seieve_points( In, Out, n, IT.tags, IT.sums, IT.tagsNum );
 
   IT.tag_inbalance_node();
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
@@ -451,8 +441,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
         if ( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 ) {  //* continue sieve
           treeNodes[i] = batchInsert_recusive(
               IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
-              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
-              IT.tags[IT.rev_tag[i]].first->dim, DIM );
+              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), DIM );
         } else {  //* launch rebuild subtree
           assert( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 2 );
           assert( IT.tags[IT.rev_tag[i]].first->size + IT.sums_tree[IT.rev_tag[i]] >= 0 );
@@ -488,7 +477,7 @@ void
 ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t& DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
-  this->root = batchInsert_recusive( T, A, B.cut( 0, A.size() ), 0, DIM );
+  this->root = batchInsert_recusive( T, A, B.cut( 0, A.size() ), DIM );
   assert( this->root != NULL );
   return;
 }

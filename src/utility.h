@@ -12,6 +12,7 @@
 //*---------- point definition ------------------
 using coord = long;  // type of each coordinate
 
+//! type with T could be really slow
 struct point2D {
   using coords = std::array<coord, 2>;
   point2D() {}
@@ -115,7 +116,8 @@ struct point15D {
 constexpr double eps = 1e-7;
 
 template<typename T>
-inline bool Gt( const T& a, const T& b ) {
+inline bool
+Gt( const T& a, const T& b ) {
   if constexpr ( std::is_integral_v<T> )
     return a > b;
   else if ( std::is_floating_point_v<T> ) {
@@ -124,7 +126,8 @@ inline bool Gt( const T& a, const T& b ) {
 }
 
 template<typename T>
-inline bool Lt( const T& a, const T& b ) {
+inline bool
+Lt( const T& a, const T& b ) {
   if constexpr ( std::is_integral_v<T> )
     return a < b;
   else if ( std::is_floating_point_v<T> )
@@ -132,7 +135,8 @@ inline bool Lt( const T& a, const T& b ) {
 }
 
 template<typename T>
-inline bool Eq( const T& a, const T& b ) {
+inline bool
+Eq( const T& a, const T& b ) {
   if constexpr ( std::is_integral_v<T> )
     return a == b;
   else if ( std::is_floating_point_v<T> )
@@ -140,7 +144,8 @@ inline bool Eq( const T& a, const T& b ) {
 }
 
 template<typename T>
-inline bool Geq( const T& a, const T& b ) {
+inline bool
+Geq( const T& a, const T& b ) {
   if constexpr ( std::is_integral_v<T> )
     return a >= b;
   else if ( std::is_floating_point_v<T> )
@@ -148,7 +153,8 @@ inline bool Geq( const T& a, const T& b ) {
 }
 
 template<typename T>
-inline bool Leq( const T& a, const T& b ) {
+inline bool
+Leq( const T& a, const T& b ) {
   if constexpr ( std::is_integral_v<T> )
     return a <= b;
   else if ( std::is_floating_point_v<T> )
@@ -159,7 +165,8 @@ template<typename T>
 class kArrayQueue {
  public:
   //* build a k-nn graph for N points
-  void resize( const int& k ) {
+  void
+  resize( const int& k ) {
     Q = (T*)malloc( 2 * k * sizeof( T ) );
     for ( int i = 0; i < 2 * k; i++ ) {
       Q[i] = std::numeric_limits<T>::max();
@@ -170,9 +177,13 @@ class kArrayQueue {
     return;
   };
 
-  void init( const int& N ) { Q = (T*)malloc( N * sizeof( T ) ); }
+  void
+  init( const int& N ) {
+    Q = (T*)malloc( N * sizeof( T ) );
+  }
 
-  void set( const int& k ) {
+  void
+  set( const int& k ) {
     for ( int i = 0; i < 2 * k; i++ ) {
       Q[i] = std::numeric_limits<T>::max();
     }
@@ -182,7 +193,8 @@ class kArrayQueue {
     return;
   }
 
-  void insert( T d ) {
+  void
+  insert( T d ) {
     Q[load++] = d;
     if ( load == size ) {
       std::nth_element( Q, Q + K - 1, Q + size );
@@ -191,7 +203,8 @@ class kArrayQueue {
     return;
   }
 
-  T queryKthElement() {
+  T
+  queryKthElement() {
     if ( load < K ) {
       return Q[load];
     } else {
@@ -200,11 +213,18 @@ class kArrayQueue {
     }
   }
 
-  void destory() { free( Q ); }
+  void
+  destory() {
+    free( Q );
+  }
 
-  inline const int& getLoad() { return load; }
+  inline const int&
+  getLoad() {
+    return load;
+  }
 
-  void printQueue() {
+  void
+  printQueue() {
     for ( int i = 0; i <= K; i++ ) {
       if ( Q[i] == DBL_MAX )
         printf( "inf " );
@@ -225,9 +245,13 @@ class kArrayQueue {
 template<typename T>
 class ArrayQueue {
  public:
-  void init( const int& N ) { Q = (T*)malloc( N * sizeof( T ) ); }
+  void
+  init( const int& N ) {
+    Q = (T*)malloc( N * sizeof( T ) );
+  }
 
-  void set( const int& k ) {
+  void
+  set( const int& k ) {
     for ( int i = 0; i < k; i++ ) {
       Q[i] = std::numeric_limits<T>::max();
     }
@@ -236,7 +260,8 @@ class ArrayQueue {
     return;
   }
 
-  void insert( T d ) {
+  void
+  insert( T d ) {
     //* highest to lowest by distance d
     if ( Lt( d, Q[0] ) ) {
       Q[0] = d;
@@ -249,11 +274,20 @@ class ArrayQueue {
     return;
   }
 
-  inline const T& top() { return Q[0]; }
+  inline const T&
+  top() {
+    return Q[0];
+  }
 
-  void destory() { free( Q ); }
+  void
+  destory() {
+    free( Q );
+  }
 
-  inline bool full() { return load == K; }
+  inline bool
+  full() {
+    return load == K;
+  }
 
  public:
   T* Q;
@@ -282,18 +316,29 @@ class kBoundedQueue {
       m_count( 0 ), m_data( data_slice ), m_comp( comp ) {}
 
   /** Sets the max number of elements in the queue */
-  void resize( parlay::slice<T*, T*> data_slice ) {
+  void
+  resize( parlay::slice<T*, T*> data_slice ) {
     m_data = data_slice;
     m_count = 0;
   }
 
-  void reset() { m_count = 0; }
+  void
+  reset() {
+    m_count = 0;
+  }
 
-  inline bool full() const { return m_count == m_data.size(); }
+  inline bool
+  full() const {
+    return m_count == m_data.size();
+  }
 
-  inline const T& top() const { return m_data[0]; }
+  inline const T&
+  top() const {
+    return m_data[0];
+  }
 
-  inline void insert( const T x ) {
+  inline void
+  insert( const T x ) {
     T* data1 = ( &m_data[0] - 1 );
     if ( full() ) {
       if ( m_comp( x, top() ) ) {

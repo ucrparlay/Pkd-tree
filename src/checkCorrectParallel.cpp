@@ -96,7 +96,8 @@ runKDParallel( points& wp, points& wi, Typename* kdknn ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish insert" << ENDL;
 
-    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     wp.append( wi );
   }
 
