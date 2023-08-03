@@ -16,9 +16,10 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: 'false'
-AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: 'false'
-AlwaysBreakTemplateDeclarations: 'Yes'
+AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterReturnType: All
+AlwaysBreakTemplateDeclarations: 'true'
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: 'true'

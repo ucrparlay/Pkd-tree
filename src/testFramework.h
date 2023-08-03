@@ -13,8 +13,8 @@ double aveDeep = 0.0;
 
 //*---------- generate points within a 0-box_size --------------------
 template<typename point>
-void generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n,
-                             int Dim ) {
+void
+generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n, int Dim ) {
   coord box_size = _box_size;
 
   std::random_device rd;        // a seed source for the random number engine
@@ -39,8 +39,8 @@ void generate_random_points( parlay::sequence<point>& wp, coord _box_size, long 
 }
 
 template<typename point>
-std::pair<size_t, int> read_points( const char* iFile, parlay::sequence<point>& wp,
-                                    int K ) {
+std::pair<size_t, int>
+read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
   size_t N = atol( W[0] );
@@ -61,7 +61,8 @@ std::pair<size_t, int> read_points( const char* iFile, parlay::sequence<point>& 
   return std::make_pair( N, Dim );
 }
 
-void traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
+void
+traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
   if ( KDroot->isLeaf ) {
     aveDeep += deep;
     return;
@@ -72,7 +73,8 @@ void traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
 }
 
 template<typename tree>
-void traverseParallelTree( typename tree::node* root, int deep ) {
+void
+traverseParallelTree( typename tree::node* root, int deep ) {
   if ( root->is_leaf ) {
     aveDeep += deep;
     return;
@@ -84,7 +86,8 @@ void traverseParallelTree( typename tree::node* root, int deep ) {
 }
 
 template<typename tree>
-void checkTreeSameSequential( typename tree::node* T, int dim, const int& DIM ) {
+void
+checkTreeSameSequential( typename tree::node* T, int dim, const int& DIM ) {
   if ( T->is_leaf ) {
     assert( T->dim == dim );
     return;
@@ -99,7 +102,8 @@ void checkTreeSameSequential( typename tree::node* T, int dim, const int& DIM ) 
 }
 
 template<typename tree>
-size_t checkTreesSize( typename tree::node* T ) {
+size_t
+checkTreesSize( typename tree::node* T ) {
   if ( T->is_leaf ) {
     return T->size;
   }
@@ -111,14 +115,16 @@ size_t checkTreesSize( typename tree::node* T ) {
 }
 
 template<typename point>
-void buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
-                ParallelKDtree<point>& pkd ) {
+void
+buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
+           ParallelKDtree<point>& pkd ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
 
   size_t n = WP.size();
-  points wp = points::uninitialized( n );
+  // points wp = points::uninitialized( n );
+  points wp = points( n );
 
   double aveBuild = time_loop(
       rounds, 1.0, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
@@ -129,14 +135,15 @@ void buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& ro
   //* return a built tree
   parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   pkd.build( wp.cut( 0, n ), Dim );
-
+  // pkd.delete_tree();
   return;
 }
 
 template<typename point>
-void batchInsert( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
-                  const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
-                  const int& rounds ) {
+void
+batchInsert( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
+             const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
+             const int& rounds ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -165,9 +172,9 @@ void batchInsert( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 }
 
 template<typename point>
-void queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
-               const int& rounds, ParallelKDtree<point>& pkd, Typename* kdknn,
-               const int& K ) {
+void
+queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds,
+          ParallelKDtree<point>& pkd, Typename* kdknn, const int& K ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;

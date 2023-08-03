@@ -9,6 +9,7 @@ dest="logger.in"
 out="log.in"
 : >${dest}
 tag=1
+count=1
 
 Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
@@ -22,13 +23,15 @@ for path in ${Paths[@]}; do
         for file in "${files_path}/"*.in; do
             echo "------->${file}"
             ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 >>${dest}
+
+            nc=$(grep -i -o "ok" ${dest} | wc -l)
+            if [[ ${nc} -ne ${count} ]]; then
+                echo 'wrong'
+                exit
+            fi
+            count=$((count + 1))
         done
 
-        #* verify correctness
-        if grep -c "wrong" ${dest} || grep -c "dumped" ${out}; then
-            echo 'wrong'
-            exit
-        fi
     done
 done
 
@@ -48,13 +51,14 @@ for node in ${Nodes[@]}; do
         for ((i = 1; i <= 3; i++)); do
             nodeVar=$((${node} + ${i}))
             ../build/${tester} -n ${nodeVar} -d ${dim} -t ${tag} -r 2 >>${dest}
-        done
 
-        #* verify correctness
-        if grep -c "wrong" ${dest} || grep -c "dumped" ${out}; then
-            echo 'wrong'
-            exit
-        fi
+            nc=$(grep -i -o "ok" ${dest} | wc -l)
+            if [[ ${nc} -ne ${count} ]]; then
+                echo 'wrong'
+                exit
+            fi
+            count=$((count + 1))
+        done
     done
 done
 

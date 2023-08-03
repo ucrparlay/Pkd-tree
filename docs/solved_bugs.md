@@ -10,6 +10,8 @@ In memory of solved bugs.
 - `WA`: Take no differences between In and Out sequence
 - `RE`: Access uninitialized memory (directly throw core dumped)
 - `RE`: Array idx out of allocate arrange (throw RE when program returns)
+- `RE`: Retag changes the defaut mapping of bucket.
+- `RE`: Run Parallel deletion is not thread safe (endless running rebuild)
 
 
 

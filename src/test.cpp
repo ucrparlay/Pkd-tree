@@ -1,7 +1,7 @@
 #include "testFramework.h"
 
-void testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t N,
-                       int K ) {
+void
+testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t N, int K ) {
   parlay::internal::timer timer;
 
   KDtree<Typename> KD;
@@ -40,9 +40,10 @@ void testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t
 }
 
 template<typename point>
-void testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
-                         parlay::sequence<point>& wp, const size_t& N, const int& K,
-                         const int& rounds, const string& insertFile, const int& tag ) {
+void
+testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
+                    const size_t& N, const int& K, const int& rounds,
+                    const string& insertFile, const int& tag ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -94,7 +95,8 @@ void testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
   return;
 }
 
-int main( int argc, char* argv[] ) {
+int
+main( int argc, char* argv[] ) {
   commandLine P( argc, argv,
                  "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
                  "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-i <_insertFile>]" );

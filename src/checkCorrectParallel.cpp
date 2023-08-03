@@ -28,7 +28,8 @@ int Dim, K, tag, rounds;
 bool insert;
 size_t N;
 
-void runCGAL( points& wp, points& wi, Typename* cgknn ) {
+void
+runCGAL( points& wp, points& wi, Typename* cgknn ) {
   //* cgal
   std::vector<Point_d> _points( N );
   parlay::parallel_for(
@@ -78,7 +79,8 @@ void runCGAL( points& wp, points& wi, Typename* cgknn ) {
   assert( wp.size() == N );
 }
 
-void runKDParallel( points& wp, points& wi, Typename* kdknn ) {
+void
+runKDParallel( points& wp, points& wi, Typename* kdknn ) {
   //* kd tree
   puts( "build kd tree" );
   using pkdtree = ParallelKDtree<point>;
@@ -107,7 +109,8 @@ void runKDParallel( points& wp, points& wi, Typename* kdknn ) {
   return;
 }
 
-int main( int argc, char* argv[] ) {
+int
+main( int argc, char* argv[] ) {
   commandLine P( argc, argv,
                  "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
                  "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-i <_insertFile>]" );
