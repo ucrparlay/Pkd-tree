@@ -8,7 +8,7 @@ declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
-tag=0
+tag=1
 dim=3
 k=100
 onecore=0
@@ -64,7 +64,7 @@ for solver in ${Solvers[@]}; do
                 for ((i = 1; i <= ${insNum}; i++)); do
                     #! NUMA control would slow down the serial process dramatically.
                     #! e.g., in zd tree, the sort would be 30% slower and 40% slower for build the tree
-                    PARLAY_NUM_THREADS=${core} taskset -c 0-95:${step} ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 2 >>${dest}
+                    PARLAY_NUM_THREADS=${core} taskset -c 0-95:${step} numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 2 >>${dest}
                 done
             done
         done

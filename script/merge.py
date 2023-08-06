@@ -23,6 +23,8 @@ header = [
     "dims",
     "file",
     "buildTime",
+    "insertTime",
+    "deleteTime",
     "queryTime",
     "aveDeep",
     "aveQueryVisNodeNum",
@@ -31,15 +33,17 @@ header = [
 
 def combine(P, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
-        print("No file fonund: "+ P)
+        print("No file fonund: " + P)
         return
     lines = open(P, "r").readlines()
     for line in lines:
         l = " ".join(line.split())
         l = l.split(" ")
-        while len(l)<5 :
+        while len(l) < 7:
             l.append("-1")
-        csvWriter.writerow([solver, benchName, node, dim, l[0], l[1], l[2], l[3], l[4]])
+        csvWriter.writerow(
+            [solver, benchName, node, dim, l[0], l[1], l[2], l[3], l[4], l[5], l[6]]
+        )
 
 
 def csvSetup(solver):
@@ -52,18 +56,18 @@ def csvSetup(solver):
 
 # * merge the result
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
-    solverName = ["test", "cgal", "zdtree"]
+    solverName = ["test", "zdtree"]
     resMap = {
         "test": "res_parallel.out",
         # "test_one_core": "res_parallel_one_core.out",
-        "cgal": "cgal_res_parallel.out",
+        # "cgal": "cgal_res_parallel.out",
         "zdtree": "zdtree.out"
         # "zdtree_one_core": "zdtree_one_core.out",
     }
 
-    for solver in solverName:
-        csvWriter = csvSetup(solver)
+    csvWriter = csvSetup("result")
 
+    for solver in solverName:
         dim = 3
         for bench in benchmarks:
             for node in Nodes:
@@ -81,46 +85,53 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                 combine(P, csvWriter, solver, bench, node, dim)
 
 
-cores = [1, 8, 16, 24, 48, 96]
+cores = [1, 4, 8, 16, 24, 48, 96]
 
 if len(sys.argv) > 1 and int(sys.argv[1]) == 2:
     solverName = ["test", "zdtree"]
-    resMap = {
-        "test": "res_parallel.out",
-        "zdtree": "zdtree.out"
-    }
-
+    resMap = {"test": "res_parallel.out", "zdtree": "zdtree.out"}
+    csvFilePointer = open(storePrefix + "scalability" + ".csv", "w", newline="")
+    csvFilePointer.truncate()
+    csvWriter = csv.writer(csvFilePointer)
+    csvWriter.writerow(
+        [
+            "solver",
+            "benchType",
+            "nodes",
+            "dims",
+            "file",
+            "buildTime",
+            "insertTime",
+            "core",
+        ]
+    )
     for solver in solverName:
-        csvFilePointer = open(storePrefix + solver + "_scala.csv", "w", newline="")
-        csvFilePointer.truncate()
-        csvWriter = csv.writer(csvFilePointer)
-        csvWriter.writerow(['solver', 'benchType', 'nodes', 'dims', 'file', 'buildTime', 'core'])
-
         dim = 3
         for bench in benchmarks:
             for node in Nodes:
                 for core in cores:
-                  P = (
-                      path
-                      + "/"
-                      + bench
-                      + "/scalability/"
-                      + str(node)
-                      + "_"
-                      + str(dim)
-                      + "/"
-                      + str(core)
-                      + '_'
-                      + resMap[solver]
-                  )
-                  if not os.path.isfile(P):
-                      print("No file fonund: "+ P)
-                      continue
-                  lines = open(P, "r").readlines()
-                  for line in lines:
-                      l = " ".join(line.split())
-                      l = l.split(" ")
-                      while len(l)<4 :
-                          l.append("-1")
-                      csvWriter.writerow([solver, bench, node, dim, l[0], l[1],str(core)])
-                      csvWriter.writerow([solver, bench, node, dim, l[2], l[3],str(core)])
+                    P = (
+                        path
+                        + "/"
+                        + bench
+                        + "/scalability/"
+                        + str(node)
+                        + "_"
+                        + str(dim)
+                        + "/"
+                        + str(core)
+                        + "_"
+                        + resMap[solver]
+                    )
+                    if not os.path.isfile(P):
+                        print("No file fonund: " + P)
+                        continue
+                    lines = open(P, "r").readlines()
+                    for line in lines:
+                        l = " ".join(line.split())
+                        l = l.split(" ")
+                        while len(l) < 5:
+                            l.append("-1")
+                        csvWriter.writerow(
+                            [solver, bench, node, dim, l[0], l[1], l[2], str(core)]
+                        )

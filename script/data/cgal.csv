@@ -1,17 +1,1 @@
 solver,benchType,nodes,dims,file,buildTime,queryTime,aveDeep,aveQueryVisNodeNum
-cgal,ss_varden,10000000,3,1.in,2.83976,1.34479,-1,-1
-cgal,ss_varden,10000000,3,2.in,2.98559,1.3494,-1,-1
-cgal,ss_varden,50000000,3,1.in,17.448,6.88854,-1,-1
-cgal,ss_varden,50000000,3,2.in,15.671,6.86053,-1,-1
-cgal,ss_varden,100000000,3,1.in,30.5932,13.8411,-1,-1
-cgal,ss_varden,100000000,3,2.in,31.3593,13.9827,-1,-1
-cgal,ss_varden,500000000,3,1.in,169.641,74.4004,-1,-1
-cgal,ss_varden,500000000,3,2.in,154.142,71.5263,-1,-1
-cgal,uniform,10000000,3,1.in,7.72216,6.45957,-1,-1
-cgal,uniform,10000000,3,2.in,7.60685,6.41061,-1,-1
-cgal,uniform,50000000,3,1.in,37.8425,35.2866,-1,-1
-cgal,uniform,50000000,3,2.in,38.2,34.8983,-1,-1
-cgal,uniform,100000000,3,1.in,82.7972,75.8396,-1,-1
-cgal,uniform,100000000,3,2.in,92.0697,75.779,-1,-1
-cgal,uniform,500000000,3,1.in,469.286,409.914,-1,-1
-cgal,uniform,500000000,3,2.in,466.706,414.121,-1,-1

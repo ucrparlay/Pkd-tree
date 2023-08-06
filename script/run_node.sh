@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("test")
+Solvers=("zdtree" "test")
 # Node=(100000000)
 Node=(10000000 50000000 100000000 500000000)
 declare -A datas
