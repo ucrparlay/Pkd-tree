@@ -13,6 +13,21 @@
 using coord = long;  // type of each coordinate
 
 //! type with T could be really slow
+template<typename T, uint_fast8_t d>
+struct PointType {
+  using coords = std::array<T, d>;
+  PointType() {}
+  PointType( const coords& _pnt ) : pnt( _pnt ){};
+  PointType( parlay::slice<T*, T*> x ) {
+    for ( int i = 0; i < x.size(); i++ )
+      pnt[i] = x[i];
+  }
+  PointType( T* x ) {
+    for ( int i = 0; i < 3; i++ )
+      pnt[i] = x[i];
+  }
+  coords pnt;
+};
 struct point2D {
   using coords = std::array<coord, 2>;
   point2D() {}
@@ -344,7 +359,7 @@ class kBoundedQueue {
       if ( m_comp( x, top() ) ) {
         // insert x in the heap at the correct place,
         // going down in the tree.
-        unsigned int j( 1 ), k( 2 );
+        size_t j( 1 ), k( 2 );
         while ( k <= m_count ) {
           T* z = &( data1[k] );
           if ( ( k < m_count ) && m_comp( *z, data1[k + 1] ) ) z = &( data1[++k] );
@@ -358,7 +373,7 @@ class kBoundedQueue {
       }
     } else {
       // insert element as in a heap
-      int i( ++m_count ), j;
+      size_t i( ++m_count ), j;
       while ( i >= 2 ) {
         j = i >> 1;  // father of i in the tree
         T& y = data1[j];
@@ -371,7 +386,7 @@ class kBoundedQueue {
   }
 
  public:
-  uint_fast32_t m_count = 0;
+  size_t m_count = 0;
   parlay::slice<T*, T*> m_data;
   // parlay::sequence<T> m_data;
   Compare m_comp;

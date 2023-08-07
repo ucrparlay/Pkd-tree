@@ -58,7 +58,7 @@ class ParallelKDtree {
 
   //@ Const variables
   //@ uint32t handle up to 4e9 at least
-  static constexpr uint_fast32_t BUILD_DEPTH_ONCE = 5;  //* last layer is leaf
+  static constexpr uint_fast32_t BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
   static constexpr uint_fast32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1;
   static constexpr uint_fast32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
   //@ general
@@ -319,6 +319,7 @@ class ParallelKDtree {
 
   node*
   delete_tree();
+
   void
   delete_tree_recursive( node* T );
 };

@@ -26,10 +26,10 @@ header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
 ```{R}
 # setwd("/home/zmen002/KDtree")
 # kd_proto <- read.csv("script/backup_data/my_kd_proto.csv", header = TRUE)
-kd <- read.csv("script/data/test.csv", header = TRUE)
-cgal <- read.csv("script/data/cgal.csv", header = TRUE)
-zd<-read.csv("script/data/zdtree.csv", header=TRUE)
-t <-  bind_rows(zd,kd,cgal)
+# kd <- read.csv("script/data/test.csv", header = TRUE)
+# cgal <- read.csv("script/data/cgal.csv", header = TRUE)
+# zd<-read.csv("script/data/zdtree.csv", header=TRUE)
+t <-  read.csv("script/data/result.csv",header=TRUE)
 # View(t)
 
 # kd1core <- read.csv("script/data/test_one_core.csv", header = TRUE)
@@ -50,25 +50,39 @@ build <- t %>%
   filter(benchType == name) %>%
   select(solver, benchType, nodes, avg)
 
+insert <- t %>%
+  group_by(solver, benchType, nodes) %>%
+  summarise(avg = mean(insertTime), .groups = "drop") %>%
+  filter(benchType == name) %>%
+  select(solver, benchType, nodes, avg)
+
 query <- t %>%
   group_by(solver, benchType, nodes) %>%
   summarise(avg = mean(queryTime / nodes), .groups = "drop") %>%
   filter(benchType == name) %>%
   select(solver, benchType, nodes, avg)
 
-return (list(build, query))
+return (list(build, insert,query))
 }
 ```
 
 plot the graph
 ```{R}
-plot <- function(buildData, queryData, name) {
+plot <- function(buildData,insertData, queryData, name) {
 gBuild <- ggplot(buildData, aes(x = nodes, y = avg, color = solver, shape = solver)) +
   geom_point(size = 3) +
   geom_line() +
   # geom_label(aes(nodes+.1,avg+.1,label=avg,size=4)) +
   theme_gray() +
   labs(y = "Ave build time") +
+  ggtitle(name)
+
+gInsert <- ggplot(insertData, aes(x = nodes, y = avg, color = solver, shape = solver)) +
+  geom_point(size = 3) +
+  geom_line() +
+  # geom_label(aes(nodes+.1,avg+.1,label=avg,size=4)) +
+  theme_gray() +
+  labs(y = "Ave insert time") +
   ggtitle(name)
 
 gQuery <- ggplot(queryData, aes(x = nodes, y = avg, color = solver, shape = solver)) +
@@ -78,21 +92,23 @@ gQuery <- ggplot(queryData, aes(x = nodes, y = avg, color = solver, shape = solv
   labs(y = "Ave query time") + 
   ggtitle(name)
 
-  return (list(gBuild, gQuery))
+  return (list(gBuild, gInsert, gQuery))
 }
 ```
 
 
 ```{R}
-list[buildVarden, queryVarden] <- computeAve(t,"ss_varden")
-list[buildUniform, queryUniform] <- computeAve(t, "uniform")
-list[gBuildVarden, gQueryVarden] <- plot(buildVarden,queryVarden, "ss_varden")
-list[gBuildUniform, gQueryUniform] <- plot(buildUniform,queryUniform, "uniform")
+list[buildVarden, insertVarden, queryVarden] <- computeAve(t,"ss_varden")
+list[buildUniform, insertUniform, queryUniform] <- computeAve(t, "uniform")
+list[gBuildVarden, gInsertVarden, gQueryVarden] <- plot(buildVarden, insertVarden, queryVarden, "ss_varden")
+list[gBuildUniform, gInsertUniform, gQueryUniform] <- plot(buildUniform, insertUniform, queryUniform, "uniform")
 
 sortedBuild <- bind_rows(buildVarden,buildUniform) %>% group_by(benchType) %>% arrange(nodes,avg,.by_group=TRUE)
+sortedInsert <- bind_rows(insertVarden,insertUniform) %>% group_by(benchType) %>% arrange(nodes,avg,.by_group=TRUE)
 sortedQuery <- bind_rows(queryVarden,queryUniform) %>% group_by(benchType) %>% arrange(nodes,avg,.by_group=TRUE)
 sortedQuery$avg<-round(sortedQuery$avg, digits=9)
 write.csv(sortedBuild, "script/data/summarize_build.csv")
+write.csv(sortedInsert, "script/data/summarize_insert.csv")
 write.csv(sortedQuery, "script/data/summarize_query.csv")
 ```
 

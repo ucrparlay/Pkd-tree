@@ -1,0 +1,17 @@
+"","solver","benchType","nodes","avg"
+"1","test","ss_varden",10000000,0.03658265
+"2","zdtree","ss_varden",10000000,0.054893
+"3","test","ss_varden",50000000,0.2334045
+"4","zdtree","ss_varden",50000000,0.280993
+"5","test","ss_varden",100000000,0.448115
+"6","zdtree","ss_varden",100000000,0.567464
+"7","test","ss_varden",500000000,2.502155
+"8","zdtree","ss_varden",500000000,2.87197
+"9","test","uniform",10000000,0.03445785
+"10","zdtree","uniform",10000000,0.058965
+"11","test","uniform",50000000,0.188227
+"12","zdtree","uniform",50000000,0.2998225
+"13","test","uniform",100000000,0.356046
+"14","zdtree","uniform",100000000,0.5983545
+"15","test","uniform",500000000,1.772995
+"16","zdtree","uniform",500000000,3.05799

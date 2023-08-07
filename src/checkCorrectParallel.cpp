@@ -12,7 +12,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = point10D;
+using point = PointType<coord, 10>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;

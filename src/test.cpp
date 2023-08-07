@@ -150,10 +150,16 @@ main( int argc, char* argv[] ) {
     decltype( wp )().swap( wp );
     testParallelKDtree<point2D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 3 ) {
-    auto pts = parlay::tabulate(
-        N, [&]( size_t i ) -> point3D { return point3D( wp[i].pnt.begin() ); } );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 3> {
+      return PointType<long, 3>( wp[i].pnt.begin() );
+    } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<point3D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
+    testParallelKDtree<PointType<long, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                            insertFile, tag );
+    // auto pts = parlay::tabulate(
+    //     N, [&]( size_t i ) -> point3D { return point3D( wp[i].pnt.begin() ); } );
+    // decltype( wp )().swap( wp );
+    // testParallelKDtree<point3D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 5 ) {
     auto pts = parlay::tabulate(
         N, [&]( size_t i ) -> point5D { return point5D( wp[i].pnt.begin() ); } );

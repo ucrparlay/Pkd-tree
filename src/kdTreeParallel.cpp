@@ -181,6 +181,35 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
                                         In.cut( start, start + sums[i] ), dim, DIM );
       },
       1 );
+
+  // auto f = [&]( const point& p ) {
+  //   uint_fast16_t k = 1, d = dim;
+  //   while ( k <= PIVOT_NUM ) {
+  //     assert( d == pivots[k].second );
+  //     k = p.pnt[d] < pivots[k].first ? k << 1 : k << 1 | 1;
+  //     d = ( d + 1 ) % DIM;
+  //   }
+  //   assert( pivots[k].first == -1 );
+  //   return pivots[k].second;
+  // };
+  // auto getBucket = parlay::delayed_map( In, f );
+  // auto bucketOffset = std::get<0>(
+  // parlay::internal::count_sort<parlay::copy_assign_tag>(
+  //     In, Out, make_slice( getBucket ), BUCKET_NUM, 1.0 ) );
+  // auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
+  // dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
+  // parlay::parallel_for(
+  //     0, BUCKET_NUM,
+  //     [&]( size_t i ) {
+  //       size_t start = 0;
+  //       for ( int j = 0; j < i; j++ ) {
+  //         start += bucketOffset[j + 1] - bucketOffset[j];
+  //       }
+  //       treeNodes[i] = build_recursive(
+  //           Out.cut( start, start + bucketOffset[i + 1] - bucketOffset[i] ),
+  //           In.cut( start, start + bucketOffset[i + 1] - bucketOffset[i] ), dim, DIM );
+  //     },
+  //     1 );
   return build_inner_tree( 1, pivots, treeNodes );
 }
 
@@ -307,39 +336,11 @@ NODE<point>*
 ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx, const node_tags& tags,
                                           parlay::sequence<node*>& treeNodes, int& p,
                                           const tag_nodes& rev_tag ) {
-  //! order below matters
-  //! tree nodes can be in bucket, so be sure to release space first
-  // if ( tags[idx].first->is_leaf ) {
-  //   assert( rev_tag[p] == idx );
-  //   if ( !treeNodes[p]->is_leaf ) {
-  //     assert( tags[idx].first != NULL );
-  //     assert( tags[idx].first != treeNodes[p] );
-  //     free_leaf( tags[idx].first );
-  //   }
-  //   return treeNodes[p++];
-  // }
-  // if ( tags[idx].second > BUCKET_NUM ) {
-  //   assert( rev_tag[p] == idx );
-  //   assert( tags[idx].second == BUCKET_NUM + 1 );
-  //   assert( !( tags[idx].first->is_leaf ) );
-  //   assert( tags[idx].first != treeNodes[p] );
-  //   delete_tree_recursive( tags[idx].first );
-  //   return treeNodes[p++];
-  // }
-  // if ( idx > PIVOT_NUM ) {
-  //   assert( rev_tag[p] == idx );
-  //   return treeNodes[p++];
-  // }
+
   if ( tags[idx].second >= BUCKET_NUM + 1 ) {
     assert( rev_tag[p] == idx );
     return treeNodes[p++];
   }
-
-  // if ( tags[idx].second == BUCKET_NUM + 2 ) {
-  //   assert( rev_tag[p] == idx );
-  //   delete_tree_recursive( tags[idx].first );
-  //   return treeNodes[p++];
-  // }
 
   assert( tags[idx].second == BUCKET_NUM );
   assert( tags[idx].first != NULL );
@@ -423,6 +424,24 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
   IT.reset_tags_num();
   IT.assign_node_tag( T, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
+
+  //* using counting sort
+  // auto f = [&]( const point& p ) {
+  //   uint_fast32_t k = 1;
+  //   interior* TI;
+  //   while ( k <= PIVOT_NUM && ( !IT.tags[k].first->is_leaf ) ) {
+  //     TI = static_cast<interior*>( IT.tags[k].first );
+  //     k = p.pnt[TI->split.second] < TI->split.first ? k << 1 : k << 1 | 1;
+  //   }
+  //   assert( IT.tags[k].second < BUCKET_NUM );
+  //   return IT.tags[k].second;
+  // };
+  // auto getBucket = parlay::delayed_map( In, f );
+  // IT.sums = std::get<0>( parlay::internal::count_sort<parlay::copy_assign_tag>(
+  //     In, Out, make_slice( getBucket ), IT.tagsNum, 1.0 ) );
+  // for ( int i = 0; i < IT.tagsNum; i++ ) {
+  //   IT.sums[i] = IT.sums[i + 1] - IT.sums[i];
+  // }
 
   seieve_points( In, Out, n, IT.tags, IT.sums, IT.tagsNum );
 
@@ -514,7 +533,6 @@ ParallelKDtree<point>::delete_tree() {
     return this->root;
   }
   delete_tree_recursive( this->root );
-  // assert( this->root == NULL );
   return this->root;
 }
 
@@ -534,6 +552,9 @@ ParallelKDtree<point>::delete_tree_recursive( node* T ) {
 }
 
 //@ Template declation
+template class ParallelKDtree<PointType<long, 3>>;
+template class ParallelKDtree<PointType<long, 10>>;
+
 template class ParallelKDtree<point2D>;
 template class ParallelKDtree<point3D>;
 template class ParallelKDtree<point5D>;
