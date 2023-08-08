@@ -145,10 +145,12 @@ main( int argc, char* argv[] ) {
     // todo rewrite test serial code
     // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
   } else if ( Dim == 2 ) {
-    auto pts = parlay::tabulate(
-        N, [&]( size_t i ) -> point2D { return point2D( wp[i].pnt.begin() ); } );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 2> {
+      return PointType<long, 2>( wp[i].pnt.begin() );
+    } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<point2D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
+    testParallelKDtree<PointType<long, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                            insertFile, tag );
   } else if ( Dim == 3 ) {
     auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 3> {
       return PointType<long, 3>( wp[i].pnt.begin() );
@@ -161,15 +163,19 @@ main( int argc, char* argv[] ) {
     // decltype( wp )().swap( wp );
     // testParallelKDtree<point3D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 5 ) {
-    auto pts = parlay::tabulate(
-        N, [&]( size_t i ) -> point5D { return point5D( wp[i].pnt.begin() ); } );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 5> {
+      return PointType<long, 5>( wp[i].pnt.begin() );
+    } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<point5D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
+    testParallelKDtree<PointType<long, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                            insertFile, tag );
   } else if ( Dim == 7 ) {
-    auto pts = parlay::tabulate(
-        N, [&]( size_t i ) -> point7D { return point7D( wp[i].pnt.begin() ); } );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 7> {
+      return PointType<long, 7>( wp[i].pnt.begin() );
+    } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<point7D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
+    testParallelKDtree<PointType<long, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                            insertFile, tag );
   }
 
   return 0;

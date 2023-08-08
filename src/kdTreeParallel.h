@@ -63,6 +63,7 @@ class ParallelKDtree {
   static constexpr uint_fast32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
   //@ general
   static constexpr uint_fast32_t LEAVE_WRAP = 32;
+  static constexpr uint_fast32_t THIN_LEAVE_WRAP = 24;
   static constexpr uint_fast32_t SERIAL_BUILD_CUTOFF = 1 << 10;
   //@ block param in partition
   static constexpr uint_fast32_t LOG2_BASE = 10;
@@ -201,12 +202,19 @@ class ParallelKDtree {
       return;
     }
 
+    void
+    init_for_insertion() {
+      reset_tags_num();
+      tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
+      sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
+      rev_tag = tag_nodes::uninitialized( BUCKET_NUM );
+    }
+
     //@ variables
-    node_tags tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
+    node_tags tags;
     parlay::sequence<uint_fast32_t> sums;
-    mutable parlay::sequence<uint_fast32_t> sums_tree =
-        parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
-    mutable tag_nodes rev_tag = tag_nodes::uninitialized( BUCKET_NUM );
+    mutable parlay::sequence<uint_fast32_t> sums_tree;
+    mutable tag_nodes rev_tag;
     int tagsNum;
   };
 
@@ -252,6 +260,11 @@ class ParallelKDtree {
   void
   free_interior( node* T ) {
     parlay::type_allocator<interior>::retire( static_cast<interior*>( T ) );
+  }
+
+  inline bool
+  inbalance_node( const size_t& l, const size_t& n ) {
+    return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
   //@ Parallel KD tree cores
@@ -314,8 +327,15 @@ class ParallelKDtree {
   update_inner_tree( uint_fast32_t idx, const node_tags& tags,
                      parlay::sequence<node*>& treeNodes, int& p,
                      const tag_nodes& rev_tag );
+
   node*
   batchInsert_recusive( node* T, slice In, slice Out, const uint_fast8_t& DIM );
+
+  void
+  batchDelete( slice In, const uint_fast8_t& DIM );
+
+  node*
+  batchDelete_recursive( node* T, slice In, const uint_fast8_t& DIM, bool hasTomb );
 
   node*
   delete_tree();

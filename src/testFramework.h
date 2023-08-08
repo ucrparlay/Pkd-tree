@@ -173,6 +173,41 @@ batchInsert( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
 template<typename point>
 void
+batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
+             const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
+             const int& rounds ) {
+  using tree = ParallelKDtree<point>;
+  using points = typename tree::points;
+  using node = typename tree::node;
+  points wp = points::uninitialized( WP.size() );
+  points wi = points::uninitialized( WI.size() );
+
+  pkd.delete_tree();
+
+  double aveInsert = time_loop(
+      rounds, 1.0,
+      [&]() {
+        parlay::copy( WP, wp ), parlay::copy( WI, wi );
+        pkd.build( parlay::make_slice( wp ), DIM );
+        pkd.batchInsert( parlay::make_slice( wi ), DIM );
+        assert( pkd.get_root()->size == WI.size() + WP.size() );
+      },
+      [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
+      [&]() { pkd.delete_tree(); } );
+
+  //* set status to be finish insert
+  parlay::copy( WP, wp ), parlay::copy( WI, wi );
+  pkd.build( parlay::make_slice( wp ), DIM );
+  pkd.batchInsert( parlay::make_slice( wi ), DIM );
+  pkd.batchDelete( parlay::make_slice( wi ), DIM );
+
+  LOG << aveInsert << " " << std::flush;
+
+  return;
+}
+
+template<typename point>
+void
 queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds,
           ParallelKDtree<point>& pkd, Typename* kdknn, const int& K ) {
   using tree = ParallelKDtree<point>;

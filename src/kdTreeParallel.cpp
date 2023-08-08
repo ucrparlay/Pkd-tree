@@ -44,7 +44,7 @@ void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivots,
                                     const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
   size_t size = std::min( n, (size_t)32 * BUCKET_NUM );
-  assert( size < n );
+  assert( size <= n );
   // points arr = points::uninitialized( size );
   points arr = points( size );
   for ( size_t i = 0; i < size; i++ ) {
@@ -420,8 +420,8 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
 
   //@ assign each node a tag
   InnerTree IT;
+  IT.init_for_insertion();
   assert( IT.rev_tag.size() == BUCKET_NUM );
-  IT.reset_tags_num();
   IT.assign_node_tag( T, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
 
@@ -501,6 +501,90 @@ ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t& DIM ) {
   return;
 }
 
+template<typename point>
+NODE<point>*
+ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, const uint_fast8_t& DIM,
+                                              bool hasTomb ) {
+  size_t n = In.size();
+  if ( n == 0 ) return T;
+
+  if ( T->is_leaf ) {
+    LOG << "in leaf" << ENDL;
+    assert( T->size >= In.size() );
+    leaf* TL = static_cast<leaf*>( T );
+    auto end = TL->pts.end();
+    for ( int i = 0; i < In.size(); i++ ) {
+      assert( std::find( TL->pts.begin(), TL->pts.end(), In[i] ) != TL->pts.end() );
+      end = std::remove( TL->pts.begin(), end, In[i] );
+    }
+    if ( std::distance( TL->pts.begin(), end ) != TL->size - In.size() ) {
+      for ( int i = 0; i < In.size(); i++ ) {
+        LOG << In[i] << " ";
+      }
+      LOG << ENDL;
+      for ( int i = 0; i < TL->pts.size(); i++ ) {
+        LOG << TL->pts[i] << " ";
+      }
+      LOG << ENDL;
+
+      LOG << std::distance( TL->pts.begin(), end ) << " " << TL->size - In.size() << ENDL;
+    }
+    assert( std::distance( TL->pts.begin(), end ) ==
+            TL->size - In.size() );  //"try delete an non-exist element"
+    TL->size -= In.size();
+    assert( TL->size >= 0 );
+    return T;
+  }
+
+  if ( In.size() ) {
+    LOG << "serial divide" << ENDL;
+
+    interior* TI = static_cast<interior*>( T );
+    auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
+      return p.pnt[TI->split.second] < TI->split.first;
+    } );
+    assert( pos - In.begin() == std::distance( In.begin(), pos ) );
+
+    bool putTomb = hasTomb && ( inbalance_node( TI->left->size - ( pos - In.begin() ),
+                                                TI->size - In.size() ) ||
+                                TI->size - In.size() < THIN_LEAVE_WRAP );
+    hasTomb = putTomb ? ~hasTomb : hasTomb;
+    assert( putTomb ? ~hasTomb : true );
+
+    node *L, *R;
+    L = batchDelete_recursive( TI->left, In.cut( 0, pos - In.begin() ), DIM, hasTomb );
+    R = batchDelete_recursive( TI->right, In.cut( pos - In.begin(), In.size() ), DIM,
+                               hasTomb );
+    update_interior( T, L, R );
+    assert( T->size == L->size + R->size && TI->split.second >= 0 &&
+            TI->is_leaf == false );
+
+    //* rebuild
+    if ( putTomb ) {
+      LOG << "rebuild" << ENDL;
+
+      assert( TI->size == T->size );
+      assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
+      points wx = points::uninitialized( T->size );
+      points wo = points::uninitialized( T->size );
+      uint_fast8_t d = T->dim;
+      flatten( T, wx.cut( 0, T->size ) );
+      delete_tree_recursive( T );
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
+                              DIM );
+    }
+    return T;
+  }
+}
+
+template<typename point>
+void
+ParallelKDtree<point>::batchDelete( slice In, const uint_fast8_t& DIM ) {
+  node* T = this->root;
+  this->root = batchDelete_recursive( T, In, DIM, 1 );
+  return;
+}
+
 //? parallel query
 template<typename point>
 void
@@ -552,12 +636,9 @@ ParallelKDtree<point>::delete_tree_recursive( node* T ) {
 }
 
 //@ Template declation
+template class ParallelKDtree<PointType<long, 2>>;
 template class ParallelKDtree<PointType<long, 3>>;
+template class ParallelKDtree<PointType<long, 5>>;
+template class ParallelKDtree<PointType<long, 7>>;
+template class ParallelKDtree<PointType<long, 9>>;
 template class ParallelKDtree<PointType<long, 10>>;
-
-template class ParallelKDtree<point2D>;
-template class ParallelKDtree<point3D>;
-template class ParallelKDtree<point5D>;
-template class ParallelKDtree<point7D>;
-template class ParallelKDtree<point9D>;
-template class ParallelKDtree<point10D>;

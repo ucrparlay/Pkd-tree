@@ -12,7 +12,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 10>;
+using point = PointType<coord, 5>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -43,7 +43,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
   Tree tree( _points.begin(), _points.end(), median );
   tree.build<CGAL::Parallel_tag>();
 
-  if ( tag == 1 ) {
+  if ( tag >= 1 ) {
     _points.resize( wi.size() );
     parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
       _points[j] =
@@ -55,6 +55,16 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
     wp.append( wi );
     assert( tree.size() == wp.size() );
     puts( "finish insert to cgal" );
+  }
+
+  if ( tag >= 2 ) {
+    assert( _points.size() == wi.size() );
+    for ( auto p : _points ) {
+      tree.remove( p );
+    }
+    assert( tree.size() == wp.size() );
+    wp.pop_tail( wi.size() );
+    puts( "finish delete from cgal" );
   }
 
   //* cgal query
@@ -75,8 +85,10 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
                        }
                      } );
 
-  wp.pop_tail( wi.size() );
-  assert( wp.size() == N );
+  if ( tag == 1 ) {
+    wp.pop_tail( wi.size() );
+    assert( wp.size() == N );
+  }
 }
 
 void
@@ -92,7 +104,7 @@ runKDParallel( points& wp, points& wi, Typename* kdknn ) {
   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
   assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
 
-  if ( tag == 1 ) {
+  if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish insert" << ENDL;
 
@@ -101,9 +113,18 @@ runKDParallel( points& wp, points& wi, Typename* kdknn ) {
     wp.append( wi );
   }
 
+  if ( tag >= 2 ) {
+    wp.pop_tail( wi.size() );
+    batchDelete<point>( pkd, wp, wi, Dim, 2 );
+    LOG << "finish delete" << ENDL;
+    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
+  }
+
   //* query phase
 
   assert( N >= K );
+  assert( tag == 1 || wp.size() == N );
   LOG << "begin kd query" << ENDL;
   queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
 
@@ -153,7 +174,8 @@ main( int argc, char* argv[] ) {
   Typename* kdknn;
   points wi;
 
-  if ( tag == 1 && iFile != NULL ) {
+  //* initialize insert points file
+  if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
       id = ( id + 1 ) % 5;  //! MOD graph number used to test
@@ -166,23 +188,33 @@ main( int argc, char* argv[] ) {
     std::cout << insertFile << ENDL;
   }
 
+  //* set result array size
   if ( tag == 0 ) {
     cgknn = new Typename[N];
     kdknn = new Typename[N];
-  } else if ( tag == 1 && iFile == NULL ) {
-    generate_random_points<point>( wi, 1000000, N / 5, Dim );
-    LOG << "insert " << N / 5 << " points" << ENDL;
-    cgknn = new Typename[N + wi.size()];
-    kdknn = new Typename[N + wi.size()];
-  } else if ( tag == 1 && iFile != NULL ) {
-    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-    if ( nd != Dim || nn != N ) {
-      puts( "read inserted points dimension wrong" );
-      abort();
+  } else {
+    if ( iFile == NULL ) {
+      generate_random_points<point>( wi, 1000000, N / 2, Dim );
+      LOG << "insert " << N / 5 << " points" << ENDL;
+    } else {
+      auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+      if ( nd != Dim || nn != N ) {
+        puts( "read inserted points dimension wrong" );
+        abort();
+      } else {
+        puts( "read inserted points from file" );
+      }
     }
-    puts( "insert points from file" );
-    cgknn = new Typename[N + wi.size()];
-    kdknn = new Typename[N + wi.size()];
+
+    if ( tag == 1 ) {
+      puts( "insert points from file" );
+      cgknn = new Typename[N + wi.size()];
+      kdknn = new Typename[N + wi.size()];
+    } else if ( tag == 2 ) {
+      puts( "insert then delete points from file" );
+      cgknn = new Typename[N];
+      kdknn = new Typename[N];
+    }
   }
 
   runCGAL( wp, wi, cgknn );

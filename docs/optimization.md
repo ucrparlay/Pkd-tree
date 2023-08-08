@@ -3,3 +3,4 @@
   byte, therefore, a small tree contains $(36/24)*2^{20}\approx 1572864$ points can be fitted in
   cache. An input graph containing 10^8 points can be divided to $63.5$ buckets each
   with amount of points above.
+- add id in point can be much slow

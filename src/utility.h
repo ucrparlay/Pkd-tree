@@ -17,17 +17,47 @@ template<typename T, uint_fast8_t d>
 struct PointType {
   using coords = std::array<T, d>;
   PointType() {}
+
   PointType( const coords& _pnt ) : pnt( _pnt ){};
+
   PointType( parlay::slice<T*, T*> x ) {
     for ( int i = 0; i < x.size(); i++ )
       pnt[i] = x[i];
   }
+
   PointType( T* x ) {
-    for ( int i = 0; i < 3; i++ )
+    for ( int i = 0; i < d; i++ )
       pnt[i] = x[i];
   }
+
+  bool
+  operator==( const PointType& x ) const {
+    for ( int i = 0; i < d; i++ ) {
+      if ( pnt[i] != x.pnt[i] ) return false;
+    }
+    return true;
+  }
+
+  bool
+  operator<( const PointType& x ) const {
+    for ( int i = 0; i < d; i++ ) {
+      if ( pnt[i] < x.pnt[i] ) return true;
+    }
+    return true;
+  }
+
+  friend std::ostream&
+  operator<<( std::ostream& o, PointType const& a ) {
+    o << "(";
+    for ( int i = 0; i < d; i++ ) {
+      o << a.pnt[i] << ", ";
+    }
+    o << ") " << std::flush;
+  }
+
   coords pnt;
 };
+
 struct point2D {
   using coords = std::array<coord, 2>;
   point2D() {}
