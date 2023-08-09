@@ -61,6 +61,41 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   return std::make_pair( N, Dim );
 }
 
+template<typename point>
+void
+unique_points( parlay::sequence<point>& wp, parlay::sequence<point>& wi,
+               const int& Dim ) {
+  using points = parlay::sequence<point>;
+  LOG << wp.size() << " " << wi.size() << ENDL;
+  parlay::sort_inplace( wp );
+  parlay::sort_inplace( wi );
+  wp = parlay::unique( wp, [&]( const point& a, const point& b ) {
+    for ( int i = 0; i < Dim; i++ ) {
+      if ( a.pnt[i] != b.pnt[i] ) return false;
+    }
+    return true;
+  } );
+
+  wi = parlay::unique( wi, [&]( const point& a, const point& b ) {
+    for ( int i = 0; i < Dim; i++ ) {
+      if ( a.pnt[i] != b.pnt[i] ) return false;
+    }
+    return true;
+  } );
+
+  points wo;
+  std::set_intersection( wp.begin(), wp.end(), wi.begin(), wi.end(), wo.begin() );
+  auto nwp = parlay::filter( wp, [&]( const point& p ) {
+    return std::find( wo.begin(), wo.end(), p ) != wo.end();
+  } );
+  auto nwi = parlay::filter( wi, [&]( const point& p ) {
+    return std::find( wo.begin(), wo.end(), p ) != wo.end();
+  } );
+  wp = nwp, wi = nwi;
+  LOG << wp.size() << " " << wi.size() << ENDL;
+  return;
+}
+
 void
 traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
   if ( KDroot->isLeaf ) {
@@ -184,24 +219,31 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
   pkd.delete_tree();
 
-  double aveInsert = time_loop(
-      rounds, 1.0,
-      [&]() {
-        parlay::copy( WP, wp ), parlay::copy( WI, wi );
-        pkd.build( parlay::make_slice( wp ), DIM );
-        pkd.batchInsert( parlay::make_slice( wi ), DIM );
-        assert( pkd.get_root()->size == WI.size() + WP.size() );
-      },
-      [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
-      [&]() { pkd.delete_tree(); } );
+  // double aveInsert = time_loop(
+  //     rounds, 1.0,
+  //     [&]() {
+  //       parlay::copy( WP, wp ), parlay::copy( WI, wi );
+  //       pkd.build( parlay::make_slice( wp ), DIM );
+  //       pkd.batchInsert( parlay::make_slice( wi ), DIM );
+  //       assert( pkd.get_root()->size == WI.size() + WP.size() );
+  //     },
+  //     [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
+  //     [&]() { pkd.delete_tree(); } );
 
-  //* set status to be finish insert
+  //* set status to be finish delete
   parlay::copy( WP, wp ), parlay::copy( WI, wi );
   pkd.build( parlay::make_slice( wp ), DIM );
   pkd.batchInsert( parlay::make_slice( wi ), DIM );
+  parlay::parallel_for( 0, wi.size(), [&]( size_t i ) {
+    assert( pkd.member( pkd.get_root(), wi[i], 0, DIM ) );
+  } );
+  // for ( int i = 0; i < wi.size(); i++ ) {
+  //   LOG << i << ENDL;
+  //   pkd.batchDelete( parlay::make_slice( wi.cut( i, i + 1 ) ), DIM );
+  // }
   pkd.batchDelete( parlay::make_slice( wi ), DIM );
 
-  LOG << aveInsert << " " << std::flush;
+  // LOG << aveInsert << " " << std::flush;
 
   return;
 }
@@ -224,14 +266,20 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
 
   node* KDParallelRoot = pkd.get_root();
+  points wp = points::uninitialized( n );
+
   double aveQuery = time_loop(
       rounds, 1.0,
-      [&]() { parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } ); },
       [&]() {
+        parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
+        points wp = points::uninitialized( n );
+      },
+      [&]() {
+        pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
         double aveVisNum = 0.0;
         parlay::parallel_for( 0, n, [&]( size_t i ) {
           size_t visNodeNum = 0;
-          pkd.k_nearest( KDParallelRoot, WP[i], Dim, bq[i], visNodeNum );
+          pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
           kdknn[i] = bq[i].top();
           visNum[i] = ( 1.0 * visNodeNum ) / n;
         } );

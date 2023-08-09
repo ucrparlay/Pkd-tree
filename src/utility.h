@@ -13,7 +13,7 @@
 using coord = long;  // type of each coordinate
 
 //! type with T could be really slow
-template<typename T, uint_fast8_t d>
+template<typename T, int d>
 struct PointType {
   using coords = std::array<T, d>;
   PointType() {}
@@ -53,6 +53,7 @@ struct PointType {
       o << a.pnt[i] << ", ";
     }
     o << ") " << std::flush;
+    return o;
   }
 
   coords pnt;

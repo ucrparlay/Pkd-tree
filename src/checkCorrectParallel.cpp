@@ -92,7 +92,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
 }
 
 void
-runKDParallel( points& wp, points& wi, Typename* kdknn ) {
+runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   //* kd tree
   puts( "build kd tree" );
   using pkdtree = ParallelKDtree<point>;
@@ -103,6 +103,10 @@ runKDParallel( points& wp, points& wi, Typename* kdknn ) {
   pkdtree::node* KDParallelRoot = pkd.get_root();
   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
   assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
+  parlay::parallel_for( 0, wp.size(), [&]( size_t i ) {
+    assert( pkd.member( pkd.get_root(), wp[i], 0, Dim ) );
+  } );
+  puts( "find all points" );
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
@@ -110,14 +114,17 @@ runKDParallel( points& wp, points& wi, Typename* kdknn ) {
 
     assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
-    wp.append( wi );
+    if ( tag == 1 ) wp.append( wi );
+    parlay::parallel_for( 0, wp.size(), [&]( size_t i ) {
+      assert( pkd.member( pkd.get_root(), wp[i], 0, Dim ) );
+    } );
+    puts( "find all points after insert" );
   }
 
   if ( tag >= 2 ) {
-    wp.pop_tail( wi.size() );
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish delete" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    assert( checkTreesSize<pkdtree>( pkd.get_root() ) <= wp.size() );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
   }
 
@@ -170,6 +177,18 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
+  // points wo = parlay::unique( wp, [&]( const point& a, const point& b ) {
+  //   for ( int i = 0; i < Dim; i++ ) {
+  //     if ( a.pnt[i] != b.pnt[i] ) return false;
+  //   }
+  //   return true;
+  // } );
+  // for ( auto i : wo ) {
+  //   LOG << i;
+  // }
+  // assert( wo.size() == wp.size() );
+  // return 0;
+
   Typename* cgknn;
   Typename* kdknn;
   points wi;
@@ -215,6 +234,8 @@ main( int argc, char* argv[] ) {
       cgknn = new Typename[N];
       kdknn = new Typename[N];
     }
+
+    // unique_points<point>( wp, wi, Dim );
   }
 
   runCGAL( wp, wi, cgknn );

@@ -4,3 +4,4 @@
   cache. An input graph containing 10^8 points can be divided to $63.5$ buckets each
   with amount of points above.
 - add id in point can be much slow
+- simply apply n_th element is not enough since the two sides of split may contain exactly same elements. This is okay for insert/build, since the following look-up will always correct. But if we want to look for a point by split this is wrong, i.e., 1 2 2 3 2, if the query point has dimension 2 we will miss the direction. 

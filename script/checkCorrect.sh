@@ -8,11 +8,11 @@ resFile="Correct.out"
 dest="logger.in"
 out="log.in"
 : >${dest}
-tag=1
+tag=2
 count=1
 
-# Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
-Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
+# Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for path in ${Paths[@]}; do
@@ -37,6 +37,7 @@ for path in ${Paths[@]}; do
 done
 
 echo "finish node test"
+exit
 
 #* check dim
 for node in ${Nodes[@]}; do

@@ -267,6 +267,30 @@ class ParallelKDtree {
     return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
+  inline bool
+  member( node* T, const point& p, int dim, const int& DIM ) {
+    if ( T->is_leaf ) {
+      leaf* TL = static_cast<leaf*>( T );
+      for ( int i = 0; i < TL->size; i++ ) {
+        bool flag = true;
+        for ( int j = 0; j < DIM; j++ ) {
+          if ( p.pnt[j] != TL->pts[i].pnt[j] ) {
+            flag = false;
+            break;
+          }
+        }
+        if ( flag ) return true;
+      }
+      return false;
+      // return std::find( TL->pts.begin(), TL->pts.begin() + TL->size, p ) !=
+      //        TL->pts.begin() + TL->size;
+    }
+    interior* TI = static_cast<interior*>( T );
+    assert( TI->split.second == dim );
+    return p.pnt[dim] < TI->split.first ? member( TI->left, p, ( dim + 1 ) % DIM, DIM )
+                                        : member( TI->right, p, ( dim + 1 ) % DIM, DIM );
+  };
+
   //@ Parallel KD tree cores
   //@ build
   void

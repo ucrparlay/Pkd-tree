@@ -156,10 +156,15 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
         In.begin(), In.begin() + n / 2, In.end(),
         [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
     splitter split = splitter( In[n / 2].pnt[dim], dim );
+    auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
+      return p.pnt[split.second] < split.first;
+    } );
     dim = ( dim + 1 ) % DIM;
     node *L, *R;
-    L = build_recursive( In.cut( 0, n / 2 ), Out.cut( 0, n / 2 ), dim, DIM );
-    R = build_recursive( In.cut( n / 2, n ), Out.cut( n / 2, n ), dim, DIM );
+    L = build_recursive( In.cut( 0, pos - In.begin() ), Out.cut( 0, pos - In.begin() ),
+                         dim, DIM );
+    R = build_recursive( In.cut( pos - In.begin(), n ), Out.cut( pos - In.begin(), n ),
+                         dim, DIM );
     return alloc_interior_node( L, R, split, split.second );
   }
 
@@ -509,58 +514,50 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, const uint_fast
   if ( n == 0 ) return T;
 
   if ( T->is_leaf ) {
-    LOG << "in leaf" << ENDL;
-    assert( T->size >= In.size() );
     leaf* TL = static_cast<leaf*>( T );
-    auto end = TL->pts.end();
-    for ( int i = 0; i < In.size(); i++ ) {
-      assert( std::find( TL->pts.begin(), TL->pts.end(), In[i] ) != TL->pts.end() );
-      end = std::remove( TL->pts.begin(), end, In[i] );
-    }
-    if ( std::distance( TL->pts.begin(), end ) != TL->size - In.size() ) {
-      for ( int i = 0; i < In.size(); i++ ) {
-        LOG << In[i] << " ";
-      }
-      LOG << ENDL;
-      for ( int i = 0; i < TL->pts.size(); i++ ) {
-        LOG << TL->pts[i] << " ";
-      }
-      LOG << ENDL;
+    // LOG << "in leaf" << ENDL;
 
-      LOG << std::distance( TL->pts.begin(), end ) << " " << TL->size - In.size() << ENDL;
+    //! suit for unrepeatable elements
+    //! can be slower for duplicated elements
+    auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
+    for ( int i = 0; i < In.size(); i++ ) {
+      // LOG << std::count( TL->pts.begin(), TL->pts.end(), In[i] ) << ENDL;
+      it = std::find( TL->pts.begin(), end, In[i] );
+      while ( it != end ) {
+        std::swap( *it, *( --end ) );
+        it = std::find( TL->pts.begin(), end, In[i] );
+      }
     }
-    assert( std::distance( TL->pts.begin(), end ) ==
-            TL->size - In.size() );  //"try delete an non-exist element"
-    TL->size -= In.size();
+
+    // assert( std::distance( TL->pts.begin(), end ) == TL->size - In.size() );
+    TL->size = end - TL->pts.begin();
     assert( TL->size >= 0 );
     return T;
   }
 
   if ( In.size() ) {
-    LOG << "serial divide" << ENDL;
-
+    // LOG << "serial divide" << ENDL;
     interior* TI = static_cast<interior*>( T );
+    assert( TI->split.second == T->dim );
     auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
       return p.pnt[TI->split.second] < TI->split.first;
     } );
-    assert( pos - In.begin() == std::distance( In.begin(), pos ) );
 
     bool putTomb = hasTomb && ( inbalance_node( TI->left->size - ( pos - In.begin() ),
                                                 TI->size - In.size() ) ||
                                 TI->size - In.size() < THIN_LEAVE_WRAP );
-    hasTomb = putTomb ? ~hasTomb : hasTomb;
-    assert( putTomb ? ~hasTomb : true );
+    hasTomb = putTomb ? false : hasTomb;
+    assert( putTomb ? ( !hasTomb ) : true );
 
     node *L, *R;
     L = batchDelete_recursive( TI->left, In.cut( 0, pos - In.begin() ), DIM, hasTomb );
-    R = batchDelete_recursive( TI->right, In.cut( pos - In.begin(), In.size() ), DIM,
-                               hasTomb );
+    R = batchDelete_recursive( TI->right, In.cut( pos - In.begin(), n ), DIM, hasTomb );
     update_interior( T, L, R );
     assert( T->size == L->size + R->size && TI->split.second >= 0 &&
             TI->is_leaf == false );
 
     //* rebuild
-    if ( putTomb ) {
+    if ( false ) {
       LOG << "rebuild" << ENDL;
 
       assert( TI->size == T->size );
