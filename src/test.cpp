@@ -74,15 +74,19 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
     batchInsert<point>( pkd, wp, wi, Dim, rounds );
 
-    wp.append( wi );
-    kdknn = new Typename[N + wi.size()];
+    if ( tag == 1 ) {
+      wp.append( wi );
+      kdknn = new Typename[N + wi.size()];
+    }
   } else {
-    kdknn = new Typename[N];
     std::cout << "-1 " << std::flush;
   }
 
   //* batch delete
   if ( tag >= 2 ) {
+    assert( wi.size() );
+    batchDelete<point>( pkd, wp, wi, Dim, rounds );
+    kdknn = new Typename[N];
   } else {
     std::cout << "-1 " << std::flush;
   }
@@ -126,7 +130,7 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  if ( tag == 1 ) {
+  if ( tag >= 1 ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
       id = ( id + 1 ) % 3;  //! MOD graph number used to test

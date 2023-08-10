@@ -188,7 +188,7 @@ main( int argc, char* argv[] ) {
   if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      id = ( id + 1 ) % 5;  //! MOD graph number used to test
+      id = ( id + 1 ) % 10;  //! MOD graph number used to test
       if ( !id ) id++;
       int pos = std::string( iFile ).rfind( "/" ) + 1;
       insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Nodes=(1000000 5000000 8000000 10000000)
+Nodes=(1000000 5000000 8000000 10000000 50000000)
 Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"

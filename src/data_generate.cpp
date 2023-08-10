@@ -16,13 +16,15 @@ long long numFile = 3;
 // std::string path = "../benchmark/craft_var_node_integer";
 std::string path = "/ssd0/zmen002/kdtree/uniform_bigint";
 
-inline std::string toString( const long long& a ) {
+inline std::string
+toString( const long long& a ) {
   return std::to_string( a );
 }
 
 Point<long>* wp;
 
-void generatePoints( std::ofstream& f ) {
+void
+generatePoints( std::ofstream& f ) {
   wp = new Point<long>[N];
   coord box_size = 10000000;
 
@@ -54,7 +56,7 @@ void generatePoints( std::ofstream& f ) {
 }
 
 using Typename = long;
-const Typename dataRange = 1e7;
+const Typename dataRange = 1e6;
 
 // std::string path = "../benchmark/craft_var_node_integer";
 std::default_random_engine generator;
@@ -66,17 +68,20 @@ struct kd_node_t {
 
 kd_node_t* node;
 
-inline double getRealRandom( const double& a, const double& b ) {
+inline double
+getRealRandom( const double& a, const double& b ) {
   std::uniform_real_distribution<double> distribution( a, b );
   return distribution( generator );
 }
 
-inline int getIntRandom( const int& a, const int& b ) {
+inline int
+getIntRandom( const int& a, const int& b ) {
   std::uniform_int_distribution<int> distribution( a, b );
   return distribution( generator );
 }
 
-void generatePointsSerial( std::ofstream& f ) {
+void
+generatePointsSerial( std::ofstream& f ) {
   node = (kd_node_t*)malloc( N * sizeof( kd_node_t ) );
   f.precision( 6 );
   f << std::fixed << N << " " << Dim << std::endl;
@@ -96,7 +101,8 @@ void generatePointsSerial( std::ofstream& f ) {
   free( node );
 }
 
-int main( int argc, char* argv[] ) {
+int
+main( int argc, char* argv[] ) {
   assert( argc >= 4 );
   N = std::stoll( argv[1] );
   Dim = std::stoll( argv[2] );

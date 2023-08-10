@@ -84,6 +84,7 @@ class ParallelKDtree {
   };
 
   struct InnerTree {
+    //@ helpers
     bool
     assert_size( node* T ) const {
       if ( T->is_leaf ) {
@@ -101,26 +102,6 @@ class ParallelKDtree {
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) return;
       interior* TI = static_cast<interior*>( tags[idx].first );
       assert( TI->size == TI->left->size + TI->right->size );
-      return;
-    }
-
-    inline void
-    reset_tags_num() {
-      tagsNum = 0;
-    }
-
-    void
-    assign_node_tag( node* T, int idx ) {
-      if ( T->is_leaf || idx > PIVOT_NUM ) {
-        assert( tagsNum < BUCKET_NUM );
-        tags[idx] = node_tag( T, tagsNum++ );
-        return;
-      }
-      //* BUCKET ID in [0, BUCKET_NUM)
-      tags[idx] = node_tag( T, BUCKET_NUM );
-      interior* TI = static_cast<interior*>( T );
-      assign_node_tag( TI->left, idx << 1 );
-      assign_node_tag( TI->right, idx << 1 | 1 );
       return;
     }
 
@@ -158,6 +139,27 @@ class ParallelKDtree {
       return;
     }
 
+    //@ cores
+    inline void
+    reset_tags_num() {
+      tagsNum = 0;
+    }
+
+    void
+    assign_node_tag( node* T, int idx ) {
+      if ( T->is_leaf || idx > PIVOT_NUM ) {
+        assert( tagsNum < BUCKET_NUM );
+        tags[idx] = node_tag( T, tagsNum++ );
+        return;
+      }
+      //* BUCKET ID in [0, BUCKET_NUM)
+      tags[idx] = node_tag( T, BUCKET_NUM );
+      interior* TI = static_cast<interior*>( T );
+      assign_node_tag( TI->left, idx << 1 );
+      assign_node_tag( TI->right, idx << 1 | 1 );
+      return;
+    }
+
     void
     reduce_sums( int idx ) const {
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
@@ -181,10 +183,9 @@ class ParallelKDtree {
       assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
       interior* TI = static_cast<interior*>( tags[idx].first );
       // TODO change to inbalance_node()
-      if ( Gt( std::abs( 100.0 * ( TI->left->size + sums_tree[idx << 1] ) /
-                             ( TI->size + sums_tree[idx] ) -
-                         50 ),
-               INBALANCE_RATIO * 1.0 ) ) {
+
+      if ( inbalance_node( TI->left->size + sums_tree[idx << 1],
+                           TI->size + sums_tree[idx] ) ) {
         tags[idx].second = BUCKET_NUM + 2;
         rev_tag[tagsNum++] = idx;
         return;
@@ -207,10 +208,8 @@ class ParallelKDtree {
     mark_tomb( int idx, bool hasTomb ) {
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
         assert( tags[idx].second >= 0 && tags[idx].second < BUCKET_NUM );
-        if ( !hasTomb ) {
-          tags[idx].second *= -1;
-          assert( tags[idx].second < 0 );
-        }
+        tags[idx].second = ( !hasTomb ) ? BUCKET_NUM + 2 : BUCKET_NUM + 1;
+        rev_tag[tagsNum++] = idx;
         return;
       }
       assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
@@ -218,6 +217,8 @@ class ParallelKDtree {
       if ( hasTomb && ( inbalance_node( TI->left->size - sums_tree[idx << 1],
                                         TI->size - sums_tree[idx] ) ||
                         ( TI->size - sums_tree[idx] < THIN_LEAVE_WRAP ) ) ) {
+        assert( hasTomb != 0 );
+        tags[idx].second = BUCKET_NUM + 3;
         hasTomb = false;
       }
 
@@ -227,23 +228,16 @@ class ParallelKDtree {
     }
 
     void
-    tag_inbalance_node_deletion() {
+    tag_inbalance_node_deletion( bool hasTomb ) {
       reduce_sums( 1 );
-      mark_tomb( 1 );
+      reset_tags_num();
+      mark_tomb( 1, hasTomb );
       assert( assert_size( tags[1].first ) );
       return;
     }
 
     void
-    init_for_insertion() {
-      reset_tags_num();
-      tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
-      sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
-      rev_tag = tag_nodes::uninitialized( BUCKET_NUM );
-    }
-
-    void
-    init_for_deletion() {
+    init() {
       reset_tags_num();
       tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
       sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
@@ -302,7 +296,7 @@ class ParallelKDtree {
     parlay::type_allocator<interior>::retire( static_cast<interior*>( T ) );
   }
 
-  inline bool
+  static inline bool
   inbalance_node( const size_t& l, const size_t& n ) {
     return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
@@ -424,6 +418,11 @@ class ParallelKDtree {
   node*
   batchDelete_recursive( node* T, slice In, slice Out, const uint_fast8_t& DIM,
                          bool hasTomb );
+
+  node*
+  delete_inner_tree( uint_fast32_t idx, const node_tags& tags,
+                     parlay::sequence<node*>& treeNodes, int& p, const tag_nodes& rev_tag,
+                     const uint_fast8_t& DIM );
 
   node*
   delete_tree();

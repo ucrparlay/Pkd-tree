@@ -7,7 +7,7 @@ declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=1
+tag=2
 dim=3
 k=100
 onecore=0

@@ -194,6 +194,8 @@ template<typename point>
 void
 ParallelKDtree<point>::flatten( NODE<point>* T, slice Out ) {
   assert( T->size == Out.size() );
+  if ( T->size == 0 ) return;
+
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
@@ -314,7 +316,7 @@ ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx, const node_tags& ta
                                           parlay::sequence<node*>& treeNodes, int& p,
                                           const tag_nodes& rev_tag ) {
 
-  if ( tags[idx].second >= BUCKET_NUM + 1 ) {
+  if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
     assert( rev_tag[p] == idx );
     return treeNodes[p++];
   }
@@ -397,7 +399,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
 
   //@ assign each node a tag
   InnerTree IT;
-  IT.init_for_insertion();
+  IT.init();
   assert( IT.rev_tag.size() == BUCKET_NUM );
   IT.assign_node_tag( T, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
@@ -445,9 +447,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
       1 );
 
   int beatles = 0;
-  node* o = update_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag );
-  assert( beatles == IT.tagsNum );
-  return o;
+  return update_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag );
 }
 
 template<typename point>
@@ -462,30 +462,46 @@ ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t& DIM ) {
 
 template<typename point>
 NODE<point>*
+ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& tags,
+                                          parlay::sequence<node*>& treeNodes, int& p,
+                                          const tag_nodes& rev_tag,
+                                          const uint_fast8_t& DIM ) {
+  if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
+    assert( rev_tag[p] == idx );
+    return treeNodes[p++];
+  }
+
+  node *L, *R;
+  L = delete_inner_tree( idx << 1, tags, treeNodes, p, rev_tag, DIM );
+  R = delete_inner_tree( idx << 1 | 1, tags, treeNodes, p, rev_tag, DIM );
+  update_interior( tags[idx].first, L, R );
+
+  if ( tags[idx].second == BUCKET_NUM + 3 ) {
+    interior* TI = static_cast<interior*>( tags[idx].first );
+    assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
+    points wx = points::uninitialized( tags[idx].first->size );
+    points wo = points::uninitialized( tags[idx].first->size );
+    uint_fast8_t d = tags[idx].first->dim;
+    flatten( tags[idx].first, wx.cut( 0, tags[idx].first->size ) );
+    delete_tree_recursive( tags[idx].first );
+    return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM );
+  }
+
+  return tags[idx].first;
+}
+
+template<typename point>
+NODE<point>*
 ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
                                               const uint_fast8_t& DIM, bool hasTomb ) {
   size_t n = In.size();
+
   if ( n == 0 ) return T;
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
-    // LOG << "in leaf" << ENDL;
-    // if ( T->size < In.size() ) {
-    //   LOG << T->size << " " << In.size() << ENDL;
-    //   LOG << In[0] << " ";
-    //   LOG << std::count( TL->pts.begin(), TL->pts.end(), In[0] ) << ENDL;
-    // }
-
     assert( T->size >= In.size() );
     auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
-
-    // point p(
-    //     parlay::sequence<coord>( { 48399, 65087, 66178, 74404, 2991 } ).cut( 0, 5 ) );
-    // if ( In[0] == p ) {
-    //   LOG << std::count( TL->pts.begin(), TL->pts.end(), p ) << ENDL;
-    //   LOG << "delete t " << ENDL;
-    // }
-
     for ( int i = 0; i < In.size(); i++ ) {
       it = std::find( TL->pts.begin(), end, In[i] );
       assert( it != end );
@@ -522,8 +538,6 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
     //* rebuild
     if ( putTomb ) {
-      // LOG << "rebuild" << ENDL;
-
       assert( TI->size == T->size );
       assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
       points wx = points::uninitialized( T->size );
@@ -539,11 +553,30 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
   }
 
   InnerTree IT;
-  IT.init_for_deletion();
+  IT.init();
   IT.assign_node_tag( T, 1 );
   assert( IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM );
   seieve_points( In, Out, n, IT.tags, IT.sums, IT.tagsNum );
-  IT.tag_inbalance_node_deletion();
+  IT.tag_inbalance_node_deletion( hasTomb );
+
+  auto treeNodes = parlay::sequence<node*>::uninitialized( IT.tagsNum );
+  parlay::parallel_for(
+      0, IT.tagsNum,
+      [&]( size_t i ) {
+        assert( IT.sums_tree[IT.rev_tag[i]] == IT.sums[i] );
+        size_t start = 0;
+        for ( int j = 0; j < i; j++ ) {
+          start += IT.sums[j];
+        }
+        treeNodes[i] = batchDelete_recursive(
+            IT.tags[IT.rev_tag[i]].first, Out.cut( start, start + IT.sums[i] ),
+            In.cut( start, start + IT.sums[i] ), DIM,
+            IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 );
+      },
+      1 );
+
+  int beatles = 0;
+  return delete_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag, DIM );
 }
 
 template<typename point>
