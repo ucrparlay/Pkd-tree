@@ -11,8 +11,8 @@ out="log.in"
 tag=2
 count=1
 
-Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
-# Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
+# Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for path in ${Paths[@]}; do

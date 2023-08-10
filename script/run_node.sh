@@ -49,7 +49,34 @@ for solver in ${Solvers[@]}; do
 
     for dataPath in "${!datas[@]}"; do
         for node in ${Node[@]}; do
-            . ./core.sh --solver ${solver} --tag ${tag} --dataPath ${dataPath} --logPath ${datas[${dataPath}]} --serial ${onecore} --node ${node} --dim ${dim} --insNum ${insNum} --core 96 --
+            files_path="${dataPath}${node}_${dim}"
+            log_path="${datas[${dataPath}]}${node}_${dim}"
+            mkdir -p ${log_path}
+            dest="${log_path}/${resFile}"
+            : >${dest}
+            echo ">>>${dest}"
+
+            exe="../build/${solver}"
+            if [[ ${solver} == "zdtree" ]]; then
+                export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
+                exe="/home/zmen002/pbbsbench_x/benchmarks/nearestNeighbors/octTree/neighbors"
+            fi
+
+            for ((i = 1; i <= ${insNum}; i++)); do
+                if [[ ${serial} == 1 ]]; then
+                    PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 >>${dest}
+                    continue
+                fi
+                PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
+
+                retval=$?
+                if [ ${retval} -eq 124 ]; then
+                    echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
+                    echo "timeout ${node}_${dim}"
+                else
+                    echo "finish ${node}_${dim}"
+                fi
+            done
         done
     done
 done

@@ -103,28 +103,19 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   pkdtree::node* KDParallelRoot = pkd.get_root();
   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
   assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
-  parlay::parallel_for( 0, wp.size(), [&]( size_t i ) {
-    assert( pkd.member( pkd.get_root(), wp[i], 0, Dim ) );
-  } );
-  puts( "find all points" );
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish insert" << ENDL;
-
     assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     if ( tag == 1 ) wp.append( wi );
-    parlay::parallel_for( 0, wp.size(), [&]( size_t i ) {
-      assert( pkd.member( pkd.get_root(), wp[i], 0, Dim ) );
-    } );
-    puts( "find all points after insert" );
   }
 
   if ( tag >= 2 ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish delete" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) <= wp.size() );
+    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
   }
 

@@ -12,6 +12,7 @@ In memory of solved bugs.
 - `RE`: Array idx out of allocate arrange (throw RE when program returns)
 - `RE`: Retag changes the defaut mapping of bucket.
 - `RE`: Access previously deleted pointer
+- `WA`: Directly use the inserted points after insertion
 
 
 

@@ -180,6 +180,7 @@ class ParallelKDtree {
       }
       assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
       interior* TI = static_cast<interior*>( tags[idx].first );
+      // TODO change to inbalance_node()
       if ( Gt( std::abs( 100.0 * ( TI->left->size + sums_tree[idx << 1] ) /
                              ( TI->size + sums_tree[idx] ) -
                          50 ),
@@ -203,7 +204,46 @@ class ParallelKDtree {
     }
 
     void
+    mark_tomb( int idx, bool hasTomb ) {
+      if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
+        assert( tags[idx].second >= 0 && tags[idx].second < BUCKET_NUM );
+        if ( !hasTomb ) {
+          tags[idx].second *= -1;
+          assert( tags[idx].second < 0 );
+        }
+        return;
+      }
+      assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
+      interior* TI = static_cast<interior*>( tags[idx].first );
+      if ( hasTomb && ( inbalance_node( TI->left->size - sums_tree[idx << 1],
+                                        TI->size - sums_tree[idx] ) ||
+                        ( TI->size - sums_tree[idx] < THIN_LEAVE_WRAP ) ) ) {
+        hasTomb = false;
+      }
+
+      mark_tomb( idx << 1, hasTomb );
+      mark_tomb( idx << 1 | 1, hasTomb );
+      return;
+    }
+
+    void
+    tag_inbalance_node_deletion() {
+      reduce_sums( 1 );
+      mark_tomb( 1 );
+      assert( assert_size( tags[1].first ) );
+      return;
+    }
+
+    void
     init_for_insertion() {
+      reset_tags_num();
+      tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
+      sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
+      rev_tag = tag_nodes::uninitialized( BUCKET_NUM );
+    }
+
+    void
+    init_for_deletion() {
       reset_tags_num();
       tags = node_tags::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
       sums_tree = parlay::sequence<uint_fast32_t>( PIVOT_NUM + BUCKET_NUM + 1 );
@@ -267,29 +307,52 @@ class ParallelKDtree {
     return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
-  inline bool
-  member( node* T, const point& p, int dim, const int& DIM ) {
+  inline void
+  member( node* T, const point& p, uint_fast8_t dim, const uint_fast8_t& DIM,
+          int& flag ) {
     if ( T->is_leaf ) {
       leaf* TL = static_cast<leaf*>( T );
-      for ( int i = 0; i < TL->size; i++ ) {
-        bool flag = true;
-        for ( int j = 0; j < DIM; j++ ) {
-          if ( p.pnt[j] != TL->pts[i].pnt[j] ) {
-            flag = false;
-            break;
-          }
+      bool tmp = std::find( TL->pts.begin(), TL->pts.end(), p ) != TL->pts.end();
+      if ( tmp ) {
+        LOG << std::count( TL->pts.begin(), TL->pts.end(), p ) << ENDL;
+
+        if ( flag == 0 ) {
+          flag += 1;
+        } else {
+          LOG << "already find " << p << ENDL;
+          abort();
         }
-        if ( flag ) return true;
       }
-      return false;
-      // return std::find( TL->pts.begin(), TL->pts.begin() + TL->size, p ) !=
-      //        TL->pts.begin() + TL->size;
+      return;
     }
     interior* TI = static_cast<interior*>( T );
+    if ( TI->split.second != dim ) {
+      LOG << TI->split.second << " " << dim << ENDL;
+    }
+    assert( TI->split.second == T->dim );
     assert( TI->split.second == dim );
-    return p.pnt[dim] < TI->split.first ? member( TI->left, p, ( dim + 1 ) % DIM, DIM )
-                                        : member( TI->right, p, ( dim + 1 ) % DIM, DIM );
+
+    member( TI->left, p, ( dim + 1 ) % DIM, DIM, flag );
+    member( TI->right, p, ( dim + 1 ) % DIM, DIM, flag );
+    return;
   };
+
+  void
+  check_legal_point( const points& In, const int& DIM ) {
+    // parlay::sequence<int> flags( In.size(), 0 );
+    // parlay::parallel_for( 0, In.size(), [&]( size_t i ) {
+    //   member( root, In[i], 0, DIM, flags[i] );
+    //   assert( flags[i] );
+    // } );
+    // assert( parlay::reduce( flags ) == In.size() );
+    LOG << "begin member check" << ENDL;
+
+    int flag = 0;
+    point p(
+        parlay::sequence<coord>( { 48399, 65087, 66178, 74404, 2991 } ).cut( 0, 5 ) );
+    member( root, p, 0, DIM, flag );
+    LOG << "finish member check" << ENDL;
+  }
 
   //@ Parallel KD tree cores
   //@ build
@@ -359,7 +422,8 @@ class ParallelKDtree {
   batchDelete( slice In, const uint_fast8_t& DIM );
 
   node*
-  batchDelete_recursive( node* T, slice In, const uint_fast8_t& DIM, bool hasTomb );
+  batchDelete_recursive( node* T, slice In, slice Out, const uint_fast8_t& DIM,
+                         bool hasTomb );
 
   node*
   delete_tree();

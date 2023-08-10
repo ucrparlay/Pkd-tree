@@ -21,7 +21,8 @@ struct PointType {
   PointType( const coords& _pnt ) : pnt( _pnt ){};
 
   PointType( parlay::slice<T*, T*> x ) {
-    for ( int i = 0; i < x.size(); i++ )
+    assert( x.size() == d );
+    for ( int i = 0; i < d; i++ )
       pnt[i] = x[i];
   }
 
@@ -41,9 +42,14 @@ struct PointType {
   bool
   operator<( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
-      if ( pnt[i] < x.pnt[i] ) return true;
+      if ( pnt[i] < x.pnt[i] )
+        return true;
+      else if ( pnt[i] > x.pnt[i] )
+        return false;
+      else
+        continue;
     }
-    return true;
+    return false;
   }
 
   friend std::ostream&

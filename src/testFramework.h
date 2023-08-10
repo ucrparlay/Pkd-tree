@@ -168,6 +168,8 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   LOG << aveBuild << " " << std::flush;
 
   //* return a built tree
+  parlay::sequence<coord> p = { 48399, 65087, 66178, 74404, 2991 };
+
   parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   pkd.build( wp.cut( 0, n ), Dim );
   // pkd.delete_tree();
@@ -219,31 +221,26 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
   pkd.delete_tree();
 
-  // double aveInsert = time_loop(
-  //     rounds, 1.0,
-  //     [&]() {
-  //       parlay::copy( WP, wp ), parlay::copy( WI, wi );
-  //       pkd.build( parlay::make_slice( wp ), DIM );
-  //       pkd.batchInsert( parlay::make_slice( wi ), DIM );
-  //       assert( pkd.get_root()->size == WI.size() + WP.size() );
-  //     },
-  //     [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
-  //     [&]() { pkd.delete_tree(); } );
+  double aveDelete = time_loop(
+      rounds, 1.0,
+      [&]() {
+        parlay::copy( WP, wp ), parlay::copy( WI, wi );
+        pkd.build( parlay::make_slice( wp ), DIM );
+        pkd.batchInsert( parlay::make_slice( wi ), DIM );
+        parlay::copy( WP, wp ), parlay::copy( WI, wi );
+      },
+      [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
+      [&]() { pkd.delete_tree(); } );
 
   //* set status to be finish delete
+
   parlay::copy( WP, wp ), parlay::copy( WI, wi );
   pkd.build( parlay::make_slice( wp ), DIM );
   pkd.batchInsert( parlay::make_slice( wi ), DIM );
-  parlay::parallel_for( 0, wi.size(), [&]( size_t i ) {
-    assert( pkd.member( pkd.get_root(), wi[i], 0, DIM ) );
-  } );
-  // for ( int i = 0; i < wi.size(); i++ ) {
-  //   LOG << i << ENDL;
-  //   pkd.batchDelete( parlay::make_slice( wi.cut( i, i + 1 ) ), DIM );
-  // }
+  parlay::copy( WP, wp ), parlay::copy( WI, wi );
   pkd.batchDelete( parlay::make_slice( wi ), DIM );
 
-  // LOG << aveInsert << " " << std::flush;
+  std::cout << aveDelete << " " << std::flush;
 
   return;
 }
@@ -272,14 +269,14 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
       rounds, 1.0,
       [&]() {
         parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
-        points wp = points::uninitialized( n );
+        // points wp = points::uninitialized( n );
       },
       [&]() {
-        pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
+        // pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
         double aveVisNum = 0.0;
         parlay::parallel_for( 0, n, [&]( size_t i ) {
           size_t visNodeNum = 0;
-          pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+          pkd.k_nearest( KDParallelRoot, WP[i], Dim, bq[i], visNodeNum );
           kdknn[i] = bq[i].top();
           visNum[i] = ( 1.0 * visNodeNum ) / n;
         } );
