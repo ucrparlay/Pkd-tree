@@ -155,8 +155,10 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
     std::nth_element(
         In.begin(), In.begin() + n / 2, In.end(),
         [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
+
     splitter split = splitter( In[n / 2].pnt[dim], dim );
-    auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
+
+    auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
       return p.pnt[split.second] < split.first;
     } );
 
@@ -479,6 +481,11 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
   if ( tags[idx].second == BUCKET_NUM + 3 ) {
     interior* TI = static_cast<interior*>( tags[idx].first );
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
+    if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
+      uint_fast8_t d = tags[idx].first->dim;
+      delete_tree_recursive( tags[idx].first );
+      return alloc_leaf_node( points().cut( 0, 0 ), d );
+    }
     points wx = points::uninitialized( tags[idx].first->size );
     points wo = points::uninitialized( tags[idx].first->size );
     uint_fast8_t d = tags[idx].first->dim;
@@ -498,6 +505,16 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
   if ( n == 0 ) return T;
 
+  if ( n == T->size ) {
+    if ( hasTomb ) {
+      uint_fast8_t d = T->dim;
+      delete_tree_recursive( T );
+      return alloc_leaf_node( In.cut( 0, 0 ), d );
+    }
+    T->size = 0;  //* lazy mark
+    return T;
+  }
+
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     assert( T->size >= In.size() );
@@ -514,7 +531,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
     return T;
   }
 
-  if ( In.size() < SERIAL_BUILD_CUTOFF ) {
+  if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
     assert( TI->split.second == T->dim );
     auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
