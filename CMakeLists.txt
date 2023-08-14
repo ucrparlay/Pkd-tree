@@ -45,13 +45,8 @@ endif()
 if(STDALLOC)
   add_compile_options(-DPARLAY_USE_STD_ALLOC)
 elseif(JEMA)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(JEMALLOC jemalloc)
-
-  pkg_search_module(JEMALLOC REQUIRED jemalloc)
-  include_directories(${JEMALLOC_INCLUDE_DIRS})
-  # export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
-  # set(ENV{PATH} "/usr/local/lib/libjemalloc.so.2")
+  include_directories("/usr/local/lib")
+  set(CMAKE_BUILD_RPATH "/usr/local/lib")
 endif()
 
 add_subdirectory(parlaylib)
@@ -70,8 +65,9 @@ target_link_libraries(kdTreeParallel PUBLIC parlay)
 
 add_executable(test ../src/test.cpp)
 target_link_libraries(test PUBLIC kdTreeParallel)
+
 if(JEMA)
-  target_link_libraries(test PUBLIC ${JEMALLOC_LIBRARIES})
+  target_link_libraries(test PUBLIC libjemalloc.so)
 endif()
 
 add_executable(data_generator ../src/data_generate.cpp)
