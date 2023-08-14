@@ -14,11 +14,13 @@ class ParallelKDtree {
   //@ take the value of a point in specific dimension
   using splitter = std::pair<coord, uint_fast8_t>;
   using splitter_s = parlay::sequence<splitter>;
+  using box = std::pair<point, point>;
 
   struct node {
     bool is_leaf;
     size_t size;
     uint_fast8_t dim;
+    box bx;
   };
 
   struct leaf : node {
@@ -71,8 +73,6 @@ class ParallelKDtree {
   //@ reconstruct ratio
   static constexpr uint_fast8_t INBALANCE_RATIO = 20;
 
-  using box = std::pair<point, point>;
-
  public:
   struct pointLess {
     pointLess( size_t index ) : index_( index ) {}
@@ -112,31 +112,6 @@ class ParallelKDtree {
       auto pos = get_node_idx( idx << 1, T );
       if ( pos != -1 ) return pos;
       return get_node_idx( idx << 1 | 1, T );
-    }
-
-    void
-    add_sum_to_node( int idx ) {
-      if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
-        tags[idx].first->size += sums[tags[idx].second];
-        return;
-      }
-      add_sum_to_node( idx << 1 );
-      add_sum_to_node( idx << 1 | 1 );
-      tags[idx].first->size = tags[idx << 1].first->size + tags[idx << 1 | 1].first->size;
-      return;
-    }
-
-    void
-    decrease_sum_from_node( int idx ) {
-      if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
-        assert( tags[idx].second < BUCKET_NUM );
-        tags[idx].first->size -= sums[std::abs( tags[idx].second )];
-        return;
-      }
-      decrease_sum_from_node( idx << 1 );
-      decrease_sum_from_node( idx << 1 | 1 );
-      tags[idx].first->size = tags[idx << 1].first->size + tags[idx << 1 | 1].first->size;
-      return;
     }
 
     //@ cores
@@ -182,7 +157,6 @@ class ParallelKDtree {
       }
       assert( tags[idx].second == BUCKET_NUM && ( !tags[idx].first->is_leaf ) );
       interior* TI = static_cast<interior*>( tags[idx].first );
-      // TODO change to inbalance_node()
 
       if ( inbalance_node( TI->left->size + sums_tree[idx << 1],
                            TI->size + sums_tree[idx] ) ) {
@@ -245,6 +219,7 @@ class ParallelKDtree {
     }
 
     //@ variables
+    // TODO node and tag can be separated with each other, leave node as a delayed may
     node_tags tags;
     parlay::sequence<uint_fast32_t> sums;
     mutable parlay::sequence<uint_fast32_t> sums_tree;
@@ -302,51 +277,17 @@ class ParallelKDtree {
     return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
-  inline void
-  member( node* T, const point& p, uint_fast8_t dim, const uint_fast8_t& DIM,
-          int& flag ) {
-    if ( T->is_leaf ) {
-      leaf* TL = static_cast<leaf*>( T );
-      bool tmp = std::find( TL->pts.begin(), TL->pts.end(), p ) != TL->pts.end();
-      if ( tmp ) {
-        LOG << std::count( TL->pts.begin(), TL->pts.end(), p ) << ENDL;
-
-        if ( flag == 0 ) {
-          flag += 1;
-        } else {
-          LOG << "already find " << p << ENDL;
-          abort();
-        }
-      }
-      return;
-    }
-    interior* TI = static_cast<interior*>( T );
-    if ( TI->split.second != dim ) {
-      LOG << TI->split.second << " " << dim << ENDL;
-    }
-    assert( TI->split.second == T->dim );
-    assert( TI->split.second == dim );
-
-    member( TI->left, p, ( dim + 1 ) % DIM, DIM, flag );
-    member( TI->right, p, ( dim + 1 ) % DIM, DIM, flag );
-    return;
-  };
-
-  void
-  check_legal_point( const points& In, const int& DIM ) {
-    // parlay::sequence<int> flags( In.size(), 0 );
-    // parlay::parallel_for( 0, In.size(), [&]( size_t i ) {
-    //   member( root, In[i], 0, DIM, flags[i] );
-    //   assert( flags[i] );
-    // } );
-    // assert( parlay::reduce( flags ) == In.size() );
-    LOG << "begin member check" << ENDL;
-
-    int flag = 0;
-    point p(
-        parlay::sequence<coord>( { 48399, 65087, 66178, 74404, 2991 } ).cut( 0, 5 ) );
-    member( root, p, 0, DIM, flag );
-    LOG << "finish member check" << ENDL;
+  box
+  get_box( const points& V ) {
+    auto minmax = [&]( box x, box y ) {
+      return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
+    };
+    // uses a delayed sequence to avoid making a copy
+    auto pts = parlay::delayed_seq<box>(
+        V.size(), [&]( size_t i ) { return box( V[i].pnt, V[i].pnt ); } );
+    box identity = pts[0];
+    box final = parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
+    return ( final );
   }
 
   //@ Parallel KD tree cores

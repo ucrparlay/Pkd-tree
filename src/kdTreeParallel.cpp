@@ -11,7 +11,7 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
   for ( int i = 0; i < DIM; i++ ) {
     r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
   }
-  return r;
+  return std::move( r );
 }
 
 //@ cut and then rotate
