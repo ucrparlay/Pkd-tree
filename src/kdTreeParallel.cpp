@@ -50,8 +50,7 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivot
   for ( size_t i = 0; i < size; i++ ) {
     arr[i] = In[i * ( n / size )];
   }
-  // pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
-  pivots = splitter_s( PIVOT_NUM + BUCKET_NUM + 1 );
+  pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
   int bucket = 0;
   divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM );
   assert( bucket == BUCKET_NUM );
@@ -135,6 +134,7 @@ template<typename point>
 void
 ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
   points B = points::uninitialized( A.size() );
+  // box bx = get_box( A );
   this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM );
   assert( this->root != NULL );
   return;
@@ -152,15 +152,19 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   //* serial run nth element
   if ( n <= SERIAL_BUILD_CUTOFF ) {
+    // uint_fast8_t d = pick_max_stretch_dim( bx );
+    // assert( d >= 0 && d < DIM );
     std::nth_element(
         In.begin(), In.begin() + n / 2, In.end(),
         [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
-
     splitter split = splitter( In[n / 2].pnt[dim], dim );
-
     auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
       return p.pnt[split.second] < split.first;
     } );
+
+    // box lbox( bx ), rbox( bx );
+    // lbox.second.pnt[d] = split.first;
+    // rbox.first.pnt[d] = split.first;
 
     dim = ( dim + 1 ) % DIM;
     node *L, *R;

@@ -15,7 +15,9 @@ using coord = long;  // type of each coordinate
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>
 struct PointType {
+  typedef T data_type;
   using coords = std::array<T, d>;
+
   PointType() {}
 
   PointType( const coords& _pnt ) : pnt( _pnt ){};
@@ -47,6 +49,11 @@ struct PointType {
       pts[i] = std::max( pnt[i], b.pnt[i] );
     }
     return pts;
+  }
+
+  const uint_fast8_t
+  get_dim() const {
+    return std::move( pnt.size() );
   }
 
   bool

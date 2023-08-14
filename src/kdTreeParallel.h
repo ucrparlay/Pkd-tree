@@ -21,6 +21,8 @@ class ParallelKDtree {
     size_t size;
     uint_fast8_t dim;
     box bx;
+    uint_fast8_t tag;
+    // node* parent;
   };
 
   struct leaf : node {
@@ -44,6 +46,8 @@ class ParallelKDtree {
         right( _right ),
         split( _split ) {}
   };
+
+  enum class split_rule { MAX_STRETCH_DIM, ROTATE_DIM };
 
  private:
   node* root = nullptr;
@@ -278,16 +282,46 @@ class ParallelKDtree {
   }
 
   box
-  get_box( const points& V ) {
-    auto minmax = [&]( box x, box y ) {
-      return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
-    };
-    // uses a delayed sequence to avoid making a copy
-    auto pts = parlay::delayed_seq<box>(
-        V.size(), [&]( size_t i ) { return box( V[i].pnt, V[i].pnt ); } );
-    box identity = pts[0];
-    box final = parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
-    return ( final );
+  get_box( slice V ) {
+    if ( V.size() == 0 ) {
+      return std::move( box() );
+    } else if ( V.size() < SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
+      box b( V[0], V[0] );
+      for ( int i = 1; i < V.size(); i++ ) {
+        for ( int j = 0; j < V[0].get_dim(); j++ ) {
+          b.first.pnt[j] = std::min( b.first.pnt[j], V[i].pnt[j] );
+          b.second.pnt[j] = std::max( b.second.pnt[j], V[i].pnt[j] );
+        }
+      }
+      return std::move( b );
+    } else {
+      auto minmax = [&]( box x, box y ) {
+        return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
+      };
+      auto boxes = parlay::delayed_seq<box>(
+          V.size(), [&]( size_t i ) { return box( V[i].pnt, V[i].pnt ); } );
+      return std::move(
+          parlay::reduce( boxes, parlay::make_monoid( minmax, boxes[0] ) ) );
+      // box identity = pts[0];
+      // box final = parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
+      // return ( final );
+    }
+  }
+
+  uint_fast8_t
+  pick_split_dim( const box& bx, const uint_fast8_t& dim ) {}
+
+  uint_fast8_t
+  pick_max_stretch_dim( const box& bx ) {
+    uint_fast8_t d( 0 );
+    uint_fast32_t diff( bx.second.pnt[0] - bx.first.pnt[0] );
+    for ( int i = 1; i < bx.first.get_dim(); i++ ) {
+      if ( bx.second.pnt[i] - bx.first.pnt[i] > diff ) {
+        diff = bx.second.pnt[i] - bx.first.pnt[i];
+        d = i;
+      }
+    }
+    return d;
   }
 
   //@ Parallel KD tree cores
