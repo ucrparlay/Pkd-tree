@@ -12,7 +12,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 5>;
+using point = PointType<coord, 3>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -89,6 +89,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
     wp.pop_tail( wi.size() );
     assert( wp.size() == N );
   }
+  tree.clear();
 }
 
 void
@@ -126,6 +127,11 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   LOG << "begin kd query" << ENDL;
   queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
 
+  if ( tag == 1 ) {
+    wp.pop_tail( wi.size() );
+    assert( wp.size() == N );
+  }
+  pkd.delete_tree();
   return;
 }
 
@@ -188,7 +194,7 @@ main( int argc, char* argv[] ) {
   if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      id = ( id + 1 ) % 10;  //! MOD graph number used to test
+      id = ( id + 1 ) % 3;  //! MOD graph number used to test
       if ( !id ) id++;
       int pos = std::string( iFile ).rfind( "/" ) + 1;
       insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
@@ -229,8 +235,8 @@ main( int argc, char* argv[] ) {
     // unique_points<point>( wp, wi, Dim );
   }
 
-  runCGAL( wp, wi, cgknn );
   runKDParallel( wp, wi, kdknn );
+  runCGAL( wp, wi, cgknn );
 
   //* verify
   for ( size_t i = 0; i < N; i++ ) {

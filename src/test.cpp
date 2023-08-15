@@ -76,7 +76,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
     if ( tag == 1 ) {
       wp.append( wi );
-      kdknn = new Typename[N + wi.size()];
+      // kdknn = new Typename[N + wi.size()];
     }
   } else {
     std::cout << "-1 " << std::flush;
@@ -86,11 +86,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   if ( tag >= 2 ) {
     assert( wi.size() );
     batchDelete<point>( pkd, wp, wi, Dim, rounds );
-    kdknn = new Typename[N];
+    // kdknn = new Typename[N];
   } else {
     std::cout << "-1 " << std::flush;
   }
 
+  kdknn = new Typename[wp.size()];
   // todo update size of kdknn in the end
   queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
 

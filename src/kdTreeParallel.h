@@ -20,8 +20,8 @@ class ParallelKDtree {
     bool is_leaf;
     size_t size;
     uint_fast8_t dim;
-    box bx;
-    uint_fast8_t tag;
+    // box bx;
+    // uint_fast8_t tag;
     // node* parent;
   };
 
