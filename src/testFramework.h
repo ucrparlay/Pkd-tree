@@ -264,6 +264,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
   node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
+  LOG << "here" << ENDL;
 
   double aveQuery = time_loop(
       rounds, 1.0,

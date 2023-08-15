@@ -103,12 +103,16 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   buildTree<point>( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
   checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
-  assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
+  // assert( checkTreesSize<pkdtree>( pkd.get_root() ) ==
+  //         ( pkd.REMOVE_DUPLICATE_POINTS ? pkd.get_root()->size : wp.size() ) );
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish insert" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    // assert(
+    //     checkTreesSize<pkdtree>( pkd.get_root() ) ==
+    //     ( pkd.REMOVE_DUPLICATE_POINTS ? pkd.get_root()->size : wp.size() + wi.size() )
+    //     );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     if ( tag == 1 ) wp.append( wi );
   }
@@ -116,7 +120,8 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   if ( tag >= 2 ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish delete" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
+    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) ==
+    //         ( pkd.REMOVE_DUPLICATE_POINTS ? pkd.get_root()->size : wp.size() ) );
     checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
   }
 

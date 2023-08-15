@@ -144,6 +144,12 @@ template<typename point>
 NODE<point>*
 ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
                                         const uint_fast8_t& DIM ) {
+  if ( REMOVE_DUPLICATE_POINTS && In.size() <= SERIAL_BUILD_CUTOFF ) {
+    std::sort( In.begin(), In.end() );
+    auto p = std::unique( In.begin(), In.end() ) - In.begin();
+    In = In.cut( 0, p );
+  }
+
   size_t n = In.size();
 
   if ( n <= LEAVE_WRAP ) {
@@ -152,15 +158,21 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   //* serial run nth element
   if ( n <= SERIAL_BUILD_CUTOFF ) {
-    // uint_fast8_t d = pick_max_stretch_dim( bx );
-    // assert( d >= 0 && d < DIM );
-    std::nth_element(
-        In.begin(), In.begin() + n / 2, In.end(),
-        [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
-    splitter split = splitter( In[n / 2].pnt[dim], dim );
-    auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
-      return p.pnt[split.second] < split.first;
-    } );
+    splitter split;
+    auto pos = In.begin();
+
+    if ( !REMOVE_DUPLICATE_POINTS ) {
+      std::nth_element(
+          In.begin(), In.begin() + n / 2, In.end(),
+          [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
+      split = splitter( In[n / 2].pnt[dim], dim );
+      pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
+        return p.pnt[split.second] < split.first;
+      } );
+    } else {
+      split = splitter( In[n / 2].pnt[dim], dim );
+      pos = In.begin() + n / 2;
+    }
 
     // box lbox( bx ), rbox( bx );
     // lbox.second.pnt[d] = split.first;
@@ -377,17 +389,17 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
     assert( pos - In.begin() == std::distance( In.begin(), pos ) );
 
     //* rebuild
-    if ( Gt( std::abs( 100.0 * ( TI->left->size + pos - In.begin() ) / ( TI->size + n ) -
-                       50 ),
-             INBALANCE_RATIO * 1.0 ) ) {
+    if ( inbalance_node( TI->left->size + pos - In.begin(), TI->size + n ) ) {
       points wx = points::uninitialized( T->size + In.size() );
       points wo = points::uninitialized( T->size + In.size() );
-      // flatten_and_delete( T, wx.cut( 0, T->size ) );
       uint_fast8_t d = T->dim;
+      size_t head_size = T->size;
       flatten( T, wx.cut( 0, T->size ) );
       delete_tree_recursive( T );
+
       parlay::parallel_for(
-          0, n, [&]( size_t j ) { wx[T->size + j] = In[j]; }, BLOCK_SIZE );
+          0, n, [&]( size_t j ) { wx[head_size + j] = In[j]; }, BLOCK_SIZE );
+
       return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
                               DIM );
     }

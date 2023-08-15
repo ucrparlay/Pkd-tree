@@ -55,6 +55,7 @@ class ParallelKDtree {
 
  public:
   size_t rebuild_time = 0;
+  bool REMOVE_DUPLICATE_POINTS = 0;
 
  public:
   //@ tag each node an bucket id
