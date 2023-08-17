@@ -49,6 +49,7 @@ class ParallelKDtree {
     }
   };
 
+  using node_box = std::pair<node*, box>;
   enum split_rule { MAX_STRETCH_DIM, ROTATE_DIM };
 
  private:
@@ -186,6 +187,9 @@ class ParallelKDtree {
       return;
     }
 
+    //* the node which needs to be rebuilt has tag BUCKET_NUM+3
+    //* the node whose ancestor has been rebuilt has tag BUCKET_NUM+2
+    //* otherwise it has tag BUCKET_NUM+1
     void
     mark_tomb( int idx, bool hasTomb ) {
       if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {
@@ -255,14 +259,14 @@ class ParallelKDtree {
   parlay::type_allocator<leaf> leaf_allocator;
   parlay::type_allocator<interior> interior_allocator;
 
-  leaf*
+  static leaf*
   alloc_leaf_node( slice In, const uint_fast8_t& dim ) {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new ( o ) leaf( In, dim );
     return o;
   }
 
-  interior*
+  static interior*
   alloc_interior_node( node* L, node* R, const splitter& split,
                        const uint_fast8_t& dim ) {
     interior* o = parlay::type_allocator<interior>::alloc();
@@ -270,12 +274,12 @@ class ParallelKDtree {
     return o;
   }
 
-  void
+  static void
   free_leaf( node* T ) {
     parlay::type_allocator<leaf>::retire( static_cast<leaf*>( T ) );
   }
 
-  void
+  static void
   free_interior( node* T ) {
     parlay::type_allocator<interior>::retire( static_cast<interior*>( T ) );
   }
@@ -296,25 +300,34 @@ class ParallelKDtree {
     return true;
   }
 
+  static inline box
+  get_empty_box() {
+    return std::move( box( point( std::numeric_limits<coord>::max() ),
+                           point( std::numeric_limits<coord>::min() ) ) );
+  }
+
   static box
   get_box( const box& x, const box& y ) {
-    return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
+    return std::move(
+        box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) ) );
   }
 
   static box
   get_box( slice V ) {
     if ( V.size() == 0 ) {
-      return std::move( box() );
-    } else if ( V.size() <= SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
-      box b( V[0], V[0] );
-      for ( int i = 1; i < V.size(); i++ ) {
-        for ( int j = 0; j < V[0].get_dim(); j++ ) {
-          b.first.pnt[j] = std::min( b.first.pnt[j], V[i].pnt[j] );
-          b.second.pnt[j] = std::max( b.second.pnt[j], V[i].pnt[j] );
-        }
-      }
-      return std::move( b );
-    } else {
+      return std::move( get_empty_box() );
+    }
+    // else if ( V.size() <= SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
+    //   box b( V[0], V[0] );
+    //   for ( int i = 1; i < V.size(); i++ ) {
+    //     for ( int j = 0; j < V[0].get_dim(); j++ ) {
+    //       b.first.pnt[j] = std::min( b.first.pnt[j], V[i].pnt[j] );
+    //       b.second.pnt[j] = std::max( b.second.pnt[j], V[i].pnt[j] );
+    //     }
+    //   }
+    //   return std::move( b );
+    // }
+    else {
       auto minmax = [&]( const box& x, const box& y ) {
         return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
       };
@@ -325,7 +338,14 @@ class ParallelKDtree {
     }
   }
 
-  inline uint_fast8_t
+  static box
+  get_box( node* T ) {
+    points wx = points::uninitialized( T->size );
+    flatten( T, parlay::make_slice( wx ) );
+    return std::move( get_box( parlay::make_slice( wx ) ) );
+  }
+
+  static inline uint_fast8_t
   pick_max_stretch_dim( const box& bx, const uint_fast8_t& DIM ) {
     uint_fast8_t d( 0 );
     coord diff( bx.second.pnt[0] - bx.first.pnt[0] );
@@ -339,6 +359,15 @@ class ParallelKDtree {
     return d;
   }
 
+  static inline bool
+  point_within_box_d( const point& p, const box& b, const coord& d ) {
+    for ( int i = 0; i < p.get_dim(); i++ ) {
+      assert( p.pnt[i] - b.first.pnt[i] >= 0 && p.pnt[i] - b.second.pnt[i] <= 0 );
+      if ( p.pnt[i] - b.first.pnt[i] < d || b.second.pnt[i] - p.pnt[i] < d ) return false;
+    }
+    return true;
+  }
+
   //@ Parallel KD tree cores
   //@ build
   void
@@ -349,20 +378,20 @@ class ParallelKDtree {
   pick_pivots( slice In, const size_t& n, splitter_s& pivots, const uint_fast8_t& dim,
                const uint_fast8_t& DIM, box_s& boxs, const box& bx );
 
-  inline uint_fast32_t
+  static inline uint_fast32_t
   find_bucket( const point& p, const splitter_s& pivots, const uint_fast8_t& dim,
                const uint_fast8_t& DIM );
 
-  void
+  static void
   partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
              parlay::sequence<uint_fast32_t>& sums, const uint_fast8_t& dim,
              const uint_fast8_t& DIM );
 
-  node*
+  static node*
   build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
                     parlay::sequence<node*>& treeNodes );
 
-  inline coord
+  static inline coord
   ppDistanceSquared( const point& p, const point& q, const uint_fast8_t& DIM );
 
   void
@@ -372,7 +401,7 @@ class ParallelKDtree {
   build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,
                    box bx );
 
-  void
+  static void
   k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,
              size_t& visNodeNum );
 
@@ -380,23 +409,23 @@ class ParallelKDtree {
   void
   batchInsert( slice In, const uint_fast8_t& DIM );
 
-  void
+  static void
   flatten( node* T, slice Out );
 
   void
   flatten_and_delete( node* T, slice Out );
 
-  inline void
+  static inline void
   update_interior( node* T, node* L, node* R );
 
-  void
+  static void
   seieve_points( slice A, slice B, const size_t& n, const node_tags& tags,
                  parlay::sequence<uint_fast32_t>& sums, const int& tagsNum );
 
-  inline uint_fast32_t
+  static inline uint_fast32_t
   retrive_tag( const point& p, const node_tags& tags );
 
-  node*
+  static node*
   update_inner_tree( uint_fast32_t idx, const node_tags& tags,
                      parlay::sequence<node*>& treeNodes, int& p,
                      const tag_nodes& rev_tag );
@@ -407,21 +436,68 @@ class ParallelKDtree {
   void
   batchDelete( slice In, const uint_fast8_t& DIM );
 
-  node*
+  node_box
   batchDelete_recursive( node* T, slice In, slice Out, const uint_fast8_t& DIM,
                          bool hasTomb );
 
-  node*
+  node_box
   delete_inner_tree( uint_fast32_t idx, const node_tags& tags,
-                     parlay::sequence<node*>& treeNodes, int& p, const tag_nodes& rev_tag,
-                     const uint_fast8_t& DIM );
+                     parlay::sequence<node_box>& treeNodes, int& p,
+                     const tag_nodes& rev_tag, const uint_fast8_t& DIM );
 
   node*
   delete_tree();
 
-  void
+  static void
   delete_tree_recursive( node* T );
+
+  //@ validations
+  bool
+  checkBox() {
+    assert( this->root != nullptr );
+    points wx = points::uninitialized( this->root->size );
+    flatten( this->root, parlay::make_slice( wx ) );
+    auto b = get_box( parlay::make_slice( wx ) );
+    if ( b != this->bbox ) {
+      LOG << b.first << " " << b.second << ENDL;
+      LOG << bbox.first << " " << bbox.second << ENDL;
+      abort();
+    }
+    return within_box( get_box( parlay::make_slice( wx ) ), this->bbox );
+  }
+
+  size_t
+  checkSize( node* T ) {
+    if ( T->is_leaf ) {
+      return T->size;
+    }
+    interior* TI = static_cast<interior*>( T );
+    size_t l = checkSize( TI->left );
+    size_t r = checkSize( TI->right );
+    assert( l + r == T->size );
+    return T->size;
+  }
+
+  void
+  validate() {
+    if ( checkBox() ) {
+      std::cout << "Correct bounding box" << std::endl << std::flush;
+    } else {
+      std::cout << "wrong bounding box" << std::endl << std::flush;
+      abort();
+    }
+    if ( checkSize( this->root ) == this->root->size ) {
+      std::cout << "Correct size" << std::endl << std::flush;
+    } else {
+      std::cout << "wrong tree size" << std::endl << std::flush;
+      abort();
+    }
+    return;
+  }
 };
 
 template<typename point>
 using NODE = typename ParallelKDtree<point>::node;
+
+template<typename point>
+using BOX = typename ParallelKDtree<point>::box;

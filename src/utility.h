@@ -20,6 +20,8 @@ struct PointType {
 
   PointType() {}
 
+  PointType( const T& val ) { pnt.fill( val ); }
+
   PointType( const coords& _pnt ) : pnt( _pnt ){};
 
   PointType( parlay::slice<T*, T*> x ) {
@@ -39,7 +41,7 @@ struct PointType {
     for ( int i = 0; i < d; i++ ) {
       pts[i] = std::min( pnt[i], b.pnt[i] );
     }
-    return pts;
+    return std::move( pts );
   }
 
   const PointType
@@ -48,7 +50,7 @@ struct PointType {
     for ( int i = 0; i < d; i++ ) {
       pts[i] = std::max( pnt[i], b.pnt[i] );
     }
-    return pts;
+    return std::move( pts );
   }
 
   const uint_fast8_t

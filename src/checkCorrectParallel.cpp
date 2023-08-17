@@ -103,22 +103,23 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
 
   buildTree<point>( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
-  // checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
-  assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
+  pkd.validate();
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
-    LOG << "finish insert" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
+    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
     // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     if ( tag == 1 ) wp.append( wi );
+    pkd.validate();
+    LOG << "finish insert" << ENDL;
   }
 
   if ( tag >= 2 ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
-    LOG << "finish delete" << ENDL;
-    assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
+    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
     // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
+    pkd.validate();
+    LOG << "finish delete" << ENDL;
   }
 
   //* query phase
