@@ -15,20 +15,19 @@ class ParallelKDtree {
   using splitter = std::pair<coord, uint_fast8_t>;
   using splitter_s = parlay::sequence<splitter>;
   using box = std::pair<point, point>;
+  using box_s = parlay::sequence<box>;
 
   struct node {
     bool is_leaf;
     size_t size;
     uint_fast8_t dim;
-    // box bx;
-    // uint_fast8_t tag;
-    // node* parent;
+    node* parent;
   };
 
   struct leaf : node {
     points pts;
     leaf( slice In, const uint_fast8_t& dim ) :
-        node{ true, static_cast<size_t>( In.size() ), dim } {
+        node{ true, static_cast<size_t>( In.size() ), dim, nullptr } {
       pts = points::uninitialized( LEAVE_WRAP );
       for ( int i = 0; i < In.size(); i++ ) {
         pts[i] = In[i];
@@ -41,17 +40,22 @@ class ParallelKDtree {
     node* right;
     splitter split;
     interior( node* _left, node* _right, splitter _split, const uint_fast8_t& dim ) :
-        node{ false, _left->size + _right->size, dim },
+        node{ false, _left->size + _right->size, dim, nullptr },
         left( _left ),
         right( _right ),
-        split( _split ) {}
+        split( _split ) {
+      left->parent = this;
+      right->parent = this;
+    }
   };
 
-  enum class split_rule { MAX_STRETCH_DIM, ROTATE_DIM };
+  enum split_rule { MAX_STRETCH_DIM, ROTATE_DIM };
 
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
+  split_rule _split_rule = MAX_STRETCH_DIM;
+  box bbox;
 
  public:
   size_t rebuild_time = 0;
@@ -241,6 +245,7 @@ class ParallelKDtree {
   set_root( node* _root ) {
     this->root = _root;
   }
+
   inline node*
   get_root() {
     return this->root;
@@ -281,11 +286,26 @@ class ParallelKDtree {
     return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
-  box
+  static inline bool
+  within_box( const box& a, const box& b ) {
+    for ( int i = 0; i < a.first.get_dim(); i++ ) {
+      if ( a.first.pnt[i] < b.first.pnt[i] || a.second.pnt[i] > b.second.pnt[i] ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static box
+  get_box( const box& x, const box& y ) {
+    return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
+  }
+
+  static box
   get_box( slice V ) {
     if ( V.size() == 0 ) {
       return std::move( box() );
-    } else if ( V.size() < SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
+    } else if ( V.size() <= SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
       box b( V[0], V[0] );
       for ( int i = 1; i < V.size(); i++ ) {
         for ( int j = 0; j < V[0].get_dim(); j++ ) {
@@ -295,27 +315,22 @@ class ParallelKDtree {
       }
       return std::move( b );
     } else {
-      auto minmax = [&]( box x, box y ) {
+      auto minmax = [&]( const box& x, const box& y ) {
         return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
       };
       auto boxes = parlay::delayed_seq<box>(
           V.size(), [&]( size_t i ) { return box( V[i].pnt, V[i].pnt ); } );
       return std::move(
           parlay::reduce( boxes, parlay::make_monoid( minmax, boxes[0] ) ) );
-      // box identity = pts[0];
-      // box final = parlay::reduce( pts, parlay::make_monoid( minmax, identity ) );
-      // return ( final );
     }
   }
 
-  uint_fast8_t
-  pick_split_dim( const box& bx, const uint_fast8_t& dim ) {}
-
-  uint_fast8_t
-  pick_max_stretch_dim( const box& bx ) {
+  inline uint_fast8_t
+  pick_max_stretch_dim( const box& bx, const uint_fast8_t& DIM ) {
     uint_fast8_t d( 0 );
-    uint_fast32_t diff( bx.second.pnt[0] - bx.first.pnt[0] );
-    for ( int i = 1; i < bx.first.get_dim(); i++ ) {
+    coord diff( bx.second.pnt[0] - bx.first.pnt[0] );
+    assert( diff >= 0 );
+    for ( int i = 1; i < DIM; i++ ) {
       if ( bx.second.pnt[i] - bx.first.pnt[i] > diff ) {
         diff = bx.second.pnt[i] - bx.first.pnt[i];
         d = i;
@@ -328,11 +343,11 @@ class ParallelKDtree {
   //@ build
   void
   divide_rotate( slice In, splitter_s& pivots, uint_fast8_t dim, int idx, int deep,
-                 int& bucket, const uint_fast8_t& DIM );
+                 int& bucket, const uint_fast8_t& DIM, box_s& boxs, const box& bx );
 
   void
   pick_pivots( slice In, const size_t& n, splitter_s& pivots, const uint_fast8_t& dim,
-               const uint_fast8_t& DIM );
+               const uint_fast8_t& DIM, box_s& boxs, const box& bx );
 
   inline uint_fast32_t
   find_bucket( const point& p, const splitter_s& pivots, const uint_fast8_t& dim,
@@ -354,7 +369,8 @@ class ParallelKDtree {
   build( slice In, const uint_fast8_t& DIM );
 
   node*
-  build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM );
+  build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,
+                   box bx );
 
   void
   k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,

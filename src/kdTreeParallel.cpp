@@ -19,22 +19,35 @@ template<typename point>
 void
 ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t dim,
                                       int idx, int deep, int& bucket,
-                                      const uint_fast8_t& DIM ) {
+                                      const uint_fast8_t& DIM, box_s& boxs,
+                                      const box& bx ) {
   if ( deep > BUILD_DEPTH_ONCE ) {
     //! sometimes cut dimension can be -1
     //! never use pivots[idx].first to check whether it is in bucket; instead,
     //! use idx > PIVOT_NUM
+    boxs[bucket] = bx;
     pivots[idx] = splitter( -1, bucket++ );
     return;
   }
   int n = In.size();
+  uint_fast8_t d =
+      ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
+  assert( d >= 0 && d < DIM );
+
   std::nth_element(
       In.begin(), In.begin() + n / 2, In.end(),
-      [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
-  pivots[idx] = splitter( In[n / 2].pnt[dim], dim );
-  dim = ( dim + 1 ) % DIM;
-  divide_rotate( In.cut( 0, n / 2 ), pivots, dim, 2 * idx, deep + 1, bucket, DIM );
-  divide_rotate( In.cut( n / 2, n ), pivots, dim, 2 * idx + 1, deep + 1, bucket, DIM );
+      [&]( const point& p1, const point& p2 ) { return p1.pnt[d] < p2.pnt[d]; } );
+  pivots[idx] = splitter( In[n / 2].pnt[d], d );
+
+  box lbox( bx ), rbox( bx );
+  lbox.second.pnt[d] = pivots[idx].first;  //* loose
+  rbox.first.pnt[d] = pivots[idx].first;
+
+  d = ( d + 1 ) % DIM;
+  divide_rotate( In.cut( 0, n / 2 ), pivots, d, 2 * idx, deep + 1, bucket, DIM, boxs,
+                 lbox );
+  divide_rotate( In.cut( n / 2, n ), pivots, d, 2 * idx + 1, deep + 1, bucket, DIM, boxs,
+                 rbox );
   return;
 }
 
@@ -42,17 +55,16 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t
 template<typename point>
 void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivots,
-                                    const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
+                                    const uint_fast8_t& dim, const uint_fast8_t& DIM,
+                                    box_s& boxs, const box& bx ) {
   size_t size = std::min( n, (size_t)32 * BUCKET_NUM );
   assert( size <= n );
-  // points arr = points::uninitialized( size );
-  points arr = points( size );
+  points arr = points::uninitialized( size );
   for ( size_t i = 0; i < size; i++ ) {
     arr[i] = In[i * ( n / size )];
   }
-  pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
   int bucket = 0;
-  divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM );
+  divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM, boxs, bx );
   assert( bucket == BUCKET_NUM );
   return;
 }
@@ -63,8 +75,8 @@ ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots,
                                     const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
   uint_fast16_t k = 1, d = dim;
   while ( k <= PIVOT_NUM ) {
-    assert( d == pivots[k].second );
-    k = p.pnt[d] < pivots[k].first ? k << 1 : k << 1 | 1;
+    // assert( d == pivots[k].second );
+    k = p.pnt[pivots[k].second] < pivots[k].first ? k << 1 : k << 1 | 1;
     d = ( d + 1 ) % DIM;
   }
   assert( pivots[k].first == -1 );
@@ -134,8 +146,9 @@ template<typename point>
 void
 ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
   points B = points::uninitialized( A.size() );
-  // box bx = get_box( A );
-  this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM );
+  this->bbox = get_box( A );
+  // LOG << bx.first << " " << bx.second << ENDL;
+  this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox );
   assert( this->root != NULL );
   return;
 }
@@ -143,7 +156,8 @@ ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
 template<typename point>
 NODE<point>*
 ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
-                                        const uint_fast8_t& DIM ) {
+                                        const uint_fast8_t& DIM, box bx ) {
+  assert( within_box( get_box( In ), bx ) );
   size_t n = In.size();
 
   if ( n <= LEAVE_WRAP ) {
@@ -152,33 +166,37 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   //* serial run nth element
   if ( n <= SERIAL_BUILD_CUTOFF ) {
-    // uint_fast8_t d = pick_max_stretch_dim( bx );
-    // assert( d >= 0 && d < DIM );
+    uint_fast8_t d =
+        ( this->_split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
+    assert( d >= 0 && d < DIM );
+
     std::nth_element(
         In.begin(), In.begin() + n / 2, In.end(),
-        [&]( const point& p1, const point& p2 ) { return p1.pnt[dim] < p2.pnt[dim]; } );
-    splitter split = splitter( In[n / 2].pnt[dim], dim );
+        [&]( const point& p1, const point& p2 ) { return p1.pnt[d] < p2.pnt[d]; } );
+    splitter split = splitter( In[n / 2].pnt[d], d );
     auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
       return p.pnt[split.second] < split.first;
     } );
 
-    // box lbox( bx ), rbox( bx );
-    // lbox.second.pnt[d] = split.first;
-    // rbox.first.pnt[d] = split.first;
+    box lbox( bx ), rbox( bx );
+    lbox.second.pnt[d] = split.first;  //* loose
+    rbox.first.pnt[d] = split.first;
 
-    dim = ( dim + 1 ) % DIM;
+    d = ( d + 1 ) % DIM;
     node *L, *R;
-    L = build_recursive( In.cut( 0, pos - In.begin() ), Out.cut( 0, pos - In.begin() ),
-                         dim, DIM );
-    R = build_recursive( In.cut( pos - In.begin(), n ), Out.cut( pos - In.begin(), n ),
-                         dim, DIM );
+    L = build_recursive( In.cut( 0, pos - In.begin() ), Out.cut( 0, pos - In.begin() ), d,
+                         DIM, lbox );
+    R = build_recursive( In.cut( pos - In.begin(), n ), Out.cut( pos - In.begin(), n ), d,
+                         DIM, rbox );
     return alloc_interior_node( L, R, split, split.second );
   }
 
   //* parallel partitons
-  splitter_s pivots;
+  auto pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
+  auto boxs = box_s::uninitialized( BUCKET_NUM );
   parlay::sequence<uint_fast32_t> sums;
-  pick_pivots( In, n, pivots, dim, DIM );
+
+  pick_pivots( In, n, pivots, dim, DIM, boxs, bx );
   partition( In, Out, n, pivots, sums, dim, DIM );
   auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
@@ -189,8 +207,9 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
         for ( int j = 0; j < i; j++ ) {
           start += sums[j];
         }
-        treeNodes[i] = build_recursive( Out.cut( start, start + sums[i] ),
-                                        In.cut( start, start + sums[i] ), dim, DIM );
+        treeNodes[i] =
+            build_recursive( Out.cut( start, start + sums[i] ),
+                             In.cut( start, start + sums[i] ), dim, DIM, boxs[i] );
       },
       1 );
   return build_inner_tree( 1, pivots, treeNodes );
@@ -364,8 +383,8 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
           0, n, [&]( size_t i ) { wx[TL->size + i] = In[i]; }, BLOCK_SIZE );
       uint_fast8_t d = T->dim;
       free_leaf( T );
-      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
-                              DIM );
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                              get_box( parlay::make_slice( wx ) ) );
     }
   }
 
@@ -377,19 +396,17 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
     assert( pos - In.begin() == std::distance( In.begin(), pos ) );
 
     //* rebuild
-    if ( Gt( std::abs( 100.0 * ( TI->left->size + pos - In.begin() ) / ( TI->size + n ) -
-                       50 ),
-             INBALANCE_RATIO * 1.0 ) ) {
+    if ( inbalance_node( TI->left->size + pos - In.begin(), TI->size + n ) ) {
       points wx = points::uninitialized( T->size + In.size() );
       points wo = points::uninitialized( T->size + In.size() );
       // flatten_and_delete( T, wx.cut( 0, T->size ) );
       uint_fast8_t d = T->dim;
       flatten( T, wx.cut( 0, T->size ) );
-      delete_tree_recursive( T );
       parlay::parallel_for(
           0, n, [&]( size_t j ) { wx[T->size + j] = In[j]; }, BLOCK_SIZE );
-      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
-                              DIM );
+      delete_tree_recursive( T );
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                              get_box( parlay::make_slice( wx ) ) );
     }
     //* continue
     node *L, *R;
@@ -446,8 +463,9 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
               0, IT.sums_tree[IT.rev_tag[i]],
               [&]( size_t j ) { wx[head_size + j] = Out[s + j]; }, BLOCK_SIZE );
 
-          treeNodes[i] = build_recursive( parlay::make_slice( wx ),
-                                          parlay::make_slice( wo ), d, DIM );
+          treeNodes[i] =
+              build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                               get_box( parlay::make_slice( wx ) ) );
         }
       },
       1 );
@@ -495,7 +513,8 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
     uint_fast8_t d = tags[idx].first->dim;
     flatten( tags[idx].first, wx.cut( 0, tags[idx].first->size ) );
     delete_tree_recursive( tags[idx].first );
-    return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM );
+    return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                            get_box( parlay::make_slice( wx ) ) );
   }
 
   return tags[idx].first;
@@ -566,8 +585,8 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
       uint_fast8_t d = T->dim;
       flatten( T, wx.cut( 0, T->size ) );
       delete_tree_recursive( T );
-      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
-                              DIM );
+      return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                              get_box( parlay::make_slice( wx ) ) );
     }
 
     return T;

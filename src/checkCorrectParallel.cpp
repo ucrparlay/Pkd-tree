@@ -12,7 +12,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 3>;
+using point = PointType<coord, 5>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -42,6 +42,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
   Median_of_rectangle median;
   Tree tree( _points.begin(), _points.end(), median );
   tree.build<CGAL::Parallel_tag>();
+  // LOG << tree.bounding_box() << ENDL;
 
   if ( tag >= 1 ) {
     _points.resize( wi.size() );
@@ -102,14 +103,14 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
 
   buildTree<point>( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
-  checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
+  // checkTreeSameSequential<pkdtree>( KDParallelRoot, 0, Dim );
   assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish insert" << ENDL;
     assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
-    checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
+    // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     if ( tag == 1 ) wp.append( wi );
   }
 
@@ -117,7 +118,7 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
     LOG << "finish delete" << ENDL;
     assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
-    checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
+    // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
   }
 
   //* query phase
@@ -147,6 +148,8 @@ main( int argc, char* argv[] ) {
   tag = P.getOptionIntValue( "-t", 0 );
   rounds = P.getOptionIntValue( "-r", 3 );
   char* _insertFile = P.getOptionValue( "-i" );
+
+  assert( Dim == point().get_dim() );
 
   if ( tag == 0 ) {
     puts( "build and query" );
@@ -235,8 +238,9 @@ main( int argc, char* argv[] ) {
     // unique_points<point>( wp, wi, Dim );
   }
 
-  runKDParallel( wp, wi, kdknn );
   runCGAL( wp, wi, cgknn );
+
+  runKDParallel( wp, wi, kdknn );
 
   //* verify
   for ( size_t i = 0; i < N; i++ ) {

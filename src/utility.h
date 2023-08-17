@@ -33,8 +33,8 @@ struct PointType {
       pnt[i] = x[i];
   }
 
-  PointType
-  minCoords( const PointType& b ) {
+  const PointType
+  minCoords( const PointType& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {
       pts[i] = std::min( pnt[i], b.pnt[i] );
@@ -42,8 +42,8 @@ struct PointType {
     return pts;
   }
 
-  PointType
-  maxCoords( const PointType& b ) {
+  const PointType
+  maxCoords( const PointType& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {
       pts[i] = std::max( pnt[i], b.pnt[i] );
