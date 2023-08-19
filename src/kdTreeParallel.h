@@ -255,6 +255,11 @@ class ParallelKDtree {
     return this->root;
   }
 
+  inline box
+  get_box() {
+    return this->bbox;
+  }
+
   //@ Support Functions
   parlay::type_allocator<leaf> leaf_allocator;
   parlay::type_allocator<interior> interior_allocator;
@@ -291,9 +296,42 @@ class ParallelKDtree {
   }
 
   static inline bool
+  legal_box( const box& bx ) {
+    for ( int i = 0; i < bx.first.get_dim(); i++ ) {
+      if ( bx.first.pnt[i] > bx.second.pnt[i] ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static inline bool
   within_box( const box& a, const box& b ) {
+    assert( legal_box( a ) && legal_box( b ) );
     for ( int i = 0; i < a.first.get_dim(); i++ ) {
       if ( a.first.pnt[i] < b.first.pnt[i] || a.second.pnt[i] > b.second.pnt[i] ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static inline bool
+  within_box( const point& p, const box& bx ) {
+    assert( legal_box( bx ) );
+    for ( int i = 0; i < p.get_dim(); i++ ) {
+      if ( p.pnt[i] < bx.first.pnt[i] || p.pnt[i] > bx.second.pnt[i] ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static inline bool
+  intersect_box( const box& a, const box& b ) {
+    assert( legal_box( a ) && legal_box( b ) );
+    for ( int i = 0; i < a.first.get_dim(); i++ ) {
+      if ( a.first.pnt[i] > b.second.pnt[i] ) {
         return false;
       }
     }
@@ -316,18 +354,7 @@ class ParallelKDtree {
   get_box( slice V ) {
     if ( V.size() == 0 ) {
       return std::move( get_empty_box() );
-    }
-    // else if ( V.size() <= SERIAL_BUILD_CUTOFF ) {  // * attention to high dimension
-    //   box b( V[0], V[0] );
-    //   for ( int i = 1; i < V.size(); i++ ) {
-    //     for ( int j = 0; j < V[0].get_dim(); j++ ) {
-    //       b.first.pnt[j] = std::min( b.first.pnt[j], V[i].pnt[j] );
-    //       b.second.pnt[j] = std::max( b.second.pnt[j], V[i].pnt[j] );
-    //     }
-    //   }
-    //   return std::move( b );
-    // }
-    else {
+    } else {
       auto minmax = [&]( const box& x, const box& y ) {
         return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
       };
@@ -391,19 +418,12 @@ class ParallelKDtree {
   build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
                     parlay::sequence<node*>& treeNodes );
 
-  static inline coord
-  ppDistanceSquared( const point& p, const point& q, const uint_fast8_t& DIM );
-
   void
   build( slice In, const uint_fast8_t& DIM );
 
   node*
   build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,
                    box bx );
-
-  static void
-  k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,
-             size_t& visNodeNum );
 
   //@ batch insert
   void
@@ -451,19 +471,26 @@ class ParallelKDtree {
   static void
   delete_tree_recursive( node* T );
 
+  //@ query stuffs
+  static inline coord
+  ppDistanceSquared( const point& p, const point& q, const uint_fast8_t& DIM );
+
+  static void
+  k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,
+             size_t& visNodeNum );
+
+  static size_t
+  range_count( node* T, const box& queryBox, const box& nodeBox );
+
   //@ validations
-  bool
-  checkBox() {
-    assert( this->root != nullptr );
-    points wx = points::uninitialized( this->root->size );
-    flatten( this->root, parlay::make_slice( wx ) );
+  static bool
+  checkBox( node* T, const box& bx ) {
+    assert( T != nullptr );
+    assert( legal_box( bx ) );
+    points wx = points::uninitialized( T->size );
+    flatten( T, parlay::make_slice( wx ) );
     auto b = get_box( parlay::make_slice( wx ) );
-    if ( b != this->bbox ) {
-      LOG << b.first << " " << b.second << ENDL;
-      LOG << bbox.first << " " << bbox.second << ENDL;
-      abort();
-    }
-    return within_box( get_box( parlay::make_slice( wx ) ), this->bbox );
+    return within_box( get_box( parlay::make_slice( wx ) ), bx );
   }
 
   size_t
@@ -480,7 +507,7 @@ class ParallelKDtree {
 
   void
   validate() {
-    if ( checkBox() ) {
+    if ( checkBox( this->root, this->bbox ) && legal_box( this->bbox ) ) {
       std::cout << "Correct bounding box" << std::endl << std::flush;
     } else {
       std::cout << "wrong bounding box" << std::endl << std::flush;

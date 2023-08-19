@@ -8,6 +8,7 @@
 #include <CGAL/Search_traits_d.h>
 #include <CGAL/Timer.h>
 #include <CGAL/point_generators_d.h>
+#include <CGAL/Fuzzy_iso_box.h>
 #include <bits/stdc++.h>
 #include <iterator>
 #include <tbb/blocked_range.h>
@@ -18,18 +19,22 @@ using points = parlay::sequence<point>;
 typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
+typedef CGAL::Random_points_in_cube_d<Point_d> Random_points_iterator;
+typedef CGAL::Counting_iterator<Random_points_iterator> N_Random_points_iterator;
 typedef CGAL::Median_of_rectangle<TreeTraits> Median_of_rectangle;
 typedef CGAL::Euclidean_distance<TreeTraits> Distance;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance, Median_of_rectangle>
     Neighbor_search;
 typedef Neighbor_search::Tree Tree;
+typedef CGAL::Fuzzy_iso_box<TreeTraits> Fuzzy_iso_box;
 
 int Dim, K, tag, rounds;
 bool insert;
+int queryType;
 size_t N;
 
 void
-runCGAL( points& wp, points& wi, Typename* cgknn ) {
+runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum ) {
   //* cgal
   std::vector<Point_d> _points( N );
   parlay::parallel_for(
@@ -42,6 +47,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
   Median_of_rectangle median;
   Tree tree( _points.begin(), _points.end(), median );
   tree.build<CGAL::Parallel_tag>();
+
   // LOG << tree.bounding_box() << ENDL;
 
   if ( tag >= 1 ) {
@@ -69,22 +75,36 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
   }
 
   //* cgal query
-  LOG << "begin tbb  query" << ENDL << std::flush;
+  LOG << "begin tbb query" << ENDL << std::flush;
   assert( tree.is_built() );
 
-  tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
-                     [&]( const tbb::blocked_range<std::size_t>& r ) {
-                       for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
-                         // Neighbor search can be instantiated from
-                         // several threads at the same time
-                         Point_d query( Dim, std::begin( wp[s].pnt ),
-                                        std::begin( wp[s].pnt ) + Dim );
-                         Neighbor_search search( tree, query, K );
-                         Neighbor_search::iterator it = search.end();
-                         it--;
-                         cgknn[s] = it->second;
-                       }
-                     } );
+  if ( queryType == 0 ) {  //* NN
+    tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
+                       [&]( const tbb::blocked_range<std::size_t>& r ) {
+                         for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                           // Neighbor search can be instantiated from
+                           // several threads at the same time
+                           Point_d query( Dim, std::begin( wp[s].pnt ),
+                                          std::begin( wp[s].pnt ) + Dim );
+                           Neighbor_search search( tree, query, K );
+                           Neighbor_search::iterator it = search.end();
+                           it--;
+                           cgknn[s] = it->second;
+                         }
+                       } );
+  } else if ( queryType == 1 ) {  //* range count
+    size_t n = wp.size();
+    parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+      std::vector<Point_d> _ans( n );
+      Point_d a( Dim, std::begin( wp[i].pnt ), std::end( wp[i].pnt ) ),
+          b( Dim, std::begin( wp[( i + n / 2 ) % n].pnt ),
+             std::end( wp[( i + n / 2 ) % n].pnt ) );
+      Fuzzy_iso_box fib( a, b, 0.0 );
+      // _ans.clear();
+      auto it = tree.search( _ans.begin(), fib );
+      cgknn[i] = std::distance( _ans.begin(), it );
+    } );
+  }
 
   if ( tag == 1 ) {
     wp.pop_tail( wi.size() );
@@ -94,10 +114,11 @@ runCGAL( points& wp, points& wi, Typename* cgknn ) {
 }
 
 void
-runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
+runKDParallel( points& wp, const points& wi, Typename* kdknn, int queryNum ) {
   //* kd tree
   puts( "build kd tree" );
   using pkdtree = ParallelKDtree<point>;
+  using box = typename ParallelKDtree<point>::box;
   pkdtree pkd;
   size_t n = wp.size();
 
@@ -107,8 +128,6 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
-    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() + wi.size() );
-    // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     if ( tag == 1 ) wp.append( wi );
     pkd.validate();
     LOG << "finish insert" << ENDL;
@@ -116,8 +135,6 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
 
   if ( tag >= 2 ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
-    // assert( checkTreesSize<pkdtree>( pkd.get_root() ) == wp.size() );
-    // checkTreeSameSequential<pkdtree>( pkd.get_root(), 0, Dim );
     pkd.validate();
     LOG << "finish delete" << ENDL;
   }
@@ -127,11 +144,10 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
   assert( N >= K );
   assert( tag == 1 || wp.size() == N );
   LOG << "begin kd query" << ENDL;
-  queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
-
-  if ( tag == 1 ) {
-    wp.pop_tail( wi.size() );
-    assert( wp.size() == N );
+  if ( queryType == 0 ) {
+    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
+  } else if ( queryType == 1 ) {
+    rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
   }
   pkd.delete_tree();
   return;
@@ -139,15 +155,17 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn ) {
 
 int
 main( int argc, char* argv[] ) {
-  commandLine P( argc, argv,
-                 "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
-                 "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-i <_insertFile>]" );
+  commandLine P(
+      argc, argv,
+      "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
+      "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-q {0,1}] [-i <_insertFile>]" );
   char* iFile = P.getOptionValue( "-p" );
   K = P.getOptionIntValue( "-k", 100 );
   Dim = P.getOptionIntValue( "-d", 3 );
   N = P.getOptionLongValue( "-n", -1 );
   tag = P.getOptionIntValue( "-t", 0 );
   rounds = P.getOptionIntValue( "-r", 3 );
+  queryType = P.getOptionIntValue( "-q", 0 );
   char* _insertFile = P.getOptionValue( "-i" );
 
   assert( Dim == point().get_dim() );
@@ -178,27 +196,16 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  // points wo = parlay::unique( wp, [&]( const point& a, const point& b ) {
-  //   for ( int i = 0; i < Dim; i++ ) {
-  //     if ( a.pnt[i] != b.pnt[i] ) return false;
-  //   }
-  //   return true;
-  // } );
-  // for ( auto i : wo ) {
-  //   LOG << i;
-  // }
-  // assert( wo.size() == wp.size() );
-  // return 0;
-
   Typename* cgknn;
   Typename* kdknn;
   points wi;
+  int queryNum = 1000;
 
   //* initialize insert points file
   if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      id = ( id + 1 ) % 3;  //! MOD graph number used to test
+      id = ( id + 1 ) % 10;  //! MOD graph number used to test
       if ( !id ) id++;
       int pos = std::string( iFile ).rfind( "/" ) + 1;
       insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
@@ -209,47 +216,65 @@ main( int argc, char* argv[] ) {
   }
 
   //* set result array size
-  if ( tag == 0 ) {
-    cgknn = new Typename[N];
-    kdknn = new Typename[N];
-  } else {
-    if ( iFile == NULL ) {
-      generate_random_points<point>( wi, 1000000, N / 2, Dim );
-      LOG << "insert " << N / 5 << " points" << ENDL;
-    } else {
-      auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-      if ( nd != Dim || nn != N ) {
-        puts( "read inserted points dimension wrong" );
-        abort();
-      } else {
-        puts( "read inserted points from file" );
-      }
-    }
-
-    if ( tag == 1 ) {
-      puts( "insert points from file" );
-      cgknn = new Typename[N + wi.size()];
-      kdknn = new Typename[N + wi.size()];
-    } else if ( tag == 2 ) {
-      puts( "insert then delete points from file" );
+  if ( queryType == 0 ) {  //*NN
+    LOG << "---do NN query---" << ENDL;
+    if ( tag == 0 ) {
       cgknn = new Typename[N];
       kdknn = new Typename[N];
-    }
+    } else {
+      if ( iFile == NULL ) {
+        generate_random_points<point>( wi, 1000000, N / 2, Dim );
+        LOG << "insert " << N / 5 << " points" << ENDL;
+      } else {
+        auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+        if ( nd != Dim || nn != N ) {
+          puts( "read inserted points dimension wrong" );
+          abort();
+        } else {
+          puts( "read inserted points from file" );
+        }
+      }
 
-    // unique_points<point>( wp, wi, Dim );
+      if ( tag == 1 ) {
+        puts( "insert points from file" );
+        cgknn = new Typename[N + wi.size()];
+        kdknn = new Typename[N + wi.size()];
+      } else if ( tag == 2 ) {
+        puts( "insert then delete points from file" );
+        cgknn = new Typename[N];
+        kdknn = new Typename[N];
+      }
+    }
+  } else if ( queryType == 1 ) {  //* range Count
+    LOG << "---do range Count---" << ENDL;
+
+    cgknn = new Typename[queryNum];
+    kdknn = new Typename[queryNum];
+  } else if ( queryType == 2 ) {
   }
 
-  runCGAL( wp, wi, cgknn );
+  runCGAL( wp, wi, cgknn, queryNum );
 
-  runKDParallel( wp, wi, kdknn );
+  runKDParallel( wp, wi, kdknn, queryNum );
 
   //* verify
-  for ( size_t i = 0; i < N; i++ ) {
-    if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
-      puts( "" );
-      puts( "wrong" );
-      std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
-      return 0;
+  if ( queryType == 0 ) {
+    for ( size_t i = 0; i < N; i++ ) {
+      if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
+        puts( "" );
+        puts( "wrong" );
+        std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
+        return 0;
+      }
+    }
+  } else if ( queryType == 1 ) {
+    for ( size_t i = 0; i < queryNum; i++ ) {
+      if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
+        puts( "" );
+        puts( "wrong" );
+        std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
+        return 0;
+      }
     }
   }
 

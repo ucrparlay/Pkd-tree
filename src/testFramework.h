@@ -292,3 +292,30 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
   return;
 }
+
+template<typename point>
+void
+rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
+            Typename* kdknn, const int& rounds, const int& queryNum ) {
+  using tree = ParallelKDtree<point>;
+  using points = typename tree::points;
+  using node = typename tree::node;
+  using box = typename tree::box;
+
+  int n = wp.size();
+
+  double aveCount = time_loop(
+      rounds, 1.0, [&]() {},
+      [&]() {
+        parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+          box queryBox = pkd.get_box(
+              box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
+          kdknn[i] = pkd.range_count( pkd.get_root(), queryBox, pkd.get_box() );
+        } );
+      },
+      [&]() {} );
+
+  LOG << aveCount << " " << std::flush;
+
+  return;
+}

@@ -661,6 +661,40 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& D
 }
 
 template<typename point>
+size_t
+ParallelKDtree<point>::range_count( node* T, const box& queryBox, const box& nodeBox ) {
+  if ( !intersect_box( nodeBox, queryBox ) ) return 0;
+  if ( within_box( nodeBox, queryBox ) ) return T->size;
+
+  assert( intersect_box( nodeBox, queryBox ) );
+
+  if ( T->is_leaf ) {
+    size_t cnt = 0;
+    leaf* TL = static_cast<leaf*>( T );
+    for ( int i = 0; i < TL->size; i++ ) {
+      if ( within_box( TL->pts[i], queryBox ) ) {
+        cnt++;
+      }
+    }
+    return std::move( cnt );
+  }
+
+  interior* TI = static_cast<interior*>( T );
+  box lbox( nodeBox ), rbox( nodeBox );
+  lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+  rbox.first.pnt[TI->split.second] = TI->split.first;
+
+  // assert( checkBox( TI->left, lbox ) && checkBox( TI->right, rbox ) );
+
+  size_t l, r;
+  parlay::par_do_if(
+      TI->size >= SERIAL_BUILD_CUTOFF,
+      [&] { l = range_count( TI->left, queryBox, lbox ); },
+      [&] { r = range_count( TI->right, queryBox, rbox ); } );
+  return std::move( l + r );
+}
+
+template<typename point>
 NODE<point>*
 ParallelKDtree<point>::delete_tree() {
   if ( this->root == nullptr ) {

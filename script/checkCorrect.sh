@@ -12,6 +12,7 @@ out="log.in"
 : >${dest}
 tag=2
 count=1
+queryType=1
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
 Paths=("/data9/zmen002/kdtree/ss_varden/" "/data9/zmen002/kdtree/uniform_bigint/")
@@ -26,7 +27,7 @@ for path in ${Paths[@]}; do
 
         for file in "${files_path}/"*.in; do
             echo "------->${file}"
-            ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 >>${dest}
+            ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 -q ${queryType} >>${dest}
 
             nc=$(grep -i -o "ok" ${dest} | wc -l)
             if [[ ${nc} -ne ${count} ]]; then
