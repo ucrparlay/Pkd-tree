@@ -486,8 +486,21 @@ class ParallelKDtree {
   k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,
              size_t& visNodeNum );
 
+  size_t
+  range_count( const box& queryBox );
+
   static size_t
-  range_count( node* T, const box& queryBox, const box& nodeBox );
+  range_count_value( node* T, const box& queryBox, const box& nodeBox );
+
+  //* cannot run in parallel
+  static void
+  range_count_recursive( node* T, const box& queryBox, const box& nodeBox );
+
+  size_t
+  range_query( const box& queryBox );
+
+  static void
+  range_query_recursive( node* T, slice In, const box& queryBox, const box& nodeBox );
 
   //@ validations
   static bool
@@ -500,7 +513,7 @@ class ParallelKDtree {
     return within_box( get_box( parlay::make_slice( wx ) ), bx );
   }
 
-  size_t
+  static size_t
   checkSize( node* T ) {
     if ( T->is_leaf ) {
       return T->size;

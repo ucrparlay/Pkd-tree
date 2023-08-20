@@ -12,34 +12,35 @@ out="log.in"
 : >${dest}
 tag=2
 count=1
-queryType=1
+queryTypes=(0 1)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
 Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
-for path in ${Paths[@]}; do
-    for node in ${Nodes[@]}; do
-        dim=5
+for queryType in ${queryTypes[@]}; do
+    for path in ${Paths[@]}; do
+        for node in ${Nodes[@]}; do
+            dim=5
 
-        files_path="${path}${node}_${dim}"
-        echo $files_path
+            files_path="${path}${node}_${dim}"
+            echo $files_path
 
-        for file in "${files_path}/"*.in; do
-            echo "------->${file}"
-            ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 -q ${queryType} >>${dest}
+            for file in "${files_path}/"*.in; do
+                echo "------->${file}"
+                ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 -q ${queryType} >>${dest}
 
-            nc=$(grep -i -o "ok" ${dest} | wc -l)
-            if [[ ${nc} -ne ${count} ]]; then
-                echo 'wrong'
-                exit
-            fi
-            count=$((count + 1))
+                nc=$(grep -i -o "ok" ${dest} | wc -l)
+                if [[ ${nc} -ne ${count} ]]; then
+                    echo 'wrong'
+                    exit
+                fi
+                count=$((count + 1))
+            done
+
         done
-
     done
 done
-
 echo "finish node test"
 echo "well done"
 exit

@@ -662,11 +662,16 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& D
 
 template<typename point>
 size_t
-ParallelKDtree<point>::range_count( node* T, const box& queryBox, const box& nodeBox ) {
+ParallelKDtree<point>::range_count( const typename ParallelKDtree<point>::box& bx ) {
+  return range_count_value( this->root, bx, this->bbox );
+}
+
+template<typename point>
+size_t
+ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
+                                          const box& nodeBox ) {
   if ( !intersect_box( nodeBox, queryBox ) ) return 0;
   if ( within_box( nodeBox, queryBox ) ) return T->size;
-
-  assert( intersect_box( nodeBox, queryBox ) );
 
   if ( T->is_leaf ) {
     size_t cnt = 0;
@@ -684,14 +689,110 @@ ParallelKDtree<point>::range_count( node* T, const box& queryBox, const box& nod
   lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
   rbox.first.pnt[TI->split.second] = TI->split.first;
 
-  // assert( checkBox( TI->left, lbox ) && checkBox( TI->right, rbox ) );
-
   size_t l, r;
   parlay::par_do_if(
       TI->size >= SERIAL_BUILD_CUTOFF,
-      [&] { l = range_count( TI->left, queryBox, lbox ); },
-      [&] { r = range_count( TI->right, queryBox, rbox ); } );
+      [&] { l = range_count_value( TI->left, queryBox, lbox ); },
+      [&] { r = range_count_value( TI->right, queryBox, rbox ); } );
+
   return std::move( l + r );
+}
+
+template<typename point>
+void
+ParallelKDtree<point>::range_count_recursive( node* T, const box& queryBox,
+                                              const box& nodeBox ) {
+  if ( !intersect_box( nodeBox, queryBox ) ) {
+    T->aug = 0;
+    return;
+  }
+
+  if ( within_box( nodeBox, queryBox ) ) {
+    T->aug = T->size;
+    return;
+  }
+
+  if ( T->is_leaf ) {
+    T->aug = 0;
+    leaf* TL = static_cast<leaf*>( T );
+    for ( int i = 0; i < TL->size; i++ ) {
+      if ( within_box( TL->pts[i], queryBox ) ) {
+        T->aug++;
+      }
+    }
+    return;
+  }
+
+  interior* TI = static_cast<interior*>( T );
+  box lbox( nodeBox ), rbox( nodeBox );
+  lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+  rbox.first.pnt[TI->split.second] = TI->split.first;
+
+  parlay::par_do_if(
+      TI->size >= SERIAL_BUILD_CUTOFF,
+      [&] { range_count_recursive( TI->left, queryBox, lbox ); },
+      [&] { range_count_recursive( TI->right, queryBox, rbox ); } );
+
+  TI->aug = TI->left->aug + TI->right->aug;
+
+  return;
+}
+
+template<typename point>
+size_t
+ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx ) {
+  range_count_recursive( this->root, bx, this->bbox );
+  size_t n = this->root->aug;
+  points wx = points::uninitialized( n );
+  range_query_recursive( this->root, parlay::make_slice( wx ), bx, this->bbox );
+  return n;
+}
+
+template<typename point>
+void
+ParallelKDtree<point>::range_query_recursive( node* T, slice Out, const box& queryBox,
+                                              const box& nodeBox ) {
+  if ( !intersect_box( nodeBox, queryBox ) ) {
+    return;
+  }
+
+  if ( within_box( nodeBox, queryBox ) ) {
+    assert( T->size == Out.size() );
+    flatten( T, Out );
+    return;
+  }
+
+  if ( T->is_leaf ) {
+    assert( Out.size() == T->aug );
+    size_t cnt = 0;
+    leaf* TL = static_cast<leaf*>( T );
+    for ( int i = 0; i < TL->size; i++ ) {
+      if ( within_box( TL->pts[i], queryBox ) ) {
+        Out[cnt++] = TL->pts[i];
+      }
+    }
+    assert( cnt == T->aug );
+    return;
+  }
+
+  interior* TI = static_cast<interior*>( T );
+  box lbox( nodeBox ), rbox( nodeBox );
+  lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+  rbox.first.pnt[TI->split.second] = TI->split.first;
+
+  assert( TI->left->aug + TI->right->aug == Out.size() );
+
+  parlay::par_do_if(
+      TI->size >= SERIAL_BUILD_CUTOFF,
+      [&] {
+        range_query_recursive( TI->left, Out.cut( 0, TI->left->aug ), queryBox, lbox );
+      },
+      [&] {
+        range_query_recursive( TI->right, Out.cut( TI->left->aug, Out.size() ), queryBox,
+                               rbox );
+      } );
+
+  return;
 }
 
 template<typename point>

@@ -14,6 +14,6 @@ In memory of solved bugs.
 - `RE`: Access previously deleted pointer
 - `WA`: Directly use the inserted points after insertion
 - `RE`: Update node doesn't update parent
-
+- `WA`: Run parallel process that changes the node value in concurrent
 
 
