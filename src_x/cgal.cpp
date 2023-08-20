@@ -31,7 +31,7 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance, Midpoint_of_rec
     Neighbor_search_Midpoint;
 typedef Neighbor_search_Midpoint::Tree Tree_Midpoint;
 
-using points = parlay::sequence<point10D>;
+using points = parlay::sequence<PointType<coord, 10>>;
 
 //@ begin function
 template<typename Splitter, typename Tree, typename Neighbor_search>

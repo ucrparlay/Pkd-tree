@@ -16,6 +16,7 @@ using coord = long;  // type of each coordinate
 template<typename T, uint_fast8_t d>
 struct PointType {
   typedef T data_type;
+  using coord = T;
   using coords = std::array<T, d>;
 
   PointType() {}

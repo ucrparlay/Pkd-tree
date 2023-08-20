@@ -113,7 +113,7 @@ main( int argc, char* argv[] ) {
   int rounds = P.getOptionIntValue( "-r", 3 );
 
   int LEAVE_WRAP = 32;
-  parlay::sequence<point15D> wp;
+  parlay::sequence<PointType<coord, 15>> wp;
   std::string name, insertFile;
 
   //* initialize points
@@ -121,12 +121,12 @@ main( int argc, char* argv[] ) {
     name = std::string( iFile );
     name = name.substr( name.rfind( "/" ) + 1 );
     std::cout << name << " ";
-    auto [n, d] = read_points<point15D>( iFile, wp, K );
+    auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
     N = n;
     assert( d == Dim );
   } else {  //* construct data byself
     K = 100;
-    generate_random_points<point15D>( wp, 1000000, N, Dim );
+    generate_random_points<PointType<coord, 15>>( wp, 1000000, N, Dim );
     std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
     std::cout << name << " ";
   }
@@ -163,10 +163,6 @@ main( int argc, char* argv[] ) {
     decltype( wp )().swap( wp );
     testParallelKDtree<PointType<long, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
                                             insertFile, tag );
-    // auto pts = parlay::tabulate(
-    //     N, [&]( size_t i ) -> point3D { return point3D( wp[i].pnt.begin() ); } );
-    // decltype( wp )().swap( wp );
-    // testParallelKDtree<point3D>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag );
   } else if ( Dim == 5 ) {
     auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 5> {
       return PointType<long, 5>( wp[i].pnt.begin() );

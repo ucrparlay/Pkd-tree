@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Nodes=(1000000 5000000 8000000 10000000 50000000)
-Nodes=(500000000)
+Nodes=(1000000 5000000 8000000 10000000 50000000)
+# Nodes=(500000000)
 
 Dims=(2 3 5 7 9)
 K=100
@@ -15,12 +15,12 @@ count=1
 queryType=1
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
-Paths=("/data9/zmen002/kdtree/ss_varden/" "/data9/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for path in ${Paths[@]}; do
     for node in ${Nodes[@]}; do
-        dim=3
+        dim=5
 
         files_path="${path}${node}_${dim}"
         echo $files_path
