@@ -124,18 +124,18 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, int queryNum ) {
 
   buildTree<point>( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
-  pkd.validate();
+  pkd.validate( Dim );
 
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, 2 );
     if ( tag == 1 ) wp.append( wi );
-    pkd.validate();
+    pkd.validate( Dim );
     LOG << "finish insert" << ENDL;
   }
 
   if ( tag >= 2 ) {
     batchDelete<point>( pkd, wp, wi, Dim, 2 );
-    pkd.validate();
+    pkd.validate( Dim );
     LOG << "finish delete" << ENDL;
   }
 

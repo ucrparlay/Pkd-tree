@@ -20,7 +20,7 @@ class ParallelKDtree {
   struct node {
     bool is_leaf;
     size_t size;
-    uint_fast8_t dim;
+    size_t aug;
     node* parent;
   };
 
@@ -241,9 +241,6 @@ class ParallelKDtree {
 
   // TODO: handle double precision
 
-  // Given two points, return the min. value on each dimension
-  // minv[i] = smaller value of two points on i-th dimension
-
  public:
   inline void
   set_root( node* _root ) {
@@ -370,6 +367,20 @@ class ParallelKDtree {
     points wx = points::uninitialized( T->size );
     flatten( T, parlay::make_slice( wx ) );
     return std::move( get_box( parlay::make_slice( wx ) ) );
+  }
+
+  inline uint_fast8_t
+  pick_rebuild_dim( const node* T, const uint_fast8_t& DIM ) {
+    if ( this->_split_rule == MAX_STRETCH_DIM ) {
+      return 0;
+    } else if ( this->_split_rule == ROTATE_DIM ) {
+      if ( T == this->root ) {
+        return 0;
+      } else {
+        assert( !( T->parent->is_leaf ) );
+        return ( static_cast<interior*>( T->parent )->split.second + 1 ) % DIM;
+      }
+    }
   }
 
   static inline uint_fast8_t
@@ -506,13 +517,34 @@ class ParallelKDtree {
   }
 
   void
-  validate() {
+  checkTreeSameSequential( node* T, int dim, const int& DIM ) {
+    if ( T->is_leaf ) {
+      assert( pick_rebuild_dim( T, DIM ) == dim );
+      return;
+    }
+    interior* TI = static_cast<interior*>( T );
+    assert( TI->split.second == dim );
+    dim = ( dim + 1 ) % DIM;
+    parlay::par_do_if(
+        T->size > 1000, [&]() { checkTreeSameSequential( TI->left, dim, DIM ); },
+        [&]() { checkTreeSameSequential( TI->right, dim, DIM ); } );
+    return;
+  }
+
+  void
+  validate( const uint_fast8_t& DIM ) {
     if ( checkBox( this->root, this->bbox ) && legal_box( this->bbox ) ) {
       std::cout << "Correct bounding box" << std::endl << std::flush;
     } else {
       std::cout << "wrong bounding box" << std::endl << std::flush;
       abort();
     }
+
+    if ( this->_split_rule == ROTATE_DIM ) {
+      checkTreeSameSequential( this->root, 0, DIM );
+      std::cout << "Correct rotate dimension" << std::endl << std::flush;
+    }
+
     if ( checkSize( this->root ) == this->root->size ) {
       std::cout << "Correct size" << std::endl << std::flush;
     } else {
