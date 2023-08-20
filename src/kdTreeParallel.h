@@ -26,8 +26,7 @@ class ParallelKDtree {
 
   struct leaf : node {
     points pts;
-    leaf( slice In, const uint_fast8_t& dim ) :
-        node{ true, static_cast<size_t>( In.size() ), dim, nullptr } {
+    leaf( slice In ) : node{ true, static_cast<size_t>( In.size() ), 0, nullptr } {
       pts = points::uninitialized( LEAVE_WRAP );
       for ( int i = 0; i < In.size(); i++ ) {
         pts[i] = In[i];
@@ -39,8 +38,8 @@ class ParallelKDtree {
     node* left;
     node* right;
     splitter split;
-    interior( node* _left, node* _right, splitter _split, const uint_fast8_t& dim ) :
-        node{ false, _left->size + _right->size, dim, nullptr },
+    interior( node* _left, node* _right, splitter _split ) :
+        node{ false, _left->size + _right->size, 0, nullptr },
         left( _left ),
         right( _right ),
         split( _split ) {
@@ -55,7 +54,7 @@ class ParallelKDtree {
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
-  split_rule _split_rule = ROTATE_DIM;
+  split_rule _split_rule = MAX_STRETCH_DIM;
   box bbox;
 
  public:
@@ -262,17 +261,16 @@ class ParallelKDtree {
   parlay::type_allocator<interior> interior_allocator;
 
   static leaf*
-  alloc_leaf_node( slice In, const uint_fast8_t& dim ) {
+  alloc_leaf_node( slice In ) {
     leaf* o = parlay::type_allocator<leaf>::alloc();
-    new ( o ) leaf( In, dim );
+    new ( o ) leaf( In );
     return o;
   }
 
   static interior*
-  alloc_interior_node( node* L, node* R, const splitter& split,
-                       const uint_fast8_t& dim ) {
+  alloc_interior_node( node* L, node* R, const splitter& split ) {
     interior* o = parlay::type_allocator<interior>::alloc();
-    new ( o ) interior( L, R, split, dim );
+    new ( o ) interior( L, R, split );
     return o;
   }
 
@@ -417,13 +415,11 @@ class ParallelKDtree {
                const uint_fast8_t& DIM, box_s& boxs, const box& bx );
 
   static inline uint_fast32_t
-  find_bucket( const point& p, const splitter_s& pivots, const uint_fast8_t& dim,
-               const uint_fast8_t& DIM );
+  find_bucket( const point& p, const splitter_s& pivots );
 
   static void
   partition( slice A, slice B, const size_t& n, const splitter_s& pivots,
-             parlay::sequence<uint_fast32_t>& sums, const uint_fast8_t& dim,
-             const uint_fast8_t& DIM );
+             parlay::sequence<uint_fast32_t>& sums );
 
   static node*
   build_inner_tree( uint_fast16_t idx, splitter_s& pivots,

@@ -71,13 +71,10 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivot
 
 template<typename point>
 inline uint_fast32_t
-ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots,
-                                    const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
-  uint_fast16_t k = 1, d = dim;
+ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots ) {
+  uint_fast16_t k = 1;
   while ( k <= PIVOT_NUM ) {
-    // assert( d == pivots[k].second );
     k = p.pnt[pivots[k].second] < pivots[k].first ? k << 1 : k << 1 | 1;
-    d = ( d + 1 ) % DIM;
   }
   assert( pivots[k].first == -1 );
   return pivots[k].second;
@@ -87,8 +84,7 @@ template<typename point>
 void
 ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
                                   const splitter_s& pivots,
-                                  parlay::sequence<uint_fast32_t>& sums,
-                                  const uint_fast8_t& dim, const uint_fast8_t& DIM ) {
+                                  parlay::sequence<uint_fast32_t>& sums ) {
   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
   parlay::sequence<parlay::sequence<uint_fast32_t>> offset(
       num_block, parlay::sequence<uint_fast32_t>( BUCKET_NUM ) );
@@ -96,7 +92,7 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
           offset[0][0] == 0 );
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
     for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n ); j++ ) {
-      offset[i][std::move( find_bucket( A[j], pivots, dim, DIM ) )]++;
+      offset[i][std::move( find_bucket( A[j], pivots ) )]++;
     }
   } );
 
@@ -120,7 +116,7 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t& n,
     }
     v[BUCKET_NUM - 1] = tot + ( ( i << LOG2_BASE ) - s_offset );
     for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n ); j++ ) {
-      B[v[std::move( find_bucket( A[j], pivots, dim, DIM ) )]++] = A[j];
+      B[v[std::move( find_bucket( A[j], pivots ) )]++] = A[j];
     }
   } );
 
@@ -138,7 +134,7 @@ ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
   node *L, *R;
   L = build_inner_tree( idx << 1, pivots, treeNodes );
   R = build_inner_tree( idx << 1 | 1, pivots, treeNodes );
-  return alloc_interior_node( L, R, pivots[idx], pivots[idx].second );
+  return alloc_interior_node( L, R, pivots[idx] );
 }
 
 //@ Parallel KD tree cores
@@ -161,7 +157,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
   size_t n = In.size();
 
   if ( n <= LEAVE_WRAP ) {
-    return alloc_leaf_node( In, dim );
+    return alloc_leaf_node( In );
   }
 
   //* serial run nth element
@@ -188,7 +184,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
                          DIM, lbox );
     R = build_recursive( In.cut( pos - In.begin(), n ), Out.cut( pos - In.begin(), n ), d,
                          DIM, rbox );
-    return alloc_interior_node( L, R, split, split.second );
+    return alloc_interior_node( L, R, split );
   }
 
   //* parallel partitons
@@ -197,7 +193,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
   parlay::sequence<uint_fast32_t> sums;
 
   pick_pivots( In, n, pivots, dim, DIM, boxs, bx );
-  partition( In, Out, n, pivots, sums, dim, DIM );
+  partition( In, Out, n, pivots, sums );
   auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
   parlay::parallel_for(
@@ -508,9 +504,9 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
     if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
       // uint_fast8_t d = tags[idx].first->dim;
-      uint_fast8_t d = pick_rebuild_dim( tags[idx].first, DIM );
+      // uint_fast8_t d = pick_rebuild_dim( tags[idx].first, DIM );
       delete_tree_recursive( tags[idx].first );
-      return node_box( alloc_leaf_node( points().cut( 0, 0 ), d ), get_empty_box() );
+      return node_box( alloc_leaf_node( points().cut( 0, 0 ) ), get_empty_box() );
     }
     points wx = points::uninitialized( tags[idx].first->size );
     points wo = points::uninitialized( tags[idx].first->size );
@@ -536,9 +532,9 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
   if ( n == T->size ) {
     if ( hasTomb ) {
-      uint_fast8_t d = pick_rebuild_dim( T, DIM );
+      // uint_fast8_t d = pick_rebuild_dim( T, DIM );
       delete_tree_recursive( T );
-      return node_box( alloc_leaf_node( In.cut( 0, 0 ), d ), get_empty_box() );
+      return node_box( alloc_leaf_node( In.cut( 0, 0 ) ), get_empty_box() );
     }
     T->size = 0;  //* lazy mark
     return node_box( T, get_empty_box() );

@@ -13,7 +13,7 @@ In memory of solved bugs.
 - `RE`: Retag changes the defaut mapping of bucket.
 - `RE`: Access previously deleted pointer
 - `WA`: Directly use the inserted points after insertion
-
+- `RE`: Update node doesn't update parent
 
 
 
