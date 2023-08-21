@@ -288,7 +288,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   aveDeep = 0.0;
   traverseParallelTree<tree>( KDParallelRoot, 1 );
   LOG << aveDeep / ( n / LEAVE_WRAP ) << " " << parlay::reduce( visNum.cut( 0, n ) )
-      << std::flush;
+      << " " << std::flush;
 
   return;
 }
@@ -307,11 +307,17 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
-        parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+        // parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+        //   box queryBox = pkd.get_box(
+        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
+        //       );
+        //   kdknn[i] = pkd.range_count( queryBox );
+        // } );
+        for ( size_t i = 0; i < queryNum; i++ ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
           kdknn[i] = pkd.range_count( queryBox );
-        } );
+        }
       },
       [&]() {} );
 
@@ -345,6 +351,5 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
       [&]() {} );
 
   LOG << aveQuery << " " << std::flush;
-  LOG << "end" << ENDL;
   return;
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("test")
+Solvers=("cgal" "test")
 # Node=(100000000)
 Node=(10000000 50000000 100000000 500000000)
 declare -A datas
@@ -12,39 +12,18 @@ dim=3
 k=100
 onecore=0
 insNum=2
+queryType=7 # 001 011 111
 
 resFile=""
 
 for solver in ${Solvers[@]}; do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        if [[ ${tag} == 0 ]]; then
-            continue
-            resFile="res_serial.out"
-        else
-            if [[ ${onecore} == 0 ]]; then
-                resFile="res_parallel.out"
-            else
-                resFile="res_parallel_one_core.out"
-            fi
-        fi
+        resFile="res.out"
     elif [[ ${solver} == "cgal" ]]; then
-        if [[ ${tag} == 0 ]]; then
-            continue
-            resFile="cgal_res_serial.out"
-        else
-            resFile="cgal_res_parallel.out"
-        fi
+        resFile="cgal.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        if [[ ${tag} == 0 ]]; then
-            continue
-        else
-            if [[ ${onecore} == 0 ]]; then
-                resFile="zdtree.out"
-            else
-                resFile="zdtree_one_core.out"
-            fi
-        fi
+        resFile="zdtree.out"
     fi
 
     for dataPath in "${!datas[@]}"; do
@@ -64,10 +43,10 @@ for solver in ${Solvers[@]}; do
 
             for ((i = 1; i <= ${insNum}; i++)); do
                 if [[ ${serial} == 1 ]]; then
-                    PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 >>${dest}
+                    PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 -q ${queryType} >>${dest}
                     continue
                 fi
-                PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} >>${dest}
+                PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
                 retval=$?
                 if [ ${retval} -eq 124 ]; then
