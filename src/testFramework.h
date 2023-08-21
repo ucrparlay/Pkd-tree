@@ -323,13 +323,15 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 template<typename point>
 void
 rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
-            Typename* kdknn, const int& rounds, const int& queryNum ) {
+            Typename* kdknn, const int& rounds, const int& queryNum,
+            parlay::sequence<point>& Out ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
   using box = typename tree::box;
 
   int n = wp.size();
+  size_t step = Out.size() / queryNum;
 
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
@@ -337,12 +339,12 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
         for ( int i = 0; i < queryNum; i++ ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_query( queryBox );
+          kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
         }
       },
       [&]() {} );
 
   LOG << aveQuery << " " << std::flush;
-
+  LOG << "end" << ENDL;
   return;
 }

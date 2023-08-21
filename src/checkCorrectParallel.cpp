@@ -33,8 +33,11 @@ bool insert;
 int queryType;
 size_t N;
 
+size_t maxReduceSize = 0;
+
 void
-runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum ) {
+runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum,
+         parlay::sequence<Point_d>& Out ) {
   //* cgal
   std::vector<Point_d> _points( N );
   parlay::parallel_for(
@@ -100,9 +103,20 @@ runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum ) {
           b( Dim, std::begin( wp[( i + n / 2 ) % n].pnt ),
              std::end( wp[( i + n / 2 ) % n].pnt ) );
       Fuzzy_iso_box fib( a, b, 0.0 );
-      // _ans.clear();
       auto it = tree.search( _ans.begin(), fib );
       cgknn[i] = std::distance( _ans.begin(), it );
+    } );
+  } else if ( queryType == 2 ) {  //* range query
+    size_t n = wp.size();
+    assert( maxReduceSize != 0 );
+    Out.resize( queryNum * maxReduceSize );
+    parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+      Point_d a( Dim, std::begin( wp[i].pnt ), std::end( wp[i].pnt ) ),
+          b( Dim, std::begin( wp[( i + n / 2 ) % n].pnt ),
+             std::end( wp[( i + n / 2 ) % n].pnt ) );
+      Fuzzy_iso_box fib( a, b, 0.0 );
+      auto it = tree.search( Out.begin() + i * maxReduceSize, fib );
+      cgknn[i] = std::distance( Out.begin() + i * maxReduceSize, it );
     } );
   }
 
@@ -114,7 +128,7 @@ runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum ) {
 }
 
 void
-runKDParallel( points& wp, const points& wi, Typename* kdknn, int queryNum ) {
+runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int queryNum ) {
   //* kd tree
   puts( "build kd tree" );
   using pkdtree = ParallelKDtree<point>;
@@ -148,6 +162,14 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, int queryNum ) {
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
   } else if ( queryType == 1 ) {
     rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
+  } else if ( queryType == 2 ) {
+    rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
+    maxReduceSize = parlay::reduce(
+        parlay::delayed_tabulate( queryNum, [&]( size_t i ) { return kdknn[i]; } ),
+        parlay::maximum<Typename>() );
+    LOG << maxReduceSize << ENDL;
+    p.resize( queryNum * maxReduceSize );
+    rangeQuery<point>( wp, pkd, kdknn, rounds, queryNum, p );
   }
   pkd.delete_tree();
   return;
@@ -199,7 +221,7 @@ main( int argc, char* argv[] ) {
   Typename* cgknn;
   Typename* kdknn;
   points wi;
-  int queryNum = 1000;
+  int queryNum = N / 10000;
 
   //* initialize insert points file
   if ( tag >= 1 && iFile != NULL ) {
@@ -251,14 +273,22 @@ main( int argc, char* argv[] ) {
     cgknn = new Typename[queryNum];
     kdknn = new Typename[queryNum];
   } else if ( queryType == 2 ) {
+    LOG << "---do range Query---" << ENDL;
+
+    cgknn = new Typename[queryNum];
+    kdknn = new Typename[queryNum];
   }
 
-  runCGAL( wp, wi, cgknn, queryNum );
+  points kdOut;
+  parlay::sequence<Point_d> cgOut;
 
-  runKDParallel( wp, wi, kdknn, queryNum );
+  runKDParallel( wp, wi, kdknn, kdOut, queryNum );
+
+  runCGAL( wp, wi, cgknn, queryNum, cgOut );
 
   //* verify
   if ( queryType == 0 ) {
+    LOG << "check NN" << ENDL;
     for ( size_t i = 0; i < N; i++ ) {
       if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
         puts( "" );
@@ -268,6 +298,7 @@ main( int argc, char* argv[] ) {
       }
     }
   } else if ( queryType == 1 ) {
+    LOG << "check range count" << ENDL;
     for ( size_t i = 0; i < queryNum; i++ ) {
       if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
         puts( "" );
@@ -276,6 +307,35 @@ main( int argc, char* argv[] ) {
         return 0;
       }
     }
+  } else if ( queryType == 2 ) {
+    LOG << "check range query" << ENDL;
+    assert( kdOut.size() == cgOut.size() );
+    auto kdans = parlay::tabulate( kdOut.size(), [&]( size_t i ) {
+      return Point_d( Dim, std::begin( kdOut[i].pnt ),
+                      ( std::begin( kdOut[i].pnt ) + Dim ) );
+    } );
+
+    parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+      if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
+        puts( "" );
+        puts( "count num wrong" );
+        std::cout << i << " " << cgknn[i] << " " << kdknn[i] << std::endl;
+        return 0;
+      }
+
+      size_t s = i * maxReduceSize;
+      std::sort( kdans.begin() + s, kdans.begin() + s + kdknn[i] );
+      std::sort( cgOut.begin() + s, cgOut.begin() + s + cgknn[i] );
+
+      for ( int j = 0; j < kdknn[i]; j++ ) {
+        if ( kdans[j + s] != cgOut[j + s] ) {
+          puts( "" );
+          puts( "point wrong" );
+          std::cout << j << " " << cgOut[j + s] << " " << kdans[j + s] << std::endl;
+          return 0;
+        }
+      }
+    } );
   }
 
   puts( "\nok" );

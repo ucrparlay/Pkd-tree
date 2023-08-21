@@ -54,7 +54,8 @@ class ParallelKDtree {
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
-  split_rule _split_rule = MAX_STRETCH_DIM;
+  split_rule _split_rule = ROTATE_DIM;
+  // split_rule _split_rule = MAX_STRETCH_DIM;
   box bbox;
 
  public:
@@ -496,8 +497,9 @@ class ParallelKDtree {
   static void
   range_count_recursive( node* T, const box& queryBox, const box& nodeBox );
 
+  // TODO add more Out type
   size_t
-  range_query( const box& queryBox );
+  range_query( const box& queryBox, slice Out );
 
   static void
   range_query_recursive( node* T, slice In, const box& queryBox, const box& nodeBox );

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 Nodes=(1000000 5000000 8000000 10000000 50000000)
-# Nodes=(500000000)
 
 Dims=(2 3 5 7 9)
 K=100
@@ -12,7 +11,7 @@ out="log.in"
 : >${dest}
 tag=2
 count=1
-queryTypes=(0 1)
+queryTypes=(0 1 2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
 Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
@@ -21,6 +20,9 @@ Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 for queryType in ${queryTypes[@]}; do
     for path in ${Paths[@]}; do
         for node in ${Nodes[@]}; do
+            if [ ${queryType} -ge 1 ] && [ ${node} -eq 50000000 ]; then
+                continue
+            fi
             dim=5
 
             files_path="${path}${node}_${dim}"

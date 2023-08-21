@@ -740,11 +740,16 @@ ParallelKDtree<point>::range_count_recursive( node* T, const box& queryBox,
 
 template<typename point>
 size_t
-ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx ) {
+ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx,
+                                    slice Out ) {
   range_count_recursive( this->root, bx, this->bbox );
   size_t n = this->root->aug;
-  points wx = points::uninitialized( n );
-  range_query_recursive( this->root, parlay::make_slice( wx ), bx, this->bbox );
+  if ( Out.size() < n ) {
+    throw( "too small output size for range query" );
+    abort();
+  }
+  assert( Out.size() >= n );
+  range_query_recursive( this->root, Out.cut( 0, n ), bx, this->bbox );
   return n;
 }
 
