@@ -91,10 +91,10 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   }
 
   kdknn = new Typename[wp.size()];
-  int queryNum = N / 10000;
+  int queryNum = 1000;
 
   if ( queryType & ( 1 << 0 ) ) {
-    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
+    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
   }
 
   if ( queryType & ( 1 << 1 ) ) {

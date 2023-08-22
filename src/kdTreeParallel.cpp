@@ -556,6 +556,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
     return node_box( T, get_box( TL->pts.cut( 0, TL->size ) ) );
   }
 
+  // if ( In.size() ) {
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
     auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {

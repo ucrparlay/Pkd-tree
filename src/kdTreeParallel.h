@@ -293,6 +293,7 @@ class ParallelKDtree {
 
   static inline bool
   legal_box( const box& bx ) {
+    if ( bx == get_empty_box() ) return true;
     for ( int i = 0; i < bx.first.get_dim(); i++ ) {
       if ( bx.first.pnt[i] > bx.second.pnt[i] ) {
         return false;
@@ -303,7 +304,11 @@ class ParallelKDtree {
 
   static inline bool
   within_box( const box& a, const box& b ) {
-    assert( legal_box( a ) && legal_box( b ) );
+    if ( !legal_box( a ) ) {
+      LOG << a.first << " " << a.second << ENDL;
+    }
+    assert( legal_box( a ) );
+    assert( legal_box( b ) );
     for ( int i = 0; i < a.first.get_dim(); i++ ) {
       if ( a.first.pnt[i] < b.first.pnt[i] || a.second.pnt[i] > b.second.pnt[i] ) {
         return false;

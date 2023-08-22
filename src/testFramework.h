@@ -212,7 +212,7 @@ template<typename point>
 void
 batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
              const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
-             const int& rounds ) {
+             const int& rounds, bool afterInsert = 1 ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -224,21 +224,38 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
   double aveDelete = time_loop(
       rounds, 1.0,
       [&]() {
-        parlay::copy( WP, wp ), parlay::copy( WI, wi );
-        pkd.build( parlay::make_slice( wp ), DIM );
-        pkd.batchInsert( parlay::make_slice( wi ), DIM );
-        parlay::copy( WP, wp ), parlay::copy( WI, wi );
+        if ( afterInsert ) {
+          parlay::copy( WP, wp ), parlay::copy( WI, wi );
+          pkd.build( parlay::make_slice( wp ), DIM );
+          pkd.batchInsert( parlay::make_slice( wi ), DIM );
+          parlay::copy( WP, wp ), parlay::copy( WI, wi );
+        } else {
+          wp.resize( WP.size() + WI.size() );
+          parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
+          parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
+          pkd.build( parlay::make_slice( wp ), DIM );
+          parlay::copy( WI, wi );
+        }
       },
       [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
       [&]() { pkd.delete_tree(); } );
 
   //* set status to be finish delete
 
-  parlay::copy( WP, wp ), parlay::copy( WI, wi );
-  pkd.build( parlay::make_slice( wp ), DIM );
-  pkd.batchInsert( parlay::make_slice( wi ), DIM );
-  parlay::copy( WP, wp ), parlay::copy( WI, wi );
-  pkd.batchDelete( parlay::make_slice( wi ), DIM );
+  if ( afterInsert ) {
+    parlay::copy( WP, wp ), parlay::copy( WI, wi );
+    pkd.build( parlay::make_slice( wp ), DIM );
+    pkd.batchInsert( parlay::make_slice( wi ), DIM );
+    parlay::copy( WP, wp ), parlay::copy( WI, wi );
+    pkd.batchDelete( parlay::make_slice( wi ), DIM );
+  } else {
+    wp.resize( WP.size() + WI.size() );
+    parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
+    parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
+    pkd.build( parlay::make_slice( wp ), DIM );
+    parlay::copy( WI, wi );
+    pkd.batchDelete( parlay::make_slice( wi ), DIM );
+  }
 
   std::cout << aveDelete << " " << std::flush;
 
@@ -248,7 +265,8 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 template<typename point>
 void
 queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds,
-          ParallelKDtree<point>& pkd, Typename* kdknn, const int& K ) {
+          ParallelKDtree<point>& pkd, Typename* kdknn, const int& K,
+          const bool checkCorrect ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -264,19 +282,19 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
   node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
+  parlay::copy( WP, wp );
 
   double aveQuery = time_loop(
       rounds, 1.0,
+      [&]() { parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } ); },
       [&]() {
-        parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
-        // points wp = points::uninitialized( n );
-      },
-      [&]() {
-        // pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
+        if ( !checkCorrect ) {
+          pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
+        }
         double aveVisNum = 0.0;
         parlay::parallel_for( 0, n, [&]( size_t i ) {
           size_t visNodeNum = 0;
-          pkd.k_nearest( KDParallelRoot, WP[i], Dim, bq[i], visNodeNum );
+          pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
           kdknn[i] = bq[i].top();
           visNum[i] = ( 1.0 * visNodeNum ) / n;
         } );
@@ -307,12 +325,6 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
-        // parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-        //   box queryBox = pkd.get_box(
-        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
-        //       );
-        //   kdknn[i] = pkd.range_count( queryBox );
-        // } );
         for ( size_t i = 0; i < queryNum; i++ ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );

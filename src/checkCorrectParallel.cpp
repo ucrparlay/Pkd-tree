@@ -66,13 +66,15 @@ runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum,
     assert( tree.size() == wp.size() );
     puts( "finish insert to cgal" );
   }
+  LOG << tree.root()->num_items() << ENDL;
 
   if ( tag >= 2 ) {
     assert( _points.size() == wi.size() );
     for ( auto p : _points ) {
       tree.remove( p );
     }
-    assert( tree.size() == wp.size() );
+
+    LOG << tree.root()->num_items() << ENDL;
     wp.pop_tail( wi.size() );
     puts( "finish delete from cgal" );
   }
@@ -136,6 +138,13 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int que
   pkdtree pkd;
   size_t n = wp.size();
 
+  // points np( wp );
+  // points ni( wi );
+  // np.append( ni );
+  // pkd.build( parlay::make_slice( np ), Dim );
+  // pkd.batchDelete( parlay::make_slice( ni ), Dim );
+  // LOG << pkd.get_root()->size << ENDL;
+
   buildTree<point>( Dim, wp, rounds, pkd );
   pkdtree::node* KDParallelRoot = pkd.get_root();
   pkd.validate( Dim );
@@ -159,7 +168,7 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int que
   assert( tag == 1 || wp.size() == N );
   LOG << "begin kd query" << ENDL;
   if ( queryType == 0 ) {
-    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K );
+    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, true );
   } else if ( queryType == 1 ) {
     rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
   } else if ( queryType == 2 ) {
