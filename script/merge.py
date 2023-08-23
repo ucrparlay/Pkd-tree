@@ -28,6 +28,8 @@ header = [
     "queryTime",
     "aveDeep",
     "aveQueryVisNodeNum",
+    "rangeCountTime",
+    "rangeQueryTime",
 ]
 
 
@@ -39,10 +41,24 @@ def combine(P, csvWriter, solver, benchName, node, dim):
     for line in lines:
         l = " ".join(line.split())
         l = l.split(" ")
-        while len(l) < 7:
+        while len(l) < 9:
             l.append("-1")
         csvWriter.writerow(
-            [solver, benchName, node, dim, l[0], l[1], l[2], l[3], l[4], l[5], l[6]]
+            [
+                solver,
+                benchName,
+                node,
+                dim,
+                l[0],
+                l[1],
+                l[2],
+                l[3],
+                l[4],
+                l[5],
+                l[6],
+                l[7],
+                l[8],
+            ]
         )
 
 
@@ -56,14 +72,8 @@ def csvSetup(solver):
 
 # * merge the result
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
-    solverName = ["test", "zdtree"]
-    resMap = {
-        "test": "res_parallel.out",
-        # "test_one_core": "res_parallel_one_core.out",
-        # "cgal": "cgal_res_parallel.out",
-        "zdtree": "zdtree.out"
-        # "zdtree_one_core": "zdtree_one_core.out",
-    }
+    solverName = ["test", "zdtree", "cgal"]
+    resMap = {"test": "res.out", "cgal": "cgal.out", "zdtree": "zdtree.out"}
 
     csvWriter = csvSetup("result")
 

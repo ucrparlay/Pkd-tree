@@ -80,7 +80,7 @@ class ParallelKDtree {
   static constexpr uint_fast32_t LOG2_BASE = 10;
   static constexpr uint_fast32_t BLOCK_SIZE = 1 << LOG2_BASE;
   //@ reconstruct ratio
-  static constexpr uint_fast8_t INBALANCE_RATIO = 20;
+  static constexpr uint_fast8_t INBALANCE_RATIO = 30;
 
  public:
   struct pointLess {

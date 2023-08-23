@@ -59,7 +59,16 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   }
 
   tree pkd;
+
   points wi;
+  if ( tag >= 1 ) {
+    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+    if ( nd != Dim ) {
+      puts( "read inserted points dimension wrong" );
+      abort();
+    }
+  }
+
   Typename* kdknn;
 
   //* begin test
@@ -67,11 +76,6 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   //* batch insert
   if ( tag >= 1 ) {
-    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-    if ( nd != Dim ) {
-      puts( "read inserted points dimension wrong" );
-      abort();
-    }
 
     batchInsert<point>( pkd, wp, wi, Dim, rounds );
 
