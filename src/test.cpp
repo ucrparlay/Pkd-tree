@@ -69,6 +69,11 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
   }
 
+  wp = parlay::unique( parlay::sort( wp ),
+                       [&]( const point& a, const point& b ) { return a == b; } );
+  wi = parlay::unique( parlay::sort( wi ),
+                       [&]( const point& a, const point& b ) { return a == b; } );
+
   Typename* kdknn;
 
   //* begin test
@@ -94,14 +99,17 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     std::cout << "-1 " << std::flush;
   }
 
-  kdknn = new Typename[wp.size()];
   int queryNum = 1000;
 
   if ( queryType & ( 1 << 0 ) ) {
+    kdknn = new Typename[wp.size()];
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
+  } else {
+    std::cout << "-1 -1 -1 " << std::flush;
   }
 
   if ( queryType & ( 1 << 1 ) ) {
+    kdknn = new Typename[queryNum];
     rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
   } else {
     std::cout << "-1 " << std::flush;
@@ -109,6 +117,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 2 ) ) {
     if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
+      kdknn = new Typename[queryNum];
+
       parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
         box queryBox = pkd.get_box( box( wp[i], wp[i] ),
                                     box( wp[( i + wp.size() / 2 ) % wp.size()],

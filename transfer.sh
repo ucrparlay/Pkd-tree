@@ -29,5 +29,5 @@ else
         srcDisk="data9"
         destDisk="ssd0"
     fi
-    scp -r "zmen002@${src}.cs.ucr.edu:/${srcDisk}/zmen002/kdtree/${name}" "zmen002@${dest}.cs.ucr.edu:/${destDisk}/zmen002/kdtree/"
+    scp -r "zmen002@${src}.cs.ucr.edu:/${srcDisk}/zmen002/kdtree/${name}" "zmen002@${dest}.cs.ucr.edu:/${destDisk}/zmen002/kdtree/${name}"
 fi

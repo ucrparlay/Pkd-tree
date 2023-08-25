@@ -1,13 +1,13 @@
 #!/bin/bash
 
-Solvers=("test")
+Solvers=("zdtree" "cpam" "test" "cgal")
 Node=(10000000 50000000 100000000 500000000)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
-dim=3
+dim=2
 k=100
 onecore=0
 insNum=2
@@ -16,6 +16,8 @@ queryType=7 # 001 011 111
 resFile=""
 
 for solver in ${Solvers[@]}; do
+    exe="../build/${solver}"
+
     #* decide output file
     if [[ ${solver} == "test" ]]; then
         resFile="res.out"
@@ -23,6 +25,10 @@ for solver in ${Solvers[@]}; do
         resFile="cgal.out"
     elif [[ ${solver} == "zdtree" ]]; then
         resFile="zdtree.out"
+        exe="/home/zmen002/pbbsbench_x/build/zdtree"
+    elif [[ ${solver} == "cpam" ]]; then
+        resFile="cpam.out"
+        exe="/home/zmen002/CPAM_x/build/cpam_query"
     fi
 
     for dataPath in "${!datas[@]}"; do
@@ -33,12 +39,6 @@ for solver in ${Solvers[@]}; do
             dest="${log_path}/${resFile}"
             : >${dest}
             echo ">>>${dest}"
-
-            exe="../build/${solver}"
-            if [[ ${solver} == "zdtree" ]]; then
-                export LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
-                exe="/home/zmen002/pbbsbench_x/benchmarks/nearestNeighbors/octTree/neighbors"
-            fi
 
             for ((i = 1; i <= ${insNum}; i++)); do
                 if [[ ${serial} == 1 ]]; then

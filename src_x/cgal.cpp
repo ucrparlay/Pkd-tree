@@ -42,6 +42,22 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
   using points = parlay::sequence<point>;
   parlay::internal::timer timer;
+
+  points wi;
+  if ( tag >= 1 ) {
+    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+    if ( nd != Dim ) {
+      puts( "read inserted points dimension wrong" );
+      abort();
+    }
+  }
+
+  wp = parlay::unique( parlay::sort( wp ),
+                       [&]( const point& a, const point& b ) { return a == b; } );
+  wi = parlay::unique( parlay::sort( wi ),
+                       [&]( const point& a, const point& b ) { return a == b; } );
+  N = wp.size();
+
   //* cgal
   std::vector<Point_d> _points( N );
   parlay::parallel_for(
@@ -60,14 +76,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
   std::cout << timer.total_time() << " " << std::flush;
 
-  points wi;
-
   if ( tag >= 1 ) {
-    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-    if ( nd != Dim ) {
-      puts( "read inserted points dimension wrong" );
-      abort();
-    }
     _points.resize( wi.size() );
     parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
       _points[j] =

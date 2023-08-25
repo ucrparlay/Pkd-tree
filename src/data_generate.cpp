@@ -14,7 +14,7 @@ long long Dim = 5;
 long long numFile = 3;
 
 // std::string path = "../benchmark/craft_var_node_integer";
-std::string path = "/ssd0/zmen002/kdtree/uniform_bigint";
+std::string path = "/data9/zmen002/kdtree/uniform";
 
 inline std::string
 toString( const long long& a ) {
@@ -33,7 +33,8 @@ generatePoints( std::ofstream& f ) {
   std::uniform_int_distribution<int> distrib( 1, box_size );
 
   parlay::random_generator gen( distrib( gen_mt ) );
-  std::uniform_int_distribution<int> dis( -box_size, box_size );
+  // std::uniform_int_distribution<int> dis( -box_size, box_size );
+  std::uniform_int_distribution<int> dis( 0, box_size );
 
   // generate n random points in a cube
   parlay::parallel_for(
