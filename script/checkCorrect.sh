@@ -11,7 +11,7 @@ out="log.in"
 : >${dest}
 tag=2
 count=1
-queryTypes=(0 1 2)
+queryTypes=(1 2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
 Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")

@@ -692,8 +692,8 @@ ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
 
   size_t l, r;
   parlay::par_do_if(
-      TI->size >= SERIAL_BUILD_CUTOFF,
-      [&] { l = range_count_value( TI->left, queryBox, lbox ); },
+      // TI->size >= SERIAL_BUILD_CUTOFF,
+      0, [&] { l = range_count_value( TI->left, queryBox, lbox ); },
       [&] { r = range_count_value( TI->right, queryBox, rbox ); } );
 
   return std::move( l + r );
@@ -743,41 +743,45 @@ template<typename point>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx,
                                     slice Out ) {
-  range_count_recursive( this->root, bx, this->bbox );
-  size_t n = this->root->aug;
+  // range_count_recursive( this->root, bx, this->bbox );
+  // size_t n = this->root->aug;
+
+  size_t n = range_count_value( this->root, bx, this->bbox );
   if ( Out.size() < n ) {
     throw( "too small output size for range query" );
     abort();
   }
   assert( Out.size() >= n );
-  range_query_recursive( this->root, Out.cut( 0, n ), bx, this->bbox );
+  size_t s = 0;
+  range_query_recursive( this->root, Out.cut( 0, n ), s, bx, this->bbox );
   return n;
 }
 
 template<typename point>
 void
-ParallelKDtree<point>::range_query_recursive( node* T, slice Out, const box& queryBox,
-                                              const box& nodeBox ) {
+ParallelKDtree<point>::range_query_recursive( node* T, slice Out, size_t& s,
+                                              const box& queryBox, const box& nodeBox ) {
   if ( !intersect_box( nodeBox, queryBox ) ) {
     return;
   }
 
   if ( within_box( nodeBox, queryBox ) ) {
-    assert( T->size == Out.size() );
-    flatten( T, Out );
+    // assert( T->size == Out.size() );
+    // flatten( T, Out );
+    flatten( T, Out.cut( s, s + T->size ) );
+    s += T->size;
     return;
   }
 
   if ( T->is_leaf ) {
-    assert( Out.size() == T->aug );
-    size_t cnt = 0;
+    // size_t cnt = 0;
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
       if ( within_box( TL->pts[i], queryBox ) ) {
-        Out[cnt++] = TL->pts[i];
+        // Out[cnt++] = TL->pts[i];
+        Out[s++] = TL->pts[i];
       }
     }
-    assert( cnt == T->aug );
     return;
   }
 
@@ -786,17 +790,12 @@ ParallelKDtree<point>::range_query_recursive( node* T, slice Out, const box& que
   lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
   rbox.first.pnt[TI->split.second] = TI->split.first;
 
-  assert( TI->left->aug + TI->right->aug == Out.size() );
+  // assert( TI->left->aug + TI->right->aug == Out.size() );
 
   parlay::par_do_if(
-      TI->size >= SERIAL_BUILD_CUTOFF,
-      [&] {
-        range_query_recursive( TI->left, Out.cut( 0, TI->left->aug ), queryBox, lbox );
-      },
-      [&] {
-        range_query_recursive( TI->right, Out.cut( TI->left->aug, Out.size() ), queryBox,
-                               rbox );
-      } );
+      // TI->size >= SERIAL_BUILD_CUTOFF,
+      0, [&] { range_query_recursive( TI->left, Out, s, queryBox, lbox ); },
+      [&] { range_query_recursive( TI->right, Out, s, queryBox, rbox ); } );
 
   return;
 }
