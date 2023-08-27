@@ -325,11 +325,17 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
-        for ( size_t i = 0; i < queryNum; i++ ) {
+        parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
           kdknn[i] = pkd.range_count( queryBox );
-        }
+        } );
+        // for ( size_t i = 0; i < queryNum; i++ ) {
+        //   box queryBox = pkd.get_box(
+        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
+        //       );
+        //   kdknn[i] = pkd.range_count( queryBox );
+        // }
       },
       [&]() {} );
 
@@ -354,11 +360,18 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
-        for ( int i = 0; i < queryNum; i++ ) {
+        parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
           kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
-        }
+        } );
+        // for ( int i = 0; i < queryNum; i++ ) {
+        //   box queryBox = pkd.get_box(
+        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
+        //       );
+        //   kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step )
+        //   );
+        // }
       },
       [&]() {} );
 

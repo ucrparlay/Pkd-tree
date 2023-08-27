@@ -507,7 +507,8 @@ class ParallelKDtree {
   range_query( const box& queryBox, slice Out );
 
   static void
-  range_query_recursive( node* T, slice In, const box& queryBox, const box& nodeBox );
+  range_query_recursive( node* T, slice In, size_t& s, const box& queryBox,
+                         const box& nodeBox );
 
   //@ validations
   static bool
