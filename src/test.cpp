@@ -69,11 +69,6 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
   }
 
-  wp = parlay::unique( parlay::sort( wp ),
-                       [&]( const point& a, const point& b ) { return a == b; } );
-  wi = parlay::unique( parlay::sort( wi ),
-                       [&]( const point& a, const point& b ) { return a == b; } );
-
   Typename* kdknn;
 
   //* begin test

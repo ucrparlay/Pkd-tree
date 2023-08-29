@@ -9,12 +9,13 @@ resFile="Correct.out"
 dest="logger.in"
 out="log.in"
 : >${dest}
-tag=2
+tag=1
 count=1
+dim=2
 queryTypes=(1 2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
-Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/ss_varden/")
 
 #* check node
 for queryType in ${queryTypes[@]}; do
@@ -23,7 +24,6 @@ for queryType in ${queryTypes[@]}; do
             if [ ${queryType} -ge 1 ] && [ ${node} -gt 8000000 ]; then
                 continue
             fi
-            dim=5
 
             files_path="${path}${node}_${dim}"
             echo $files_path
@@ -40,34 +40,6 @@ for queryType in ${queryTypes[@]}; do
                 count=$((count + 1))
             done
 
-        done
-    done
-done
-echo "finish node test"
-echo "well done"
-exit
-
-#* check dim
-for node in ${Nodes[@]}; do
-    if [ ${node} -ne 5000000 ]; then
-        continue
-    fi
-
-    path="../benchmark/craft_var_dim_integer/"
-    for dim in ${Dims[@]}; do
-        files_path="${path}${node}_${dim}"
-        echo "------->${files_path}"
-
-        for ((i = 1; i <= 3; i++)); do
-            nodeVar=$((${node} + ${i}))
-            ../build/${tester} -n ${nodeVar} -d ${dim} -t ${tag} -r 2 >>${dest}
-
-            nc=$(grep -i -o "ok" ${dest} | wc -l)
-            if [[ ${nc} -ne ${count} ]]; then
-                echo 'wrong'
-                exit
-            fi
-            count=$((count + 1))
         done
     done
 done

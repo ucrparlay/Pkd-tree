@@ -33,6 +33,8 @@ endif()
 
 if(DEBUG)
   set(CMAKE_BUILD_TYPE "Debug")
+
+  # add_compile_options(-g -mcx16 -march=native)
   add_compile_options(-O3 -mcx16 -march=native)
 elseif(MEMCHECK)
   set(CMAKE_BUILD_TYPE "Debug")
@@ -108,7 +110,6 @@ if(CGAL)
 
   # add_executable(checkCorrect ../src/checkCorrect.cpp)
   # target_link_libraries(checkCorrect PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
-
   add_executable(checkCorrectParallel ../src/checkCorrectParallel.cpp)
   target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 endif()

@@ -13,7 +13,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 5>;
+using point = PointType<coord, 2>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -180,6 +180,9 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int que
     p.resize( queryNum * maxReduceSize );
     rangeQuery<point>( wp, pkd, kdknn, rounds, queryNum, p );
   }
+
+  if ( tag == 1 ) wp.pop_tail( wi.size() );
+  assert( wp.size() == N );
   pkd.delete_tree();
   return;
 }
@@ -236,7 +239,7 @@ main( int argc, char* argv[] ) {
   if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      id = ( id + 1 ) % 10;  //! MOD graph number used to test
+      // id = ( id + 1 ) % 10;  //! MOD graph number used to test
       if ( !id ) id++;
       int pos = std::string( iFile ).rfind( "/" ) + 1;
       insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
@@ -246,35 +249,36 @@ main( int argc, char* argv[] ) {
     std::cout << insertFile << ENDL;
   }
 
+  //* generate points
+  if ( tag >= 1 ) {
+    if ( iFile == NULL ) {
+      generate_random_points<point>( wi, 1000000, N / 2, Dim );
+      LOG << "insert " << N / 5 << " points" << ENDL;
+    } else {
+      auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
+      if ( nd != Dim || nn != N ) {
+        puts( "read inserted points dimension wrong" );
+        abort();
+      } else {
+        puts( "read inserted points from file" );
+      }
+    }
+  }
+
   //* set result array size
   if ( queryType == 0 ) {  //*NN
     LOG << "---do NN query---" << ENDL;
     if ( tag == 0 ) {
       cgknn = new Typename[N];
       kdknn = new Typename[N];
-    } else {
-      if ( iFile == NULL ) {
-        generate_random_points<point>( wi, 1000000, N / 2, Dim );
-        LOG << "insert " << N / 5 << " points" << ENDL;
-      } else {
-        auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-        if ( nd != Dim || nn != N ) {
-          puts( "read inserted points dimension wrong" );
-          abort();
-        } else {
-          puts( "read inserted points from file" );
-        }
-      }
-
-      if ( tag == 1 ) {
-        puts( "insert points from file" );
-        cgknn = new Typename[N + wi.size()];
-        kdknn = new Typename[N + wi.size()];
-      } else if ( tag == 2 ) {
-        puts( "insert then delete points from file" );
-        cgknn = new Typename[N];
-        kdknn = new Typename[N];
-      }
+    } else if ( tag == 1 ) {
+      puts( "insert points from file" );
+      cgknn = new Typename[N + wi.size()];
+      kdknn = new Typename[N + wi.size()];
+    } else if ( tag == 2 ) {
+      puts( "insert then delete points from file" );
+      cgknn = new Typename[N];
+      kdknn = new Typename[N];
     }
   } else if ( queryType == 1 ) {  //* range Count
     LOG << "---do range Count---" << ENDL;
@@ -325,6 +329,7 @@ main( int argc, char* argv[] ) {
     } );
 
     parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+      // for ( int i = 0; i < queryNum; i++ ) {
       if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
         puts( "" );
         puts( "count num wrong" );
@@ -344,6 +349,7 @@ main( int argc, char* argv[] ) {
           return 0;
         }
       }
+      // }
     } );
   }
 

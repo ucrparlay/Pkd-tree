@@ -170,9 +170,72 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
         In.begin(), In.begin() + n / 2, In.end(),
         [&]( const point& p1, const point& p2 ) { return p1.pnt[d] < p2.pnt[d]; } );
     splitter split = splitter( In[n / 2].pnt[d], d );
+
     auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
       return p.pnt[split.second] < split.first;
     } );
+
+    if ( pos == In.begin() ) {
+      // LOG << "sort right" << ENDL;
+      assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
+                                   [&]( const point& p ) {
+                                     return p.pnt[split.second] >= split.first;
+                                   } ) &&
+              std::ranges::all_of( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
+                return p.pnt[split.second] == split.first;
+              } ) );
+
+      pos = std::partition( In.begin() + n / 2, In.end(), [&]( const point& p ) {
+        return p.pnt[split.second] <= split.first;
+      } );
+      assert( pos - ( In.begin() + n / 2 ) > 0 );
+      points_iter diffEleIter;
+
+      if ( pos != In.end() ) {
+        //* need to change split
+        auto minEleIter = std::ranges::min_element(
+            pos, In.end(), [&]( const point& p1, const point& p2 ) {
+              return p1.pnt[split.second] < p2.pnt[split.second];
+            } );
+        assert( minEleIter != In.end() );
+        split.first = minEleIter->pnt[split.second];
+        assert( std::ranges::all_of( In.begin(), pos,
+                                     [&]( const point& p ) {
+                                       return p.pnt[split.second] < split.first;
+                                     } ) &&
+                std::ranges::all_of( pos, In.end(), [&]( const point& p ) {
+                  return p.pnt[split.second] >= split.first;
+                } ) );
+      } else if ( In.end() == ( diffEleIter = std::ranges::find_if_not(
+                                    In.begin(), In.end(), [&]( const point& p ) {
+                                      return p == In[n / 2];
+                                    } ) ) ) {
+        assert( pos == In.end() && diffEleIter == In.end() );
+        // LOG << "alloc dummy" << ENDL;
+        return alloc_dummy_leaf( In );
+      } else {  //* current dim d is same but other dims are not
+        if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
+          // LOG << "recalculate" << ENDL;
+          return build_recursive( In, Out, d, DIM, get_box( In ) );
+        } else if ( _split_rule == ROTATE_DIM ) {  //* switch to next dim
+          decltype( diffEleIter ) compIter =
+              diffEleIter == In.begin() ? In.begin() + n - 1 : In.begin();
+          assert( compIter != diffEleIter );
+          for ( int i = 0; i < DIM; i++ ) {
+            if ( diffEleIter->pnt[i] != compIter->pnt[i] ) {
+              d = i;
+              break;
+            }
+          }
+          return build_recursive( In, Out, d, DIM, bx );
+        }
+      }
+
+      assert( !( _split_rule == MAX_STRETCH_DIM &&
+                 std::ranges::all_of( In.begin(), In.end(), [&]( const point& p ) {
+                   return p == In[n / 2];
+                 } ) ) );
+    }
 
     box lbox( bx ), rbox( bx );
     lbox.second.pnt[d] = split.first;  //* loose
@@ -220,7 +283,7 @@ ParallelKDtree<point>::flatten( NODE<point>* T, slice Out ) {
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      Out[i] = TL->pts[i];
+      Out[i] = TL->pts[( !T->is_dummy ) * i];
     }
     return;
   }
@@ -242,7 +305,7 @@ ParallelKDtree<point>::flatten_and_delete( NODE<point>* T, slice Out ) {
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      Out[i] = TL->pts[i];
+      Out[i] = TL->pts[( !T->is_dummy ) * i];
     }
     free_leaf( T );
     return;
@@ -364,7 +427,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
-    if ( n + TL->size <= LEAVE_WRAP ) {
+    if ( !T->is_dummy && n + TL->size <= LEAVE_WRAP ) {
       assert( T->size == TL->size );
       for ( int i = 0; i < n; i++ ) {
         TL->pts[TL->size + i] = In[i];
@@ -374,8 +437,9 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
     } else {
       points wx = points::uninitialized( n + TL->size );
       points wo = points::uninitialized( n + TL->size );
+      assert( !T->is_dummy || T->size >= LEAVE_WRAP );
       for ( int i = 0; i < TL->size; i++ ) {
-        wx[i] = TL->pts[i];
+        wx[i] = TL->pts[( !T->is_dummy ) * i];
       }
       parlay::parallel_for(
           0, n, [&]( size_t i ) { wx[TL->size + i] = In[i]; }, BLOCK_SIZE );
@@ -478,6 +542,7 @@ void
 ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t& DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
+  box b = get_box( A );
   this->bbox = get_box( this->bbox, get_box( A ) );
   this->root = batchInsert_recusive( T, A, B.cut( 0, A.size() ), DIM );
   assert( this->root != NULL );
@@ -540,9 +605,19 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
     return node_box( T, get_empty_box() );
   }
 
-  if ( T->is_leaf ) {
+  if ( T->is_dummy ) {
+    assert( T->is_leaf );
+    assert( In.size() <= T->size );
     leaf* TL = static_cast<leaf*>( T );
+    T->size -= In.size();
+    return node_box( T, box( TL->pts[0], TL->pts[0] ) );
+  }
+
+  if ( T->is_leaf ) {
+    assert( !T->is_dummy );
     assert( T->size >= In.size() );
+
+    leaf* TL = static_cast<leaf*>( T );
     auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
     for ( int i = 0; i < In.size(); i++ ) {
       it = std::find( TL->pts.begin(), end, In[i] );
@@ -556,7 +631,6 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
     return node_box( T, get_box( TL->pts.cut( 0, TL->size ) ) );
   }
 
-  // if ( In.size() ) {
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
     auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
@@ -646,7 +720,7 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& D
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      bq.insert( std::move( ppDistanceSquared( q, TL->pts[i], DIM ) ) );
+      bq.insert( ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) );
     }
     return;
   }
@@ -678,7 +752,7 @@ ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
     size_t cnt = 0;
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      if ( within_box( TL->pts[i], queryBox ) ) {
+      if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
         cnt++;
       }
     }
@@ -717,7 +791,7 @@ ParallelKDtree<point>::range_count_recursive( node* T, const box& queryBox,
     T->aug = 0;
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      if ( within_box( TL->pts[i], queryBox ) ) {
+      if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
         T->aug++;
       }
     }
@@ -777,9 +851,9 @@ ParallelKDtree<point>::range_query_recursive( node* T, slice Out, size_t& s,
     // size_t cnt = 0;
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
-      if ( within_box( TL->pts[i], queryBox ) ) {
+      if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
         // Out[cnt++] = TL->pts[i];
-        Out[s++] = TL->pts[i];
+        Out[s++] = TL->pts[( !T->is_dummy ) * i];
       }
     }
     return;

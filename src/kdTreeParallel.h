@@ -10,6 +10,7 @@ class ParallelKDtree {
  public:
   using slice = parlay::slice<point*, point*>;
   using points = parlay::sequence<point>;
+  using points_iter = parlay::sequence<point>::iterator;
   using coords = typename point::coords;
   //@ take the value of a point in specific dimension
   using splitter = std::pair<coord, uint_fast8_t>;
@@ -19,6 +20,7 @@ class ParallelKDtree {
 
   struct node {
     bool is_leaf;
+    bool is_dummy;
     size_t size;
     size_t aug;
     node* parent;
@@ -26,11 +28,16 @@ class ParallelKDtree {
 
   struct leaf : node {
     points pts;
-    leaf( slice In ) : node{ true, static_cast<size_t>( In.size() ), 0, nullptr } {
+    leaf( slice In ) : node{ true, false, static_cast<size_t>( In.size() ), 0, nullptr } {
       pts = points::uninitialized( LEAVE_WRAP );
       for ( int i = 0; i < In.size(); i++ ) {
         pts[i] = In[i];
       }
+    }
+    leaf( slice In, bool _is_dummy ) :
+        node{ true, true, static_cast<size_t>( In.size() ), 0, nullptr } {
+      pts = points::uninitialized( 1 );
+      pts[0] = In[0];
     }
   };
 
@@ -39,7 +46,7 @@ class ParallelKDtree {
     node* right;
     splitter split;
     interior( node* _left, node* _right, splitter _split ) :
-        node{ false, _left->size + _right->size, 0, nullptr },
+        node{ false, false, _left->size + _right->size, 0, nullptr },
         left( _left ),
         right( _right ),
         split( _split ) {
@@ -265,6 +272,15 @@ class ParallelKDtree {
   alloc_leaf_node( slice In ) {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new ( o ) leaf( In );
+    assert( o->is_dummy == false );
+    return o;
+  }
+
+  static leaf*
+  alloc_dummy_leaf( slice In ) {
+    leaf* o = parlay::type_allocator<leaf>::alloc();
+    new ( o ) leaf( In, true );
+    assert( o->is_dummy == true );
     return o;
   }
 
@@ -518,7 +534,8 @@ class ParallelKDtree {
     points wx = points::uninitialized( T->size );
     flatten( T, parlay::make_slice( wx ) );
     auto b = get_box( parlay::make_slice( wx ) );
-    return within_box( get_box( parlay::make_slice( wx ) ), bx );
+    // LOG << b.first << b.second << ENDL;
+    return within_box( b, bx );
   }
 
   static size_t
