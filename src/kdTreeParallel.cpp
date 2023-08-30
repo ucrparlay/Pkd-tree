@@ -34,7 +34,7 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t
       ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
   assert( d >= 0 && d < DIM );
 
-  std::nth_element(
+  std::ranges::nth_element(
       In.begin(), In.begin() + n / 2, In.end(),
       [&]( const point& p1, const point& p2 ) { return p1.pnt[d] < p2.pnt[d]; } );
   pivots[idx] = splitter( In[n / 2].pnt[d], d );
@@ -166,16 +166,16 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
         ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
     assert( d >= 0 && d < DIM );
 
-    std::nth_element(
+    std::ranges::nth_element(
         In.begin(), In.begin() + n / 2, In.end(),
         [&]( const point& p1, const point& p2 ) { return p1.pnt[d] < p2.pnt[d]; } );
     splitter split = splitter( In[n / 2].pnt[d], d );
 
-    auto pos = std::partition( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
-      return p.pnt[split.second] < split.first;
-    } );
+    auto _2ndGroup = std::ranges::partition(
+        In.begin(), In.begin() + n / 2,
+        [&]( const point& p ) { return p.pnt[split.second] < split.first; } );
 
-    if ( pos == In.begin() ) {
+    if ( _2ndGroup.begin() == In.begin() ) {
       // LOG << "sort right" << ENDL;
       assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
                                    [&]( const point& p ) {
@@ -185,39 +185,37 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
                 return p.pnt[split.second] == split.first;
               } ) );
 
-      pos = std::partition( In.begin() + n / 2, In.end(), [&]( const point& p ) {
-        return p.pnt[split.second] <= split.first;
-      } );
-      assert( pos - ( In.begin() + n / 2 ) > 0 );
+      _2ndGroup = std::ranges::partition(
+          In.begin() + n / 2, In.end(),
+          [&]( const point& p ) { return p.pnt[split.second] == split.first; } );
+      assert( _2ndGroup.begin() - ( In.begin() + n / 2 ) > 0 );
       points_iter diffEleIter;
 
-      if ( pos != In.end() ) {
+      if ( _2ndGroup.begin() != In.end() ) {
         //* need to change split
-        auto minEleIter = std::ranges::min_element(
-            pos, In.end(), [&]( const point& p1, const point& p2 ) {
+        auto minEleIter =
+            std::ranges::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
               return p1.pnt[split.second] < p2.pnt[split.second];
             } );
         assert( minEleIter != In.end() );
         split.first = minEleIter->pnt[split.second];
-        assert( std::ranges::all_of( In.begin(), pos,
+        assert( std::ranges::all_of( In.begin(), _2ndGroup.begin(),
                                      [&]( const point& p ) {
                                        return p.pnt[split.second] < split.first;
                                      } ) &&
-                std::ranges::all_of( pos, In.end(), [&]( const point& p ) {
+                std::ranges::all_of( _2ndGroup, [&]( const point& p ) {
                   return p.pnt[split.second] >= split.first;
                 } ) );
       } else if ( In.end() == ( diffEleIter = std::ranges::find_if_not(
                                     In.begin(), In.end(), [&]( const point& p ) {
                                       return p == In[n / 2];
                                     } ) ) ) {
-        assert( pos == In.end() && diffEleIter == In.end() );
-        // LOG << "alloc dummy" << ENDL;
+        assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
         return alloc_dummy_leaf( In );
       } else {  //* current dim d is same but other dims are not
         if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
-          // LOG << "recalculate" << ENDL;
           return build_recursive( In, Out, d, DIM, get_box( In ) );
-        } else if ( _split_rule == ROTATE_DIM ) {  //* switch to next dim
+        } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
           decltype( diffEleIter ) compIter =
               diffEleIter == In.begin() ? In.begin() + n - 1 : In.begin();
           assert( compIter != diffEleIter );
@@ -243,10 +241,10 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
     d = ( d + 1 ) % DIM;
     node *L, *R;
-    L = build_recursive( In.cut( 0, pos - In.begin() ), Out.cut( 0, pos - In.begin() ), d,
-                         DIM, lbox );
-    R = build_recursive( In.cut( pos - In.begin(), n ), Out.cut( pos - In.begin(), n ), d,
-                         DIM, rbox );
+    L = build_recursive( In.cut( 0, _2ndGroup.begin() - In.begin() ),
+                         Out.cut( 0, _2ndGroup.begin() - In.begin() ), d, DIM, lbox );
+    R = build_recursive( In.cut( _2ndGroup.begin() - In.begin(), n ),
+                         Out.cut( _2ndGroup.begin() - In.begin(), n ), d, DIM, rbox );
     return alloc_interior_node( L, R, split );
   }
 
@@ -452,13 +450,12 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
 
   if ( n <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
-    auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
-      return p.pnt[TI->split.second] < TI->split.first;
-    } );
-    assert( pos - In.begin() == std::distance( In.begin(), pos ) );
+    auto _2ndGroup = std::ranges::partition(
+        In, [&]( const point& p ) { return p.pnt[TI->split.second] < TI->split.first; } );
 
     //* rebuild
-    if ( inbalance_node( TI->left->size + pos - In.begin(), TI->size + n ) ) {
+    if ( inbalance_node( TI->left->size + _2ndGroup.begin() - In.begin(),
+                         TI->size + n ) ) {
       points wx = points::uninitialized( T->size + In.size() );
       points wo = points::uninitialized( T->size + In.size() );
       // uint_fast8_t d = T->dim;
@@ -472,10 +469,10 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
     }
     //* continue
     node *L, *R;
-    L = batchInsert_recusive( TI->left, In.cut( 0, pos - In.begin() ),
-                              Out.cut( 0, pos - In.begin() ), DIM );
-    R = batchInsert_recusive( TI->right, In.cut( pos - In.begin(), n ),
-                              Out.cut( pos - In.begin(), n ), DIM );
+    L = batchInsert_recusive( TI->left, In.cut( 0, _2ndGroup.begin() - In.begin() ),
+                              Out.cut( 0, _2ndGroup.begin() - In.begin() ), DIM );
+    R = batchInsert_recusive( TI->right, In.cut( _2ndGroup.begin() - In.begin(), n ),
+                              Out.cut( _2ndGroup.begin() - In.begin(), n ), DIM );
     update_interior( T, L, R );
     assert( T->size == L->size + R->size && TI->split.second >= 0 &&
             TI->is_leaf == false );
@@ -620,9 +617,9 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
     leaf* TL = static_cast<leaf*>( T );
     auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
     for ( int i = 0; i < In.size(); i++ ) {
-      it = std::find( TL->pts.begin(), end, In[i] );
+      it = std::ranges::find( TL->pts.begin(), end, In[i] );
       assert( it != end );
-      std::swap( *it, *( --end ) );
+      std::iter_swap( it, --end );
     }
 
     assert( std::distance( TL->pts.begin(), end ) == TL->size - In.size() );
@@ -633,22 +630,22 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
-    auto pos = std::partition( In.begin(), In.end(), [&]( const point& p ) {
-      return p.pnt[TI->split.second] < TI->split.first;
-    } );
+    auto _2ndGroup = std::ranges::partition(
+        In, [&]( const point& p ) { return p.pnt[TI->split.second] < TI->split.first; } );
 
-    bool putTomb = hasTomb && ( inbalance_node( TI->left->size - ( pos - In.begin() ),
-                                                TI->size - In.size() ) ||
-                                TI->size - In.size() < THIN_LEAVE_WRAP );
+    bool putTomb =
+        hasTomb && ( inbalance_node( TI->left->size - ( _2ndGroup.begin() - In.begin() ),
+                                     TI->size - In.size() ) ||
+                     TI->size - In.size() < THIN_LEAVE_WRAP );
     hasTomb = putTomb ? false : hasTomb;
     assert( putTomb ? ( !hasTomb ) : true );
 
-    auto [L, Lbox] =
-        batchDelete_recursive( TI->left, In.cut( 0, pos - In.begin() ),
-                               Out.cut( 0, pos - In.begin() ), DIM, hasTomb );
-    auto [R, Rbox] =
-        batchDelete_recursive( TI->right, In.cut( pos - In.begin(), n ),
-                               Out.cut( pos - In.begin(), n ), DIM, hasTomb );
+    auto [L, Lbox] = batchDelete_recursive(
+        TI->left, In.cut( 0, _2ndGroup.begin() - In.begin() ),
+        Out.cut( 0, _2ndGroup.begin() - In.begin() ), DIM, hasTomb );
+    auto [R, Rbox] = batchDelete_recursive(
+        TI->right, In.cut( _2ndGroup.begin() - In.begin(), n ),
+        Out.cut( _2ndGroup.begin() - In.begin(), n ), DIM, hasTomb );
     update_interior( T, L, R );
     assert( T->size == L->size + R->size && TI->split.second >= 0 &&
             TI->is_leaf == false );

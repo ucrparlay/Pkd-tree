@@ -12,7 +12,7 @@ out="log.in"
 tag=1
 count=1
 dim=2
-queryTypes=(1 2)
+queryTypes=(0 1 2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
 Paths=("/ssd0/zmen002/kdtree/ss_varden/")

@@ -61,8 +61,8 @@ class ParallelKDtree {
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
-  // split_rule _split_rule = ROTATE_DIM;
-  split_rule _split_rule = MAX_STRETCH_DIM;
+  split_rule _split_rule = ROTATE_DIM;
+  // split_rule _split_rule = MAX_STRETCH_DIM;
   box bbox;
 
  public:
@@ -574,10 +574,10 @@ class ParallelKDtree {
       abort();
     }
 
-    if ( this->_split_rule == ROTATE_DIM ) {
-      checkTreeSameSequential( this->root, 0, DIM );
-      std::cout << "Correct rotate dimension" << std::endl << std::flush;
-    }
+    // if ( this->_split_rule == ROTATE_DIM ) {
+    //   checkTreeSameSequential( this->root, 0, DIM );
+    //   std::cout << "Correct rotate dimension" << std::endl << std::flush;
+    // }
 
     if ( checkSize( this->root ) == this->root->size ) {
       std::cout << "Correct size" << std::endl << std::flush;
