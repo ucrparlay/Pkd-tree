@@ -10,12 +10,12 @@
 #include "parlay/utilities.h"
 
 //*---------- point definition ------------------
-using coord = long;  // type of each coordinate
+using coord = double;  // type of each coordinate
+constexpr double eps = 1e-7;
 
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>
 struct PointType {
-  typedef T data_type;
   using coord = T;
   using coords = std::array<T, d>;
 
@@ -59,10 +59,35 @@ struct PointType {
     return std::move( pnt.size() );
   }
 
+  inline bool
+  Lt( const T& a, const T& b ) const {
+    if constexpr ( std::is_integral_v<T> )
+      return a < b;
+    else if ( std::is_floating_point_v<T> )
+      return a - b < -eps;
+  }
+
+  inline bool
+  Eq( const T& a, const T& b ) const {
+    if constexpr ( std::is_integral_v<T> )
+      return a == b;
+    else if ( std::is_floating_point_v<T> )
+      return std::abs( a - b ) < eps;
+  }
+
+  inline bool
+  Gt( const T& a, const T& b ) const {
+    if constexpr ( std::is_integral_v<T> )
+      return a > b;
+    else if ( std::is_floating_point_v<T> ) {
+      return a - b > eps;
+    }
+  }
+
   bool
   operator==( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
-      if ( pnt[i] != x.pnt[i] ) return false;
+      if ( !Eq( pnt[i], x.pnt[i] ) ) return false;
     }
     return true;
   }
@@ -70,9 +95,10 @@ struct PointType {
   bool
   operator<( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
-      if ( pnt[i] < x.pnt[i] )
-        return true;
-      else if ( pnt[i] > x.pnt[i] )
+      // if ( pnt[i] < x.pnt[i] )
+      if ( Lt( pnt[i], x.pnt[i] ) ) return true;
+      // else if ( pnt[i] > x.pnt[i] )
+      else if ( Gt( pnt[i], x.pnt[i] ) )
         return false;
       else
         continue;
@@ -94,53 +120,38 @@ struct PointType {
 };
 
 //*----------- double precision comparision ----------------
-constexpr double eps = 1e-7;
 
 template<typename T>
-inline bool
-Gt( const T& a, const T& b ) {
-  if constexpr ( std::is_integral_v<T> )
-    return a > b;
-  else if ( std::is_floating_point_v<T> ) {
+class Comparator {
+ public:
+  static inline bool
+  Gt( const T& a, const T& b ) {
     return a - b > eps;
   }
-}
 
-template<typename T>
-inline bool
-Lt( const T& a, const T& b ) {
-  if constexpr ( std::is_integral_v<T> )
-    return a < b;
-  else if ( std::is_floating_point_v<T> )
+  static inline bool
+  Lt( const T& a, const T& b ) {
     return a - b < -eps;
-}
+  }
 
-template<typename T>
-inline bool
-Eq( const T& a, const T& b ) {
-  if constexpr ( std::is_integral_v<T> )
-    return a == b;
-  else if ( std::is_floating_point_v<T> )
+  static inline bool
+  Eq( const T& a, const T& b ) {
     return std::abs( a - b ) < eps;
-}
+  }
 
-template<typename T>
-inline bool
-Geq( const T& a, const T& b ) {
-  if constexpr ( std::is_integral_v<T> )
-    return a >= b;
-  else if ( std::is_floating_point_v<T> )
+  static inline bool
+  Geq( const T& a, const T& b ) {
     return Gt( a, b ) || Eq( a, b );
-}
+  }
 
-template<typename T>
-inline bool
-Leq( const T& a, const T& b ) {
-  if constexpr ( std::is_integral_v<T> )
-    return a <= b;
-  else if ( std::is_floating_point_v<T> )
+  static inline bool
+  Leq( const T& a, const T& b ) {
     return Lt( a, b ) || Eq( a, b );
-}
+  }
+
+ private:
+  static constexpr double eps = 1e-7;
+};
 
 template<typename T>
 class kArrayQueue {
@@ -318,19 +329,21 @@ class kBoundedQueue {
     return m_data[0];
   }
 
+  static Comparator<T> Num;
+
   inline void
   insert( const T x ) {
     T* data1 = ( &m_data[0] - 1 );
     if ( full() ) {
-      if ( m_comp( x, top() ) ) {
+      if ( Num.Lt( x, top() ) ) {
         // insert x in the heap at the correct place,
         // going down in the tree.
         size_t j( 1 ), k( 2 );
         while ( k <= m_count ) {
           T* z = &( data1[k] );
-          if ( ( k < m_count ) && m_comp( *z, data1[k + 1] ) ) z = &( data1[++k] );
+          if ( ( k < m_count ) && Num.Lt( *z, data1[k + 1] ) ) z = &( data1[++k] );
 
-          if ( m_comp( *z, x ) ) break;
+          if ( Num.Lt( *z, x ) ) break;
           data1[j] = *z;
           j = k;
           k = j << 1;  // a son of j in the tree
@@ -343,7 +356,7 @@ class kBoundedQueue {
       while ( i >= 2 ) {
         j = i >> 1;  // father of i in the tree
         T& y = data1[j];
-        if ( m_comp( x, y ) ) break;
+        if ( Num.Lt( x, y ) ) break;
         data1[i] = y;
         i = j;
       }

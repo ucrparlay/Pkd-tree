@@ -1,44 +1,5 @@
 #include "testFramework.h"
 
-void
-testSerialKDtree( int Dim, int LEAVE_WRAP, Point<Typename>* kdPoint, size_t N, int K ) {
-  parlay::internal::timer timer;
-
-  KDtree<Typename> KD;
-
-  timer.start();
-  KDnode<Typename>* KDroot = KD.init( Dim, LEAVE_WRAP, kdPoint, N );
-  timer.stop();
-
-  std::cout << timer.total_time() << " " << std::flush;
-
-  //* start test
-  parlay::random_shuffle( parlay::make_slice( kdPoint, kdPoint + N ) );
-  Typename* kdknn = new Typename[N];
-
-  timer.reset();
-  timer.start();
-  double aveVisNum = 0.0;
-  for ( size_t i = 0; i < N; i++ ) {
-    size_t visNodeNum = 0;
-    parlay::sequence<coord> array_queue( K );
-    kBoundedQueue<coord> bq( array_queue.cut( 0, K ) );
-    KD.k_nearest( KDroot, &kdPoint[i], 0, bq, visNodeNum );
-    kdknn[i] = bq.top();
-    aveVisNum += ( 1.0 * visNodeNum ) / N;
-  }
-
-  timer.stop();
-  std::cout << timer.total_time() << " " << std::flush;
-
-  aveDeep = 0.0;
-  traverseSerialTree( KDroot, 1 );
-  std::cout << aveDeep / ( N / LEAVE_WRAP ) << " " << aveVisNum << std::endl
-            << std::flush;
-
-  return;
-}
-
 template<typename point>
 void
 testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
@@ -188,33 +149,33 @@ main( int argc, char* argv[] ) {
     // todo rewrite test serial code
     // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
   } else if ( Dim == 2 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 2> {
-      return PointType<long, 2>( wp[i].pnt.begin() );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 2> {
+      return PointType<coord, 2>( wp[i].pnt.begin() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<long, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType );
+    testParallelKDtree<PointType<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
   } else if ( Dim == 3 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 3> {
-      return PointType<long, 3>( wp[i].pnt.begin() );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 3> {
+      return PointType<coord, 3>( wp[i].pnt.begin() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<long, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType );
+    testParallelKDtree<PointType<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
   } else if ( Dim == 5 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 5> {
-      return PointType<long, 5>( wp[i].pnt.begin() );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 5> {
+      return PointType<coord, 5>( wp[i].pnt.begin() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<long, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType );
+    testParallelKDtree<PointType<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
   } else if ( Dim == 7 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<long, 7> {
-      return PointType<long, 7>( wp[i].pnt.begin() );
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 7> {
+      return PointType<coord, 7>( wp[i].pnt.begin() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<long, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType );
+    testParallelKDtree<PointType<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
   }
 
   return 0;

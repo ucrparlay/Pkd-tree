@@ -14,27 +14,26 @@ long long Dim = 5;
 long long numFile = 3;
 
 // std::string path = "../benchmark/craft_var_node_integer";
-std::string path = "/data9/zmen002/kdtree/uniform";
+std::string path = "/ssd0/zmen002/kdtree/uniform_float";
 
 inline std::string
 toString( const long long& a ) {
   return std::to_string( a );
 }
 
-Point<long>* wp;
+Point<double>* wp;
 
 void
 generatePoints( std::ofstream& f ) {
-  wp = new Point<long>[N];
+  wp = new Point<double>[N];
   coord box_size = 10000000;
 
   std::random_device rd;        // a seed source for the random number engine
   std::mt19937 gen_mt( rd() );  // mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<int> distrib( 1, box_size );
+  std::uniform_real_distribution<double> distrib( 1, box_size );
 
   parlay::random_generator gen( distrib( gen_mt ) );
-  // std::uniform_int_distribution<int> dis( -box_size, box_size );
-  std::uniform_int_distribution<int> dis( 0, box_size );
+  std::uniform_real_distribution<double> dis( -box_size, box_size );
 
   // generate n random points in a cube
   parlay::parallel_for(

@@ -41,6 +41,7 @@ generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n, in
 template<typename point>
 std::pair<size_t, int>
 read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
+  using coord = typename point::coord;
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
   size_t N = atol( W[0] );
@@ -50,8 +51,12 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   auto pts = W.cut( 2, W.size() );
   assert( pts.size() % Dim == 0 );
   size_t n = pts.size() / Dim;
-  auto a =
-      parlay::tabulate( Dim * n, [&]( size_t i ) -> coord { return atol( pts[i] ); } );
+  auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {
+    if constexpr ( std::is_integral_v<coord> )
+      return atol( pts[i] );
+    else if ( std::is_floating_point_v<coord> )
+      return atof( pts[i] );
+  } );
   wp.resize( N );
   parlay::parallel_for( 0, n, [&]( size_t i ) {
     for ( int j = 0; j < Dim; j++ ) {
@@ -59,41 +64,6 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
     }
   } );
   return std::make_pair( N, Dim );
-}
-
-template<typename point>
-void
-unique_points( parlay::sequence<point>& wp, parlay::sequence<point>& wi,
-               const int& Dim ) {
-  using points = parlay::sequence<point>;
-  LOG << wp.size() << " " << wi.size() << ENDL;
-  parlay::sort_inplace( wp );
-  parlay::sort_inplace( wi );
-  wp = parlay::unique( wp, [&]( const point& a, const point& b ) {
-    for ( int i = 0; i < Dim; i++ ) {
-      if ( a.pnt[i] != b.pnt[i] ) return false;
-    }
-    return true;
-  } );
-
-  wi = parlay::unique( wi, [&]( const point& a, const point& b ) {
-    for ( int i = 0; i < Dim; i++ ) {
-      if ( a.pnt[i] != b.pnt[i] ) return false;
-    }
-    return true;
-  } );
-
-  points wo;
-  std::set_intersection( wp.begin(), wp.end(), wi.begin(), wi.end(), wo.begin() );
-  auto nwp = parlay::filter( wp, [&]( const point& p ) {
-    return std::find( wo.begin(), wo.end(), p ) != wo.end();
-  } );
-  auto nwi = parlay::filter( wi, [&]( const point& p ) {
-    return std::find( wo.begin(), wo.end(), p ) != wo.end();
-  } );
-  wp = nwp, wi = nwi;
-  LOG << wp.size() << " " << wi.size() << ENDL;
-  return;
 }
 
 void

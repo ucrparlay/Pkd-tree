@@ -54,7 +54,8 @@ endif()
 add_subdirectory(parlaylib)
 
 set(source_files
-  ${PROJECT_SOURCE_DIR}/src/kdTree.cpp
+
+  # ${PROJECT_SOURCE_DIR}/src/kdTree.cpp
   ${PROJECT_SOURCE_DIR}/src/kdTreeParallel.cpp
 )
 

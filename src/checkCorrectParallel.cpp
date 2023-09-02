@@ -13,7 +13,7 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 2>;
+using point = PointType<coord, 5>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -230,6 +230,8 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
+  LOG << wp[0] << wp[1] << ENDL;
+
   Typename* cgknn;
   Typename* kdknn;
   points wi;
@@ -239,7 +241,7 @@ main( int argc, char* argv[] ) {
   if ( tag >= 1 && iFile != NULL ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      // id = ( id + 1 ) % 10;  //! MOD graph number used to test
+      id = ( id + 1 ) % 10;  //! MOD graph number used to test
       if ( !id ) id++;
       int pos = std::string( iFile ).rfind( "/" ) + 1;
       insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
@@ -338,8 +340,8 @@ main( int argc, char* argv[] ) {
       }
 
       size_t s = i * maxReduceSize;
-      std::sort( kdans.begin() + s, kdans.begin() + s + kdknn[i] );
-      std::sort( cgOut.begin() + s, cgOut.begin() + s + cgknn[i] );
+      std::sort( kdans.begin() + s, kdans.begin() + s + size_t( kdknn[i] ) );
+      std::sort( cgOut.begin() + s, cgOut.begin() + s + size_t( cgknn[i] ) );
 
       for ( int j = 0; j < kdknn[i]; j++ ) {
         if ( kdans[j + s] != cgOut[j + s] ) {

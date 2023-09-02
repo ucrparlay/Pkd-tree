@@ -11,6 +11,7 @@ class ParallelKDtree {
   using slice = parlay::slice<point*, point*>;
   using points = parlay::sequence<point>;
   using points_iter = parlay::sequence<point>::iterator;
+  using coord = typename point::coord;
   using coords = typename point::coords;
   //@ take the value of a point in specific dimension
   using splitter = std::pair<coord, uint_fast8_t>;
@@ -61,21 +62,24 @@ class ParallelKDtree {
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
-  split_rule _split_rule = ROTATE_DIM;
-  // split_rule _split_rule = MAX_STRETCH_DIM;
+  // split_rule _split_rule = ROTATE_DIM;
+  split_rule _split_rule = MAX_STRETCH_DIM;
   box bbox;
+  static Comparator<coord> Num;
+  coords a;
 
  public:
   size_t rebuild_time = 0;
 
  public:
   //@ tag each node an bucket id
-  using node_tag = std::pair<node*, int_fast32_t>;
+  using node_tag = std::pair<node*, uint_fast8_t>;
   using node_tags = parlay::sequence<node_tag>;
   using tag_nodes = parlay::sequence<uint_fast32_t>;  //*index by tag
 
   //@ Const variables
   //@ uint32t handle up to 4e9 at least
+  //! bucket num should smaller than 1<<8 to handle type overflow
   static constexpr uint_fast32_t BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
   static constexpr uint_fast32_t PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1;
   static constexpr uint_fast32_t BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
@@ -273,7 +277,7 @@ class ParallelKDtree {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new ( o ) leaf( In );
     assert( o->is_dummy == false );
-    return o;
+    return std::move( o );
   }
 
   static leaf*
@@ -281,14 +285,14 @@ class ParallelKDtree {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new ( o ) leaf( In, true );
     assert( o->is_dummy == true );
-    return o;
+    return std::move( o );
   }
 
   static interior*
   alloc_interior_node( node* L, node* R, const splitter& split ) {
     interior* o = parlay::type_allocator<interior>::alloc();
     new ( o ) interior( L, R, split );
-    return o;
+    return std::move( o );
   }
 
   static void
@@ -304,14 +308,15 @@ class ParallelKDtree {
   static inline bool
   inbalance_node( const size_t& l, const size_t& n ) {
     if ( n == 0 ) return true;
-    return Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
+    return Num.Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
   }
 
   static inline bool
   legal_box( const box& bx ) {
     if ( bx == get_empty_box() ) return true;
     for ( int i = 0; i < bx.first.get_dim(); i++ ) {
-      if ( bx.first.pnt[i] > bx.second.pnt[i] ) {
+      // if ( bx.first.pnt[i] > bx.second.pnt[i] ) {
+      if ( Num.Gt( bx.first.pnt[i], bx.second.pnt[i] ) ) {
         return false;
       }
     }
@@ -326,7 +331,9 @@ class ParallelKDtree {
     assert( legal_box( a ) );
     assert( legal_box( b ) );
     for ( int i = 0; i < a.first.get_dim(); i++ ) {
-      if ( a.first.pnt[i] < b.first.pnt[i] || a.second.pnt[i] > b.second.pnt[i] ) {
+      // if ( a.first.pnt[i] < b.first.pnt[i] || a.second.pnt[i] > b.second.pnt[i] ) {
+      if ( Num.Lt( a.first.pnt[i], b.first.pnt[i] ) ||
+           Num.Gt( a.second.pnt[i], b.second.pnt[i] ) ) {
         return false;
       }
     }
@@ -337,7 +344,8 @@ class ParallelKDtree {
   within_box( const point& p, const box& bx ) {
     assert( legal_box( bx ) );
     for ( int i = 0; i < p.get_dim(); i++ ) {
-      if ( p.pnt[i] < bx.first.pnt[i] || p.pnt[i] > bx.second.pnt[i] ) {
+      // if ( p.pnt[i] < bx.first.pnt[i] || p.pnt[i] > bx.second.pnt[i] ) {
+      if ( Num.Lt( p.pnt[i], bx.first.pnt[i] ) || Num.Gt( p.pnt[i], bx.second.pnt[i] ) ) {
         return false;
       }
     }
@@ -348,7 +356,8 @@ class ParallelKDtree {
   intersect_box( const box& a, const box& b ) {
     assert( legal_box( a ) && legal_box( b ) );
     for ( int i = 0; i < a.first.get_dim(); i++ ) {
-      if ( a.first.pnt[i] > b.second.pnt[i] ) {
+      // if ( a.first.pnt[i] > b.second.pnt[i] ) {
+      if ( Num.Gt( a.first.pnt[i], b.second.pnt[i] ) ) {
         return false;
       }
     }
@@ -409,21 +418,12 @@ class ParallelKDtree {
     coord diff( bx.second.pnt[0] - bx.first.pnt[0] );
     assert( diff >= 0 );
     for ( int i = 1; i < DIM; i++ ) {
-      if ( bx.second.pnt[i] - bx.first.pnt[i] > diff ) {
+      if ( Num.Gt( bx.second.pnt[i] - bx.first.pnt[i], diff ) ) {
         diff = bx.second.pnt[i] - bx.first.pnt[i];
         d = i;
       }
     }
     return d;
-  }
-
-  static inline bool
-  point_within_box_d( const point& p, const box& b, const coord& d ) {
-    for ( int i = 0; i < p.get_dim(); i++ ) {
-      assert( p.pnt[i] - b.first.pnt[i] >= 0 && p.pnt[i] - b.second.pnt[i] <= 0 );
-      if ( p.pnt[i] - b.first.pnt[i] < d || b.second.pnt[i] - p.pnt[i] < d ) return false;
-    }
-    return true;
   }
 
   //@ Parallel KD tree cores
@@ -436,7 +436,7 @@ class ParallelKDtree {
   pick_pivots( slice In, const size_t& n, splitter_s& pivots, const uint_fast8_t& dim,
                const uint_fast8_t& DIM, box_s& boxs, const box& bx );
 
-  static inline uint_fast32_t
+  static inline uint_fast8_t
   find_bucket( const point& p, const splitter_s& pivots );
 
   static void
@@ -471,7 +471,7 @@ class ParallelKDtree {
   seieve_points( slice A, slice B, const size_t& n, const node_tags& tags,
                  parlay::sequence<uint_fast32_t>& sums, const int& tagsNum );
 
-  static inline uint_fast32_t
+  static inline uint_fast8_t
   retrive_tag( const point& p, const node_tags& tags );
 
   static node*

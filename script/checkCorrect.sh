@@ -2,20 +2,18 @@
 
 Nodes=(1000000 5000000 8000000 10000000 50000000)
 
-Dims=(2 3 5 7 9)
 K=100
 tester="checkCorrectParallel"
 resFile="Correct.out"
 dest="logger.in"
 out="log.in"
 : >${dest}
-tag=1
+tag=2
 count=1
-dim=2
+dim=5
 queryTypes=(0 1 2)
 
-# Paths=("/ssd0/zmen002/kdtree/uniform_bigint/")
-Paths=("/ssd0/zmen002/kdtree/ss_varden/")
+Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
 
 #* check node
 for queryType in ${queryTypes[@]}; do
