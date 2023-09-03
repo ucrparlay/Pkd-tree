@@ -713,14 +713,15 @@ ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t& DIM ) {
 template<typename point>
 void
 ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& DIM,
-                                  kBoundedQueue<coord>& bq, size_t& visNodeNum ) {
+                                  kBoundedQueue<point>& bq, size_t& visNodeNum ) {
   visNodeNum++;
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
       bq.insert(
-          std::move( ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
+          std::make_pair( TL->pts[( !T->is_dummy ) * i],
+                          ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
     }
     return;
   }
@@ -729,7 +730,7 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& D
   auto dx = [&]() { return TI->split.first - q.pnt[TI->split.second]; };
 
   k_nearest( Num.Gt( dx(), 0 ) ? TI->left : TI->right, q, DIM, bq, visNodeNum );
-  if ( Num.Gt( dx() * dx(), bq.top() ) && bq.full() ) {
+  if ( Num.Gt( dx() * dx(), bq.top().second ) && bq.full() ) {
     return;
   }
   k_nearest( Num.Gt( dx(), 0 ) ? TI->right : TI->left, q, DIM, bq, visNodeNum );

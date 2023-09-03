@@ -11,7 +11,7 @@ out="log.in"
 tag=2
 count=1
 dim=5
-queryTypes=(0 1 2)
+queryTypes=(0)
 
 Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
 
@@ -28,7 +28,7 @@ for queryType in ${queryTypes[@]}; do
 
             for file in "${files_path}/"*.in; do
                 echo "------->${file}"
-                ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 2 -q ${queryType} >>${dest}
+                ../build/${tester} -p ${file} -d ${dim} -k ${K} -t ${tag} -r 1 -q ${queryType} >>${dest}
 
                 nc=$(grep -i -o "ok" ${dest} | wc -l)
                 if [[ ${nc} -ne ${count} ]]; then

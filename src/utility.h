@@ -61,27 +61,17 @@ struct PointType {
 
   inline bool
   Lt( const T& a, const T& b ) const {
-    if constexpr ( std::is_integral_v<T> )
-      return a < b;
-    else if ( std::is_floating_point_v<T> )
-      return a - b < -eps;
+    return a - b < -eps;
   }
 
   inline bool
   Eq( const T& a, const T& b ) const {
-    if constexpr ( std::is_integral_v<T> )
-      return a == b;
-    else if ( std::is_floating_point_v<T> )
-      return std::abs( a - b ) < eps;
+    return std::abs( a - b ) < eps;
   }
 
   inline bool
   Gt( const T& a, const T& b ) const {
-    if constexpr ( std::is_integral_v<T> )
-      return a > b;
-    else if ( std::is_floating_point_v<T> ) {
-      return a - b > eps;
-    }
+    return a - b > eps;
   }
 
   bool
@@ -287,7 +277,19 @@ class ArrayQueue {
   int load;
 };
 
-template<typename T, typename Compare = std::less<T>>
+template<typename point>
+class NN_Comparator {
+  using coord = point::coord;
+  using T = std::pair<point, coord>;
+
+ public:
+  bool
+  operator()( const T& a, const T& b ) {
+    return a.second - b.second < -eps;
+  }
+};
+
+template<typename point, typename Compare = NN_Comparator<point>>
 class kBoundedQueue {
   /*
    * A priority queue with fixed maximum capacity.
@@ -300,6 +302,9 @@ class kBoundedQueue {
    */
   //* A simplified version of CGAL bounded_priority_queue
   //* https://github.com/CGAL/cgal/blob/v5.4/Spatial_searching/include/CGAL/Spatial_searching/internal/bounded_priority_queue.h
+
+  using coord = typename point::coord;
+  using T = std::pair<point, coord>;
 
  public:
   kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
@@ -329,21 +334,21 @@ class kBoundedQueue {
     return m_data[0];
   }
 
-  static Comparator<T> Num;
+  // static Comparator<T> Num;
 
   inline void
-  insert( const T x ) {
+  insert( const T& x ) {
     T* data1 = ( &m_data[0] - 1 );
     if ( full() ) {
-      if ( Num.Lt( x, top() ) ) {
+      if ( m_comp( x, top() ) ) {
         // insert x in the heap at the correct place,
         // going down in the tree.
         size_t j( 1 ), k( 2 );
         while ( k <= m_count ) {
           T* z = &( data1[k] );
-          if ( ( k < m_count ) && Num.Lt( *z, data1[k + 1] ) ) z = &( data1[++k] );
+          if ( ( k < m_count ) && m_comp( *z, data1[k + 1] ) ) z = &( data1[++k] );
 
-          if ( Num.Lt( *z, x ) ) break;
+          if ( m_comp( *z, x ) ) break;
           data1[j] = *z;
           j = k;
           k = j << 1;  // a son of j in the tree
@@ -356,7 +361,7 @@ class kBoundedQueue {
       while ( i >= 2 ) {
         j = i >> 1;  // father of i in the tree
         T& y = data1[j];
-        if ( Num.Lt( x, y ) ) break;
+        if ( m_comp( x, y ) ) break;
         data1[i] = y;
         i = j;
       }
@@ -367,6 +372,5 @@ class kBoundedQueue {
  public:
   size_t m_count = 0;
   parlay::slice<T*, T*> m_data;
-  // parlay::sequence<T> m_data;
   Compare m_comp;
 };

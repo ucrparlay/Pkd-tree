@@ -240,12 +240,14 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
+  using coord = typename point::coord;
+  using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
-  parlay::sequence<coord> array_queue( K * n );
-  parlay::sequence<kBoundedQueue<Typename>> bq =
-      parlay::sequence<kBoundedQueue<Typename>>::uninitialized( n );
+  parlay::sequence<nn_pair> array_queue( K * n );
+  parlay::sequence<kBoundedQueue<point>> bq =
+      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
   parlay::parallel_for(
       0, n, [&]( size_t i ) { bq[i].resize( array_queue.cut( i * K, i * K + K ) ); } );
   parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
@@ -265,7 +267,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
         parlay::parallel_for( 0, n, [&]( size_t i ) {
           size_t visNodeNum = 0;
           pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
-          kdknn[i] = bq[i].top();
+          kdknn[i] = bq[i].top().second;
           visNum[i] = ( 1.0 * visNodeNum ) / n;
         } );
       },

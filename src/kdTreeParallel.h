@@ -505,7 +505,7 @@ class ParallelKDtree {
   ppDistanceSquared( const point& p, const point& q, const uint_fast8_t& DIM );
 
   static void
-  k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<coord>& bq,
+  k_nearest( node* T, const point& q, const uint_fast8_t& DIM, kBoundedQueue<point>& bq,
              size_t& visNodeNum );
 
   size_t
