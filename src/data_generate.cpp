@@ -26,7 +26,7 @@ Point<double>* wp;
 void
 generatePoints( std::ofstream& f ) {
   wp = new Point<double>[N];
-  coord box_size = 10000000;
+  coord box_size = 1e9;
 
   std::random_device rd;        // a seed source for the random number engine
   std::mt19937 gen_mt( rd() );  // mersenne_twister_engine seeded with rd()
@@ -55,7 +55,7 @@ generatePoints( std::ofstream& f ) {
   }
 }
 
-using Typename = long;
+using Typename = coord;
 const Typename dataRange = 1e6;
 
 // std::string path = "../benchmark/craft_var_node_integer";
@@ -83,18 +83,18 @@ getIntRandom( const int& a, const int& b ) {
 void
 generatePointsSerial( std::ofstream& f ) {
   node = (kd_node_t*)malloc( N * sizeof( kd_node_t ) );
-  f.precision( 6 );
-  f << std::fixed << N << " " << Dim << std::endl;
+  f << N << " " << Dim << std::endl;
   for ( int i = 0; i < N; i++ ) {
     int idx = 0;
     Typename a;
     for ( int j = 0; j < Dim; j++ ) {
       if constexpr ( std::is_integral_v<Typename> )
         a = getIntRandom( -dataRange, dataRange );
-      else if ( std::is_floating_point_v<Typename> )
+      else if ( std::is_floating_point_v<Typename> ) {
         a = getRealRandom( -dataRange, dataRange );
+      }
       node[i].x[j] = a;
-      f << std::fixed << a << " ";
+      f << a << " ";
     }
     f << std::endl;
   }

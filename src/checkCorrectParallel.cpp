@@ -230,7 +230,7 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  LOG << wp[0] << wp[1] << ENDL;
+  LOG << std::setprecision( 13 ) << wp[0] << wp[1] << ENDL;
 
   Typename* cgknn;
   Typename* kdknn;
@@ -296,9 +296,7 @@ main( int argc, char* argv[] ) {
 
   points kdOut;
   parlay::sequence<Point_d> cgOut;
-
   runKDParallel( wp, wi, kdknn, kdOut, queryNum );
-
   runCGAL( wp, wi, cgknn, queryNum, cgOut );
 
   //* verify

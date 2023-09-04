@@ -163,6 +163,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   //* serial run nth element
   if ( n <= SERIAL_BUILD_CUTOFF ) {
+    // if ( n ) {
     uint_fast8_t d =
         ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
     assert( d >= 0 && d < DIM );
@@ -194,6 +195,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
       points_iter diffEleIter;
 
       if ( _2ndGroup.begin() != In.end() ) {
+        // LOG << "reset splitter" << ENDL;
         //* need to change split
         auto minEleIter =
             std::ranges::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
@@ -212,6 +214,8 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
                                     In.begin(), In.end(), [&]( const point& p ) {
                                       return p == In[n / 2];
                                     } ) ) ) {
+        // LOG << "alloc dummy" << ENDL;
+
         assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
         return alloc_dummy_leaf( In );
       } else {  //* current dim d is same but other dims are not
@@ -904,6 +908,7 @@ ParallelKDtree<point>::delete_tree_recursive( node* T ) {
 //@ Template declation
 template class Comparator<long>;
 template class Comparator<double>;
+template class Comparator<long double>;
 
 template class ParallelKDtree<PointType<long, 2>>;
 template class ParallelKDtree<PointType<long, 3>>;
@@ -918,3 +923,10 @@ template class ParallelKDtree<PointType<double, 5>>;
 template class ParallelKDtree<PointType<double, 7>>;
 template class ParallelKDtree<PointType<double, 9>>;
 template class ParallelKDtree<PointType<double, 10>>;
+
+template class ParallelKDtree<PointType<long double, 2>>;
+template class ParallelKDtree<PointType<long double, 3>>;
+template class ParallelKDtree<PointType<long double, 5>>;
+template class ParallelKDtree<PointType<long double, 7>>;
+template class ParallelKDtree<PointType<long double, 9>>;
+template class ParallelKDtree<PointType<long double, 10>>;

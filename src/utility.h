@@ -11,7 +11,8 @@
 
 //*---------- point definition ------------------
 using coord = double;  // type of each coordinate
-constexpr double eps = 1e-7;
+// constexpr double eps = 1e-9;
+constexpr coord eps = std::numeric_limits<coord>::epsilon();
 
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>
@@ -66,7 +67,7 @@ struct PointType {
 
   inline bool
   Eq( const T& a, const T& b ) const {
-    return std::abs( a - b ) < eps;
+    return std::abs( a - b ) <= eps;
   }
 
   inline bool
@@ -110,7 +111,8 @@ struct PointType {
 };
 
 //*----------- double precision comparision ----------------
-
+//* God made the integers, all else is the work of man.
+//* -- Leopold Kronecker
 template<typename T>
 class Comparator {
  public:
@@ -140,7 +142,8 @@ class Comparator {
   }
 
  private:
-  static constexpr double eps = 1e-7;
+  static constexpr T eps = std::numeric_limits<T>::epsilon();
+  // static constexpr double eps = 1e-9;
 };
 
 template<typename T>
