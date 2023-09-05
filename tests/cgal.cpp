@@ -1,6 +1,6 @@
-#include "../src/common/parse_command_line.h"
-#include "../src/kdTreeParallel.h"
-#include "../src/testFramework.h"
+#include "common/parse_command_line.h"
+#include "pdd/kdTreeParallel.h"
+#include "testFramework.h"
 
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/K_neighbor_search.h>

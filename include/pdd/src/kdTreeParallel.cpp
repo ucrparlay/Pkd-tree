@@ -1,4 +1,4 @@
-#include "kdTreeParallel.h"
+#include "../kdTreeParallel.h"
 
 //@ Find Bounding Box
 
@@ -481,7 +481,6 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
                          TI->size + n ) ) {
       points wx = points::uninitialized( T->size + In.size() );
       points wo = points::uninitialized( T->size + In.size() );
-      // uint_fast8_t d = T->dim;
       uint_fast8_t d = pick_rebuild_dim( T, DIM );
       flatten( T, wx.cut( 0, T->size ) );
       parlay::parallel_for(
@@ -535,7 +534,6 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
           points wo = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size +
                                              IT.sums_tree[IT.rev_tag[i]] );
           uint_fast8_t d = pick_rebuild_dim( IT.tags[IT.rev_tag[i]].first, DIM );
-          // uint_fast8_t d = IT.tags[IT.rev_tag[i]].first->dim;
           size_t head_size = IT.tags[IT.rev_tag[i]].first->size;
 
           flatten( IT.tags[IT.rev_tag[i]].first,

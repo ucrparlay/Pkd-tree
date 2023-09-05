@@ -1,7 +1,5 @@
 #pragma once
-
-#include "kdTree.h"
-#include "kdTreeParallel.h"
+#include "pdd/kdTreeParallel.h"
 
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -64,17 +62,6 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
     }
   } );
   return std::make_pair( N, Dim );
-}
-
-void
-traverseSerialTree( KDnode<Typename>* KDroot, int deep ) {
-  if ( KDroot->isLeaf ) {
-    aveDeep += deep;
-    return;
-  }
-  traverseSerialTree( KDroot->left, deep + 1 );
-  traverseSerialTree( KDroot->right, deep + 1 );
-  return;
 }
 
 template<typename tree>

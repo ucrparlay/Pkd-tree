@@ -54,31 +54,34 @@ endif()
 add_subdirectory(parlaylib)
 
 set(source_files
-
-  # ${PROJECT_SOURCE_DIR}/src/kdTree.cpp
-  ${PROJECT_SOURCE_DIR}/src/kdTreeParallel.cpp
+  ${PROJECT_SOURCE_DIR}/include/pdd/src/kdTreeParallel.cpp
 )
 
 # my kd
-# add_library(kdTree INTERFACE)
-# target_include_directories(kdTree INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-# target_link_libraries(kdTree INTERFACE kdTreeParallel)
 add_library(kdTreeParallel ${source_files})
 target_link_libraries(kdTreeParallel PUBLIC parlay)
+set_target_properties(kdTreeParallel PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1
+    PUBLIC_HEADER include/pdd/kdTreeParallel.h)
+target_include_directories(kdTreeParallel PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 
-add_executable(test ../src/test.cpp)
+include(GNUInstallDirs)
+install(TARGETS kdTreeParallel
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+add_executable(test ${PROJECT_SOURCE_DIR}/tests/test.cpp)
 target_link_libraries(test PUBLIC kdTreeParallel)
+target_include_directories(test PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 if(JEMA)
   target_link_libraries(test PUBLIC libjemalloc.so)
 endif()
 
-add_executable(data_generator ../src/data_generate.cpp)
+add_executable(data_generator ${PROJECT_SOURCE_DIR}/tests/data_generate.cpp)
 target_link_libraries(data_generator PUBLIC kdTreeParallel)
-
-# parlay::zd tree
-# add_executable(zdtree ../src_x/zdtree.cpp)
-# target_link_libraries(zdtree PUBLIC parlay)
+target_include_directories(data_generator PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 # CGAL
 if(CGAL)
@@ -105,13 +108,11 @@ if(CGAL)
   list(APPEND CGAL_3RD_PARTY_LIBRARIES ${TBB_LIBRARIES})
 
   # executables
-  add_executable(cgal "../src_x/cgal.cpp")
+  add_executable(cgal ${PROJECT_SOURCE_DIR}/tests/cgal.cpp)
   target_link_libraries(cgal PUBLIC CGAL::CGAL CGAL::TBB_support)
-  target_include_directories(cgal INTERFACE kdTreeParallel)
+  target_include_directories(cgal PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-  # add_executable(checkCorrect ../src/checkCorrect.cpp)
-  # target_link_libraries(checkCorrect PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
-  add_executable(checkCorrectParallel ../src/checkCorrectParallel.cpp)
+  add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
   target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 endif()
 

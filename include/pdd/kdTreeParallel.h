@@ -250,8 +250,6 @@ class ParallelKDtree {
     int tagsNum;
   };
 
-  // TODO: handle double precision
-
  public:
   inline void
   set_root( node* _root ) {
