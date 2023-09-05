@@ -11,8 +11,8 @@
 
 //*---------- point definition ------------------
 using coord = double;  // type of each coordinate
-constexpr double eps = 1e-9;
-// constexpr coord eps = std::numeric_limits<coord>::epsilon();
+// constexpr double eps = 1e-9;
+constexpr coord eps = std::numeric_limits<coord>::epsilon();
 
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>

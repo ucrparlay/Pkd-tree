@@ -456,6 +456,12 @@ class ParallelKDtree {
   build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,
                    box bx );
 
+  node*
+  rebuild_with_insert( node* T, slice In, const uint_fast8_t DIM );
+
+  node_box
+  rebuild_after_delete( node* T, const uint_fast8_t DIM );
+
   //@ batch insert
   void
   batchInsert( slice In, const uint_fast8_t& DIM );
