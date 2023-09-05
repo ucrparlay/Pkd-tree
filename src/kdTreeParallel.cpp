@@ -152,9 +152,8 @@ ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
 
 template<typename point>
 NODE<point>*
-ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
-                                        const uint_fast8_t& DIM, box bx ) {
-  assert( within_box( get_box( In ), bx ) );
+ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t dim,
+                                               const uint_fast8_t& DIM, box bx ) {
   size_t n = In.size();
 
   if ( n <= LEAVE_WRAP ) {
@@ -162,98 +161,110 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
   }
 
   //* serial run nth element
-  if ( n <= SERIAL_BUILD_CUTOFF ) {
-    // if ( n ) {
-    uint_fast8_t d =
-        ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
-    assert( d >= 0 && d < DIM );
+  uint_fast8_t d =
+      ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
+  assert( d >= 0 && d < DIM );
 
-    std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-                              [&]( const point& p1, const point& p2 ) {
-                                return Num.Lt( p1.pnt[d], p2.pnt[d] );
-                              } );
-    splitter split = splitter( In[n / 2].pnt[d], d );
+  std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+                            [&]( const point& p1, const point& p2 ) {
+                              return Num.Lt( p1.pnt[d], p2.pnt[d] );
+                            } );
+  splitter split = splitter( In[n / 2].pnt[d], d );
 
-    auto _2ndGroup = std::ranges::partition(
-        In.begin(), In.begin() + n / 2,
-        [&]( const point& p ) { return Num.Lt( p.pnt[split.second], split.first ); } );
+  auto _2ndGroup = std::ranges::partition(
+      In.begin(), In.begin() + n / 2,
+      [&]( const point& p ) { return Num.Lt( p.pnt[split.second], split.first ); } );
 
-    if ( _2ndGroup.begin() == In.begin() ) {
-      // LOG << "sort right" << ENDL;
-      assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
+  if ( _2ndGroup.begin() == In.begin() ) {
+    // LOG << "sort right" << ENDL;
+    assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
+                                 [&]( const point& p ) {
+                                   return Num.Geq( p.pnt[split.second], split.first );
+                                 } ) &&
+            std::ranges::all_of( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
+              return Num.Eq( p.pnt[split.second], split.first );
+            } ) );
+
+    _2ndGroup = std::ranges::partition(
+        In.begin() + n / 2, In.end(),
+        [&]( const point& p ) { return Num.Eq( p.pnt[split.second], split.first ); } );
+    assert( _2ndGroup.begin() - ( In.begin() + n / 2 ) > 0 );
+    points_iter diffEleIter;
+
+    if ( _2ndGroup.begin() != In.end() ) {
+      //* need to change split
+      auto minEleIter =
+          parlay::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
+            return Num.Lt( p1.pnt[split.second], p2.pnt[split.second] );
+          } );
+      assert( minEleIter != In.end() );
+
+      split.first = minEleIter->pnt[split.second];
+
+      assert( std::ranges::all_of( In.begin(), _2ndGroup.begin(),
                                    [&]( const point& p ) {
-                                     return Num.Geq( p.pnt[split.second], split.first );
+                                     return Num.Lt( p.pnt[split.second], split.first );
                                    } ) &&
-              std::ranges::all_of( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
-                return Num.Eq( p.pnt[split.second], split.first );
+              std::ranges::all_of( _2ndGroup, [&]( const point& p ) {
+                return Num.Geq( p.pnt[split.second], split.first );
               } ) );
-
-      _2ndGroup = std::ranges::partition(
-          In.begin() + n / 2, In.end(),
-          [&]( const point& p ) { return Num.Eq( p.pnt[split.second], split.first ); } );
-      assert( _2ndGroup.begin() - ( In.begin() + n / 2 ) > 0 );
-      points_iter diffEleIter;
-
-      if ( _2ndGroup.begin() != In.end() ) {
-        // LOG << "reset splitter" << ENDL;
-        //* need to change split
-        auto minEleIter =
-            std::ranges::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
-              return Num.Lt( p1.pnt[split.second], p2.pnt[split.second] );
-            } );
-        assert( minEleIter != In.end() );
-        split.first = minEleIter->pnt[split.second];
-        assert( std::ranges::all_of( In.begin(), _2ndGroup.begin(),
-                                     [&]( const point& p ) {
-                                       return Num.Lt( p.pnt[split.second], split.first );
-                                     } ) &&
-                std::ranges::all_of( _2ndGroup, [&]( const point& p ) {
-                  return Num.Geq( p.pnt[split.second], split.first );
-                } ) );
-      } else if ( In.end() == ( diffEleIter = std::ranges::find_if_not(
-                                    In.begin(), In.end(), [&]( const point& p ) {
-                                      return p == In[n / 2];
-                                    } ) ) ) {
-        // LOG << "alloc dummy" << ENDL;
-
-        assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
-        return alloc_dummy_leaf( In );
-      } else {  //* current dim d is same but other dims are not
-        if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
-          return build_recursive( In, Out, d, DIM, get_box( In ) );
-        } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
-          decltype( diffEleIter ) compIter =
-              diffEleIter == In.begin() ? In.begin() + n - 1 : In.begin();
-          assert( compIter != diffEleIter );
-          for ( int i = 0; i < DIM; i++ ) {
-            // if ( diffEleIter->pnt[i] != compIter->pnt[i] ) {
-            if ( !Num.Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
-              d = i;
-              break;
-            }
+    } else if ( In.end() ==
+                ( diffEleIter = parlay::find_if_not(
+                      In, [&]( const point& p ) { return p == In[n / 2]; } ) ) ) {
+      // LOG << "alloc dummy" << ENDL;
+      assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
+      return alloc_dummy_leaf( In );
+    } else {  //* current dim d is same but other dims are not
+      if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
+        return build_recursive( In, Out, d, DIM, get_box( In ) );
+      } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
+        points_iter compIter =
+            diffEleIter == In.begin() ? std::ranges::prev( In.end() ) : In.begin();
+        assert( compIter != diffEleIter );
+        for ( int i = 0; i < DIM; i++ ) {
+          // if ( diffEleIter->pnt[i] != compIter->pnt[i] ) {
+          if ( !Num.Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
+            d = i;
+            break;
           }
-          return build_recursive( In, Out, d, DIM, bx );
         }
+        return build_recursive( In, Out, d, DIM, bx );
       }
-
-      assert( !( _split_rule == MAX_STRETCH_DIM &&
-                 std::ranges::all_of( In.begin(), In.end(), [&]( const point& p ) {
-                   return p == In[n / 2];
-                 } ) ) );
     }
 
-    box lbox( bx ), rbox( bx );
-    lbox.second.pnt[d] = split.first;  //* loose
-    rbox.first.pnt[d] = split.first;
-
-    d = ( d + 1 ) % DIM;
-    node *L, *R;
-    L = build_recursive( In.cut( 0, _2ndGroup.begin() - In.begin() ),
-                         Out.cut( 0, _2ndGroup.begin() - In.begin() ), d, DIM, lbox );
-    R = build_recursive( In.cut( _2ndGroup.begin() - In.begin(), n ),
-                         Out.cut( _2ndGroup.begin() - In.begin(), n ), d, DIM, rbox );
-    return alloc_interior_node( L, R, split );
+    assert( !( _split_rule == MAX_STRETCH_DIM &&
+               std::ranges::all_of( In.begin(), In.end(), [&]( const point& p ) {
+                 return p == In[n / 2];
+               } ) ) );
   }
+
+  box lbox( bx ), rbox( bx );
+  lbox.second.pnt[d] = split.first;  //* loose
+  rbox.first.pnt[d] = split.first;
+
+  d = ( d + 1 ) % DIM;
+  node *L, *R;
+  parlay::par_do_if(
+      n > SERIAL_BUILD_CUTOFF,
+      [&] {
+        L = build_recursive( In.cut( 0, _2ndGroup.begin() - In.begin() ),
+                             Out.cut( 0, _2ndGroup.begin() - In.begin() ), d, DIM, lbox );
+      },
+      [&] {
+        R = build_recursive( In.cut( _2ndGroup.begin() - In.begin(), n ),
+                             Out.cut( _2ndGroup.begin() - In.begin(), n ), d, DIM, rbox );
+      } );
+  return alloc_interior_node( L, R, split );
+}
+
+template<typename point>
+NODE<point>*
+ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
+                                        const uint_fast8_t& DIM, const box bx ) {
+  assert( In.size() == 0 || within_box( get_box( In ), bx ) );
+  size_t n = In.size();
+
+  if ( n <= SERIAL_BUILD_CUTOFF ) return serial_build_recursive( In, Out, dim, DIM, bx );
 
   //* parallel partitons
   auto pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
@@ -262,8 +273,15 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   pick_pivots( In, n, pivots, dim, DIM, boxs, bx );
   partition( In, Out, n, pivots, sums );
+
+  //* if random sampling failed to split points, re-partitions using serail approach
+  if ( std::ranges::count( sums, 0 ) == BUCKET_NUM - 1 ) {
+    return serial_build_recursive( In, Out, dim, DIM, bx );
+  }
+
   auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
+
   parlay::parallel_for(
       0, BUCKET_NUM,
       [&]( size_t i ) {

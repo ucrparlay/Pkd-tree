@@ -11,8 +11,8 @@
 
 //*---------- point definition ------------------
 using coord = double;  // type of each coordinate
-// constexpr double eps = 1e-9;
-constexpr coord eps = std::numeric_limits<coord>::epsilon();
+constexpr double eps = 1e-9;
+// constexpr coord eps = std::numeric_limits<coord>::epsilon();
 
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>
@@ -128,7 +128,7 @@ class Comparator {
 
   static inline bool
   Eq( const T& a, const T& b ) {
-    return std::abs( a - b ) < eps;
+    return std::abs( a - b ) <= eps;
   }
 
   static inline bool
@@ -141,8 +141,8 @@ class Comparator {
     return Lt( a, b ) || Eq( a, b );
   }
 
- private:
-  static constexpr T eps = std::numeric_limits<T>::epsilon();
+  //  private:
+  //   static constexpr T eps = std::numeric_limits<T>::epsilon();
   // static constexpr double eps = 1e-9;
 };
 
@@ -337,7 +337,10 @@ class kBoundedQueue {
     return m_data[0];
   }
 
-  // static Comparator<T> Num;
+  inline parlay::slice<T*, T*>
+  data() const {
+    return m_data;
+  }
 
   inline void
   insert( const T& x ) {

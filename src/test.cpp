@@ -57,21 +57,21 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   int queryNum = 1000;
 
-  if ( queryType & ( 1 << 0 ) ) {
+  if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
   } else {
     std::cout << "-1 -1 -1 " << std::flush;
   }
 
-  if ( queryType & ( 1 << 1 ) ) {
+  if ( queryType & ( 1 << 1 ) ) {  //* range count
     kdknn = new Typename[queryNum];
     rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
   } else {
     std::cout << "-1 " << std::flush;
   }
 
-  if ( queryType & ( 1 << 2 ) ) {
+  if ( queryType & ( 1 << 2 ) ) {         //* range query
     if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
       kdknn = new Typename[queryNum];
 
@@ -90,6 +90,11 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     rangeQuery<point>( wp, pkd, kdknn, rounds, queryNum, Out );
   } else {
     std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 3 ) ) {
+    generate_knn<point>( Dim, wp, rounds, pkd, kdknn, K, false,
+                         "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
   }
 
   std::cout << std::endl;

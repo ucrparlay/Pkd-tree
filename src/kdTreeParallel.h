@@ -416,7 +416,7 @@ class ParallelKDtree {
   pick_max_stretch_dim( const box& bx, const uint_fast8_t& DIM ) {
     uint_fast8_t d( 0 );
     coord diff( bx.second.pnt[0] - bx.first.pnt[0] );
-    assert( diff >= 0 );
+    assert( Num.Geq( diff, 0 ) );
     for ( int i = 1; i < DIM; i++ ) {
       if ( Num.Gt( bx.second.pnt[i] - bx.first.pnt[i], diff ) ) {
         diff = bx.second.pnt[i] - bx.first.pnt[i];
@@ -449,6 +449,10 @@ class ParallelKDtree {
 
   void
   build( slice In, const uint_fast8_t& DIM );
+
+  node*
+  serial_build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,
+                          box bx );
 
   node*
   build_recursive( slice In, slice Out, uint_fast8_t dim, const uint_fast8_t& DIM,

@@ -245,11 +245,11 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
-  parlay::sequence<nn_pair> array_queue( K * n );
+  parlay::sequence<nn_pair> Out( K * n );
   parlay::sequence<kBoundedQueue<point>> bq =
       parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
   parlay::parallel_for(
-      0, n, [&]( size_t i ) { bq[i].resize( array_queue.cut( i * K, i * K + K ) ); } );
+      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
   parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
 
   node* KDParallelRoot = pkd.get_root();
@@ -348,5 +348,74 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
       [&]() {} );
 
   LOG << aveQuery << " " << std::flush;
+  return;
+}
+
+template<typename point>
+void
+generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
+              const int& rounds, ParallelKDtree<point>& pkd, Typename* kdknn,
+              const int& K, const bool checkCorrect, const char* outFile ) {
+  using tree = ParallelKDtree<point>;
+  using points = typename tree::points;
+  using node = typename tree::node;
+  using coord = typename point::coord;
+  using nn_pair = std::pair<point, coord>;
+  size_t n = WP.size();
+  int LEAVE_WRAP = 32;
+
+  parlay::sequence<nn_pair> Out( K * n );
+  parlay::sequence<kBoundedQueue<point>> bq =
+      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
+  parlay::parallel_for(
+      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
+
+  node* KDParallelRoot = pkd.get_root();
+  points wp = points::uninitialized( n );
+  parlay::copy( WP, wp );
+  parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
+
+  double aveVisNum = 0.0;
+  parlay::parallel_for( 0, n, [&]( size_t i ) {
+    size_t visNodeNum = 0;
+    pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+  } );
+
+  std::ofstream ofs( outFile );
+  if ( !ofs.is_open() ) {
+    throw( "file not open" );
+    abort();
+  }
+  size_t m = n * K;
+  ofs << "WeightedAdjacencyGraph" << '\n';
+  ofs << n << '\n';
+  ofs << m << '\n';
+  parlay::sequence<uint64_t> offset( n + 1 );
+  parlay::parallel_for( 0, n + 1, [&]( size_t i ) { offset[i] = i * K; } );
+  // parlay::parallel_for( 0, n, [&]( size_t i ) {
+  //   for ( size_t j = 0; j < K; j++ ) {
+  //     if ( Out[i * K + j].first == wp[i] ) {
+  //       printf( "%d, self-loop\n", i );
+  //       exit( 0 );
+  //     }
+  //   }
+  // } );
+  parlay::sequence<point> edge( m );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first; } );
+  parlay::sequence<double> weight( m );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { weight[i] = Out[i].second; } );
+  for ( size_t i = 0; i < n; i++ ) {
+    ofs << offset[i] << '\n';
+  }
+  for ( size_t i = 0; i < m; i++ ) {
+    for ( auto j : edge[i].pnt )
+      ofs << j << " ";
+    ofs << "\n";
+    // ofs << edge[i] << '\n';
+  }
+  for ( size_t i = 0; i < n; i++ ) {
+    ofs << weight[i] << '\n';
+  }
+  ofs.close();
   return;
 }
