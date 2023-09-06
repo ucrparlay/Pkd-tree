@@ -3,6 +3,8 @@
 #include <bits/stdc++.h>
 #include <unistd.h>
 
+#include "comparator.h"
+
 #include "parlay/alloc.h"
 #include "parlay/delayed.h"
 #include "parlay/primitives.h"
@@ -10,19 +12,18 @@
 #include "parlay/utilities.h"
 
 //*---------- point definition ------------------
-using coord = double;  // type of each coordinate
-// constexpr double eps = 1e-9;
-constexpr coord eps = std::numeric_limits<coord>::epsilon();
+using coord = long;  // type of each coordinate
 
 //! type with T could be really slow
 template<typename T, uint_fast8_t d>
 struct PointType {
   using coord = T;
   using coords = std::array<T, d>;
+  using Num = Num<coord>;
 
   PointType() {}
 
-  PointType( const T& val ) { pnt.fill( val ); }
+  PointType( const T val ) { pnt.fill( val ); }
 
   PointType( const coords& _pnt ) : pnt( _pnt ){};
 
@@ -60,25 +61,10 @@ struct PointType {
     return std::move( pnt.size() );
   }
 
-  inline bool
-  Lt( const T& a, const T& b ) const {
-    return a - b < -eps;
-  }
-
-  inline bool
-  Eq( const T& a, const T& b ) const {
-    return std::abs( a - b ) <= eps;
-  }
-
-  inline bool
-  Gt( const T& a, const T& b ) const {
-    return a - b > eps;
-  }
-
   bool
   operator==( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
-      if ( !Eq( pnt[i], x.pnt[i] ) ) return false;
+      if ( !Num::Eq( pnt[i], x.pnt[i] ) ) return false;
     }
     return true;
   }
@@ -86,10 +72,9 @@ struct PointType {
   bool
   operator<( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
-      // if ( pnt[i] < x.pnt[i] )
-      if ( Lt( pnt[i], x.pnt[i] ) ) return true;
-      // else if ( pnt[i] > x.pnt[i] )
-      else if ( Gt( pnt[i], x.pnt[i] ) )
+      if ( Num::Lt( pnt[i], x.pnt[i] ) )
+        return true;
+      else if ( Num::Gt( pnt[i], x.pnt[i] ) )
         return false;
       else
         continue;
@@ -108,42 +93,6 @@ struct PointType {
   }
 
   coords pnt;
-};
-
-//*----------- double precision comparision ----------------
-//* God made the integers, all else is the work of man.
-//* -- Leopold Kronecker
-template<typename T>
-class Comparator {
- public:
-  static inline bool
-  Gt( const T& a, const T& b ) {
-    return a - b > eps;
-  }
-
-  static inline bool
-  Lt( const T& a, const T& b ) {
-    return a - b < -eps;
-  }
-
-  static inline bool
-  Eq( const T& a, const T& b ) {
-    return std::abs( a - b ) <= eps;
-  }
-
-  static inline bool
-  Geq( const T& a, const T& b ) {
-    return Gt( a, b ) || Eq( a, b );
-  }
-
-  static inline bool
-  Leq( const T& a, const T& b ) {
-    return Lt( a, b ) || Eq( a, b );
-  }
-
-  //  private:
-  //   static constexpr T eps = std::numeric_limits<T>::epsilon();
-  // static constexpr double eps = 1e-9;
 };
 
 template<typename T>
@@ -284,11 +233,12 @@ template<typename point>
 class NN_Comparator {
   using coord = point::coord;
   using T = std::pair<point, coord>;
+  using Num = Num<coord>;
 
  public:
   bool
   operator()( const T& a, const T& b ) {
-    return a.second - b.second < -eps;
+    return Num::Lt( a.second, b.second );
   }
 };
 

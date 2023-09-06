@@ -6,7 +6,7 @@
 template<typename point>
 inline typename ParallelKDtree<point>::coord
 ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
-                                          const uint_fast8_t& DIM ) {
+                                          const uint_fast8_t DIM ) {
   coord r = 0;
   for ( int i = 0; i < DIM; i++ ) {
     r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
@@ -19,7 +19,7 @@ template<typename point>
 void
 ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t dim,
                                       int idx, int deep, int& bucket,
-                                      const uint_fast8_t& DIM, box_s& boxs,
+                                      const uint_fast8_t DIM, box_s& boxs,
                                       const box& bx ) {
   if ( deep > BUILD_DEPTH_ONCE ) {
     //! sometimes cut dimension can be -1
@@ -36,7 +36,7 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t
 
   std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                             [&]( const point& p1, const point& p2 ) {
-                              return Num.Lt( p1.pnt[d], p2.pnt[d] );
+                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
                             } );
   pivots[idx] = splitter( In[n / 2].pnt[d], d );
 
@@ -56,7 +56,7 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, uint_fast8_t
 template<typename point>
 void
 ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivots,
-                                    const uint_fast8_t& dim, const uint_fast8_t& DIM,
+                                    const uint_fast8_t dim, const uint_fast8_t DIM,
                                     box_s& boxs, const box& bx ) {
   size_t size = std::min( n, (size_t)32 * BUCKET_NUM );
   assert( size <= n );
@@ -76,7 +76,7 @@ ParallelKDtree<point>::find_bucket( const point& p, const splitter_s& pivots ) {
   uint_fast8_t k = 1;
   while ( k <= PIVOT_NUM ) {
     // k = p.pnt[pivots[k].second] < pivots[k].first ? k << 1 : k << 1 | 1;
-    k = Num.Lt( p.pnt[pivots[k].second], pivots[k].first ) ? k << 1 : k << 1 | 1;
+    k = Num::Lt( p.pnt[pivots[k].second], pivots[k].first ) ? k << 1 : k << 1 | 1;
   }
   assert( pivots[k].first == -1 );
   return pivots[k].second;
@@ -141,7 +141,7 @@ ParallelKDtree<point>::build_inner_tree( uint_fast16_t idx, splitter_s& pivots,
 //@ Parallel KD tree cores
 template<typename point>
 void
-ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
+ParallelKDtree<point>::build( slice A, const uint_fast8_t DIM ) {
   points B = points::uninitialized( A.size() );
   this->bbox = get_box( A );
   // LOG << bx.first << " " << bx.second << ENDL;
@@ -153,7 +153,7 @@ ParallelKDtree<point>::build( slice A, const uint_fast8_t& DIM ) {
 template<typename point>
 NODE<point>*
 ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t dim,
-                                               const uint_fast8_t& DIM, box bx ) {
+                                               const uint_fast8_t DIM, const box& bx ) {
   size_t n = In.size();
 
   if ( n <= LEAVE_WRAP ) {
@@ -167,35 +167,35 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t
 
   std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                             [&]( const point& p1, const point& p2 ) {
-                              return Num.Lt( p1.pnt[d], p2.pnt[d] );
+                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
                             } );
   splitter split = splitter( In[n / 2].pnt[d], d );
 
   auto _2ndGroup = std::ranges::partition(
       In.begin(), In.begin() + n / 2,
-      [&]( const point& p ) { return Num.Lt( p.pnt[split.second], split.first ); } );
+      [&]( const point& p ) { return Num::Lt( p.pnt[split.second], split.first ); } );
 
   if ( _2ndGroup.begin() == In.begin() ) {
     // LOG << "sort right" << ENDL;
     assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
                                  [&]( const point& p ) {
-                                   return Num.Geq( p.pnt[split.second], split.first );
+                                   return Num::Geq( p.pnt[split.second], split.first );
                                  } ) &&
             std::ranges::all_of( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
-              return Num.Eq( p.pnt[split.second], split.first );
+              return Num::Eq( p.pnt[split.second], split.first );
             } ) );
 
     _2ndGroup = std::ranges::partition(
         In.begin() + n / 2, In.end(),
-        [&]( const point& p ) { return Num.Eq( p.pnt[split.second], split.first ); } );
+        [&]( const point& p ) { return Num::Eq( p.pnt[split.second], split.first ); } );
     assert( _2ndGroup.begin() - ( In.begin() + n / 2 ) > 0 );
     points_iter diffEleIter;
 
     if ( _2ndGroup.begin() != In.end() ) {
       //* need to change split
       auto minEleIter =
-          parlay::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
-            return Num.Lt( p1.pnt[split.second], p2.pnt[split.second] );
+          std::ranges::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
+            return Num::Lt( p1.pnt[split.second], p2.pnt[split.second] );
           } );
       assert( minEleIter != In.end() );
 
@@ -203,13 +203,13 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t
 
       assert( std::ranges::all_of( In.begin(), _2ndGroup.begin(),
                                    [&]( const point& p ) {
-                                     return Num.Lt( p.pnt[split.second], split.first );
+                                     return Num::Lt( p.pnt[split.second], split.first );
                                    } ) &&
               std::ranges::all_of( _2ndGroup, [&]( const point& p ) {
-                return Num.Geq( p.pnt[split.second], split.first );
+                return Num::Geq( p.pnt[split.second], split.first );
               } ) );
     } else if ( In.end() ==
-                ( diffEleIter = parlay::find_if_not(
+                ( diffEleIter = std::ranges::find_if_not(
                       In, [&]( const point& p ) { return p == In[n / 2]; } ) ) ) {
       // LOG << "alloc dummy" << ENDL;
       assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
@@ -223,7 +223,7 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t
         assert( compIter != diffEleIter );
         for ( int i = 0; i < DIM; i++ ) {
           // if ( diffEleIter->pnt[i] != compIter->pnt[i] ) {
-          if ( !Num.Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
+          if ( !Num::Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
             d = i;
             break;
           }
@@ -260,7 +260,7 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, uint_fast8_t
 template<typename point>
 NODE<point>*
 ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
-                                        const uint_fast8_t& DIM, const box bx ) {
+                                        const uint_fast8_t DIM, const box& bx ) {
   assert( In.size() == 0 || within_box( get_box( In ), bx ) );
   size_t n = In.size();
 
@@ -276,6 +276,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, uint_fast8_t dim,
 
   //* if random sampling failed to split points, re-partitions using serail approach
   if ( std::ranges::count( sums, 0 ) == BUCKET_NUM - 1 ) {
+    LOG << "switch to serial" << ENDL;
     return serial_build_recursive( In, Out, dim, DIM, bx );
   }
 
@@ -367,7 +368,7 @@ ParallelKDtree<point>::retrive_tag( const point& p, const node_tags& tags ) {
   while ( k <= PIVOT_NUM && ( !tags[k].first->is_leaf ) ) {
     TI = static_cast<interior*>( tags[k].first );
     // k = p.pnt[TI->split.second] < TI->split.first ? k << 1 : k << 1 | 1;
-    k = Num.Lt( p.pnt[TI->split.second], TI->split.first ) ? k << 1 : k << 1 | 1;
+    k = Num::Lt( p.pnt[TI->split.second], TI->split.first ) ? k << 1 : k << 1 | 1;
   }
   assert( tags[k].second < BUCKET_NUM );
   return tags[k].second;
@@ -440,22 +441,20 @@ template<typename point>
 typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::rebuild_with_insert( node* T, slice In, const uint_fast8_t DIM ) {
   uint_fast8_t d = pick_rebuild_dim( T, DIM );
-  size_t treeSize = T->size;
-  points wo = points::uninitialized( treeSize + In.size() );
-  points wx = points::uninitialized( treeSize + In.size() );
-  flatten( T, wx.cut( 0, treeSize ) );
+  points wo = points::uninitialized( T->size + In.size() );
+  points wx = points::uninitialized( T->size + In.size() );
+  parlay::parallel_for( 0, In.size(), [&]( size_t j ) { wx[j] = In[j]; } );
+  flatten( T, wx.cut( In.size(), wx.size() ) );
   delete_tree_recursive( T );
-  parlay::copy( In, wx.cut( treeSize, treeSize + In.size() ) );
-  return std::move( build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ),
-                                     d, DIM,
-                                     std::move( get_box( parlay::make_slice( wx ) ) ) ) );
+  return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                          get_box( parlay::make_slice( wx ) ) );
 }
 
 //* return the updated node
 template<typename point>
 NODE<point>*
 ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
-                                             const uint_fast8_t& DIM ) {
+                                             const uint_fast8_t DIM ) {
   size_t n = In.size();
 
   if ( n == 0 ) return T;
@@ -477,7 +476,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
   if ( n <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
     auto _2ndGroup = std::ranges::partition( In, [&]( const point& p ) {
-      return Num.Lt( p.pnt[TI->split.second], TI->split.first );
+      return Num::Lt( p.pnt[TI->split.second], TI->split.first );
     } );
 
     //* rebuild
@@ -558,7 +557,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
 
 template<typename point>
 void
-ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t& DIM ) {
+ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
   box b = get_box( A );
@@ -587,7 +586,7 @@ typename ParallelKDtree<point>::node_box
 ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& tags,
                                           parlay::sequence<node_box>& treeNodes, int& p,
                                           const tag_nodes& rev_tag,
-                                          const uint_fast8_t& DIM ) {
+                                          const uint_fast8_t DIM ) {
   if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
     assert( rev_tag[p] == idx );
     return treeNodes[p++];
@@ -623,7 +622,7 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
 template<typename point>
 typename ParallelKDtree<point>::node_box
 ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
-                                              const uint_fast8_t& DIM, bool hasTomb ) {
+                                              const uint_fast8_t DIM, bool hasTomb ) {
   size_t n = In.size();
 
   if ( n == 0 ) return node_box( T, get_box( T ) );
@@ -667,7 +666,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     interior* TI = static_cast<interior*>( T );
     auto _2ndGroup = std::ranges::partition( In, [&]( const point& p ) {
-      return Num.Lt( p.pnt[TI->split.second], TI->split.first );
+      return Num::Lt( p.pnt[TI->split.second], TI->split.first );
     } );
 
     bool putTomb =
@@ -736,7 +735,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
 template<typename point>
 void
-ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t& DIM ) {
+ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
   std::tie( this->root, this->bbox ) =
@@ -748,7 +747,7 @@ ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t& DIM ) {
 //? parallel query
 template<typename point>
 void
-ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& DIM,
+ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t DIM,
                                   kBoundedQueue<point>& bq, size_t& visNodeNum ) {
   visNodeNum++;
 
@@ -765,11 +764,11 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t& D
   interior* TI = static_cast<interior*>( T );
   auto dx = [&]() { return TI->split.first - q.pnt[TI->split.second]; };
 
-  k_nearest( Num.Gt( dx(), 0 ) ? TI->left : TI->right, q, DIM, bq, visNodeNum );
-  if ( Num.Gt( dx() * dx(), bq.top().second ) && bq.full() ) {
+  k_nearest( Num::Gt( dx(), 0 ) ? TI->left : TI->right, q, DIM, bq, visNodeNum );
+  if ( Num::Gt( dx() * dx(), bq.top().second ) && bq.full() ) {
     return;
   }
-  k_nearest( Num.Gt( dx(), 0 ) ? TI->right : TI->left, q, DIM, bq, visNodeNum );
+  k_nearest( Num::Gt( dx(), 0 ) ? TI->right : TI->left, q, DIM, bq, visNodeNum );
 }
 
 template<typename point>
@@ -938,10 +937,6 @@ ParallelKDtree<point>::delete_tree_recursive( node* T ) {
 }
 
 //@ Template declation
-template class Comparator<long>;
-template class Comparator<double>;
-template class Comparator<long double>;
-
 template class ParallelKDtree<PointType<long, 2>>;
 template class ParallelKDtree<PointType<long, 3>>;
 template class ParallelKDtree<PointType<long, 5>>;
