@@ -527,26 +527,6 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
           treeNodes[i] =
               rebuild_with_insert( IT.tags[IT.rev_tag[i]].first,
                                    Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), DIM );
-
-          // points wx = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size +
-          //                                    IT.sums_tree[IT.rev_tag[i]] );
-          // points wo = points::uninitialized( IT.tags[IT.rev_tag[i]].first->size +
-          //                                    IT.sums_tree[IT.rev_tag[i]] );
-          // uint_fast8_t d = pick_rebuild_dim( IT.tags[IT.rev_tag[i]].first, DIM );
-          // size_t head_size = IT.tags[IT.rev_tag[i]].first->size;
-
-          // flatten( IT.tags[IT.rev_tag[i]].first,
-          //          wx.cut( 0, IT.tags[IT.rev_tag[i]].first->size ) );
-          // delete_tree_recursive( IT.tags[IT.rev_tag[i]].first );
-
-          // parlay::parallel_for(
-          //     0, IT.sums_tree[IT.rev_tag[i]],
-          //     [&]( size_t j ) { wx[head_size + j] = Out[s + j]; }, BLOCK_SIZE );
-
-          // treeNodes[i] =
-          //     build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
-          //     DIM,
-          //                      get_box( parlay::make_slice( wx ) ) );
         }
       },
       1 );
@@ -604,16 +584,6 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
       return node_box( alloc_leaf_node( points().cut( 0, 0 ) ), get_empty_box() );
     }
     return std::move( rebuild_after_delete( tags[idx].first, DIM ) );
-    // points wx = points::uninitialized( tags[idx].first->size );
-    // points wo = points::uninitialized( tags[idx].first->size );
-    // uint_fast8_t d = pick_rebuild_dim( tags[idx].first, DIM );
-    // flatten( tags[idx].first, wx.cut( 0, tags[idx].first->size ) );
-    // delete_tree_recursive( tags[idx].first );
-    // box bx = get_box( parlay::make_slice( wx ) );
-    // node* o =
-    //     build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM, bx
-    //     );
-    // return node_box( o, bx );
   }
 
   return node_box( tags[idx].first, get_box( Lbox, Rbox ) );
@@ -629,7 +599,6 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
 
   if ( n == T->size ) {
     if ( hasTomb ) {
-      // uint_fast8_t d = pick_rebuild_dim( T, DIM );
       delete_tree_recursive( T );
       return node_box( alloc_leaf_node( In.cut( 0, 0 ) ), get_empty_box() );
     }
@@ -691,16 +660,6 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
       assert( TI->size == T->size );
       assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
       return std::move( rebuild_after_delete( T, DIM ) );
-      // points wx = points::uninitialized( T->size );
-      // points wo = points::uninitialized( T->size );
-      // uint_fast8_t d = pick_rebuild_dim( T, DIM );
-      // // uint_fast8_t d = T->dim;
-      // flatten( T, wx.cut( 0, T->size ) );
-      // delete_tree_recursive( T );
-      // box bx = get_box( parlay::make_slice( wx ) );
-      // node* o = build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d,
-      //                            DIM, bx );
-      // return node_box( o, bx );
     }
 
     return node_box( T, get_box( Lbox, Rbox ) );
@@ -740,7 +699,6 @@ ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t DIM ) {
   node* T = this->root;
   std::tie( this->root, this->bbox ) =
       batchDelete_recursive( T, A, parlay::make_slice( B ), DIM, 1 );
-
   return;
 }
 
@@ -755,7 +713,7 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t DI
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
       bq.insert(
-          std::make_pair( TL->pts[( !T->is_dummy ) * i],
+          std::make_pair( &( TL->pts[( !T->is_dummy ) * i] ),
                           ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
     }
     return;

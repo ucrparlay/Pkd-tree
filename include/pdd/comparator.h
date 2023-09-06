@@ -8,7 +8,7 @@ template<typename T>
 class Num {
  public:
   static inline bool
-  Gt( const T& a, const T& b ) {
+  Gt( const T a, const T b ) {
     if constexpr ( std::is_integral_v<T> )
       return a > b;
     else if ( std::is_floating_point_v<T> ) {
@@ -17,7 +17,7 @@ class Num {
   }
 
   static inline bool
-  Lt( const T& a, const T& b ) {
+  Lt( const T a, const T b ) {
     if constexpr ( std::is_integral_v<T> )
       return a < b;
     else if ( std::is_floating_point_v<T> )
@@ -25,7 +25,7 @@ class Num {
   }
 
   static inline bool
-  Eq( const T& a, const T& b ) {
+  Eq( const T a, const T b ) {
     if constexpr ( std::is_integral_v<T> )
       return a == b;
     else if ( std::is_floating_point_v<T> )
@@ -33,19 +33,19 @@ class Num {
   }
 
   static inline bool
-  Geq( const T& a, const T& b ) {
+  Geq( const T a, const T b ) {
     if constexpr ( std::is_integral_v<T> )
       return a >= b;
     else if ( std::is_floating_point_v<T> )
-      return Gt( a, b ) || Eq( a, b );
+      return ~Lt( a, b );
   }
 
   static inline bool
-  Leq( const T& a, const T& b ) {
+  Leq( const T a, const T b ) {
     if constexpr ( std::is_integral_v<T> )
       return a <= b;
     else if ( std::is_floating_point_v<T> )
-      return Lt( a, b ) || Eq( a, b );
+      return ~Gt( a, b );
   }
 
  private:

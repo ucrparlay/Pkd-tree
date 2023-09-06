@@ -228,7 +228,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point, coord>;
+  using nn_pair = std::pair<point*, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
@@ -347,7 +347,7 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point, coord>;
+  using nn_pair = std::pair<point*, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
@@ -388,7 +388,7 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   //   }
   // } );
   parlay::sequence<point> edge( m );
-  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first; } );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = *( Out[i].first ); } );
   parlay::sequence<double> weight( m );
   parlay::parallel_for( 0, m, [&]( size_t i ) { weight[i] = Out[i].second; } );
   for ( size_t i = 0; i < n; i++ ) {

@@ -232,7 +232,7 @@ class ArrayQueue {
 template<typename point>
 class NN_Comparator {
   using coord = point::coord;
-  using T = std::pair<point, coord>;
+  using T = std::pair<point*, coord>;
   using Num = Num<coord>;
 
  public:
@@ -257,7 +257,7 @@ class kBoundedQueue {
   //* https://github.com/CGAL/cgal/blob/v5.4/Spatial_searching/include/CGAL/Spatial_searching/internal/bounded_priority_queue.h
 
   using coord = typename point::coord;
-  using T = std::pair<point, coord>;
+  using T = std::pair<point*, coord>;
 
  public:
   kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
