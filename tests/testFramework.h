@@ -5,7 +5,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
-using coord = double;
+using coord = long;
 using Typename = coord;
 using namespace cpdd;
 

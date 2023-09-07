@@ -60,10 +60,6 @@ add_subdirectory(parlaylib)
 # my kd
 add_library(kdTreeParallel INTERFACE)
 target_link_libraries(kdTreeParallel INTERFACE parlay)
-set_target_properties(kdTreeParallel PROPERTIES
-  VERSION ${PROJECT_VERSION}
-  SOVERSION 1
-  PUBLIC_HEADER include/cpdd/cpdd.h)
 target_include_directories(kdTreeParallel INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 include(GNUInstallDirs)
