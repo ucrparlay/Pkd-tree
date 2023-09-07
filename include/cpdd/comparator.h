@@ -1,6 +1,7 @@
 #pragma once
 #include "bits/stdc++.h"
 
+namespace cpdd {
 //*----------- double precision comparision ----------------
 //* God made the integers, all else is the work of man.
 //* -- Leopold Kronecker
@@ -51,3 +52,5 @@ class Num {
  private:
   static constexpr T eps = std::numeric_limits<T>::epsilon();
 };
+
+}  // namespace cpdd

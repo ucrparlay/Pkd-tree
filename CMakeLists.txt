@@ -54,7 +54,7 @@ endif()
 add_subdirectory(parlaylib)
 
 # set(source_files
-# ${PROJECT_SOURCE_DIR}/include/pdd/kdTreeParallel.hpp
+# ${PROJECT_SOURCE_DIR}/include/cpdd/kdTreeParallel.hpp
 # )
 
 # my kd
@@ -63,7 +63,7 @@ target_link_libraries(kdTreeParallel INTERFACE parlay)
 set_target_properties(kdTreeParallel PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION 1
-  PUBLIC_HEADER include/pdd/kdTreeParallel.h)
+  PUBLIC_HEADER include/cpdd/cpdd.h)
 target_include_directories(kdTreeParallel INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 include(GNUInstallDirs)

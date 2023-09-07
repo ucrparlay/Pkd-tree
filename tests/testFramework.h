@@ -1,12 +1,13 @@
 #pragma once
-#include "pdd/kdTreeParallel.h"
+#include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
-using coord = long;
+using coord = double;
 using Typename = coord;
+using namespace cpdd;
 
 double aveDeep = 0.0;
 

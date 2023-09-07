@@ -1,9 +1,14 @@
 #pragma once
 
-#include <cstdint>
-
 #include "comparator.h"
-#include "parlay_headers.h"
+
+#include "parlay/alloc.h"
+#include "parlay/delayed.h"
+#include "parlay/primitives.h"
+#include "parlay/sequence.h"
+#include "parlay/utilities.h"
+
+namespace cpdd {
 
 template<typename T, uint_fast8_t d>
 struct PointType {
@@ -84,3 +89,5 @@ struct PointType {
 
   coords pnt;
 };
+
+}  // namespace cpdd

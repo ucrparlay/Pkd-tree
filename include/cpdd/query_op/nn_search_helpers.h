@@ -1,8 +1,9 @@
 #pragma once
 
-#include "basic_point.h"
-#include "comparator.h"
-#include "parlay_headers.h"
+#include "../basic_point.h"
+#include "../comparator.h"
+
+namespace cpdd {
 
 template<typename point>
 class NN_Comparator {
@@ -239,3 +240,5 @@ class ArrayQueue {
   int K;
   int load;
 };
+
+}  // namespace cpdd
