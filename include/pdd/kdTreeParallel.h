@@ -1,6 +1,9 @@
 #pragma once
 
-#include "utility.h"
+#include "basic_node.h"
+#include "comparator.h"
+#include "parlay_headers.h"
+#include "nn_search_helpers.h"
 
 #define LOG  std::cout
 #define ENDL std::endl << std::flush

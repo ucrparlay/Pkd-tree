@@ -53,23 +53,23 @@ endif()
 
 add_subdirectory(parlaylib)
 
-set(source_files
-  ${PROJECT_SOURCE_DIR}/include/pdd/src/kdTreeParallel.cpp
-)
+# set(source_files
+# ${PROJECT_SOURCE_DIR}/include/pdd/kdTreeParallel.hpp
+# )
 
 # my kd
-add_library(kdTreeParallel ${source_files})
-target_link_libraries(kdTreeParallel PUBLIC parlay)
+add_library(kdTreeParallel INTERFACE)
+target_link_libraries(kdTreeParallel INTERFACE parlay)
 set_target_properties(kdTreeParallel PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION 1
-    PUBLIC_HEADER include/pdd/kdTreeParallel.h)
-target_include_directories(kdTreeParallel PUBLIC ${PROJECT_SOURCE_DIR}/include/)
+  VERSION ${PROJECT_VERSION}
+  SOVERSION 1
+  PUBLIC_HEADER include/pdd/kdTreeParallel.h)
+target_include_directories(kdTreeParallel INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 include(GNUInstallDirs)
 install(TARGETS kdTreeParallel
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 add_executable(test ${PROJECT_SOURCE_DIR}/tests/test.cpp)
 target_link_libraries(test PUBLIC kdTreeParallel)

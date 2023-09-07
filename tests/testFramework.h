@@ -5,6 +5,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
+using coord = long;
 using Typename = coord;
 
 double aveDeep = 0.0;

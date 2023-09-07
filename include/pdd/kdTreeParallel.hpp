@@ -1,4 +1,6 @@
-#include "../kdTreeParallel.h"
+#pragma once
+
+#include "kdTreeParallel.h"
 
 //@ Find Bounding Box
 
@@ -893,25 +895,3 @@ ParallelKDtree<point>::delete_tree_recursive( node* T ) {
     free_interior( T );
   }
 }
-
-//@ Template declation
-template class ParallelKDtree<PointType<long, 2>>;
-template class ParallelKDtree<PointType<long, 3>>;
-template class ParallelKDtree<PointType<long, 5>>;
-template class ParallelKDtree<PointType<long, 7>>;
-template class ParallelKDtree<PointType<long, 9>>;
-template class ParallelKDtree<PointType<long, 10>>;
-
-template class ParallelKDtree<PointType<double, 2>>;
-template class ParallelKDtree<PointType<double, 3>>;
-template class ParallelKDtree<PointType<double, 5>>;
-template class ParallelKDtree<PointType<double, 7>>;
-template class ParallelKDtree<PointType<double, 9>>;
-template class ParallelKDtree<PointType<double, 10>>;
-
-template class ParallelKDtree<PointType<long double, 2>>;
-template class ParallelKDtree<PointType<long double, 3>>;
-template class ParallelKDtree<PointType<long double, 5>>;
-template class ParallelKDtree<PointType<long double, 7>>;
-template class ParallelKDtree<PointType<long double, 9>>;
-template class ParallelKDtree<PointType<long double, 10>>;
