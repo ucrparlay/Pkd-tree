@@ -83,13 +83,13 @@ ParallelKDtree<point>::retrive_tag( const point& p, const node_tags& tags ) {
 
 template<typename point>
 void
-ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
+ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t n,
                                       const node_tags& tags,
-                                      parlay::sequence<uint_fast32_t>& sums,
-                                      const int& tagsNum ) {
+                                      parlay::sequence<balls_type>& sums,
+                                      const bucket_type tagsNum ) {
   size_t num_block = ( n + BLOCK_SIZE - 1 ) >> LOG2_BASE;
-  parlay::sequence<parlay::sequence<uint_fast32_t>> offset(
-      num_block, parlay::sequence<uint_fast32_t>( tagsNum ) );
+  parlay::sequence<parlay::sequence<balls_type>> offset(
+      num_block, parlay::sequence<balls_type>( tagsNum ) );
   assert( offset.size() == num_block && offset[0].size() == tagsNum &&
           offset[0][0] == 0 );
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
@@ -98,7 +98,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
     }
   } );
 
-  sums = parlay::sequence<uint_fast32_t>( tagsNum );
+  sums = parlay::sequence<balls_type>( tagsNum );
   for ( size_t i = 0; i < num_block; i++ ) {
     auto t = offset[i];
     offset[i] = sums;
@@ -108,7 +108,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t& n,
   }
 
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
-    auto v = parlay::sequence<uint_fast32_t>::uninitialized( tagsNum );
+    auto v = parlay::sequence<balls_type>::uninitialized( tagsNum );
     int tot = 0, s_offset = 0;
     for ( int k = 0; k < tagsNum - 1; k++ ) {
       v[k] = tot + offset[i][k];

@@ -47,7 +47,7 @@ ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim, const int& DIM
 
 template<typename point>
 void
-ParallelKDtree<point>::validate( const uint_fast8_t DIM ) {
+ParallelKDtree<point>::validate( const dim_type DIM ) {
   if ( checkBox( this->root, this->bbox ) && legal_box( this->bbox ) ) {
     std::cout << "Correct bounding box" << std::endl << std::flush;
   } else {

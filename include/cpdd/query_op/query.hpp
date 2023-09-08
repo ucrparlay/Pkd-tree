@@ -8,7 +8,7 @@ namespace cpdd {
 template<typename point>
 inline typename ParallelKDtree<point>::coord
 ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
-                                          const uint_fast8_t DIM ) {
+                                          const dim_type DIM ) {
   coord r = 0;
   for ( int i = 0; i < DIM; i++ ) {
     r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
@@ -19,7 +19,7 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
 //? parallel query
 template<typename point>
 void
-ParallelKDtree<point>::k_nearest( node* T, const point& q, const uint_fast8_t DIM,
+ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
                                   kBoundedQueue<point>& bq, size_t& visNodeNum ) {
   visNodeNum++;
 

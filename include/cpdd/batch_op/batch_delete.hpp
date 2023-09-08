@@ -7,7 +7,7 @@ namespace cpdd {
 
 template<typename point>
 void
-ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t DIM ) {
+ParallelKDtree<point>::batchDelete( slice A, const dim_type DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
   std::tie( this->root, this->bbox ) =
@@ -17,7 +17,7 @@ ParallelKDtree<point>::batchDelete( slice A, const uint_fast8_t DIM ) {
 
 template<typename point>
 typename ParallelKDtree<point>::node_box
-ParallelKDtree<point>::rebuild_after_delete( node* T, const uint_fast8_t DIM ) {
+ParallelKDtree<point>::rebuild_after_delete( node* T, const dim_type DIM ) {
   points wo = points::uninitialized( T->size );
   points wx = points::uninitialized( T->size );
   uint_fast8_t d = pick_rebuild_dim( T, DIM );
@@ -31,10 +31,10 @@ ParallelKDtree<point>::rebuild_after_delete( node* T, const uint_fast8_t DIM ) {
 
 template<typename point>
 typename ParallelKDtree<point>::node_box
-ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& tags,
-                                          parlay::sequence<node_box>& treeNodes, int& p,
-                                          const tag_nodes& rev_tag,
-                                          const uint_fast8_t DIM ) {
+ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags,
+                                          parlay::sequence<node_box>& treeNodes,
+                                          bucket_type& p, const tag_nodes& rev_tag,
+                                          const dim_type DIM ) {
   if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
     assert( rev_tag[p] == idx );
     return treeNodes[p++];
@@ -60,7 +60,7 @@ ParallelKDtree<point>::delete_inner_tree( uint_fast32_t idx, const node_tags& ta
 template<typename point>
 typename ParallelKDtree<point>::node_box
 ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
-                                              const uint_fast8_t DIM, bool hasTomb ) {
+                                              const dim_type DIM, bool hasTomb ) {
   size_t n = In.size();
 
   if ( n == 0 ) return node_box( T, get_box( T ) );
@@ -156,7 +156,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
       },
       1 );
 
-  int beatles = 0;
+  bucket_type beatles = 0;
   return delete_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag, DIM );
 }
 

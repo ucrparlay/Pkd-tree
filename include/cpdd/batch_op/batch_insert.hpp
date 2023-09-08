@@ -7,7 +7,7 @@ namespace cpdd {
 
 template<typename point>
 void
-ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t DIM ) {
+ParallelKDtree<point>::batchInsert( slice A, const dim_type DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
   box b = get_box( A );
@@ -19,9 +19,9 @@ ParallelKDtree<point>::batchInsert( slice A, const uint_fast8_t DIM ) {
 
 template<typename point>
 typename ParallelKDtree<point>::node*
-ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx, const node_tags& tags,
-                                          parlay::sequence<node*>& treeNodes, int& p,
-                                          const tag_nodes& rev_tag ) {
+ParallelKDtree<point>::update_inner_tree( bucket_type idx, const node_tags& tags,
+                                          parlay::sequence<node*>& treeNodes,
+                                          bucket_type& p, const tag_nodes& rev_tag ) {
 
   if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
     assert( rev_tag[p] == idx );
@@ -39,7 +39,7 @@ ParallelKDtree<point>::update_inner_tree( uint_fast32_t idx, const node_tags& ta
 
 template<typename point>
 typename ParallelKDtree<point>::node*
-ParallelKDtree<point>::rebuild_with_insert( node* T, slice In, const uint_fast8_t DIM ) {
+ParallelKDtree<point>::rebuild_with_insert( node* T, slice In, const dim_type DIM ) {
   uint_fast8_t d = pick_rebuild_dim( T, DIM );
   points wo = points::uninitialized( T->size + In.size() );
   points wx = points::uninitialized( T->size + In.size() );
@@ -54,7 +54,7 @@ ParallelKDtree<point>::rebuild_with_insert( node* T, slice In, const uint_fast8_
 template<typename point>
 typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
-                                             const uint_fast8_t DIM ) {
+                                             const dim_type DIM ) {
   size_t n = In.size();
 
   if ( n == 0 ) return T;
@@ -131,7 +131,7 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
       },
       1 );
 
-  int beatles = 0;
+  bucket_type beatles = 0;
   return update_inner_tree( 1, IT.tags, treeNodes, beatles, IT.rev_tag );
 }
 
