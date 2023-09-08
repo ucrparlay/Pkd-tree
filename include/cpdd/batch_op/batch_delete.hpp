@@ -49,7 +49,7 @@ ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
     if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
       delete_tree_recursive( tags[idx].first );
-      return node_box( alloc_leaf_node( points().cut( 0, 0 ) ), get_empty_box() );
+      return node_box( alloc_empty_leaf(), get_empty_box() );
     }
     return rebuild_after_delete( tags[idx].first, DIM );
   }
@@ -68,7 +68,7 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out,
   if ( n == T->size ) {
     if ( hasTomb ) {
       delete_tree_recursive( T );
-      return node_box( alloc_leaf_node( In.cut( 0, 0 ) ), get_empty_box() );
+      return node_box( alloc_empty_leaf(), get_empty_box() );
     }
     T->size = 0;  //* lazy mark
     return node_box( T, get_empty_box() );

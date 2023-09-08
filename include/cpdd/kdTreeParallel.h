@@ -51,6 +51,7 @@ class ParallelKDtree {
 
   static leaf* alloc_leaf_node( slice In );
   static leaf* alloc_dummy_leaf( slice In );
+  static leaf* alloc_empty_leaf();
   static interior* alloc_interior_node( node* L, node* R, const splitter& split );
   static void free_leaf( node* T );
   static void free_interior( node* T );
@@ -93,6 +94,7 @@ class ParallelKDtree {
   static node* build_inner_tree( bucket_type idx, splitter_s& pivots,
                                  parlay::sequence<node*>& treeNodes );
   void build( slice In, const dim_type DIM );
+  points_iter serial_partition( slice In, dim_type d );
   node* serial_build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
                                 const box& bx );
   node* build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
@@ -115,6 +117,7 @@ class ParallelKDtree {
   node* rebuild_with_insert( node* T, slice In, const dim_type DIM );
   static inline void update_interior( node* T, node* L, node* R );
   void batchInsert( slice In, const dim_type DIM );
+  node* serial_insert_recursive( node* T, slice In, slice Out, const dim_type DIM );
   node* batchInsert_recusive( node* T, slice In, slice Out, const dim_type DIM );
 
   //@ batch delete

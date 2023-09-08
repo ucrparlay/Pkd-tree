@@ -63,6 +63,9 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out,
     leaf* TL = static_cast<leaf*>( T );
     if ( !T->is_dummy && n + TL->size <= LEAVE_WRAP ) {
       assert( T->size == TL->size );
+      if ( TL->pts.size() == 0 ) {
+        TL->pts = points::uninitialized( LEAVE_WRAP );
+      }
       for ( int i = 0; i < n; i++ ) {
         TL->pts[TL->size + i] = In[i];
       }

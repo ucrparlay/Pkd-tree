@@ -138,92 +138,74 @@ ParallelKDtree<point>::build_inner_tree( bucket_type idx, splitter_s& pivots,
 }
 
 template<typename point>
-typename ParallelKDtree<point>::node*
-ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim,
-                                               const dim_type DIM, const box& bx ) {
+typename ParallelKDtree<point>::points_iter
+ParallelKDtree<point>::serial_partition( slice In, dim_type d ) {
   size_t n = In.size();
-
-  if ( n <= LEAVE_WRAP ) {
-    return alloc_leaf_node( In );
-  }
-
-  //* serial run nth element
-  uint_fast8_t d =
-      ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
-  assert( d >= 0 && d < DIM );
-
   std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
                             [&]( const point& p1, const point& p2 ) {
                               return Num::Lt( p1.pnt[d], p2.pnt[d] );
                             } );
-  splitter split = splitter( In[n / 2].pnt[d], d );
-
   auto _2ndGroup = std::ranges::partition(
       In.begin(), In.begin() + n / 2,
-      [&]( const point& p ) { return Num::Lt( p.pnt[split.second], split.first ); } );
-
-  if ( _2ndGroup.begin() == In.begin() ) {
-    // LOG << "sort right" << ENDL;
-    assert( std::ranges::all_of( In.begin() + n / 2, In.end(),
-                                 [&]( const point& p ) {
-                                   return Num::Geq( p.pnt[split.second], split.first );
-                                 } ) &&
-            std::ranges::all_of( In.begin(), In.begin() + n / 2, [&]( const point& p ) {
-              return Num::Eq( p.pnt[split.second], split.first );
-            } ) );
-
+      [&]( const point& p ) { return Num::Lt( p.pnt[d], In[n / 2].pnt[d] ); } );
+  if ( _2ndGroup.begin() == In.begin() ) {  //* handle duplicated medians
     _2ndGroup = std::ranges::partition(
         In.begin() + n / 2, In.end(),
-        [&]( const point& p ) { return Num::Eq( p.pnt[split.second], split.first ); } );
-    assert( _2ndGroup.begin() - ( In.begin() + n / 2 ) > 0 );
-    points_iter diffEleIter;
-
-    if ( _2ndGroup.begin() != In.end() ) {
-      //* need to change split
-      auto minEleIter =
-          std::ranges::min_element( _2ndGroup, [&]( const point& p1, const point& p2 ) {
-            return Num::Lt( p1.pnt[split.second], p2.pnt[split.second] );
-          } );
-      assert( minEleIter != In.end() );
-
-      split.first = minEleIter->pnt[split.second];
-
-      assert( std::ranges::all_of( In.begin(), _2ndGroup.begin(),
-                                   [&]( const point& p ) {
-                                     return Num::Lt( p.pnt[split.second], split.first );
-                                   } ) &&
-              std::ranges::all_of( _2ndGroup, [&]( const point& p ) {
-                return Num::Geq( p.pnt[split.second], split.first );
-              } ) );
-    } else if ( In.end() ==
-                ( diffEleIter = std::ranges::find_if_not(
-                      In, [&]( const point& p ) { return p == In[n / 2]; } ) ) ) {
-      // LOG << "alloc dummy" << ENDL;
-      assert( _2ndGroup.begin() == In.end() && diffEleIter == In.end() );
-      return alloc_dummy_leaf( In );
-    } else {  //* current dim d is same but other dims are not
-      if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
-        return build_recursive( In, Out, d, DIM, get_box( In ) );
-      } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
-        points_iter compIter =
-            diffEleIter == In.begin() ? std::ranges::prev( In.end() ) : In.begin();
-        assert( compIter != diffEleIter );
-        for ( int i = 0; i < DIM; i++ ) {
-          // if ( diffEleIter->pnt[i] != compIter->pnt[i] ) {
-          if ( !Num::Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
-            d = i;
-            break;
-          }
-        }
-        return build_recursive( In, Out, d, DIM, bx );
-      }
-    }
-
-    assert( !( _split_rule == MAX_STRETCH_DIM &&
-               std::ranges::all_of( In.begin(), In.end(), [&]( const point& p ) {
-                 return p == In[n / 2];
-               } ) ) );
+        [&]( const point& p ) { return Num::Eq( p.pnt[d], In[n / 2].pnt[d] ); } );
   }
+  return _2ndGroup.begin();
+}
+
+template<typename point>
+typename ParallelKDtree<point>::node*
+ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim,
+                                               const dim_type DIM, const box& bx ) {
+  size_t n = In.size();
+  if ( n == 0 ) return alloc_empty_leaf();
+  if ( n <= LEAVE_WRAP ) return alloc_leaf_node( In );
+
+  dim_type d = ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
+  points_iter splitIter = serial_partition( In, d );
+  points_iter diffEleIter;
+
+  splitter split;
+
+  if ( splitIter <= In.begin() + n / 2 ) {
+    split = splitter( In[n / 2].pnt[d], d );
+  } else if ( splitIter != In.end() ) {
+    auto minEleIter = std::ranges::min_element( splitIter, In.end(),
+                                                [&]( const point& p1, const point& p2 ) {
+                                                  return Num::Lt( p1.pnt[d], p2.pnt[d] );
+                                                } );
+    split = splitter( minEleIter->pnt[d], d );
+  } else if ( In.end() ==
+              ( diffEleIter = std::ranges::find_if_not( In, [&]( const point& p ) {
+                  return p == In[0];
+                } ) ) ) {  //* check whether all elements are identical
+    return alloc_dummy_leaf( In );
+  } else {  //* current dim d is same but other dims are not
+    if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
+      return serial_build_recursive( In, Out, d, DIM, get_box( In ) );
+    } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
+      points_iter compIter =
+          diffEleIter == In.begin() ? std::ranges::prev( In.end() ) : In.begin();
+      assert( compIter != diffEleIter );
+      for ( int i = 0; i < DIM; i++ ) {
+        if ( !Num::Eq( diffEleIter->pnt[i], compIter->pnt[i] ) ) {
+          d = i;
+          break;
+        }
+      }
+      return serial_build_recursive( In, Out, d, DIM, bx );
+    }
+  }
+
+  assert( std::ranges::all_of(
+              In.begin(), splitIter,
+              [&]( point& p ) { return Num::Lt( p.pnt[split.second], split.first ); } ) &&
+          std::ranges::all_of( splitIter, In.end(), [&]( point& p ) {
+            return Num::Geq( p.pnt[split.second], split.first );
+          } ) );
 
   box lbox( bx ), rbox( bx );
   lbox.second.pnt[d] = split.first;  //* loose
@@ -231,16 +213,11 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
 
   d = ( d + 1 ) % DIM;
   node *L, *R;
-  parlay::par_do_if(
-      n > SERIAL_BUILD_CUTOFF,
-      [&] {
-        L = build_recursive( In.cut( 0, _2ndGroup.begin() - In.begin() ),
-                             Out.cut( 0, _2ndGroup.begin() - In.begin() ), d, DIM, lbox );
-      },
-      [&] {
-        R = build_recursive( In.cut( _2ndGroup.begin() - In.begin(), n ),
-                             Out.cut( _2ndGroup.begin() - In.begin(), n ), d, DIM, rbox );
-      } );
+
+  L = serial_build_recursive( In.cut( 0, splitIter - In.begin() ),
+                              Out.cut( 0, splitIter - In.begin() ), d, DIM, lbox );
+  R = serial_build_recursive( In.cut( splitIter - In.begin(), n ),
+                              Out.cut( splitIter - In.begin(), n ), d, DIM, rbox );
   return alloc_interior_node( L, R, split );
 }
 
@@ -249,37 +226,50 @@ typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
                                         const dim_type DIM, const box& bx ) {
   assert( In.size() == 0 || within_box( get_box( In ), bx ) );
-  size_t n = In.size();
 
-  if ( n <= SERIAL_BUILD_CUTOFF ) return serial_build_recursive( In, Out, dim, DIM, bx );
+  if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
+    return serial_build_recursive( In, Out, dim, DIM, bx );
+  }
 
   //* parallel partitons
   auto pivots = splitter_s::uninitialized( PIVOT_NUM + BUCKET_NUM + 1 );
   auto boxs = box_s::uninitialized( BUCKET_NUM );
-  parlay::sequence<uint_fast32_t> sums;
+  parlay::sequence<balls_type> sums;
 
-  pick_pivots( In, n, pivots, dim, DIM, boxs, bx );
-  partition( In, Out, n, pivots, sums );
+  pick_pivots( In, In.size(), pivots, dim, DIM, boxs, bx );
+  partition( In, Out, In.size(), pivots, sums );
 
   //* if random sampling failed to split points, re-partitions using serail approach
-  if ( std::ranges::count( sums, 0 ) == BUCKET_NUM - 1 ) {
-    LOG << "switch to serial" << ENDL;
+  auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
+  auto nodesMap = parlay::sequence<bucket_type>::uninitialized( BUCKET_NUM );
+
+  bucket_type zeros = 0, cnt = 0;
+  for ( bucket_type i = 0; i < BUCKET_NUM; i++ ) {
+    if ( !sums[i] ) {
+      zeros++;
+      treeNodes[i] = alloc_empty_leaf();
+    } else {
+      nodesMap[cnt++] = i;
+    }
+  }
+
+  if ( zeros == BUCKET_NUM - 1 ) {  // * switch to seral
     return serial_build_recursive( In, Out, dim, DIM, bx );
   }
 
-  auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
 
   parlay::parallel_for(
-      0, BUCKET_NUM,
-      [&]( size_t i ) {
+      0, BUCKET_NUM - zeros,
+      [&]( bucket_type i ) {
         size_t start = 0;
-        for ( int j = 0; j < i; j++ ) {
+        for ( bucket_type j = 0; j < nodesMap[i]; j++ ) {
           start += sums[j];
         }
-        treeNodes[i] =
-            build_recursive( Out.cut( start, start + sums[i] ),
-                             In.cut( start, start + sums[i] ), dim, DIM, boxs[i] );
+
+        treeNodes[nodesMap[i]] = build_recursive(
+            Out.cut( start, start + sums[nodesMap[i]] ),
+            In.cut( start, start + sums[nodesMap[i]] ), dim, DIM, boxs[nodesMap[i]] );
       },
       1 );
   return build_inner_tree( 1, pivots, treeNodes );

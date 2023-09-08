@@ -14,21 +14,21 @@ struct ParallelKDtree<point>::node {
   bool is_leaf;
   bool is_dummy;
   size_t size;
-  size_t aug;
   node* parent;
 };
 
 template<typename point>
 struct ParallelKDtree<point>::leaf : node {
   points pts;
-  leaf( slice In ) : node{ true, false, static_cast<size_t>( In.size() ), 0, nullptr } {
+  leaf() : node{ true, false, static_cast<size_t>( 0 ), nullptr } {};
+  leaf( slice In ) : node{ true, false, static_cast<size_t>( In.size() ), nullptr } {
     pts = points::uninitialized( LEAVE_WRAP );
     for ( int i = 0; i < In.size(); i++ ) {
       pts[i] = In[i];
     }
   }
   leaf( slice In, bool _is_dummy ) :
-      node{ true, true, static_cast<size_t>( In.size() ), 0, nullptr } {
+      node{ true, true, static_cast<size_t>( In.size() ), nullptr } {
     pts = points::uninitialized( 1 );
     pts[0] = In[0];
   }
@@ -40,7 +40,7 @@ struct ParallelKDtree<point>::interior : node {
   node* right;
   splitter split;
   interior( node* _left, node* _right, splitter _split ) :
-      node{ false, false, _left->size + _right->size, 0, nullptr },
+      node{ false, false, _left->size + _right->size, nullptr },
       left( _left ),
       right( _right ),
       split( _split ) {
@@ -64,6 +64,15 @@ ParallelKDtree<point>::alloc_dummy_leaf( slice In ) {
   leaf* o = parlay::type_allocator<leaf>::alloc();
   new ( o ) leaf( In, true );
   assert( o->is_dummy == true );
+  return std::move( o );
+}
+
+template<typename point>
+typename ParallelKDtree<point>::leaf*
+ParallelKDtree<point>::alloc_empty_leaf() {
+  leaf* o = parlay::type_allocator<leaf>::alloc();
+  new ( o ) leaf();
+  assert( o->size == 0 && o->pts.size() == 0 );
   return std::move( o );
 }
 

@@ -4,7 +4,7 @@
 
 namespace cpdd {
 template<typename point>
-inline uint_fast8_t
+inline ParallelKDtree<point>::dim_type
 ParallelKDtree<point>::pick_rebuild_dim( const node* T, const dim_type DIM ) {
   if ( this->_split_rule == MAX_STRETCH_DIM ) {
     return 0;
@@ -19,9 +19,9 @@ ParallelKDtree<point>::pick_rebuild_dim( const node* T, const dim_type DIM ) {
 }
 
 template<typename point>
-inline uint_fast8_t
+inline ParallelKDtree<point>::dim_type
 ParallelKDtree<point>::pick_max_stretch_dim( const box& bx, const dim_type DIM ) {
-  uint_fast8_t d( 0 );
+  dim_type d( 0 );
   coord diff( bx.second.pnt[0] - bx.first.pnt[0] );
   assert( Num::Geq( diff, 0 ) );
   for ( int i = 1; i < DIM; i++ ) {
