@@ -1,4 +1,4 @@
-# CPDD: Construction-based Parallel Dynamic $k$D-tree
+# CPDD: Construction-based Parallel Dynamic kD-tree
 
 Requirements
 --------

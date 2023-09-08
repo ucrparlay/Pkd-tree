@@ -145,7 +145,7 @@ ParallelKDtree<point>::serial_partition( slice In, dim_type d ) {
                             [&]( const point& p1, const point& p2 ) {
                               return Num::Lt( p1.pnt[d], p2.pnt[d] );
                             } );
-  auto _2ndGroup = std::ranges::partition(
+  std::ranges::subrange _2ndGroup = std::ranges::partition(
       In.begin(), In.begin() + n / 2,
       [&]( const point& p ) { return Num::Lt( p.pnt[d], In[n / 2].pnt[d] ); } );
   if ( _2ndGroup.begin() == In.begin() ) {  //* handle duplicated medians
@@ -254,6 +254,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
   }
 
   if ( zeros == BUCKET_NUM - 1 ) {  // * switch to seral
+                                    // TODO add parallelsim within this call
     return serial_build_recursive( In, Out, dim, DIM, bx );
   }
 

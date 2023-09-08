@@ -15,7 +15,7 @@ path = "../benchmark"
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
 Nodes = [10000000, 50000000, 100000000, 500000000]
-Dims = [2, 3, 5, 7, 9]
+Dims = [2, 3]
 header = [
     "solver",
     "benchType",
@@ -77,22 +77,22 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
 
     csvWriter = csvSetup("result")
 
-    for solver in solverName:
-        dim = 3
-        for bench in benchmarks:
-            for node in Nodes:
-                P = (
-                    path
-                    + "/"
-                    + bench
-                    + "/"
-                    + str(node)
-                    + "_"
-                    + str(dim)
-                    + "/"
-                    + resMap[solver]
-                )
-                combine(P, csvWriter, solver, bench, node, dim)
+    for dim in Dims:
+        for solver in solverName:
+            for bench in benchmarks:
+                for node in Nodes:
+                    P = (
+                        path
+                        + "/"
+                        + bench
+                        + "/"
+                        + str(node)
+                        + "_"
+                        + str(dim)
+                        + "/"
+                        + resMap[solver]
+                    )
+                    combine(P, csvWriter, solver, bench, node, dim)
 
 
 cores = [1, 4, 8, 16, 24, 48, 96]
