@@ -83,7 +83,7 @@ ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
 }
 
 //* range count
-
+// TODO change return type to pointers
 template<typename point>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx,

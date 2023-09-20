@@ -180,7 +180,7 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
     split = splitter( minEleIter->pnt[d], d );
   } else if ( In.end() ==
               ( diffEleIter = std::ranges::find_if_not( In, [&]( const point& p ) {
-                  return p == In[0];
+                  return p.sameDimension( In[0] );
                 } ) ) ) {  //* check whether all elements are identical
     return alloc_dummy_leaf( In );
   } else {  //* current dim d is same but other dims are not
@@ -227,6 +227,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
                                         const dim_type DIM, const box& bx ) {
   assert( In.size() == 0 || within_box( get_box( In ), bx ) );
 
+  // if ( In.size() ) {
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
     return serial_build_recursive( In, Out, dim, DIM, bx );
   }

@@ -5,7 +5,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
-using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -40,8 +40,11 @@ generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n, in
 
 template<typename point>
 std::pair<size_t, int>
-read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
+read_points( const char* iFile, parlay::sequence<point>& wp, int K,
+             bool withID = false ) {
   using coord = typename point::coord;
+  using coords = typename point::coords;
+  static coords samplePoint;
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
   size_t N = atol( W[0] );
@@ -61,6 +64,10 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   parlay::parallel_for( 0, n, [&]( size_t i ) {
     for ( int j = 0; j < Dim; j++ ) {
       wp[i].pnt[j] = a[i * Dim + j];
+      if constexpr ( std::is_same_v<point, PointType<coord, samplePoint.size()>> ) {
+      } else {
+        wp[i].id = i;
+      }
     }
   } );
   return std::make_pair( N, Dim );
