@@ -102,6 +102,7 @@ class ParallelKDtree {
 
   //@ batch helpers
   static void flatten( node* T, slice Out );
+  static void flatten_pointes( node* T, slice Out );
   void flatten_and_delete( node* T, slice Out );
   static void seieve_points( slice A, slice B, const size_t n, const node_tags& tags,
                              parlay::sequence<balls_type>& sums,
