@@ -18,16 +18,18 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
 
 //? parallel query
 template<typename point>
+template<typename StoreType>
 void
 ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
-                                  kBoundedQueue<point>& bq, size_t& visNodeNum ) {
+                                  kBoundedQueue<point, StoreType>& bq,
+                                  size_t& visNodeNum ) {
   visNodeNum++;
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
       bq.insert(
-          std::make_pair( &( TL->pts[( !T->is_dummy ) * i] ),
+          std::make_pair( std::ref( TL->pts[( !T->is_dummy ) * i] ),
                           ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
     }
     return;

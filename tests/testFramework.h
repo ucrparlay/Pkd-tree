@@ -5,7 +5,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
-using coord = double;
+using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
@@ -237,20 +237,20 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point*, coord>;
+  using nn_pair = std::pair<std::reference_wrapper<point>, coord>;
+  // using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
-
-  parlay::sequence<nn_pair> Out( K * n );
-  parlay::sequence<kBoundedQueue<point>> bq =
-      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
-  parlay::parallel_for(
-      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
-  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
-
   node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
   parlay::copy( WP, wp );
+
+  parlay::sequence<nn_pair> Out( K * n, nn_pair( std::ref( wp[0] ), 0 ) );
+  parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
+      parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
+  parlay::parallel_for(
+      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
+  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
 
   double aveQuery = time_loop(
       rounds, 1.0,
@@ -352,13 +352,13 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point*, coord>;
+  using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
   parlay::sequence<nn_pair> Out( K * n );
-  parlay::sequence<kBoundedQueue<point>> bq =
-      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
+  parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
+      parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
   parlay::parallel_for(
       0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
 
@@ -393,7 +393,7 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   //   }
   // } );
   parlay::sequence<point> edge( m );
-  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = *( Out[i].first ); } );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first; } );
   parlay::sequence<double> weight( m );
   parlay::parallel_for( 0, m, [&]( size_t i ) { weight[i] = Out[i].second; } );
   for ( size_t i = 0; i < n; i++ ) {

@@ -5,10 +5,10 @@
 
 namespace cpdd {
 
-template<typename point>
+template<typename point, typename T>
 class NN_Comparator {
   using coord = point::coord;
-  using T = std::pair<point*, coord>;
+  // using T = std::pair<point*, coord>;
   using Num = Num<coord>;
 
  public:
@@ -18,7 +18,7 @@ class NN_Comparator {
   }
 };
 
-template<typename point, typename Compare = NN_Comparator<point>>
+template<typename point, typename T, typename Compare = NN_Comparator<point, T>>
 class kBoundedQueue {
   /*
    * A priority queue with fixed maximum capacity.
@@ -33,7 +33,7 @@ class kBoundedQueue {
   //* https://github.com/CGAL/cgal/blob/v5.4/Spatial_searching/include/CGAL/Spatial_searching/internal/bounded_priority_queue.h
 
   using coord = typename point::coord;
-  using T = std::pair<point*, coord>;
+  // using T = std::pair<point*, coord>;
 
  public:
   kBoundedQueue( const Compare& comp = Compare() ) : m_comp( comp ) {}
@@ -69,7 +69,8 @@ class kBoundedQueue {
   }
 
   inline void
-  insert( const T& x ) {
+  insert( const std::pair<std::reference_wrapper<point>, coord> x ) {
+    // T x( _x.first, _x.second );
     T* data1 = ( &m_data[0] - 1 );
     if ( full() ) {
       if ( m_comp( x, top() ) ) {

@@ -134,8 +134,11 @@ class ParallelKDtree {
   //@ query stuffs
   static inline coord ppDistanceSquared( const point& p, const point& q,
                                          const dim_type DIM );
+
+  template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
-                         kBoundedQueue<point>& bq, size_t& visNodeNum );
+                         kBoundedQueue<point, StoreType>& bq, size_t& visNodeNum );
+
   size_t range_count( const box& queryBox );
   static size_t range_count_value( node* T, const box& queryBox, const box& nodeBox );
 
