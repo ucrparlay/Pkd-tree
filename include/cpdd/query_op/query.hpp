@@ -85,17 +85,19 @@ ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
 //* range count
 // TODO change return type to pointers
 template<typename point>
+template<typename Slice>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx,
-                                    slice Out ) {
+                                    Slice Out ) {
   size_t s = 0;
   range_query_recursive( this->root, Out, s, bx, this->bbox );
   return s;
 }
 
 template<typename point>
+template<typename Slice>
 void
-ParallelKDtree<point>::range_query_recursive( node* T, slice Out, size_t& s,
+ParallelKDtree<point>::range_query_recursive( node* T, Slice Out, size_t& s,
                                               const box& queryBox, const box& nodeBox ) {
   if ( !intersect_box( nodeBox, queryBox ) ) {
     return;

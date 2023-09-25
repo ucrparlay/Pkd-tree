@@ -79,7 +79,6 @@ class kBoundedQueue {
         while ( k <= m_count ) {
           T* z = &( data1[k] );
           if ( ( k < m_count ) && m_comp( *z, data1[k + 1] ) ) z = &( data1[++k] );
-
           if ( m_comp( *z, x ) ) break;
           data1[j] = *z;
           j = k;
