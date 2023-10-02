@@ -1,3 +1,6 @@
 [submodule "parlaylib"]
 	path = parlaylib
 	url = https://github.com/cmuparlay/parlaylib
+[submodule "external/ParGeo"]
+	path = external/ParGeo
+	url = git@github.com:ParAlg/ParGeo.git
