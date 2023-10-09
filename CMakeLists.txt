@@ -10,6 +10,7 @@ project(
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 
 option(DEBUG "" ON)
@@ -52,6 +53,7 @@ elseif(JEMA)
 endif()
 
 add_subdirectory(parlaylib)
+add_subdirectory(external/ParGeo)
 
 # set(source_files
 # ${PROJECT_SOURCE_DIR}/include/cpdd/kdTreeParallel.hpp
@@ -71,8 +73,16 @@ add_executable(test ${PROJECT_SOURCE_DIR}/tests/test.cpp)
 target_link_libraries(test PUBLIC kdTreeParallel)
 target_include_directories(test PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
+add_executable(test_pg ${PROJECT_SOURCE_DIR}/tests/test_pg.cpp)
+target_link_libraries(test_pg PUBLIC kdTreeParallel)
+target_link_libraries(kdTreeParallel INTERFACE pargeoLib)
+# target_include_directories(test_pg PUBLIC ${PROJECT_SOURCE_DIR}/include)
+# target_include_directories(test_pg PUBLIC ${PROJECT_SOURCE_DIR}/external/ParGeo/include)
+target_include_directories(test_pg INTERFACE parlay)
+
 if(JEMA)
   target_link_libraries(test PUBLIC libjemalloc.so)
+  target_link_libraries(test_pg PUBLIC libjemalloc.so)
 endif()
 
 add_executable(data_generator ${PROJECT_SOURCE_DIR}/tests/data_generate.cpp)
@@ -105,7 +115,7 @@ if(CGAL)
 
   # executables
   add_executable(cgal ${PROJECT_SOURCE_DIR}/tests/cgal.cpp)
-  target_link_libraries(cgal PUBLIC CGAL::CGAL CGAL::TBB_support)
+  target_link_libraries(cgal PUBLIC CGAL::CGAL CGAL::TBB_support PUBLIC parlay)
   target_include_directories(cgal PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
   add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
