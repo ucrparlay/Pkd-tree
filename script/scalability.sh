@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test")
+Solvers=("test")
 Cores=(1 4 8 16 24 48 96)
 # Node=(100000)
 Node=(100000000 500000000)
@@ -8,7 +8,7 @@ declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
-tag=1
+tag=2
 dim=3
 k=100
 onecore=0
@@ -19,26 +19,15 @@ resFile=""
 for solver in ${Solvers[@]}; do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        if [[ ${tag} == -1 ]]; then
-            continue
-            resFile="res_serial.out"
-        else
-            resFile="res_parallel.out"
-            # resFile="res_parallel_one_core.out"
-        fi
+        resFile="res.out"
     elif [[ ${solver} == "cgal" ]]; then
-        if [[ ${tag} == -1 ]]; then
-            continue
-            resFile="cgal_res_serial.out"
-        else
-            resFile="cgal_res_parallel.out"
-        fi
+        resFile="cgal.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        if [[ ${tag} == -1 ]]; then
-            continue
-        else
-            resFile="zdtree.out"
-        fi
+        resFile="zdtree.out"
+        exe="/home/zmen002/pbbsbench_x/build/zdtree"
+    elif [[ ${solver} == "cpam" ]]; then
+        resFile="cpam.out"
+        exe="/home/zmen002/CPAM_x/build/cpam_query"
     fi
 
     exe="../build/${solver}"

@@ -13,7 +13,9 @@
 #include <iterator>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-using point = PointType<coord, 5>;
+
+using point = PointID<coord, 5>;
+// using point = PointType<coord, 5>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -232,6 +234,12 @@ main( int argc, char* argv[] ) {
 
   LOG << std::setprecision( 13 ) << wp[0] << wp[1] << ENDL;
 
+  using ref_t = std::reference_wrapper<point>;
+  using pairs = std::pair<ref_t, int>;
+  ref_t a( wp[0] );
+  pairs p( a, 0 );
+  LOG << p.first << " " << p.second << ENDL;
+
   Typename* cgknn;
   Typename* kdknn;
   points wi;
@@ -328,8 +336,8 @@ main( int argc, char* argv[] ) {
                       ( std::begin( kdOut[i].pnt ) + Dim ) );
     } );
 
-    parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-      // for ( int i = 0; i < queryNum; i++ ) {
+    // parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+    for ( int i = 0; i < queryNum; i++ ) {
       if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
         puts( "" );
         puts( "count num wrong" );
@@ -349,8 +357,8 @@ main( int argc, char* argv[] ) {
           return 0;
         }
       }
-      // }
-    } );
+    }
+    // } );
   }
 
   puts( "\nok" );

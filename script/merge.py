@@ -95,11 +95,12 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                     combine(P, csvWriter, solver, bench, node, dim)
 
 
-cores = [1, 4, 8, 16, 24, 48, 96]
-
 if len(sys.argv) > 1 and int(sys.argv[1]) == 2:
-    solverName = ["test", "zdtree"]
-    resMap = {"test": "res_parallel.out", "zdtree": "zdtree.out"}
+    Nodes = [100000000, 500000000]
+    cores = [1, 4, 8, 16, 24, 48, 96]
+
+    solverName = ["test"]
+    resMap = {"test": "res.out"}
     csvFilePointer = open(storePrefix + "scalability" + ".csv", "w", newline="")
     csvFilePointer.truncate()
     csvWriter = csv.writer(csvFilePointer)
@@ -112,6 +113,7 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 2:
             "file",
             "buildTime",
             "insertTime",
+            "deleteTime",
             "core",
         ]
     )
@@ -140,8 +142,16 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 2:
                     for line in lines:
                         l = " ".join(line.split())
                         l = l.split(" ")
-                        while len(l) < 5:
-                            l.append("-1")
                         csvWriter.writerow(
-                            [solver, bench, node, dim, l[0], l[1], l[2], str(core)]
+                            [
+                                solver,
+                                bench,
+                                node,
+                                dim,
+                                l[0],
+                                l[1],
+                                l[2],
+                                l[3],
+                                str(core),
+                            ]
                         )

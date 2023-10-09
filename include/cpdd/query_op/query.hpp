@@ -18,16 +18,18 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
 
 //? parallel query
 template<typename point>
+template<typename StoreType>
 void
 ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
-                                  kBoundedQueue<point>& bq, size_t& visNodeNum ) {
+                                  kBoundedQueue<point, StoreType>& bq,
+                                  size_t& visNodeNum ) {
   visNodeNum++;
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
     for ( int i = 0; i < TL->size; i++ ) {
       bq.insert(
-          std::make_pair( &( TL->pts[( !T->is_dummy ) * i] ),
+          std::make_pair( std::ref( TL->pts[( !T->is_dummy ) * i] ),
                           ppDistanceSquared( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
     }
     return;
@@ -83,19 +85,21 @@ ParallelKDtree<point>::range_count_value( node* T, const box& queryBox,
 }
 
 //* range count
-
+// TODO change return type to pointers
 template<typename point>
+template<typename Slice>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& bx,
-                                    slice Out ) {
+                                    Slice Out ) {
   size_t s = 0;
   range_query_recursive( this->root, Out, s, bx, this->bbox );
   return s;
 }
 
 template<typename point>
+template<typename Slice>
 void
-ParallelKDtree<point>::range_query_recursive( node* T, slice Out, size_t& s,
+ParallelKDtree<point>::range_query_recursive( node* T, Slice Out, size_t& s,
                                               const box& queryBox, const box& nodeBox ) {
   if ( !intersect_box( nodeBox, queryBox ) ) {
     return;

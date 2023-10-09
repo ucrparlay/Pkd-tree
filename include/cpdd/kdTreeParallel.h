@@ -101,7 +101,9 @@ class ParallelKDtree {
                          const box& bx );
 
   //@ batch helpers
-  static void flatten( node* T, slice Out );
+  template<typename Slice>
+  static void flatten( node* T, Slice Out );
+
   void flatten_and_delete( node* T, slice Out );
   static void seieve_points( slice A, slice B, const size_t n, const node_tags& tags,
                              parlay::sequence<balls_type>& sums,
@@ -132,12 +134,19 @@ class ParallelKDtree {
   //@ query stuffs
   static inline coord ppDistanceSquared( const point& p, const point& q,
                                          const dim_type DIM );
+
+  template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
-                         kBoundedQueue<point>& bq, size_t& visNodeNum );
+                         kBoundedQueue<point, StoreType>& bq, size_t& visNodeNum );
+
   size_t range_count( const box& queryBox );
   static size_t range_count_value( node* T, const box& queryBox, const box& nodeBox );
-  size_t range_query( const box& queryBox, slice Out );
-  static void range_query_recursive( node* T, slice In, size_t& s, const box& queryBox,
+
+  template<typename Slice>
+  size_t range_query( const box& queryBox, Slice Out );
+
+  template<typename Slice>
+  static void range_query_recursive( node* T, Slice Out, size_t& s, const box& queryBox,
                                      const box& nodeBox );
 
   //@ validations

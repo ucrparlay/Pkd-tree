@@ -5,8 +5,9 @@
 namespace cpdd {
 
 template<typename point>
+template<typename Slice>
 void
-ParallelKDtree<point>::flatten( typename ParallelKDtree<point>::node* T, slice Out ) {
+ParallelKDtree<point>::flatten( typename ParallelKDtree<point>::node* T, Slice Out ) {
   assert( T->size == Out.size() );
   if ( T->size == 0 ) return;
 

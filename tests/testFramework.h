@@ -40,8 +40,11 @@ generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n, in
 
 template<typename point>
 std::pair<size_t, int>
-read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
+read_points( const char* iFile, parlay::sequence<point>& wp, int K,
+             bool withID = false ) {
   using coord = typename point::coord;
+  using coords = typename point::coords;
+  static coords samplePoint;
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
   size_t N = atol( W[0] );
@@ -61,6 +64,10 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   parlay::parallel_for( 0, n, [&]( size_t i ) {
     for ( int j = 0; j < Dim; j++ ) {
       wp[i].pnt[j] = a[i * Dim + j];
+      if constexpr ( std::is_same_v<point, PointType<coord, samplePoint.size()>> ) {
+      } else {
+        wp[i].id = i;
+      }
     }
   } );
   return std::make_pair( N, Dim );
@@ -230,20 +237,20 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point*, coord>;
+  using nn_pair = std::pair<std::reference_wrapper<point>, coord>;
+  // using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
-
-  parlay::sequence<nn_pair> Out( K * n );
-  parlay::sequence<kBoundedQueue<point>> bq =
-      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
-  parlay::parallel_for(
-      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
-  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
-
   node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
   parlay::copy( WP, wp );
+
+  parlay::sequence<nn_pair> Out( K * n, nn_pair( std::ref( wp[0] ), 0 ) );
+  parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
+      parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
+  parlay::parallel_for(
+      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
+  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
 
   double aveQuery = time_loop(
       rounds, 1.0,
@@ -291,12 +298,6 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
           kdknn[i] = pkd.range_count( queryBox );
         } );
-        // for ( size_t i = 0; i < queryNum; i++ ) {
-        //   box queryBox = pkd.get_box(
-        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
-        //       );
-        //   kdknn[i] = pkd.range_count( queryBox );
-        // }
       },
       [&]() {} );
 
@@ -317,6 +318,8 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 
   int n = wp.size();
   size_t step = Out.size() / queryNum;
+  using ref_t = std::reference_wrapper<point>;
+  parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
 
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
@@ -324,17 +327,17 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
         parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
+          kdknn[i] =
+              pkd.range_query( queryBox, out_ref.cut( i * step, ( i + 1 ) * step ) );
         } );
-        // for ( int i = 0; i < queryNum; i++ ) {
-        //   box queryBox = pkd.get_box(
-        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
-        //       );
-        //   kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step )
-        //   );
-        // }
       },
       [&]() {} );
+
+  parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
+    for ( int j = 0; j < kdknn[i]; j++ ) {
+      Out[i * step + j] = out_ref[i * step + j];
+    }
+  } );
 
   LOG << aveQuery << " " << std::flush;
   return;
@@ -349,13 +352,13 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
-  using nn_pair = std::pair<point*, coord>;
+  using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
   parlay::sequence<nn_pair> Out( K * n );
-  parlay::sequence<kBoundedQueue<point>> bq =
-      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
+  parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
+      parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
   parlay::parallel_for(
       0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
 
@@ -390,7 +393,7 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   //   }
   // } );
   parlay::sequence<point> edge( m );
-  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = *( Out[i].first ); } );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first; } );
   parlay::sequence<double> weight( m );
   parlay::parallel_for( 0, m, [&]( size_t i ) { weight[i] = Out[i].second; } );
   for ( size_t i = 0; i < n; i++ ) {
