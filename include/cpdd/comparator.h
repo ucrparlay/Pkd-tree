@@ -6,7 +6,7 @@ namespace cpdd {
 //* God made the integers, all else is the work of man.
 //* -- Leopold Kronecker
 template<typename T>
-class Num {
+class Num_Comparator {
  public:
   static inline bool
   Gt( const T a, const T b ) {

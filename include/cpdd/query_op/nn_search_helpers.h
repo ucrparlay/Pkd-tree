@@ -9,7 +9,7 @@ template<typename point, typename T>
 class NN_Comparator {
   using coord = point::coord;
   // using T = std::pair<point*, coord>;
-  using Num = Num<coord>;
+  using Num = Num_Comparator<coord>;
 
  public:
   bool

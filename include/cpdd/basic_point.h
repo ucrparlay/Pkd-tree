@@ -14,7 +14,7 @@ template<typename T, uint_fast8_t d>
 struct PointType {
   using coord = T;
   using coords = std::array<T, d>;
-  using Num = Num<coord>;
+  using Num = Num_Comparator<coord>;
 
   PointType() {}
 
@@ -99,7 +99,7 @@ template<typename T, uint_fast8_t d, typename IDtype = uint>
 struct PointID : PointType<T, d> {
   using coord = T;
   using coords = std::array<T, d>;
-  using Num = Num<coord>;
+  using Num = Num_Comparator<coord>;
   using ID = IDtype;
 
   PointID() {}

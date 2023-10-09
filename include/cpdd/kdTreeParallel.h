@@ -18,7 +18,7 @@ class ParallelKDtree {
 
   using coord = typename point::coord;
   using coords = typename point::coords;
-  using Num = Num<coord>;
+  using Num = Num_Comparator<coord>;
   using slice = parlay::slice<point*, point*>;
   using points = parlay::sequence<point>;
   using points_iter = parlay::sequence<point>::iterator;
