@@ -1,4 +1,4 @@
-solver,benchType,nodes,dims,file,buildTime,insertTime,deleteTime,queryTime,aveDeep,aveQueryVisNodeNum,rangeCountTime,rangeQueryTime
+solver,benchType,nodes,dims,file,build,insert,delete,queryTime,aveDeep,aveQueryVisNodeNum,rangeCountTime,rangeQueryTime
 test,ss_varden,10000000,2,1.in,0.0459517,0.0587963,0.047725,0.657163,38.6349,61.125,1.31069,-1
 test,ss_varden,10000000,2,2.in,0.0441013,0.0551827,0.0466007,0.64513,38.5883,61.0174,0.585804,-1
 test,ss_varden,50000000,2,1.in,0.190586,0.241271,0.229062,3.23321,45.2715,65.071,3.21705,-1
@@ -35,10 +35,6 @@ cgal,ss_varden,10000000,2,1.in,5.17392,12.9025,3.29479,1.99002,-1,-1,102.089,102
 cgal,ss_varden,10000000,2,2.in,4.6599,13.6238,3.43206,1.83979,-1,-1,201.533,201.402
 cgal,ss_varden,50000000,2,1.in,22.5753,62.4159,28.9612,12.612,-1,-1,834.947,817.345
 cgal,ss_varden,50000000,2,2.in,22.7567,71.2532,30.4822,12.5883,-1,-1,895.663,894.537
-cgal,ss_varden,100000000,2,1.in,Unable,to,open,file:,/data9/zmen002/kdtree/ss_varden/100000000_2/1.in,-1,-1,-1
-cgal,ss_varden,100000000,2,2.in,Unable,to,open,file:,/data9/zmen002/kdtree/ss_varden/100000000_2/2.in,-1,-1,-1
-cgal,ss_varden,500000000,2,1.in,Unable,to,open,file:,/data9/zmen002/kdtree/ss_varden/500000000_2/1.in,-1,-1,-1
-cgal,ss_varden,500000000,2,2.in,Unable,to,open,file:,/data9/zmen002/kdtree/ss_varden/500000000_2/2.in,-1,-1,-1
 cgal,uniform,10000000,2,1.in,5.88248,17.5247,4.33278,3.30658,-1,-1,193.016,193.227
 cgal,uniform,10000000,2,2.in,6.09343,17.427,4.40454,3.45843,-1,-1,198.182,197.987
 cgal,uniform,50000000,2,1.in,30.5362,93.5384,27.7562,22.9983,-1,-1,1022.3,949.715
