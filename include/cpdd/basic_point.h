@@ -33,7 +33,7 @@ struct PointType {
       pnt[i] = x[i];
   }
 
-  const PointType
+  inline const PointType
   minCoords( const PointType& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {
@@ -42,7 +42,7 @@ struct PointType {
     return std::move( PointType( pts ) );
   }
 
-  const PointType
+  inline const PointType
   maxCoords( const PointType& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {
@@ -51,7 +51,7 @@ struct PointType {
     return std::move( PointType( pts ) );
   }
 
-  const uint_fast8_t
+  inline const uint_fast8_t
   get_dim() const {
     return std::move( pnt.size() );
   }
@@ -61,7 +61,7 @@ struct PointType {
     return *this == b;
   }
 
-  bool
+  inline bool
   operator==( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
       if ( !Num::Eq( pnt[i], x.pnt[i] ) ) return false;
@@ -69,7 +69,7 @@ struct PointType {
     return true;
   }
 
-  bool
+  inline bool
   operator<( const PointType& x ) const {
     for ( int i = 0; i < d; i++ ) {
       if ( Num::Lt( pnt[i], x.pnt[i] ) )
@@ -120,7 +120,7 @@ struct PointID : PointType<T, d> {
       this->pnt[i] = x[i];
   }
 
-  const PointID
+  inline const PointID
   minCoords( const PointID& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {
@@ -129,7 +129,7 @@ struct PointID : PointType<T, d> {
     return std::move( PointID( pts ) );
   }
 
-  const PointID
+  inline const PointID
   maxCoords( const PointID& b ) const {
     coords pts;
     for ( int i = 0; i < d; i++ ) {

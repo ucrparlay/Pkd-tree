@@ -14,7 +14,7 @@ dim=5
 queryTypes=(0)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
-Paths=("/ssd0/zmen002/kdtree/ss_varden/")
+Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform/")
 
 #* check node
 for queryType in ${queryTypes[@]}; do
