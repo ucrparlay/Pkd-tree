@@ -5,7 +5,7 @@
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
 
-using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -345,33 +345,40 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 
 template<typename point>
 void
-generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
-              const int& rounds, ParallelKDtree<point>& pkd, Typename* kdknn,
-              const int& K, const bool checkCorrect, const char* outFile ) {
+generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int K,
+              const char* outFile ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
   using coord = typename point::coord;
   using nn_pair = std::pair<point, coord>;
-  size_t n = WP.size();
-  int LEAVE_WRAP = 32;
+  // using nn_pair = std::pair<std::reference_wrapper<point>, coord>;
+  using ID_type = uint;
 
-  parlay::sequence<nn_pair> Out( K * n );
+  size_t n = WP.size();
+
+  tree pkd;
+  points wp = points( n );
+  parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
+
+  pkd.build( parlay::make_slice( wp ), Dim );
+
+  parlay::sequence<nn_pair> Out( K * n, nn_pair( std::ref( wp[0] ), 0 ) );
   parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
       parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
   parlay::parallel_for(
       0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
 
   node* KDParallelRoot = pkd.get_root();
-  points wp = points::uninitialized( n );
-  parlay::copy( WP, wp );
   parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
 
-  double aveVisNum = 0.0;
+  std::cout << "begin query" << std::endl;
   parlay::parallel_for( 0, n, [&]( size_t i ) {
     size_t visNodeNum = 0;
-    pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+    pkd.k_nearest( KDParallelRoot, WP[i], Dim, bq[i], visNodeNum );
   } );
+
+  std::cout << "finish query" << std::endl;
 
   std::ofstream ofs( outFile );
   if ( !ofs.is_open() ) {
@@ -392,20 +399,20 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,
   //     }
   //   }
   // } );
-  parlay::sequence<point> edge( m );
-  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first; } );
+
+  parlay::sequence<ID_type> edge( m );
+  parlay::parallel_for( 0, m, [&]( size_t i ) { edge[i] = Out[i].first.id; } );
   parlay::sequence<double> weight( m );
   parlay::parallel_for( 0, m, [&]( size_t i ) { weight[i] = Out[i].second; } );
   for ( size_t i = 0; i < n; i++ ) {
     ofs << offset[i] << '\n';
   }
   for ( size_t i = 0; i < m; i++ ) {
-    for ( auto j : edge[i].pnt )
-      ofs << j << " ";
+    ofs << edge[i];
     ofs << "\n";
     // ofs << edge[i] << '\n';
   }
-  for ( size_t i = 0; i < n; i++ ) {
+  for ( size_t i = 0; i < m; i++ ) {
     ofs << weight[i] << '\n';
   }
   ofs.close();

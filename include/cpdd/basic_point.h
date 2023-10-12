@@ -106,14 +106,12 @@ struct PointID : PointType<T, d> {
   PointID( const T val ) { this->pnt.fill( val ); }
   PointID( const coords& _pnt ) { this->pnt = _pnt, id = 0; }
   PointID( const coords& _pnt, ID _id ) { this->pnt = _pnt, id = _id; }
-
   PointID( parlay::slice<T*, T*> x, ID _id ) {
     assert( x.size() == d );
     id = _id;
     for ( int i = 0; i < d; i++ )
       this->pnt[i] = x[i];
   }
-
   PointID( T* x, ID _id ) {
     id = _id;
     for ( int i = 0; i < d; i++ )
@@ -172,6 +170,11 @@ struct PointID : PointType<T, d> {
     }
     o << ") " << std::flush;
     return o;
+  }
+
+  ID
+  getId() {
+    return id;
   }
 
   ID id;
