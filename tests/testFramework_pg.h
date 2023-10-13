@@ -10,7 +10,7 @@
 
 #include "parlay/random.h"
 
-#include "../external/ParGeo/include/kdTree/kdTree.h"
+// #include "../external/ParGeo/include/kdTree/kdTree.h"
 #include "../external/ParGeo/include/pargeo/pointIO.h"
 
 using coord = long;
@@ -48,7 +48,7 @@ generate_random_points( parlay::sequence<point>& wp, coord _box_size, long n, in
 template<typename point>
 std::pair<size_t, int>
 read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
-  using coord = std::remove_reference_t<decltype(*std::declval<point>().coords())>; // *
+  using coord = std::remove_reference_t<decltype(*std::declval<point>().coordinate())>; // *
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
   size_t N = atol( W[0] );
@@ -115,26 +115,27 @@ checkTreesSize( typename tree::node* T ) {
   return T->size;
 }
 */
-template<typename point>
-pargeo::kdTree::node<point::dim,point>*
+template<class Tree, typename point>
+auto
 buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t leaf_size) {
   // using tree = ParallelKDtree<point>;
   // using points = typename tree::points;
   using points = parlay::sequence<point>;
   // using node = typename tree::node;
-  using node = pargeo::kdTree::node<point::dim, point>;
 
   size_t n = WP.size();
   // points wp = points::uninitialized( n );
   parlay::sequence<point> wp( n );
 
-  node *tree = nullptr;
+  Tree *tree = nullptr;
   double aveBuild = time_loop(
       rounds, 1.0, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
       [&]() {
-        tree = pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
+        // tree = pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
+        const auto &cwp = wp;
+        tree = new Tree(cwp.cut(0,n));
       }, 
-      [&]() { pargeo::kdTree::del(tree); }
+      [&]() { delete tree; }
   );
 
   std::cout << aveBuild << " " << std::endl;
@@ -144,7 +145,9 @@ buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t 
 
   parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   // pkd.delete_tree();
-  return pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
+  // return pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
+  const auto &cwp = wp;
+  return Tree(cwp.cut(0,n));
 }
 /*
 template<typename point, uint_fast8_t DIM>
@@ -232,7 +235,7 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
   return;
 }
-*/
+
 template<typename point>
 void
 queryKNN(const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& rounds,
@@ -247,48 +250,22 @@ queryKNN(const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& 
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
-  /*
-  parlay::sequence<nn_pair> Out( K * n );
-  parlay::sequence<kBoundedQueue<point>> bq =
-      parlay::sequence<kBoundedQueue<point>>::uninitialized( n );
-  parlay::parallel_for(
-      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
-  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
-  */
-
   // node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
   parlay::copy( WP, wp );
   double aveQuery = time_loop(
       rounds, 1.0,
-      [&]() { /*parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );*/ },
+      [&]() {  },
       [&]() {
-        /*
-        if ( !checkCorrect ) {
-          pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
-        }
-        double aveVisNum = 0.0;
-        parlay::parallel_for( 0, n, [&]( size_t i ) {
-          size_t visNodeNum = 0;
-          pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
-          kdknn[i] = bq[i].top().second;
-          visNum[i] = ( 1.0 * visNodeNum ) / n;
-        } );
-        */
         auto nn = pargeo::kdTree::batchKnn<point::dim,point>(wp, K, pkd, true);
       },
       [&]() {} );
 
   std::cout << aveQuery << " " << std::flush;
-  /*
-  aveDeep = 0.0;
-  traverseParallelTree<tree>( KDParallelRoot, 1 );
-  LOG << aveDeep / ( n / LEAVE_WRAP ) << " " << parlay::reduce( visNum.cut( 0, n ) )
-      << " " << std::flush;
-  */
+
   return;
 }
-/*
+
 template<typename point>
 void
 rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,

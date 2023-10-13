@@ -1,6 +1,11 @@
 #include "testFramework_pg.h"
 
-template<typename point>
+#include "batchKdtree/cache-oblivious/cokdtree.h"
+#include "batchKdtree/binary-heap-layout/bhlkdtree.h"
+#include "batchKdtree/log-tree/logtree.h"
+#include "batchKdtree/shared/dual.h"
+
+template<class Tree, typename point>
 void
 testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
                     const size_t& N, const int& K, const int& rounds,
@@ -8,7 +13,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   // using tree = ParallelKDtree<point>;
   constexpr const int DimMax = point::dim;
   using points = parlay::sequence<point>;
-  using node = pargeo::kdTree::node<DimMax, point>;
+  // using node = pargeo::kdTree::node<DimMax, point>;
   // using interior = typename tree::interior;
   // using leaf = typename tree::leaf;
   // using node_tag = typename tree::node_tag;
@@ -32,7 +37,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   Typename* kdknn;
 
   //* begin test
-  auto pkd = buildTree<point>(Dim, wp, rounds, LEAVE_WRAP);
+  auto pkd = buildTree<Tree,point>(Dim, wp, rounds, LEAVE_WRAP);
 
   //* batch insert
   if ( tag >= 1 ) {
@@ -58,7 +63,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
-    queryKNN<point>(Dim, wp, rounds, pkd, kdknn, K, false );
+    // queryKNN<point>(Dim, wp, rounds, pkd, kdknn, K, false );
   } else {
     std::cout << "-1 -1 -1 " << std::flush;
   }
@@ -105,7 +110,30 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 }
 
 template<typename T, uint_fast8_t d>
-using PointType = pargeo::_point<d,T,double,pargeo::_empty>;
+// using PointType = pargeo::_point<d,T,double,pargeo::_empty>;
+using PointType = pargeo::batchKdTree::point<d>;
+
+struct wrapper{
+  constexpr const static bool parallel = true;
+  constexpr const static bool coarsen = false;
+
+  constexpr const static int NUM_TREES = 21;
+  constexpr const static int BUFFER_LOG2_SIZE = 7;
+
+  struct COTree_t{
+    template<class Point>
+    using type = pargeo::batchKdTree::CO_KdTree<Point::dim, Point, parallel, coarsen>;
+  };
+  struct BHLTree_t{
+    template<class Point>
+    using type = pargeo::batchKdTree::BHL_KdTree<Point::dim, Point, parallel, coarsen>;
+  };
+  struct LogTree_t{
+    template<class Point>
+    using type = pargeo::batchKdTree::LogTree<NUM_TREES, BUFFER_LOG2_SIZE, Point::dim, Point, parallel, coarsen>;
+  };
+};
+
 
 int
 main( int argc, char* argv[] ) {
@@ -121,6 +149,7 @@ main( int argc, char* argv[] ) {
   int tag = P.getOptionIntValue( "-t", 1 );
   int rounds = P.getOptionIntValue( "-r", 3 );
   int queryType = P.getOptionIntValue( "-q", 0 );
+  int treeType = P.getOptionIntValue( "-T", 0 );
 
   int LEAVE_WRAP = 32;
   parlay::sequence<PointType<coord, 15>> wp;
@@ -155,39 +184,39 @@ main( int argc, char* argv[] ) {
 
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
-  if ( tag == -1 ) {
-    //* serial run
-    // todo rewrite test serial code
-    // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-  } else if ( Dim == 2 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 2> {
-      return PointType<coord, 2>( wp[i].coords() );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                             insertFile, tag, queryType );
-  } else if ( Dim == 3 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 3> {
-      return PointType<coord, 3>( wp[i].coords() );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                             insertFile, tag, queryType );
-  } else if ( Dim == 5 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 5> {
-      return PointType<coord, 5>( wp[i].coords() );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                             insertFile, tag, queryType );
-  } else if ( Dim == 7 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 7> {
-      return PointType<coord, 7>( wp[i].coords() );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                             insertFile, tag, queryType );
-  }
+  auto run_test = [&]<class Wrapper>(Wrapper){
+
+    auto run = [&](auto dim_wrapper){
+      constexpr const auto D = decltype(dim_wrapper)::value;
+      auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
+        return PointType<coord, D>( wp[i].coordinate() );
+      } );
+      decltype( wp )().swap( wp );
+      testParallelKDtree<typename Wrapper::type<PointType<coord,D>> >(Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                               insertFile, tag, queryType );
+    };
+
+    if ( tag == -1 ) {
+      //* serial run
+      // todo rewrite test serial code
+      // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+    } else if ( Dim == 2 ) {
+      run(std::integral_constant<int,2>{});
+    } else if ( Dim == 3 ) {
+      run(std::integral_constant<int,3>{});
+    } else if ( Dim == 5 ) {
+      run(std::integral_constant<int,5>{});
+    } else if ( Dim == 7 ) {
+      run(std::integral_constant<int,7>{});
+    }
+  };
+
+  if(treeType==0)
+    run_test(wrapper::COTree_t{});
+  else if(treeType==1)
+    run_test(wrapper::BHLTree_t{});
+  else if(treeType==2)
+    run_test(wrapper::LogTree_t{});
 
   return 0;
 }
