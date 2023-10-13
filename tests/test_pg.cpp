@@ -1,13 +1,14 @@
 #include "testFramework_pg.h"
 
-template<typename point, int Dim>
+template<typename point>
 void
-testParallelKDtree( const int& LEAVE_WRAP, parlay::sequence<point>& wp,
+testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
                     const size_t& N, const int& K, const int& rounds,
                     const string& insertFile, const int& tag, const int& queryType ) {
   // using tree = ParallelKDtree<point>;
+  constexpr const int DimMax = point::dim;
   using points = parlay::sequence<point>;
-  using node = pargeo::kdTree::node<Dim, point>;
+  using node = pargeo::kdTree::node<DimMax, point>;
   // using interior = typename tree::interior;
   // using leaf = typename tree::leaf;
   // using node_tag = typename tree::node_tag;
@@ -21,7 +22,7 @@ testParallelKDtree( const int& LEAVE_WRAP, parlay::sequence<point>& wp,
 
   points wi;
   if ( tag >= 1 ) {
-    auto [nn, nd] = read_points<point,Dim>( insertFile.c_str(), wi, K );
+    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K);
     if ( nd != Dim ) {
       puts( "read inserted points dimension wrong" );
       abort();
@@ -31,7 +32,7 @@ testParallelKDtree( const int& LEAVE_WRAP, parlay::sequence<point>& wp,
   Typename* kdknn;
 
   //* begin test
-  auto pkd = buildTree<point,Dim>(wp, rounds, LEAVE_WRAP);
+  auto pkd = buildTree<point>(Dim, wp, rounds, LEAVE_WRAP);
 
   //* batch insert
   if ( tag >= 1 ) {
@@ -57,7 +58,7 @@ testParallelKDtree( const int& LEAVE_WRAP, parlay::sequence<point>& wp,
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
-    queryKNN<point,Dim>(wp, rounds, pkd, kdknn, K, false );
+    queryKNN<point>(Dim, wp, rounds, pkd, kdknn, K, false );
   } else {
     std::cout << "-1 -1 -1 " << std::flush;
   }
@@ -130,12 +131,12 @@ main( int argc, char* argv[] ) {
     name = std::string( iFile );
     name = name.substr( name.rfind( "/" ) + 1 );
     std::cout << name << " ";
-    auto [n, d] = read_points<PointType<coord, 15>,15>( iFile, wp, K );
+    auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
     N = n;
     assert( d == Dim );
   } else {  //* construct data byself
     K = 100;
-    generate_random_points<PointType<coord, 15>,15>( wp, 1000000, N);
+    generate_random_points<PointType<coord, 15>>( wp, 1000000, N, 15);
     std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
     std::cout << name << " ";
   }
@@ -163,28 +164,28 @@ main( int argc, char* argv[] ) {
       return PointType<coord, 2>( wp[i].coords() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 2>,2>(LEAVE_WRAP, pts, N, K, rounds,
+    testParallelKDtree<PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                              insertFile, tag, queryType );
   } else if ( Dim == 3 ) {
     auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 3> {
       return PointType<coord, 3>( wp[i].coords() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 3>,3>(LEAVE_WRAP, pts, N, K, rounds,
+    testParallelKDtree<PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                              insertFile, tag, queryType );
   } else if ( Dim == 5 ) {
     auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 5> {
       return PointType<coord, 5>( wp[i].coords() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 5>,5>(LEAVE_WRAP, pts, N, K, rounds,
+    testParallelKDtree<PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                              insertFile, tag, queryType );
   } else if ( Dim == 7 ) {
     auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 7> {
       return PointType<coord, 7>( wp[i].coords() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 7>,7>(LEAVE_WRAP, pts, N, K, rounds,
+    testParallelKDtree<PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                              insertFile, tag, queryType );
   }
 
