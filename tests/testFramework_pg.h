@@ -126,28 +126,31 @@ buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t 
   size_t n = WP.size();
   // points wp = points::uninitialized( n );
   parlay::sequence<point> wp( n );
-
   Tree *tree = nullptr;
+
+  auto prologue = [&]{
+    parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
+  };
+  auto body = [&]{
+    // tree = pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
+    const auto &cwp = wp;
+    tree = new Tree(cwp.cut(0,n));
+  };
+  auto epilogue = [&]{
+    delete tree;
+  };
+
   double aveBuild = time_loop(
-      rounds, 1.0, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
-      [&]() {
-        // tree = pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
-        const auto &cwp = wp;
-        tree = new Tree(cwp.cut(0,n));
-      }, 
-      [&]() { delete tree; }
+      rounds, 1.0, 
+      prologue, body, epilogue
   );
 
-  std::cout << aveBuild << " " << std::endl;
+  std::cout << aveBuild << " " << std::flush;
 
   //* return a built tree
-  // parlay::sequence<coord> p = { 48399, 65087, 66178, 74404, 2991 };
-
-  parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
-  // pkd.delete_tree();
-  // return pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
-  const auto &cwp = wp;
-  return Tree(cwp.cut(0,n));
+  prologue();
+  body();
+  return tree;
 }
 /*
 template<typename point, uint_fast8_t DIM>
