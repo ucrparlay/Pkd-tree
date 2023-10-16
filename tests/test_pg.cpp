@@ -1,11 +1,6 @@
 #include "testFramework_pg.h"
 
-#include "batchKdtree/cache-oblivious/cokdtree.h"
-#include "batchKdtree/binary-heap-layout/bhlkdtree.h"
-#include "batchKdtree/log-tree/logtree.h"
-#include "batchKdtree/shared/dual.h"
-
-template<class Tree, typename point>
+template<class TreeDesc, typename point>
 void
 testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
                     const size_t& N, const int& K, const int& rounds,
@@ -37,12 +32,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   Typename* kdknn;
 
   //* begin test
-  auto pkd = buildTree<Tree,point>(Dim, wp, rounds, LEAVE_WRAP);
+  auto pkd = buildTree<TreeDesc,point>(Dim, wp, rounds, LEAVE_WRAP);
 
   //* batch insert
   if ( tag >= 1 ) {
 
-    // batchInsert<point>( pkd, wp, wi, Dim, rounds );
+    batchInsert<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
 
     if ( tag == 1 ) {
       wp.append( wi );
@@ -54,7 +49,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   //* batch delete
   if ( tag >= 2 ) {
     assert( wi.size() );
-    // batchDelete<point>( pkd, wp, wi, Dim, rounds );
+    batchDelete<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
   } else {
     std::cout << "-1 " << std::flush;
   }
@@ -63,7 +58,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
-    // queryKNN<point>(Dim, wp, rounds, pkd, kdknn, K, false );
+    queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, K, false );
   } else {
     std::cout << "-1 -1 -1 " << std::flush;
   }
@@ -122,15 +117,33 @@ struct wrapper{
 
   struct COTree_t{
     template<class Point>
-    using type = pargeo::batchKdTree::CO_KdTree<Point::dim, Point, parallel, coarsen>;
+    struct desc{
+      using type = pargeo::batchKdTree::CO_KdTree<Point::dim, Point, parallel, coarsen>;
+      constexpr static const bool support_knn2 = false;
+      constexpr static const bool support_knn3 = false;
+      constexpr static const bool support_insert = false;
+      constexpr static const bool support_insert_delete = false;
+    };
   };
   struct BHLTree_t{
     template<class Point>
-    using type = pargeo::batchKdTree::BHL_KdTree<Point::dim, Point, parallel, coarsen>;
+    struct desc{
+      using type = pargeo::batchKdTree::BHL_KdTree<Point::dim, Point, parallel, coarsen>;
+      constexpr static const bool support_knn2 = false;
+      constexpr static const bool support_knn3 = false;
+      constexpr static const bool support_insert = true;
+      constexpr static const bool support_insert_delete = true;
+    };
   };
   struct LogTree_t{
     template<class Point>
-    using type = pargeo::batchKdTree::LogTree<NUM_TREES, BUFFER_LOG2_SIZE, Point::dim, Point, parallel, coarsen>;
+    struct desc{
+      using type = pargeo::batchKdTree::LogTree<NUM_TREES, BUFFER_LOG2_SIZE, Point::dim, Point, parallel, coarsen>;
+      constexpr static const bool support_knn2 = true;
+      constexpr static const bool support_knn3 = true;
+      constexpr static const bool support_insert = true;
+      constexpr static const bool support_insert_delete = true;
+    };
   };
 };
 
@@ -192,7 +205,7 @@ main( int argc, char* argv[] ) {
         return PointType<coord, D>( wp[i].coordinate() );
       } );
       decltype( wp )().swap( wp );
-      testParallelKDtree<typename Wrapper::type<PointType<coord,D>> >(Dim, LEAVE_WRAP, pts, N, K, rounds,
+      testParallelKDtree<typename Wrapper::desc<PointType<coord,D>> >(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                                insertFile, tag, queryType );
     };
 
@@ -204,11 +217,11 @@ main( int argc, char* argv[] ) {
       run(std::integral_constant<int,2>{});
     } else if ( Dim == 3 ) {
       run(std::integral_constant<int,3>{});
-    } else if ( Dim == 5 ) {
+    }/* else if ( Dim == 5 ) {
       run(std::integral_constant<int,5>{});
     } else if ( Dim == 7 ) {
       run(std::integral_constant<int,7>{});
-    }
+    }*/
   };
 
   if(treeType==0)

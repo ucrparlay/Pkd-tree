@@ -13,6 +13,11 @@
 // #include "../external/ParGeo/include/kdTree/kdTree.h"
 #include "../external/ParGeo/include/pargeo/pointIO.h"
 
+#include "batchKdtree/cache-oblivious/cokdtree.h"
+#include "batchKdtree/binary-heap-layout/bhlkdtree.h"
+#include "batchKdtree/log-tree/logtree.h"
+#include "batchKdtree/shared/dual.h"
+
 using coord = long;
 using Typename = coord;
 
@@ -115,13 +120,14 @@ checkTreesSize( typename tree::node* T ) {
   return T->size;
 }
 */
-template<class Tree, typename point>
+template<class TreeDesc, typename point>
 auto
 buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t leaf_size) {
   // using tree = ParallelKDtree<point>;
   // using points = typename tree::points;
   using points = parlay::sequence<point>;
   // using node = typename tree::node;
+  using Tree = typename TreeDesc::type;
 
   size_t n = WP.size();
   // points wp = points::uninitialized( n );
@@ -152,123 +158,171 @@ buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t 
   body();
   return tree;
 }
-/*
-template<typename point, uint_fast8_t DIM>
+
+template<class TreeDesc, typename point>
 void
-batchInsert( pargeo::kdTree::node<DIM, point> *&pkd, const parlay::sequence<point>& WP,
-             const parlay::sequence<point>& WI,
+batchInsert( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
+             const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
              const int& rounds ) {
+  if(!TreeDesc::support_insert)
+  {
+    std::cout << "-1 " << std::flush;
+    return;
+  }
+
   // using tree = ParallelKDtree<point>;
   using points = parlay::sequence<point>;
-  using node = pargeo::kdTree::node<DIM, point>;
+  // using node = pargeo::kdTree::node<DIM, point>;
+  using Tree = typename TreeDesc::type;
+
   points wp = points::uninitialized( WP.size() );
   points wi = points::uninitialized( WI.size() );
 
-  pargeo::kdTree::del(pkd);
+  delete tree;
+
+  auto prologue = [&]{
+    parlay::copy( WP, wp ), parlay::copy( WI, wi );
+    const auto &cwp = wp;
+    // tree = new Tree( parlay::make_slice( cwp ) );
+    const int log2size = (int)std::ceil(std::log2(WP.size()+WI.size()));
+    tree = new Tree(log2size);
+    tree->insert( parlay::make_slice( cwp ) );
+  };
+  auto body = [&]{
+    const auto &cwi = wi;
+    tree->insert( parlay::make_slice( cwi ) );
+  };
+  auto epilogue = [&]{
+    delete tree;
+  };
 
   double aveInsert = time_loop(
       rounds, 1.0,
-      [&]() {
-        parlay::copy( WP, wp ), parlay::copy( WI, wi );
-        pkd = pargeo::kdTree::build<DIM,point>(wp.cut(0,n), true, leaf_size);
-      },
-      [&]() { pkd.batchInsert( parlay::make_slice( wi ), DIM ); },
-      [&]() { pargeo::kdTree::del(pkd); } );
+      prologue, body, epilogue
+  );
+
+  std::cout << aveInsert << " " << std::flush;
 
   //* set status to be finish insert
-  parlay::copy( WP, wp ), parlay::copy( WI, wi );
-  pkd = pargeo::kdTree::build<DIM,point>(wp.cut(0,n), true, leaf_size);
-  pkd.batchInsert( parlay::make_slice( wi ), DIM );
-
-  LOG << aveInsert << " " << std::flush;
-
-  return;
+  prologue();
+  body();
 }
 
-template<typename point>
+template<class TreeDesc, typename point>
 void
-batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
+batchDelete( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
              const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
              const int& rounds, bool afterInsert = 1 ) {
-  using tree = ParallelKDtree<point>;
-  using points = typename tree::points;
-  using node = typename tree::node;
+  if(afterInsert && !TreeDesc::support_insert_delete)
+  {
+    std::cout << "-1 " << std::flush;
+    return;
+  }
+
+  // using tree = ParallelKDtree<point>;
+  using points = parlay::sequence<point>;
+  // using node = typename tree::node;
+  using Tree = typename TreeDesc::type;
+
   points wp = points::uninitialized( WP.size() );
   points wi = points::uninitialized( WI.size() );
 
-  pkd.delete_tree();
+  delete tree;
+
+  auto prologue = [&]{
+    if ( afterInsert ) {
+      parlay::copy( WP, wp ), parlay::copy( WI, wi );
+      const auto &cwp=wp, &cwi = wi;
+      // tree = new Tree( parlay::make_slice( cwp ) );
+      // tree->insert( parlay::make_slice( cwi ) );
+      const int log2size = (int)std::ceil(std::log2(WP.size()+WI.size()));
+      tree = new Tree(log2size);
+      tree->insert( parlay::make_slice( cwp ) );
+      tree->insert( parlay::make_slice( cwi ) );
+      parlay::copy( WP, wp ), parlay::copy( WI, wi );
+    } else {
+      wp.resize( WP.size() + WI.size() );
+      parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
+      parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
+      const auto &cwp = wp;
+      tree = new Tree( parlay::make_slice( cwp ) );
+      parlay::copy( WI, wi );
+    }
+  };
+  auto body = [&]{
+    tree->bulk_erase( wi );
+  };
+  auto epilogue = [&]{
+    delete tree;
+  };
 
   double aveDelete = time_loop(
       rounds, 1.0,
-      [&]() {
-        if ( afterInsert ) {
-          parlay::copy( WP, wp ), parlay::copy( WI, wi );
-          pkd.build( parlay::make_slice( wp ), DIM );
-          pkd.batchInsert( parlay::make_slice( wi ), DIM );
-          parlay::copy( WP, wp ), parlay::copy( WI, wi );
-        } else {
-          wp.resize( WP.size() + WI.size() );
-          parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
-          parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
-          pkd.build( parlay::make_slice( wp ), DIM );
-          parlay::copy( WI, wi );
-        }
-      },
-      [&]() { pkd.batchDelete( parlay::make_slice( wi ), DIM ); },
-      [&]() { pkd.delete_tree(); } );
-
-  //* set status to be finish delete
-
-  if ( afterInsert ) {
-    parlay::copy( WP, wp ), parlay::copy( WI, wi );
-    pkd.build( parlay::make_slice( wp ), DIM );
-    pkd.batchInsert( parlay::make_slice( wi ), DIM );
-    parlay::copy( WP, wp ), parlay::copy( WI, wi );
-    pkd.batchDelete( parlay::make_slice( wi ), DIM );
-  } else {
-    wp.resize( WP.size() + WI.size() );
-    parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
-    parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
-    pkd.build( parlay::make_slice( wp ), DIM );
-    parlay::copy( WI, wi );
-    pkd.batchDelete( parlay::make_slice( wi ), DIM );
-  }
+      prologue, body, epilogue
+  );
 
   std::cout << aveDelete << " " << std::flush;
 
-  return;
+  //* set status to be finish delete
+  prologue();
+  body();
 }
 
-template<typename point>
+template<class TreeDesc, typename point>
 void
-queryKNN(const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& rounds,
-          pargeo::kdTree::node<point::dim, point> *&pkd, Typename* kdknn, const int& K,
+queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& rounds,
+          typename TreeDesc::type *&tree, Typename* kdknn, const int& K,
           const bool checkCorrect ) {
   // using tree = ParallelKDtree<point>;
   using points = parlay::sequence<point>;
   // using node = typename tree::node;
-  using node = pargeo::kdTree::node<point::dim, point>;
+  // using node = pargeo::kdTree::node<point::dim, point>;
+  using Tree = typename TreeDesc::type;
   // using coord = typename point::coord;
   using nn_pair = std::pair<point*, coord>;
+
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
 
-  // node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
   parlay::copy( WP, wp );
-  double aveQuery = time_loop(
-      rounds, 1.0,
-      [&]() {  },
-      [&]() {
-        auto nn = pargeo::kdTree::batchKnn<point::dim,point>(wp, K, pkd, true);
-      },
-      [&]() {} );
 
-  std::cout << aveQuery << " " << std::flush;
+  auto test_knn = [&](auto knn_func){
+    double aveQuery = time_loop(
+        rounds, 1.0,
+        []{}, knn_func, []{}
+    );
+    std::cout << aveQuery << " " << std::flush;
+  };
 
-  return;
+  std::cout << "knn1 " << std::flush;
+  test_knn([&]{tree->template knn<false,false>(wp,K);});
+  test_knn([&]{tree->template knn<false,true>(wp,K);});
+  test_knn([&]{tree->template knn<true,false>(wp,K);});
+  test_knn([&]{tree->template knn<true,true>(wp,K);});
+
+  if(TreeDesc::support_knn2)
+  {
+    std::cout << "knn2 " << std::flush;
+    test_knn([&]{tree->template knn2<false,false>(wp,K);});
+    test_knn([&]{tree->template knn2<false,true>(wp,K);});
+    test_knn([&]{tree->template knn2<true,false>(wp,K);});
+    test_knn([&]{tree->template knn2<true,true>(wp,K);});
+  }
+
+  if(TreeDesc::support_knn3)
+  {
+    std::cout << "knn3 " << std::flush;
+    test_knn([&]{tree->template knn3<false,false>(wp,K);});
+    test_knn([&]{tree->template knn3<false,true>(wp,K);});
+    test_knn([&]{tree->template knn3<true,false>(wp,K);});
+    test_knn([&]{tree->template knn3<true,true>(wp,K);});
+  }
+
+  // std::cout << "dualknn " << std::flush;
+  // test_knn([&]{pargeo::batchKdTree::dualKnn(wp,*tree,K);});
 }
-
+/*
 template<typename point>
 void
 rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
