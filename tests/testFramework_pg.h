@@ -322,75 +322,73 @@ queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int&
   // std::cout << "dualknn " << std::flush;
   // test_knn([&]{pargeo::batchKdTree::dualKnn(wp,*tree,K);});
 }
-/*
-template<typename point>
+
+template<class TreeDesc, typename point>
 void
-rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
+rangeCount( const parlay::sequence<point>& wp, typename TreeDesc::type *&tree,
             Typename* kdknn, const int& rounds, const int& queryNum ) {
-  using tree = ParallelKDtree<point>;
-  using points = typename tree::points;
-  using node = typename tree::node;
-  using box = typename tree::box;
+  // using tree = ParallelKDtree<point>;
+  using Tree = typename TreeDesc::type;
+  // using points = typename tree::points;
+  using points = parlay::sequence<point>;
+  // using node = typename tree::node;
+  // using box = typename tree::box;
 
+  std::cout << "-1 " << std::flush;
+  /*
   int n = wp.size();
-
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
         parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-          box queryBox = pkd.get_box(
+          box queryBox = tree.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_count( queryBox );
+          kdknn[i] = tree.range_count( queryBox );
         } );
-        // for ( size_t i = 0; i < queryNum; i++ ) {
-        //   box queryBox = pkd.get_box(
-        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
-        //       );
-        //   kdknn[i] = pkd.range_count( queryBox );
-        // }
       },
       [&]() {} );
 
-  LOG << aveCount << " " << std::flush;
-
-  return;
+  std::out << aveCount << " " << std::flush;
+  */
 }
 
-template<typename point>
+template<class TreeDesc, typename point>
 void
-rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
+rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type *&tree,
             Typename* kdknn, const int& rounds, const int& queryNum,
             parlay::sequence<point>& Out ) {
-  using tree = ParallelKDtree<point>;
-  using points = typename tree::points;
-  using node = typename tree::node;
-  using box = typename tree::box;
+  // using tree = ParallelKDtree<point>;
+  using Tree = typename TreeDesc::type;
+  // using points = typename tree::points;
+  // using node = typename tree::node;
+  // using box = typename tree::box;
+  using points = parlay::sequence<point>;
 
   int n = wp.size();
   size_t step = Out.size() / queryNum;
+
+  parlay::sequence<points> res(queryNum);
 
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
         parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-          box queryBox = pkd.get_box(
+          /*
+          box queryBox = tree.get_box(
               box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
+          kdknn[i] = tree.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
+          */
+          point qMin=wp[i], qMax=qMin, q=wp[(i+n/2)%n];
+          qMin.minCoords(q);
+          qMax.maxCoords(q);
+          res[i] = tree->orthogonalQuery(qMin, qMax);
         } );
-        // for ( int i = 0; i < queryNum; i++ ) {
-        //   box queryBox = pkd.get_box(
-        //       box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] )
-        //       );
-        //   kdknn[i] = pkd.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step )
-        //   );
-        // }
       },
       [&]() {} );
 
-  LOG << aveQuery << " " << std::flush;
-  return;
+  std::cout << aveQuery << " " << std::flush;
 }
-
+/*
 template<typename point>
 void
 generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP,

@@ -65,7 +65,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count
     kdknn = new Typename[queryNum];
-    // rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
+    rangeCount<TreeDesc,point>( wp, pkd, kdknn, rounds, queryNum );
   } else {
     std::cout << "-1 " << std::flush;
   }
@@ -82,13 +82,17 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         kdknn[i] = pkd.range_count( queryBox );
       } );
     }
+    */
     //* reduce
+    /*
     auto maxReduceSize = parlay::reduce(
         parlay::delayed_tabulate( queryNum, [&]( size_t i ) { return kdknn[i]; } ),
         parlay::maximum<Typename>() );
     points Out( queryNum * maxReduceSize );
-    rangeQuery<point>( wp, pkd, kdknn, rounds, queryNum, Out );
     */
+    points Out;
+    rangeQuery<TreeDesc,point>( wp, pkd, kdknn, rounds, queryNum, Out );
+    
   } else {
     std::cout << "-1 " << std::flush;
   }
