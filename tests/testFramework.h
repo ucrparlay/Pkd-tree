@@ -139,6 +139,21 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   pkd.build( wp.cut( 0, n ), Dim );
   // pkd.delete_tree();
+
+  LOG << "sample: ";
+  for ( int i = 0; i < maxl; i++ ) {
+    LOG << sampleTime[i] / ( 1 << i ) << " ";
+  }
+  LOG << ENDL << "partition: ";
+  for ( int i = 0; i < maxl; i++ ) {
+    LOG << partitionTime[i] / ( 1 << i ) << " ";
+  }
+  LOG << ENDL << "verifyZeros: ";
+  for ( int i = 0; i < maxl; i++ ) {
+    LOG << verifyZeros[i] / ( 1 << i ) << " ";
+  }
+  LOG << ENDL;
+  puts( "--------------" );
   return;
 }
 

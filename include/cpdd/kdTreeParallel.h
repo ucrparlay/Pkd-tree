@@ -97,9 +97,9 @@ class ParallelKDtree {
   void build( slice In, const dim_type DIM );
   points_iter serial_partition( slice In, dim_type d );
   node* serial_build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
-                                const box& bx );
+                                const box& bx, int deep );
   node* build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
-                         const box& bx );
+                         const box& bx, int deep );
 
   //@ batch helpers
   template<typename Slice>

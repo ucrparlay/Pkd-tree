@@ -4,14 +4,27 @@
 
 namespace cpdd {
 
+const int maxl = 30;
+double sampleTime[maxl], partitionTime[maxl], verifyZeros[maxl];
+
 template<typename point>
 void
 ParallelKDtree<point>::build( slice A, const dim_type DIM ) {
+  puts( "================" );
+  timer.reset();
+  timer.start();
   points B = points::uninitialized( A.size() );
   this->bbox = get_box( A );
-  this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox );
-  // this->root = serial_build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox );
+  timer.next( "prepare: " );
+
+  for ( int i = 0; i < maxl; i++ ) {
+    verifyZeros[i] = 0.0;
+    partitionTime[i] = 0.0;
+    sampleTime[i] = 0.0;
+  }
+  this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox, 0 );
   assert( this->root != NULL );
+
   return;
 }
 
@@ -167,13 +180,20 @@ ParallelKDtree<point>::serial_partition( slice In, dim_type d ) {
 template<typename point>
 typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim,
-                                               const dim_type DIM, const box& bx ) {
+                                               const dim_type DIM, const box& bx,
+                                               int deep ) {
   size_t n = In.size();
   if ( n == 0 ) return alloc_empty_leaf();
   if ( n <= LEAVE_WRAP ) return alloc_leaf_node( In );
 
   dim_type d = ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
+
+  timer.reset();
+  timer.start();
   points_iter splitIter = serial_partition( In, d );
+  partitionTime[deep] += timer.next_time();
+  timer.stop();
+
   points_iter diffEleIter;
 
   splitter split;
@@ -193,7 +213,7 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
     return alloc_dummy_leaf( In );
   } else {  //* current dim d is same but other dims are not
     if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
-      return serial_build_recursive( In, Out, d, DIM, get_box( In ) );
+      return serial_build_recursive( In, Out, d, DIM, get_box( In ), deep );
     } else if ( _split_rule == ROTATE_DIM ) {  //* switch dim, break rotation order
       points_iter compIter =
           diffEleIter == In.begin() ? std::ranges::prev( In.end() ) : In.begin();
@@ -204,7 +224,7 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
           break;
         }
       }
-      return serial_build_recursive( In, Out, d, DIM, bx );
+      return serial_build_recursive( In, Out, d, DIM, bx, deep );
     }
   }
 
@@ -223,21 +243,22 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
   node *L, *R;
 
   L = serial_build_recursive( In.cut( 0, splitIter - In.begin() ),
-                              Out.cut( 0, splitIter - In.begin() ), d, DIM, lbox );
+                              Out.cut( 0, splitIter - In.begin() ), d, DIM, lbox,
+                              deep + 1 );
   R = serial_build_recursive( In.cut( splitIter - In.begin(), n ),
-                              Out.cut( splitIter - In.begin(), n ), d, DIM, rbox );
+                              Out.cut( splitIter - In.begin(), n ), d, DIM, rbox,
+                              deep + 1 );
   return alloc_interior_node( L, R, split );
 }
 
 template<typename point>
 typename ParallelKDtree<point>::node*
 ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
-                                        const dim_type DIM, const box& bx ) {
+                                        const dim_type DIM, const box& bx, int deep ) {
   assert( In.size() == 0 || within_box( get_box( In ), bx ) );
 
-  // if ( In.size() ) {
   if ( In.size() <= SERIAL_BUILD_CUTOFF ) {
-    return serial_build_recursive( In, Out, dim, DIM, bx );
+    return serial_build_recursive( In, Out, dim, DIM, bx, deep );
   }
 
   //* parallel partitons
@@ -245,8 +266,13 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
   auto boxs = box_s::uninitialized( BUCKET_NUM );
   parlay::sequence<balls_type> sums;
 
+  timer.reset();
+  timer.start();
   pick_pivots( In, In.size(), pivots, dim, DIM, boxs, bx );
+  sampleTime[deep] += timer.next_time();
+
   partition( In, Out, In.size(), pivots, sums );
+  partitionTime[deep] += timer.next_time();
 
   //* if random sampling failed to split points, re-partitions using serail approach
   auto treeNodes = parlay::sequence<node*>::uninitialized( BUCKET_NUM );
@@ -262,9 +288,12 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
     }
   }
 
+  verifyZeros[deep] += timer.next_time();
+  timer.stop();
+
   if ( zeros == BUCKET_NUM - 1 ) {  // * switch to seral
                                     // TODO add parallelsim within this call
-    return serial_build_recursive( In, Out, dim, DIM, bx );
+    return serial_build_recursive( In, Out, dim, DIM, bx, deep );
   }
 
   dim = ( dim + BUILD_DEPTH_ONCE ) % DIM;
@@ -277,9 +306,10 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
           start += sums[j];
         }
 
-        treeNodes[nodesMap[i]] = build_recursive(
-            Out.cut( start, start + sums[nodesMap[i]] ),
-            In.cut( start, start + sums[nodesMap[i]] ), dim, DIM, boxs[nodesMap[i]] );
+        treeNodes[nodesMap[i]] =
+            build_recursive( Out.cut( start, start + sums[nodesMap[i]] ),
+                             In.cut( start, start + sums[nodesMap[i]] ), dim, DIM,
+                             boxs[nodesMap[i]], deep + BUILD_DEPTH_ONCE );
       },
       1 );
   return build_inner_tree( 1, pivots, treeNodes );

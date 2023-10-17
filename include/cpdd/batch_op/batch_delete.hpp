@@ -24,8 +24,8 @@ ParallelKDtree<point>::rebuild_after_delete( node* T, const dim_type DIM ) {
   flatten( T, wx.cut( 0, T->size ) );
   delete_tree_recursive( T );
   box bx = get_box( parlay::make_slice( wx ) );
-  node* o =
-      build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM, bx );
+  node* o = build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
+                             bx, 0 );
   return node_box( std::move( o ), std::move( bx ) );
 }
 

@@ -47,7 +47,7 @@ ParallelKDtree<point>::rebuild_with_insert( node* T, slice In, const dim_type DI
   flatten( T, wx.cut( In.size(), wx.size() ) );
   delete_tree_recursive( T );
   return build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM,
-                          get_box( parlay::make_slice( wx ) ) );
+                          get_box( parlay::make_slice( wx ) ), 0 );
 }
 
 //* return the updated node
