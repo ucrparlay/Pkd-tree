@@ -17,6 +17,7 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
 }
 
 //? parallel query
+//! returned distance is squared.
 template<typename point>
 template<typename StoreType>
 void

@@ -13,7 +13,7 @@
 
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
-
+#include <tbb/task_scheduler_init.h>
 using Typename = coord;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -67,6 +67,10 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
             Point_d( Dim, std::begin( wp[i].pnt ), ( std::begin( wp[i].pnt ) + Dim ) );
       },
       1000 );
+
+  // TODO maybe used
+  // int nthread = 64;
+  // tbb::task_scheduler_init init( nthread );
 
   // timer.start();
   Splitter split;
