@@ -52,10 +52,10 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     }
   }
 
-  wp = parlay::unique( parlay::sort( wp ),
-                       [&]( const point& a, const point& b ) { return a == b; } );
-  wi = parlay::unique( parlay::sort( wi ),
-                       [&]( const point& a, const point& b ) { return a == b; } );
+  // wp = parlay::unique( parlay::sort( wp ),
+  //                      [&]( const point& a, const point& b ) { return a == b; } );
+  // wi = parlay::unique( parlay::sort( wi ),
+  //                      [&]( const point& a, const point& b ) { return a == b; } );
   N = wp.size();
 
   //* cgal
@@ -68,14 +68,23 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
       },
       1000 );
 
-  timer.start();
+  // timer.start();
   Splitter split;
+  for ( int i = 0; i < rounds; i++ ) {
+    Tree tree( _points.begin(), _points.end(), split );
+    timer.start();
+    // tree.build();
+    tree.template build<CGAL::Parallel_tag>();
+    timer.next_time();
+  }
+
+  // timer.stop();
+
+  // std::cout << timer.total_time() << " " << std::flush;
+  std::cout << timer.total_time() / rounds << " " << std::flush;
+
   Tree tree( _points.begin(), _points.end(), split );
   tree.template build<CGAL::Parallel_tag>();
-  timer.stop();
-
-  std::cout << timer.total_time() << " " << std::flush;
-
   if ( tag >= 1 ) {
     _points.resize( wi.size() );
     parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
