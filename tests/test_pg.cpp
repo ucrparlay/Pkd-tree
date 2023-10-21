@@ -114,7 +114,7 @@ using PointType = pargeo::batchKdTree::point<d>;
 
 struct wrapper{
   constexpr const static bool parallel = true;
-  constexpr const static bool coarsen = false;
+  constexpr const static bool coarsen = true;
 
   constexpr const static int NUM_TREES = 21;
   constexpr const static int BUFFER_LOG2_SIZE = 7;
