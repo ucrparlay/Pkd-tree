@@ -288,11 +288,15 @@ queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int&
   parlay::copy( WP, wp );
 
   auto test_knn = [&](auto knn_func){
+    try{
     double aveQuery = time_loop(
         rounds, 1.0,
         []{}, knn_func, []{}
     );
     std::cout << aveQuery << " " << std::flush;
+    }catch(...){
+    std::cout << "E " << std::flush;
+    }
   };
 
   std::cout << "knn1 " << std::flush;
