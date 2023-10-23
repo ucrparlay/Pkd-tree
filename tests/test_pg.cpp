@@ -168,6 +168,8 @@ main( int argc, char* argv[] ) {
   int queryType = P.getOptionIntValue( "-q", 0 );
   int treeType = P.getOptionIntValue( "-T", 0 );
 
+  pargeo::batchKdTree::print_config();
+
   int LEAVE_WRAP = 32;
   parlay::sequence<PointType<coord, 15>> wp;
   std::string name, insertFile;
