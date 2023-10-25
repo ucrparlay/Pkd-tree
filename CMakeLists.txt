@@ -58,6 +58,7 @@ add_subdirectory(external/ParGeo)
 # add_compile_definitions(PRINT_CONFIG)
 # add_compile_definitions(PRINT_LOGTREE_TIMINGS)
 # add_compile_definitions(PRINT_DELETE_TIMINGS)
+# add_compile_definitions(PRINT_KDTREE_TIMINGS)
 
 if(DEFINED PARTITION_TYPE)
   if(PARTITION_TYPE STREQUAL "PARTITION_OBJECT_MEDIAN")
@@ -134,9 +135,15 @@ target_include_directories(test_pg PUBLIC ${PROJECT_SOURCE_DIR}/external/ParGeo/
 target_include_directories(test_pg PUBLIC ${PROJECT_SOURCE_DIR}/external/ParGeo/external/batchKdTree/include/common)
 target_include_directories(test_pg INTERFACE parlay)
 
+add_executable(test_dkdt ${PROJECT_SOURCE_DIR}/tests/test_dkdt.cpp)
+target_link_libraries(test_dkdt PUBLIC kdTreeParallel)
+target_link_libraries(kdTreeParallel INTERFACE pargeoLib)
+target_include_directories(test_dkdt INTERFACE parlay)
+
 if(JEMA)
   target_link_libraries(test PUBLIC libjemalloc.so)
   target_link_libraries(test_pg PUBLIC libjemalloc.so)
+  target_link_libraries(test_dkdt PUBLIC libjemalloc.so)
 endif()
 
 add_executable(data_generator ${PROJECT_SOURCE_DIR}/tests/data_generate.cpp)
