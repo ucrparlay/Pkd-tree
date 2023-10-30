@@ -4,7 +4,7 @@ template<class TreeDesc, typename point>
 void
 testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
                     const size_t& N, const int& K, const int& rounds,
-                    const string& insertFile, const int& tag, const int& queryType ) {
+                    const string& insertFile, const int& tag_ext, const int& queryType ) {
   // using tree = ParallelKDtree<point>;
   constexpr const int DimMax = point::dim;
   using points = parlay::sequence<point>;
@@ -14,6 +14,11 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   // using node_tag = typename tree::node_tag;
   // using node_tags = typename tree::node_tags;
   // using box = typename tree::box;
+
+  int tag = tag_ext & 0xf;
+  int ins_ratio = (tag_ext>>4) & 0xf;
+  int downsize_k = (tag_ext>>8) & 0xf;
+  printf("tag=%d ins_ratio=%d downsize_k=%d\n", tag, ins_ratio, downsize_k);
 
   if ( N != wp.size() ) {
     puts( "input parameter N is different to input points size" );
@@ -33,6 +38,13 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   //* begin test
   auto pkd = buildTree<TreeDesc,point>(Dim, wp, rounds, LEAVE_WRAP);
+
+  if ( tag == 3 ) {
+    const auto ins_size = wi.size()/10*ins_ratio;
+    parlay::sequence<point> pwi(wi.begin(), wi.begin()+ins_size);
+    batchInsertDelete<TreeDesc,point>( pkd, pwi, Dim, 1 );
+    tag = 0;
+  }
 
   //* batch insert
   if ( tag >= 1 ) {
@@ -58,9 +70,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
-    queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, K, false );
+    if(downsize_k==0)
+      queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, K, false );
+    else for(auto cnt_nbh=K; cnt_nbh>0; cnt_nbh/=downsize_k)
+      queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, cnt_nbh, false );
   } else {
-    std::cout << "-1 -1 -1 " << std::flush;
+    std::cout << "-1 " << std::flush;
   }
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count

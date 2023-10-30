@@ -269,6 +269,17 @@ batchDelete( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
 }
 
 template<class TreeDesc, typename point>
+void batchInsertDelete(typename TreeDesc::type *&tree,
+  const parlay::sequence<point>& WI,
+  const uint_fast8_t& DIM, const int& rounds ) {
+  for(int i=0; i<rounds; ++i)
+  {
+    tree->insert(parlay::make_slice(WI));
+    tree->bulk_erase(WI);
+  }
+}
+
+template<class TreeDesc, typename point>
 void
 queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& rounds,
           typename TreeDesc::type *&tree, Typename* kdknn, const int& K,
@@ -298,7 +309,7 @@ queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int&
     std::cout << "E " << std::flush;
     }
   };
-
+/*
   std::cout << "knn1 " << std::flush;
   test_knn([&]{tree->template knn<false,false>(wp,K);});
   test_knn([&]{tree->template knn<false,true>(wp,K);});
@@ -313,14 +324,14 @@ queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int&
     test_knn([&]{tree->template knn2<true,false>(wp,K);});
     test_knn([&]{tree->template knn2<true,true>(wp,K);});
   }
-
+*/
   if(TreeDesc::support_knn3)
   {
     std::cout << "knn3 " << std::flush;
-    test_knn([&]{tree->template knn3<false,false>(wp,K);});
-    test_knn([&]{tree->template knn3<false,true>(wp,K);});
+    // test_knn([&]{tree->template knn3<false,false>(wp,K);});
+    // test_knn([&]{tree->template knn3<false,true>(wp,K);});
     test_knn([&]{tree->template knn3<true,false>(wp,K);});
-    test_knn([&]{tree->template knn3<true,true>(wp,K);});
+    // test_knn([&]{tree->template knn3<true,true>(wp,K);});
   }
 
   // std::cout << "dualknn " << std::flush;
@@ -373,24 +384,42 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type *&tree,
 
   parlay::sequence<points> res(queryNum);
 
-  double aveQuery = time_loop(
-      rounds, 1.0, [&]() {},
-      [&]() {
-        parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-          /*
-          box queryBox = tree.get_box(
-              box( wp[i], wp[i] ), box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = tree.range_query( queryBox, Out.cut( i * step, ( i + 1 ) * step ) );
-          */
-          point qMin=wp[i], qMax=qMin, q=wp[(i+n/2)%n];
-          qMin.minCoords(q);
-          qMax.maxCoords(q);
-          res[i] = tree->orthogonalQuery(qMin, qMax);
-        } );
-      },
-      [&]() {} );
+  point qMin = parlay::reduce(
+    wp, 
+    parlay::binary_op([](const point &lhs, const point &rhs){
+      point t = lhs;
+      t.minCoords(rhs);
+      return t;
+    }, point{})
+  );
+  std::cerr << "qMin[0:2] " << qMin[0] << " " << qMin[1] << std::flush;
+  point qMax = parlay::reduce(
+    wp, 
+    parlay::binary_op([](const point &lhs, const point &rhs){
+      point t = lhs;
+      t.maxCoords(rhs);
+      return t;
+    },point{})
+  );
+  std::cerr << "qMax[0:2] " << qMax[0] << " " << qMax[1] << std::endl;
+  point qDiff = qMax - qMin;
 
-  std::cout << aveQuery << " " << std::flush;
+  auto test_rangeQuery = [&](float rec_ratio){
+    size_t res_size = 0;
+    double aveQuery = time_loop(
+      rounds, 1.0, []{},
+      [&](){
+        point qUpper = qMin + qDiff*rec_ratio;
+        res_size = tree->orthogonalQuery(qMin, qUpper).size();
+      },
+      []{}
+    );
+    std::cout << rec_ratio << ' ' << aveQuery << ' ' << res_size << " | " << std::flush;
+  };
+
+  float ratio[] = {0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.01};
+  for(size_t i=0; i<sizeof(ratio)/sizeof(*ratio); ++i)
+    test_rangeQuery(ratio[i]);
 }
 /*
 template<typename point>
