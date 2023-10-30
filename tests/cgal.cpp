@@ -41,6 +41,9 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
                   const int& queryType ) {
 
   using points = parlay::sequence<point>;
+  using pkdTree = ParallelKDtree<point>;
+  using box = typename pkdTree::box;
+
   parlay::internal::timer timer;
 
   points wi;
@@ -52,6 +55,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     }
   }
 
+  //* otherwise cannot insert heavy duplicated points
   wp = parlay::unique( parlay::sort( wp ),
                        [&]( const point& a, const point& b ) { return a == b; } );
   wi = parlay::unique( parlay::sort( wi ),
@@ -177,6 +181,127 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     }
     timer.stop();
     std::cout << timer.total_time() << " " << std::flush;
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 4 ) ) {  //* vary k for knn
+    int k[3] = { 1, 10, 100 };
+    for ( int i = 0; i < 3; i++ ) {
+      timer.reset();
+      timer.start();
+
+      tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, N ),
+                         [&]( const tbb::blocked_range<std::size_t>& r ) {
+                           for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                             // Neighbor search can be instantiated from
+                             // several threads at the same time
+                             Point_d query( Dim, std::begin( wp[s].pnt ),
+                                            std::begin( wp[s].pnt ) + Dim );
+                             Neighbor_search search( tree, query, k[i] );
+                             auto it = search.end();
+                             it--;
+                             cgknn[s] = it->second;
+                           }
+                         } );
+
+      timer.stop();
+      std::cout << timer.total_time() << " -1 -1 " << std::flush;
+    }
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 5 ) ) {  //* vary box size
+    double ratios[3] = { 0.05, 0.2, 0.5 };
+    size_t n = wp.size();
+    std::vector<Point_d> _ans( n );
+
+    for ( int i = 0; i < 3; i++ ) {
+      //* new box
+      box queryBox = pkdTree::get_box( parlay::make_slice( wp ) );
+      // LOG << queryBox.first << " " << queryBox.second << ENDL;
+      auto dim = queryBox.first.get_dim();
+      for ( int j = 0; j < dim; j++ ) {
+        coord diff = queryBox.second.pnt[j] - queryBox.first.pnt[j];
+        queryBox.second.pnt[j] = queryBox.first.pnt[j] + coord( diff * ratios[i] );
+      }
+
+      timer.reset();
+      timer.start();
+
+      Point_d a( Dim, std::begin( queryBox.first.pnt ), std::end( queryBox.first.pnt ) );
+      Point_d b( Dim, std::begin( queryBox.second.pnt ),
+                 std::end( queryBox.second.pnt ) );
+      Fuzzy_iso_box fib( a, b, 0.0 );
+      auto it = tree.search( _ans.begin(), fib );
+      cgknn[i] = std::distance( _ans.begin(), it );
+      // std::cout << cgknn[i] << queryBox.first << " " << queryBox.second << std::endl;
+      timer.stop();
+      std::cout << timer.total_time() << " " << cgknn[i] << " " << std::flush;
+    }
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 6 ) ) {  //* batch knn
+    tree.clear();
+
+    //* build tree
+    _points.resize( wp.size() );
+    N = wp.size();
+    parlay::parallel_for(
+        0, N,
+        [&]( size_t i ) {
+          _points[i] =
+              Point_d( Dim, std::begin( wp[i].pnt ), ( std::begin( wp[i].pnt ) + Dim ) );
+        },
+        1000 );
+    tree.insert( _points.begin(), _points.end() );
+    tree.template build<CGAL::Parallel_tag>();
+
+    //* initialize insert points
+    _points.resize( wi.size() );
+    parlay::parallel_for( 0, wi.size(), [&]( size_t j ) {
+      _points[j] =
+          Point_d( Dim, std::begin( wi[j].pnt ), ( std::begin( wi[j].pnt ) + Dim ) );
+    } );
+
+    delete[] cgknn;
+    cgknn = new Typename[N + wi.size()];
+
+    double ratios[4] = { 0.1, 0.3, 0.5, 1.0 };
+    for ( int i = 0; i < 4; i++ ) {
+      auto sz = size_t( wi.size() * ratios[i] );
+      tree.insert( _points.begin(), _points.begin() + sz );
+      wp.append( wi.begin(), wi.begin() + sz );
+
+      timer.reset();
+      timer.start();
+      tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, N ),
+                         [&]( const tbb::blocked_range<std::size_t>& r ) {
+                           for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
+                             // Neighbor search can be instantiated from
+                             // several threads at the same time
+                             Point_d query( Dim, std::begin( wp[s].pnt ),
+                                            std::begin( wp[s].pnt ) + Dim );
+                             Neighbor_search search( tree, query, K );
+                             auto it = search.end();
+                             it--;
+                             cgknn[s] = it->second;
+                           }
+                         } );
+
+      timer.stop();
+      std::cout << timer.total_time() << " -1 -1 " << std::flush;
+
+      //* restore state
+      wp.pop_tail( sz );
+      for ( int i = 0; i < sz; i++ ) {
+        tree.remove( _points[i] );
+      }
+    }
+
   } else {
     std::cout << "-1 " << std::flush;
   }

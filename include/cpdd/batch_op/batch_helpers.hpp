@@ -8,6 +8,9 @@ template<typename point>
 template<typename Slice>
 void
 ParallelKDtree<point>::flatten( typename ParallelKDtree<point>::node* T, Slice Out ) {
+  // if ( T->size != Out.size() ) {
+  //   LOG << T->size << " " << Out.size() << ENDL;
+  // }
   assert( T->size == Out.size() );
   if ( T->size == 0 ) return;
 

@@ -92,11 +92,55 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     std::cout << "-1 " << std::flush;
   }
 
-  if ( queryType & ( 1 << 3 ) ) {
-    generate_knn<point>( Dim, wp, K, "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
+  if ( queryType & ( 1 << 3 ) ) {  //* generate knn
+    // generate_knn<point>( Dim, wp, K, "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
   }
 
-  std::cout << std::endl;
+  if ( queryType & ( 1 << 4 ) ) {  //* vary k for knn
+    kdknn = new Typename[wp.size()];
+    int k[3] = { 1, 10, 100 };
+    for ( int i = 0; i < 3; i++ ) {
+      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
+    }
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 5 ) ) {  //* range query with given rectangle
+    double ratios[3] = { 0.05, 0.2, 0.5 };
+    points Out( wp.size() );
+    for ( int i = 0; i < 3; i++ ) {
+      rangeQueryFix<point>( wp, pkd, kdknn, rounds, queryNum, Out, ratios[i] );
+      // std::cout << kdknn[0] << std::endl;
+    }
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  if ( queryType & ( 1 << 6 ) ) {  //* batch knn
+    double ratios[4] = { 0.1, 0.3, 0.5, 1.0 };
+    // double ratios[4] = { 1.0, 0.3, 0.5, 1.0 };
+    delete[] kdknn;
+    kdknn = new Typename[2 * wp.size()];
+    for ( int i = 0; i < 4; i++ ) {
+      // std::cout << i << std::endl;
+      batchInsert<point>( pkd, wp, wi, Dim, rounds, ratios[i] );
+      auto sz = size_t( wi.size() * ratios[i] );
+      // points new_wp( wp.size() + sz );
+      // parlay::copy( wp.cut( 0, wp.size() ), new_wp.cut( 0, wp.size() ) );
+      // parlay::copy( wi.cut( 0, sz ), new_wp.cut( wp.size(), wp.size() + sz ) );
+
+      wp.append( wi.begin(), wi.begin() + sz );
+      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
+      wp.pop_tail( sz );
+      // std::cout << wp.size() << std::endl;
+    }
+
+  } else {
+    std::cout << "-1 " << std::flush;
+  }
+
+  std::cout << std::endl << std::flush;
   return;
 }
 
@@ -151,73 +195,77 @@ main( int argc, char* argv[] ) {
 
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
-  if ( tag == -1 ) {
-    //* serial run
-    // todo rewrite test serial code
-    // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-  } else if ( Dim == 2 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 2> {
-      return PointID<coord, 2>( wp[i].pnt.begin(), i );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointID<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile,
-                                           tag, queryType );
-  } else if ( Dim == 3 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 3> {
-      return PointID<coord, 3>( wp[i].pnt.begin(), i );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointID<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile,
-                                           tag, queryType );
-  } else if ( Dim == 5 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 5> {
-      return PointID<coord, 5>( wp[i].pnt.begin(), i );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointID<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile,
-                                           tag, queryType );
-  } else if ( Dim == 7 ) {
-    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 7> {
-      return PointID<coord, 7>( wp[i].pnt.begin(), i );
-    } );
-    decltype( wp )().swap( wp );
-    testParallelKDtree<PointID<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile,
-                                           tag, queryType );
-  }
-
   // if ( tag == -1 ) {
   //   //* serial run
   //   // todo rewrite test serial code
   //   // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
   // } else if ( Dim == 2 ) {
-  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 2> {
-  //     return PointType<coord, 2>( wp[i].pnt.begin() );
+  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 2> {
+  //     return PointID<coord, 2>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointType<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-  //                                            insertFile, tag, queryType );
+  //   testParallelKDtree<PointID<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
+  //                                          tag, queryType );
   // } else if ( Dim == 3 ) {
-  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 3> {
-  //     return PointType<coord, 3>( wp[i].pnt.begin() );
+  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 3> {
+  //     return PointID<coord, 3>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointType<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-  //                                            insertFile, tag, queryType );
+  //   testParallelKDtree<PointID<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
+  //                                          tag, queryType );
   // } else if ( Dim == 5 ) {
-  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 5> {
-  //     return PointType<coord, 5>( wp[i].pnt.begin() );
+  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 5> {
+  //     return PointID<coord, 5>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointType<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-  //                                            insertFile, tag, queryType );
+  //   testParallelKDtree<PointID<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
+  //                                          tag, queryType );
   // } else if ( Dim == 7 ) {
-  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 7> {
-  //     return PointType<coord, 7>( wp[i].pnt.begin() );
+  //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 7> {
+  //     return PointID<coord, 7>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointType<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
-  //                                            insertFile, tag, queryType );
+  //   testParallelKDtree<PointID<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
+  //                                          tag, queryType );
   // }
+
+  if ( tag == -1 ) {
+    //* serial run
+    // todo rewrite test serial code
+    // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+  } else if ( Dim == 2 ) {
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 2> {
+      return PointType<coord, 2>( wp[i].pnt.begin() );
+    } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<PointType<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
+  } else if ( Dim == 3 ) {
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 3> {
+      return PointType<coord, 3>( wp[i].pnt.begin() );
+    } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<PointType<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
+  } else if ( Dim == 5 ) {
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 5> {
+      return PointType<coord, 5>( wp[i].pnt.begin() );
+    } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<PointType<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
+  } else if ( Dim == 7 ) {
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 7> {
+      return PointType<coord, 7>( wp[i].pnt.begin() );
+    } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<PointType<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                             insertFile, tag, queryType );
+  }
 
   return 0;
 }
