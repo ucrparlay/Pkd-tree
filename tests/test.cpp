@@ -13,6 +13,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   using node_tag = typename tree::node_tag;
   using node_tags = typename tree::node_tags;
   using box = typename tree::box;
+  using boxs = parlay::sequence<box>;
 
   // auto boxs = gen_rectangles<point>( 1000, 2, wp, Dim );
   // for ( int i = 0; i < 10; i++ ) {
@@ -57,13 +58,16 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     batchDelete<point>( pkd, wp, wi, Dim, rounds );
   }
 
-  int recNum = 1000;
-
-  if ( queryType & ( 1 << 0 ) ) {  //* NN
+  if ( queryType & ( 1 << 0 ) ) {  //* KNN
     kdknn = new Typename[wp.size()];
-    queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
+    int k[3] = { 1, 10, 100 };
+    for ( int i = 0; i < 3; i++ ) {
+      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
+    }
     delete[] kdknn;
   }
+
+  int recNum = 1000;
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count
     kdknn = new Typename[recNum];
@@ -78,28 +82,22 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 2 ) ) {  //* range query
 
-    // if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate
-    // size
-    //   kdknn = new Typename[recNum];
-    //   parlay::parallel_for( 0, recNum, [&]( size_t i ) {
-    //     box queryBox = pkd.get_box( box( wp[i], wp[i] ),
-    //                                 box( wp[( i + wp.size() / 2 ) % wp.size()],
-    //                                      wp[( i + wp.size() / 2 ) % wp.size()] ) );
-    //     kdknn[i] = pkd.range_count( queryBox );
-    //   } );
-    // }
-    // //* reduce
-    // auto maxReduceSize = parlay::reduce(
-    //     parlay::delayed_tabulate( recNum, [&]( size_t i ) { return kdknn[i]; } ),
-    //     parlay::maximum<Typename>() );
-    // points Out( recNum * maxReduceSize );
-    // rangeQuery<point>( wp, pkd, kdknn, rounds, recNum, Out );
-
-    kdknn = new Typename[recNum];
-
     int type[3] = { 0, 1, 2 };
-    points Out( wp.size() );
     for ( int i = 0; i < 3; i++ ) {
+      //* run range count to obtain size
+      kdknn = new Typename[recNum];
+      auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
+      parlay::parallel_for(
+          0, recNum, [&]( size_t i ) { kdknn[i] = pkd.range_count( queryBox[i] ); } );
+
+      //* reduce max size
+      auto maxReduceSize =
+          parlay::reduce( parlay::delayed_tabulate(
+                              recNum, [&]( size_t i ) { return size_t( kdknn[i] ); } ),
+                          parlay::maximum<Typename>() );
+      points Out( recNum * maxReduceSize );
+
+      //* range query
       rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim );
     }
 
@@ -110,17 +108,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     // generate_knn<point>( Dim, wp, K, "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
   }
 
-  if ( queryType & ( 1 << 4 ) ) {  //* vary k for knn
-    kdknn = new Typename[wp.size()];
-    int k[3] = { 1, 10, 100 };
-    for ( int i = 0; i < 3; i++ ) {
-      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
-    }
-
-    delete[] kdknn;
-  }
-
-  if ( queryType & ( 1 << 5 ) ) {  //* batch insertion then knn
+  if ( queryType & ( 1 << 4 ) ) {  //* batch insertion then knn
     double ratios[4] = { 0.1, 0.3, 0.5, 1.0 };
     // double ratios[4] = { 1.0, 0.3, 0.5, 1.0 };
     kdknn = new Typename[2 * wp.size()];
@@ -135,14 +123,14 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     delete[] kdknn;
   }
 
-  if ( queryType & ( 1 << 6 ) ) {  //* batch insertion with fraction
+  if ( queryType & ( 1 << 5 ) ) {  //* batch insertion with fraction
     double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
     for ( int i = 0; i < 10; i++ ) {
       batchInsert<point>( pkd, wp, wi, Dim, rounds, ratios[i] );
     }
   }
 
-  if ( queryType & ( 1 << 7 ) ) {  //* batch deletion with fraction
+  if ( queryType & ( 1 << 6 ) ) {  //* batch deletion with fraction
     double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
     points tmp;
     for ( int i = 0; i < 10; i++ ) {

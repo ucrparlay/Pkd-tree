@@ -1,20 +1,19 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test" "cgal")
+Solvers=("test")
 Node=(10000000 50000000 100000000 500000000)
-# Dim=(2 3)
 Dim=(2 3)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=2
+tag=0
 k=100
 onecore=0
 insNum=2
 # queryType=3 # 001 011 111
-queryType=112 # 1110000
-# querys=(4 6 5)
+queryType=$((2#11010110)) # 1110000
+echo $queryType
 
 resFile=""
 

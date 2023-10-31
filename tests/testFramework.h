@@ -442,19 +442,20 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   using node = typename tree::node;
   using box = typename tree::box;
 
-  int n = WP.size();
+  auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
 
+  int n = WP.size();
+  size_t step = Out.size() / recNum;
   using ref_t = std::reference_wrapper<point>;
   parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
-
-  auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
 
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
-        for ( int i = 0; i < recNum; i++ ) {
-          kdknn[i] = pkd.range_query( queryBox[i], out_ref.cut( 0, Out.size() ) );
-        }
+        parlay::parallel_for( 0, recNum, [&]( size_t i ) {
+          kdknn[i] =
+              pkd.range_query( queryBox[i], out_ref.cut( i * step, ( i + 1 ) * step ) );
+        } );
       },
       [&]() {} );
 
