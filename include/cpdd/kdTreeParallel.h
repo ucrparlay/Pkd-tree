@@ -154,6 +154,7 @@ class ParallelKDtree {
   static size_t checkSize( node* T );
   void checkTreeSameSequential( node* T, int dim, const int& DIM );
   void validate( const dim_type DIM );
+  int getTreeHeight( node* T, int deep );
 
   //@ kdtree interfaces
   inline void

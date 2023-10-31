@@ -10,8 +10,6 @@ using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
-double aveDeep = 0.0;
-
 //*---------- generate points within a 0-box_size --------------------
 template<typename point>
 void
@@ -74,17 +72,87 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K,
   return std::make_pair( N, Dim );
 }
 
-template<typename tree>
+//* [a,b)
+size_t
+get_random_index( size_t a, size_t b ) {
+  return size_t( ( rand() % ( b - a ) ) + a );
+}
+
+template<typename point>
 void
-traverseParallelTree( typename tree::node* root, int deep ) {
-  if ( root->is_leaf ) {
-    aveDeep += deep;
+recurse_box( parlay::slice<point*, point*> In,
+             parlay::sequence<std::pair<point, point>>& boxs, int DIM,
+             std::pair<size_t, size_t> range, int& idx, int recNum, bool first ) {
+  using tree = ParallelKDtree<point>;
+  using box = typename tree::box;
+
+  size_t n = In.size();
+  if ( idx >= recNum || n < range.first || n == 0 ) return;
+
+  if ( !first && n >= range.first && n <= range.second ) {
+    // LOG << n << ENDL;
+    boxs[idx++] = tree::get_box( In );
     return;
   }
-  typename tree::interior* TI = static_cast<typename tree::interior*>( root );
-  traverseParallelTree<tree>( TI->left, deep + 1 );
-  traverseParallelTree<tree>( TI->right, deep + 1 );
+
+  int dim = get_random_index( 0, DIM );
+  size_t pos = get_random_index( 0, n );
+  parlay::sequence<bool> flag( n, 0 );
+  parlay::parallel_for( 0, n, [&]( size_t i ) {
+    if ( cpdd::Num_Comparator<coord>::Gt( In[i].pnt[dim], In[pos].pnt[dim] ) )
+      flag[i] = 1;
+    else
+      flag[i] = 0;
+  } );
+  auto [Out, m] = parlay::internal::split_two( In, flag );
+
+  assert( Out.size() == n );
+  // LOG << dim << " " << Out[0] << Out[m] << ENDL;
+
+  parlay::par_do_if(
+      0,
+      [&]() { recurse_box<point>( Out.cut( 0, m ), boxs, DIM, range, idx, recNum, 0 ); },
+      [&]() {
+        recurse_box<point>( Out.cut( m, n ), boxs, DIM, range, idx, recNum, 0 );
+      } );
+
   return;
+}
+
+template<typename point>
+parlay::sequence<std::pair<point, point>>
+gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM ) {
+  using tree = ParallelKDtree<point>;
+  using points = typename tree::points;
+  using node = typename tree::node;
+  using box = typename tree::box;
+  using boxs = parlay::sequence<box>;
+
+  size_t n = WP.size();
+  std::pair<size_t, size_t> range;
+  if ( type == 0 ) {  //* small bracket
+    range.first = std::numeric_limits<size_t>::min();
+    range.second = size_t( std::sqrt( std::sqrt( n ) ) );
+  } else if ( type == 1 ) {  //* medium bracket
+    range.first = size_t( std::sqrt( std::sqrt( n ) ) );
+    range.second = size_t( std::sqrt( n ) );
+    LOG << range.first << " " << range.second << ENDL;
+  } else {  //* large bracket
+    range.first = size_t( std::sqrt( n ) );
+    range.second = std::numeric_limits<size_t>::max();
+  }
+
+  boxs bxs( recNum );
+  int cnt = 0;
+  points wp( n );
+
+  srand( 10 );
+
+  while ( cnt < recNum ) {
+    parlay::copy( WP, wp );
+    recurse_box<point>( parlay::make_slice( wp ), bxs, DIM, range, cnt, recNum, 1 );
+  }
+  return bxs;
 }
 
 template<typename tree>
@@ -272,10 +340,9 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
   LOG << aveQuery << " " << std::flush;
 
-  aveDeep = 0.0;
-  traverseParallelTree<tree>( KDParallelRoot, 1 );
-  LOG << aveDeep / ( n / LEAVE_WRAP ) << " " << parlay::reduce( visNum.cut( 0, n ) )
-      << " " << std::flush;
+  // int deep = traverseParallelTree<tree>( KDParallelRoot, 1 );
+  int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
+  LOG << deep << " " << parlay::reduce( visNum.cut( 0, n ) ) << " " << std::flush;
 
   return;
 }

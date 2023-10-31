@@ -14,6 +14,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   using node_tags = typename tree::node_tags;
   using box = typename tree::box;
 
+  // auto boxs = gen_rectangles<point>( 1000, 2, wp, Dim );
+  // for ( int i = 0; i < 10; i++ ) {
+  //   LOG << boxs[i].first << " " << boxs[i].second << ENDL;
+  // }
+  // return;
+
   if ( N != wp.size() ) {
     puts( "input parameter N is different to input points size" );
     abort();

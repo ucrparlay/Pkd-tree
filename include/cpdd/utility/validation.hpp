@@ -68,4 +68,17 @@ ParallelKDtree<point>::validate( const dim_type DIM ) {
   }
   return;
 }
+
+template<typename point>
+int
+ParallelKDtree<point>::getTreeHeight( node* T, int deep ) {
+  if ( T->is_leaf ) {
+    return deep;
+  }
+  interior* TI = static_cast<interior*>( T );
+  int l = getTreeHeight( TI->left, deep + 1 );
+  int r = getTreeHeight( TI->right, deep + 1 );
+  return std::max( l, r );
+}
+
 }  // namespace cpdd
