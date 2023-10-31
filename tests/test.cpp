@@ -36,7 +36,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
   }
 
-  Typename* kdknn;
+  Typename* kdknn = nullptr;
 
   //* begin test
   buildTree<point>( Dim, wp, rounds, pkd );
@@ -49,53 +49,61 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     if ( tag == 1 ) {
       wp.append( wi );
     }
-  } else {
-    std::cout << "-1 " << std::flush;
   }
 
   //* batch delete
   if ( tag >= 2 ) {
     assert( wi.size() );
     batchDelete<point>( pkd, wp, wi, Dim, rounds );
-  } else {
-    std::cout << "-1 " << std::flush;
   }
 
-  int queryNum = 1000;
+  int recNum = 1000;
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
-  } else {
-    std::cout << "-1 -1 -1 " << std::flush;
+    delete[] kdknn;
   }
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count
-    kdknn = new Typename[queryNum];
-    rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
-  } else {
-    std::cout << "-1 " << std::flush;
+    kdknn = new Typename[recNum];
+    int type[3] = { 0, 1, 2 };
+
+    for ( int i = 0; i < 3; i++ ) {
+      rangeCountFix<point>( wp, pkd, kdknn, rounds, type[i], recNum, Dim );
+    }
+
+    delete[] kdknn;
   }
 
-  if ( queryType & ( 1 << 2 ) ) {         //* range query
-    if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
-      kdknn = new Typename[queryNum];
+  if ( queryType & ( 1 << 2 ) ) {  //* range query
 
-      parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-        box queryBox = pkd.get_box( box( wp[i], wp[i] ),
-                                    box( wp[( i + wp.size() / 2 ) % wp.size()],
-                                         wp[( i + wp.size() / 2 ) % wp.size()] ) );
-        kdknn[i] = pkd.range_count( queryBox );
-      } );
+    // if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate
+    // size
+    //   kdknn = new Typename[recNum];
+    //   parlay::parallel_for( 0, recNum, [&]( size_t i ) {
+    //     box queryBox = pkd.get_box( box( wp[i], wp[i] ),
+    //                                 box( wp[( i + wp.size() / 2 ) % wp.size()],
+    //                                      wp[( i + wp.size() / 2 ) % wp.size()] ) );
+    //     kdknn[i] = pkd.range_count( queryBox );
+    //   } );
+    // }
+    // //* reduce
+    // auto maxReduceSize = parlay::reduce(
+    //     parlay::delayed_tabulate( recNum, [&]( size_t i ) { return kdknn[i]; } ),
+    //     parlay::maximum<Typename>() );
+    // points Out( recNum * maxReduceSize );
+    // rangeQuery<point>( wp, pkd, kdknn, rounds, recNum, Out );
+
+    kdknn = new Typename[recNum];
+
+    int type[3] = { 0, 1, 2 };
+    points Out( wp.size() );
+    for ( int i = 0; i < 3; i++ ) {
+      rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim );
     }
-    //* reduce
-    auto maxReduceSize = parlay::reduce(
-        parlay::delayed_tabulate( queryNum, [&]( size_t i ) { return kdknn[i]; } ),
-        parlay::maximum<Typename>() );
-    points Out( queryNum * maxReduceSize );
-    rangeQuery<point>( wp, pkd, kdknn, rounds, queryNum, Out );
-  } else {
-    std::cout << "-1 " << std::flush;
+
+    delete[] kdknn;
   }
 
   if ( queryType & ( 1 << 3 ) ) {  //* generate knn
@@ -108,42 +116,38 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     for ( int i = 0; i < 3; i++ ) {
       queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
     }
-  } else {
-    std::cout << "-1 " << std::flush;
+
+    delete[] kdknn;
   }
 
-  if ( queryType & ( 1 << 5 ) ) {  //* range query with given rectangle
-    double ratios[3] = { 0.05, 0.2, 0.5 };
-    points Out( wp.size() );
-    for ( int i = 0; i < 3; i++ ) {
-      rangeQueryFix<point>( wp, pkd, kdknn, rounds, queryNum, Out, ratios[i] );
-      // std::cout << kdknn[0] << std::endl;
-    }
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-
-  if ( queryType & ( 1 << 6 ) ) {  //* batch knn
+  if ( queryType & ( 1 << 5 ) ) {  //* batch insertion then knn
     double ratios[4] = { 0.1, 0.3, 0.5, 1.0 };
     // double ratios[4] = { 1.0, 0.3, 0.5, 1.0 };
-    delete[] kdknn;
     kdknn = new Typename[2 * wp.size()];
     for ( int i = 0; i < 4; i++ ) {
-      // std::cout << i << std::endl;
       batchInsert<point>( pkd, wp, wi, Dim, rounds, ratios[i] );
       auto sz = size_t( wi.size() * ratios[i] );
-      // points new_wp( wp.size() + sz );
-      // parlay::copy( wp.cut( 0, wp.size() ), new_wp.cut( 0, wp.size() ) );
-      // parlay::copy( wi.cut( 0, sz ), new_wp.cut( wp.size(), wp.size() + sz ) );
-
       wp.append( wi.begin(), wi.begin() + sz );
       queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
       wp.pop_tail( sz );
-      // std::cout << wp.size() << std::endl;
     }
 
-  } else {
-    std::cout << "-1 " << std::flush;
+    delete[] kdknn;
+  }
+
+  if ( queryType & ( 1 << 6 ) ) {  //* batch insertion with fraction
+    double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
+    for ( int i = 0; i < 10; i++ ) {
+      batchInsert<point>( pkd, wp, wi, Dim, rounds, ratios[i] );
+    }
+  }
+
+  if ( queryType & ( 1 << 7 ) ) {  //* batch deletion with fraction
+    double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
+    points tmp;
+    for ( int i = 0; i < 10; i++ ) {
+      batchDelete<point>( pkd, wp, tmp, Dim, rounds, 0, ratios[i] );
+    }
   }
 
   std::cout << std::endl << std::flush;
