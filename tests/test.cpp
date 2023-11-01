@@ -29,7 +29,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   tree pkd;
 
   points wi;
-  if ( tag >= 1 ) {
+  if ( tag >= 0 ) {
     auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
     if ( nd != Dim ) {
       puts( "read inserted points dimension wrong" );
@@ -67,7 +67,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     delete[] kdknn;
   }
 
-  int recNum = 1000;
+  int recNum = 100;
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count
     kdknn = new Typename[recNum];
@@ -86,7 +86,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     for ( int i = 0; i < 3; i++ ) {
       //* run range count to obtain size
       kdknn = new Typename[recNum];
-      auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
+      auto queryBox = gen_rectangles( recNum, type[i], wp, Dim );
       parlay::parallel_for(
           0, recNum, [&]( size_t i ) { kdknn[i] = pkd.range_count( queryBox[i] ); } );
 
@@ -179,7 +179,7 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  if ( tag >= 1 ) {
+  if ( tag >= 0 ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
       if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test

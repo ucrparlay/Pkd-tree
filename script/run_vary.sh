@@ -12,7 +12,7 @@ k=100
 onecore=0
 insNum=2
 # queryType=3 # 001 011 111
-queryType=$((2#11010110)) # 1110000
+queryType=$((2#1100111)) # 1110000
 echo $queryType
 
 resFile=""

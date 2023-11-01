@@ -406,6 +406,7 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
   return;
 }
 
+//* test range count for fix rectangle
 template<typename point>
 void
 rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
@@ -432,6 +433,7 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   return;
 }
 
+//* test range query for fix rectangle
 template<typename point>
 void
 rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
