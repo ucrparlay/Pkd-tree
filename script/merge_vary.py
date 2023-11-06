@@ -96,8 +96,8 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
     csvWriter = csvSetup("result")
 
     for dim in Dims:
-        for solver in solverName:
-            for bench in benchmarks:
+        for bench in benchmarks:
+            for solver in solverName:
                 for node in Nodes:
                     P = (
                         path

@@ -135,6 +135,7 @@ ParallelKDtree<point>::delete_tree() {
     return this->root;
   }
   delete_tree_recursive( this->root );
+  this->root = nullptr;
   return this->root;
 }
 

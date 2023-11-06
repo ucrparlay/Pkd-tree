@@ -10,7 +10,7 @@ ParallelKDtree<point>::build( slice A, const dim_type DIM ) {
   points B = points::uninitialized( A.size() );
   this->bbox = get_box( A );
   this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox );
-  assert( this->root != NULL );
+  assert( this->root != nullptr );
   return;
 }
 
