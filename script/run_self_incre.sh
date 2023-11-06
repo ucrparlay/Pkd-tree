@@ -1,14 +1,15 @@
 #!/bin/bash
 
 Solvers=("test")
-Node=(10000000 50000000 100000000 500000000)
+# Node=(10000000 50000000 100000000 500000000)
+Node=(100000000)
 Dim=(2 3)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
-k=100
+k=10
 onecore=0
 insNum=2
 # queryType=3 # 001 011 111
@@ -22,11 +23,11 @@ for solver in ${Solvers[@]}; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        resFile="res.out"
+        resFile="res.quality.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal.out"
+        resFile="cgal.quality.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree.out"
+        resFile="zdtree.quality.out"
         exe="/home/zmen002/pbbsbench_x/build/zdtree"
     elif [[ ${solver} == "cpam" ]]; then
         resFile="cpam.out"
