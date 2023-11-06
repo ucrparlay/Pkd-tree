@@ -314,7 +314,12 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
       parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
   parlay::parallel_for(
       0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
-  parlay::sequence<double> visNum = parlay::sequence<double>::uninitialized( n );
+  parlay::sequence<size_t> visNum( n );
+
+  // size_t visNodeNum = 0;
+  // pkd.k_nearest( KDParallelRoot, wp[0], Dim, bq[0], visNodeNum );
+  // int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
+  // LOG << deep << " " << visNodeNum << ENDL;
 
   double aveQuery = time_loop(
       rounds, 1.0,
@@ -328,16 +333,24 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
           size_t visNodeNum = 0;
           pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
           kdknn[i] = bq[i].top().second;
-          visNum[i] = ( 1.0 * visNodeNum ) / n;
+          // visNum[i] = ( 1.0 * visNodeNum ) / n;
+          visNum[i] = visNodeNum;
         } );
       },
       [&]() {} );
 
   LOG << aveQuery << " " << std::flush;
 
-  // int deep = traverseParallelTree<tree>( KDParallelRoot, 1 );
   int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
-  LOG << deep << " " << parlay::reduce( visNum.cut( 0, n ) ) << " " << std::flush;
+  // parlay::sequence<int> heights( n );
+  // int idx = 0;
+  // pkd.countTreeHeights( pkd.get_root(), 0, idx, heights );
+  // auto kv = parlay::histogram_by_key( heights.cut( 0, idx ) );
+  // std::sort( kv.begin(), kv.end(), [&]( auto a, auto b ) { return a.first < b.first; }
+  // ); puts( "--" ); for ( auto i : kv ) {
+  //   LOG << i.first << " " << i.second << ENDL;
+  // }
+  LOG << deep << " " << parlay::reduce( visNum.cut( 0, n ) ) / n << " " << std::flush;
 
   return;
 }

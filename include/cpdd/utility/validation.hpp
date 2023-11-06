@@ -81,4 +81,18 @@ ParallelKDtree<point>::getTreeHeight( node* T, int deep ) {
   return std::max( l, r );
 }
 
+template<typename point>
+void
+ParallelKDtree<point>::countTreeHeights( node* T, int deep, int& idx,
+                                         parlay::sequence<int>& heights ) {
+  if ( T->is_leaf ) {
+    heights[idx++] = deep;
+    return;
+  }
+  interior* TI = static_cast<interior*>( T );
+  countTreeHeights( TI->left, deep + 1, idx, heights );
+  countTreeHeights( TI->right, deep + 1, idx, heights );
+  return;
+}
+
 }  // namespace cpdd

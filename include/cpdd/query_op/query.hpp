@@ -16,7 +16,6 @@ ParallelKDtree<point>::ppDistanceSquared( const point& p, const point& q,
   return std::move( r );
 }
 
-//? parallel query
 template<typename point>
 template<typename StoreType>
 void
