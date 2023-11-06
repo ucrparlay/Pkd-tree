@@ -212,7 +212,7 @@ template<class TreeDesc, typename point>
 void
 batchDelete( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
              const parlay::sequence<point>& WI, const uint_fast8_t& DIM,
-             const int& rounds, bool afterInsert = 1 ) {
+             const int& rounds, bool afterInsert = 1, bool disableInsertion=false) {
   if(afterInsert && !TreeDesc::support_insert_delete)
   {
     std::cout << "-1 " << std::flush;
@@ -238,12 +238,16 @@ batchDelete( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
       const int log2size = (int)std::ceil(std::log2(WP.size()+WI.size()));
       tree = new Tree(log2size);
       tree->insert( parlay::make_slice( cwp ) );
-      tree->insert( parlay::make_slice( cwi ) );
+      if(!disableInsertion)
+        tree->insert( parlay::make_slice( cwi ) );
       parlay::copy( WP, wp ), parlay::copy( WI, wi );
     } else {
-      wp.resize( WP.size() + WI.size() );
-      parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
-      parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
+      if(!disableInsertion)
+      {
+        wp.resize( WP.size() + WI.size() );
+        parlay::copy( parlay::make_slice( WP ), wp.cut( 0, WP.size() ) );
+        parlay::copy( parlay::make_slice( WI ), wp.cut( WP.size(), wp.size() ) );
+      }
       const auto &cwp = wp;
       tree = new Tree( parlay::make_slice( cwp ) );
       parlay::copy( WI, wi );

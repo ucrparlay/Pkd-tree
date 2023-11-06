@@ -78,6 +78,16 @@ for solver in ${Solvers[@]}; do
                     echo "Test for $k-NN with incremental deletion"
                     PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
 
+                    # del_mode=4 (partial), ins_mode=4 (partial), build_mode=1 (wp), seg_mode=0 (unused)
+                    # downsize_k=0 (unused), ins_ratio=1-10 (10%-100%), tag=2
+                    queryType=0 # no query
+                    k=10 # unused
+                    echo "Test for insertion and deletion with batch size 10%-100%"
+                    tags=(71368722 71368738 71368754 71368770 71368786 71368802 71368818 71368834 71368850 71368866)
+                    for tag in ${tags[@]}; do
+                        PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    done
+
                     retval=$?
                     if [ ${retval} -eq 124 ]; then
                         echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
