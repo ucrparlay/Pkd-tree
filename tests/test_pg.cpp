@@ -18,7 +18,14 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   int tag = tag_ext & 0xf;
   int ins_ratio = (tag_ext>>4) & 0xf;
   int downsize_k = (tag_ext>>8) & 0xf;
-  printf("tag=%d ins_ratio=%d downsize_k=%d\n", tag, ins_ratio, downsize_k);
+  int seg_mode = (tag_ext>>12) & 0xf;
+  const int build_mode = (tag_ext>>16) & 0xf;
+  const int ins_mode = (tag_ext>>20) & 0xf;
+  const int del_mode = (tag_ext>>24) & 0xf;
+  printf("tag=%d ins_ratio=%d\n", tag, ins_ratio);
+  printf("downsize_k=%d seg_mode=%d\n", downsize_k, seg_mode);
+  printf("build_mode=%d\n", build_mode);
+  printf("ins_mode=%d del_mode=%d\n", ins_mode, del_mode);
 
   if ( N != wp.size() ) {
     puts( "input parameter N is different to input points size" );
@@ -37,7 +44,23 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   Typename* kdknn;
 
   //* begin test
-  auto pkd = buildTree<TreeDesc,point>(Dim, wp, rounds, LEAVE_WRAP);
+  using Tree = typename TreeDesc::type;
+  Tree *pkd = nullptr;
+  if(build_mode==0) // unit test
+  {
+    pkd = buildTree<TreeDesc,point>(Dim, wp, rounds, LEAVE_WRAP);
+  }
+  else if(build_mode==1) // build from wp
+  {
+    const auto &cwp = wp;
+    pkd = new Tree(parlay::make_slice(cwp));
+  }
+  else if(build_mode==2) // build from empty (wp will be inserted later)
+  {
+    wi = wp;
+    const int log2size = (int)std::ceil(std::log2(wi.size()));
+    pkd = new Tree(log2size);
+  }
 
   if ( tag == 3 ) {
     const auto ins_size = wi.size()/10*ins_ratio;
@@ -46,10 +69,31 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     tag = 0;
   }
 
+  const int seg_ratio[] = {100, 10, 20, 25, 50};
+  auto segs = parlay::tabulate(100/seg_ratio[seg_mode], [&](size_t i){
+    return wi.size()*seg_ratio[seg_mode]/100*i;
+  });
+  segs.push_back(wi.size());
+
   //* batch insert
   if ( tag >= 1 ) {
-
-    batchInsert<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
+    if(ins_mode==0) // unit test
+    {
+      batchInsert<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
+    }
+    else if(ins_mode==1) // insert all
+    {
+      const auto &cwi = wi;
+      pkd->insert(parlay::make_slice(cwi));
+    }
+    else if(ins_mode==2) // insert in seg mode
+    {
+      for(size_t i=1; i<segs.size(); ++i)
+      {
+        const parlay::sequence<point> pwi(wi.begin()+segs[i-1], wi.begin()+segs[i]);
+        pkd->insert(parlay::make_slice(pwi));
+      }
+    }
 
     if ( tag == 1 ) {
       wp.append( wi );
@@ -61,7 +105,23 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   //* batch delete
   if ( tag >= 2 ) {
     assert( wi.size() );
-    batchDelete<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
+    if(del_mode==0) // unit test
+    {
+      batchDelete<TreeDesc,point>( pkd, wp, wi, Dim, rounds );
+    }
+    else if(del_mode==1) // delete all
+    {
+      const auto wi2 = wi;
+      pkd->bulk_erase(wi2);
+    }
+    else if(del_mode==2) // delete in seg mode
+    {
+      for(size_t i=1; i<segs.size(); ++i)
+      {
+        parlay::sequence<point> pwi(wi.begin()+segs[i-1], wi.begin()+segs[i]);
+        pkd->bulk_erase(pwi);
+      }
+    }
   } else {
     std::cout << "-1 " << std::flush;
   }
