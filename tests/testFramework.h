@@ -208,7 +208,7 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
 
     if ( print ) {
         LOG << aveBuild << " " << std::flush;
-        int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
+        auto deep = pkd.getAveTreeHeight();
         LOG << deep << " " << std::flush;
     }
 
@@ -249,7 +249,7 @@ incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int ro
     }
 
     if ( print ) {
-        int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
+        auto deep = pkd.getAveTreeHeight();
         LOG << aveIncreBuild << " " << deep << " " << std::flush;
     }
     return;
@@ -301,7 +301,7 @@ incrementalDelete( const int Dim, const parlay::sequence<point>& WP,
     }
 
     if ( print ) {
-        int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
+        auto deep = pkd.getAveTreeHeight();
         LOG << aveIncreDelete << " " << deep << " " << std::flush;
     }
     return;
@@ -437,16 +437,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
     LOG << aveQuery << " " << std::flush;
 
-    int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
-    // parlay::sequence<int> heights( n );
-    // int idx = 0;
-    // pkd.countTreeHeights( pkd.get_root(), 0, idx, heights );
-    // auto kv = parlay::histogram_by_key( heights.cut( 0, idx ) );
-    // std::sort( kv.begin(), kv.end(), [&]( auto a, auto b ) { return a.first < b.first;
-    // }
-    // ); puts( "--" ); for ( auto i : kv ) {
-    //   LOG << i.first << " " << i.second << ENDL;
-    // }
+    auto deep = pkd.getAveTreeHeight();
     LOG << deep << " " << parlay::reduce( visNum.cut( 0, n ) ) / n << " " << std::flush;
 
     return;

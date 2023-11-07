@@ -21,7 +21,55 @@ theme_set(theme_light())
 # options(scipen = 999)
 options(digits = 5, nsmall = 3)
 ```
-header[] = solver,benchType,nodes,dims,file,buildTime,queryTime,wrapSize
+
+colors https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-data-visualization/
+
+Draw the technique graph
+```{R}
+bench <- c(rep("n=10M, p=192",4), rep("n=10M, p=1",4), rep("n=50M, p=192",4), rep("n=50M, p=1",4)) 
+techniques <- rep(c("one layer+serial median", 
+  "one layer+parallel median", 
+  "one layer+sample median", 
+  "six layer+sample median"), 4)
+slow <- c(
+9.46,
+6.25,
+2.86,
+1.00,
+1.39,
+1.72,
+0.80,
+1.00,
+13.50,
+10.27,
+5.23,
+1.00,
+1.72,
+2.10,
+0.98,
+1.00)
+
+t <- data.frame(bench,techniques,slow)
+t$techniques <- factor(t$techniques, levels = c("six layer+sample median", "one layer+sample median","one layer+parallel median","one layer+serial median"))
+
+plt<-ggplot(t, aes(fill=techniques, y=slow, x=bench)) + 
+    geom_bar(position="dodge", stat="identity") +
+    theme(
+      legend.position = c(0.18, 0.87),
+      plot.title = element_text(hjust = 0.5)) + 
+    labs(x="Data size and threads number", 
+      y="Normalized slow ratio", 
+      title="Effectiveness of each technique",
+      color="techniques",
+      ) + 
+    # scale_y_continuous(breaks=seq(1,15,by=3))
+    scale_y_continuous(breaks=c(0,1,4,7,10,13))+
+    scale_fill_brewer(palette="Set2")
+    
+ggsave("script/plot/technique.pdf", dpi=1800)
+```
+
+
 
 ```{R}
 # setwd("/home/zmen002/KDtree")

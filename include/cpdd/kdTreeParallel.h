@@ -155,6 +155,7 @@ class ParallelKDtree {
     void checkTreeSameSequential( node* T, int dim, const int& DIM );
     void validate( const dim_type DIM );
     int getTreeHeight( node* T, int deep );
+    double getAveTreeHeight();
     void countTreeHeights( node* T, int deep, int& idx, parlay::sequence<int>& heights );
 
     //@ kdtree interfaces
