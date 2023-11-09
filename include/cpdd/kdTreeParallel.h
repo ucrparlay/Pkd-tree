@@ -30,8 +30,8 @@ class ParallelKDtree {
   //@ Const variables
   //@ uint32t handle up to 4e9 at least
   //! bucket num should smaller than 1<<8 to handle type overflow
-  static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
-  // static constexpr bucket_type BUILD_DEPTH_ONCE = 1;  //* last layer is leaf
+  // static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
+  static constexpr bucket_type BUILD_DEPTH_ONCE = 1;  //* last layer is leaf
   static constexpr bucket_type PIVOT_NUM = ( 1 << BUILD_DEPTH_ONCE ) - 1;
   static constexpr bucket_type BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
   //@ tree structure

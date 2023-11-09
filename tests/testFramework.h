@@ -140,7 +140,7 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   pkd.build( wp.cut( 0, n ), Dim );
   // pkd.delete_tree();
 
-  LOG << "sample: ";
+  LOG << "\n sample: ";
   for ( int i = 0; i < maxl; i++ ) {
     LOG << sampleTime[i] / ( 1 << i ) << " ";
   }
