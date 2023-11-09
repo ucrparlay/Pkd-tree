@@ -412,11 +412,6 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
         0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
     parlay::sequence<size_t> visNum( n );
 
-    // size_t visNodeNum = 0;
-    // pkd.k_nearest( KDParallelRoot, wp[0], Dim, bq[0], visNodeNum );
-    // int deep = pkd.getTreeHeight( pkd.get_root(), 0 );
-    // LOG << deep << " " << visNodeNum << ENDL;
-
     double aveQuery = time_loop(
         rounds, 1.0,
         [&]() { parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } ); },

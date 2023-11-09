@@ -69,9 +69,18 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         delete[] kdknn;
     }
 
+    if ( queryType & ( 1 << 1 ) ) {  //* batch NN query
+        size_t nq = static_cast<size_t>( std::sqrt( wp.size() ) );
+        points new_wp( nq );
+        parlay::copy( wp.cut( 0, nq ), new_wp.cut( 0, nq ) );
+        kdknn = new Typename[new_wp.size()];
+
+        queryKNN( Dim, new_wp, rounds, pkd, kdknn, K, true );
+    }
+
     int recNum = 100;
 
-    if ( queryType & ( 1 << 1 ) ) {  //* range count
+    if ( queryType & ( 1 << 2 ) ) {  //* range count
         kdknn = new Typename[recNum];
         int type[3] = { 0, 1, 2 };
 
@@ -82,7 +91,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         delete[] kdknn;
     }
 
-    if ( queryType & ( 1 << 2 ) ) {  //* range query
+    if ( queryType & ( 1 << 3 ) ) {  //* range query
 
         int type[3] = { 0, 1, 2 };
         for ( int i = 0; i < 3; i++ ) {
@@ -107,10 +116,10 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         delete[] kdknn;
     }
 
-    if ( queryType & ( 1 << 3 ) ) {  //* generate knn
-        // generate_knn<point>( Dim, wp, K, "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out"
-        // );
-    }
+    // if ( queryType & ( 1 << 3 ) ) {  //* generate knn
+    // generate_knn<point>( Dim, wp, K, "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out"
+    // );
+    // }
 
     if ( queryType & ( 1 << 4 ) ) {  //* batch insertion with fraction
         double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
