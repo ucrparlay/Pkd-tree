@@ -128,7 +128,10 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   points wp = points( n );
 
   double aveBuild = time_loop(
-      rounds, 1.0, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
+      rounds, 1.0,
+      [&]() {  // parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
+        wp = parlay::random_shuffle( WP );
+      },
       [&]() { pkd.build( wp.cut( 0, n ), Dim ); }, [&]() { pkd.delete_tree(); } );
 
   LOG << aveBuild << " " << std::flush;

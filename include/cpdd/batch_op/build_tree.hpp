@@ -47,21 +47,17 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, dim_type dim
       ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
   assert( d >= 0 && d < DIM );
 
-//  std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-//                            [&]( const point& p1, const point& p2 ) {
-//                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
-//                            } );
-//  pivots[idx] = splitter( In[n / 2].pnt[d], d );
+  //  std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+  //                            [&]( const point& p1, const point& p2 ) {
+  //                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
+  //                            } );
+  //  pivots[idx] = splitter( In[n / 2].pnt[d], d );
 
-  point kth = *( parlay::kth_smallest( In, n / 2, [&]( const point& a, const point& b )
-  {
+  point kth = *( parlay::kth_smallest( In, n / 2, [&]( const point& a, const point& b ) {
     return Num::Lt( a.pnt[d], b.pnt[d] );
   } ) );
   pivots[idx] = splitter( kth.pnt[d], d );
-  std::ranges::partition(In.begin(), In.end(), [&](point& p){
-		  return p.pnt[d]<pivots[idx].first;
-		  });
-	  
+
   box lbox( bx ), rbox( bx );
   lbox.second.pnt[d] = pivots[idx].first;  //* loose
   rbox.first.pnt[d] = pivots[idx].first;
