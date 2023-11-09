@@ -1,17 +1,19 @@
 #!/bin/bash
 
-Solvers=("zdtree test cgal")
-Node=(1000000000)
-Dim=(2 3)
+Solvers=("test cgal")
+Node=(100000000)
+Dim=(2 3 5 7 9)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=2
-k=100
+tag=0
+k=10
 onecore=0
 insNum=2
-queryType=1 # 001 011 111
+queryType=2 # 001 011 111
+# queryType=$((2#1100111)) # 1110000
+echo $queryType
 
 resFile=""
 
@@ -20,9 +22,9 @@ for solver in ${Solvers[@]}; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        resFile="res.out"
+        resFile="res_highDim.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal.out"
+        resFile="cgal_highDim.out"
     elif [[ ${solver} == "zdtree" ]]; then
         resFile="zdtree.out"
         exe="/home/zmen002/pbbsbench_x/build/zdtree"
