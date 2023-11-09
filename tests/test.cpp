@@ -63,14 +63,14 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         // int k[3] = { 1, 10, 100 };
         int k[3] = { 1, 10, 100 };
         // for ( int i = 0; i < 3; i++ ) {
-        for ( int i = 0; i < 1; i++ ) {
+        for ( int i = 0; i < 3; i++ ) {
             queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
         }
         delete[] kdknn;
     }
 
     if ( queryType & ( 1 << 1 ) ) {  //* batch NN query
-        size_t nq = static_cast<size_t>(100000);
+        size_t nq = static_cast<size_t>( 100000 );
         points new_wp( nq );
         parlay::copy( wp.cut( 0, nq ), new_wp.cut( 0, nq ) );
         kdknn = new Typename[new_wp.size()];
@@ -303,6 +303,13 @@ main( int argc, char* argv[] ) {
         } );
         decltype( wp )().swap( wp );
         testParallelKDtree<PointType<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                                 insertFile, tag, queryType );
+    } else if ( Dim == 9 ) {
+        auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 9> {
+            return PointType<coord, 9>( wp[i].pnt.begin() );
+        } );
+        decltype( wp )().swap( wp );
+        testParallelKDtree<PointType<coord, 9>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
                                                  insertFile, tag, queryType );
     }
 

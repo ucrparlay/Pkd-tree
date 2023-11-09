@@ -89,10 +89,14 @@ recurse_box( parlay::slice<point*, point*> In,
     size_t n = In.size();
     if ( idx >= recNum || n < range.first || n == 0 ) return;
 
-    if ( !first && n >= range.first && n <= range.second ) {
-        // LOG << n << ENDL;
-        boxs[idx++] = tree::get_box( In );
-        return;
+    if ( n >= range.first && n <= range.second ) {
+        if ( first ) {
+            first = false;
+        } else {
+            // LOG << n << ENDL;
+            boxs[idx++] = tree::get_box( In );
+            return;
+        }
     }
 
     int dim = get_random_index( 0, DIM );

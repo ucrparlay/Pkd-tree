@@ -1,14 +1,15 @@
 #!/bin/bash
 
-Solvers=("test cgal")
+Solvers=("test")
 Node=(100000000)
 Dim=(2 3 5 7 9)
+# Dim=(9)
 declare -A datas
-datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+# datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
-k=10
+k=100
 onecore=0
 insNum=2
 queryType=2 # 001 011 111

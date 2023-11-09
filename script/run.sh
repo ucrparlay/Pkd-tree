@@ -1,17 +1,17 @@
 #!/bin/bash
 
-Solvers=("zdtree test cgal")
+Solvers=("test")
 Node=(1000000000)
 Dim=(2 3)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=2
+tag=0
 k=100
 onecore=0
 insNum=2
-queryType=1 # 001 011 111
+queryType=2 # 001 011 111
 
 resFile=""
 
