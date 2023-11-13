@@ -54,10 +54,10 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     }
 
     //* otherwise cannot insert heavy duplicated points
-    wp = parlay::unique( parlay::sort( wp ),
-                         [&]( const point& a, const point& b ) { return a == b; } );
-    wi = parlay::unique( parlay::sort( wi ),
-                         [&]( const point& a, const point& b ) { return a == b; } );
+    // wp = parlay::unique( parlay::sort( wp ),
+    //                      [&]( const point& a, const point& b ) { return a == b; } );
+    // wi = parlay::unique( parlay::sort( wi ),
+    //                      [&]( const point& a, const point& b ) { return a == b; } );
     N = wp.size();
 
     //* cgal
