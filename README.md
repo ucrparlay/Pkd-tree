@@ -44,7 +44,7 @@ Outputs instertion time.
 Outputs delete time.
 4. Query `q & (1<<0)` asks KNN of $P$ on $T$ where $k=1, 10, 100$. 
 For each KNN, outputs time for query, average depth and average # nodes visited.
-5. Query `q & (1<<1)` asks 10-NN w.r.t points $P'=\{P_0,\cdots,P_{1e5}\}$ (assume $|P|\geq 1e5$). 
+5. Query `q & (1<<1)` asks 10-NN w.r.t points $P'=\{P_0,\cdots,P_{1e6}\}$ (assume $|P|\geq 1e6$). 
 For each KNN, outputs time for query, average depth and average # nodes visited.
 6. Query `q & (1<<2)` asks range count on $T$ each with size $n = [0,n^{1/4}）, [n^{1/4}, n^{1/2}), [n^{1/2}, n)$
 For each query, outputs time for that query.

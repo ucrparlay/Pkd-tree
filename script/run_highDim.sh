@@ -1,11 +1,11 @@
 #!/bin/bash
 
-Solvers=("test")
+Solvers=("cgal")
 Node=(100000000)
 Dim=(2 3 5 7 9)
 # Dim=(9)
 declare -A datas
-# datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0

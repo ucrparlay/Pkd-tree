@@ -118,7 +118,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
         for ( int i = 0; i < 3; i++ ) {
             timer.reset();
             timer.start();
-
+            parlay::sequence<int> visNodeNum( N, 0 );
             tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, N ),
                                [&]( const tbb::blocked_range<std::size_t>& r ) {
                                    for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
@@ -130,11 +130,14 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
                                        auto it = search.end();
                                        it--;
                                        cgknn[s] = it->second;
+                                       visNodeNum[s] = search.internals_visited() +
+                                                       search.leafs_visited();
                                    }
                                } );
 
             timer.stop();
-            std::cout << timer.total_time() << " -1 -1 " << std::flush;
+            std::cout << timer.total_time() << " " << tree.root()->depth() << " "
+                      << 1.0 * parlay::reduce( visNodeNum ) / wp.size() << std::flush;
         }
     }
 
@@ -143,6 +146,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
         timer.reset();
         timer.start();
+        parlay::sequence<int> visNodeNum( sz, 0 );
 
         tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, sz ),
                            [&]( const tbb::blocked_range<std::size_t>& r ) {
@@ -155,11 +159,14 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
                                    auto it = search.end();
                                    it--;
                                    cgknn[s] = it->second;
+                                   visNodeNum[s] = search.internals_visited() +
+                                                   search.leafs_visited();
                                }
                            } );
 
         timer.stop();
-        std::cout << timer.total_time() << " -1 -1 " << std::flush;
+        std::cout << timer.total_time() << " " << tree.root()->depth() << " "
+                  << 1.0 * parlay::reduce( visNodeNum ) / 100000 << " " << std::flush;
     }
 
     if ( queryType & ( 1 << 2 ) ) {  //* range count

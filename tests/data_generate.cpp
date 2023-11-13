@@ -17,7 +17,7 @@ using Typename = coord;
 const Typename dataRange = 1e6;
 
 // std::string path = "../benchmark/craft_var_node_integer";
-std::string path = "/ssd0/zmen002/kdtree/uniform";
+std::string path = "/data9/zmen002/kdtree/uniform";
 
 inline std::string
 toString( const long long& a ) {
@@ -38,7 +38,8 @@ generatePoints( std::ofstream& f ) {
 
     parlay::random_generator gen( distrib( gen_mt ) );
     // std::uniform_real_distribution<Typename> dis( -box_size, box_size );
-    std::uniform_int_distribution<int> dis( -box_size, box_size );
+    // std::uniform_int_distribution<int> dis( -box_size, box_size );
+    std::uniform_int_distribution<int> dis( 0, box_size );
 
     // generate n random points in a cube
     parlay::parallel_for(
