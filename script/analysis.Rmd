@@ -26,28 +26,29 @@ colors https://www.datanovia.com/en/blog/top-r-color-palettes-to-know-for-great-
 
 Draw the technique graph
 ```{R}
-bench <- c(rep("n=10M, p=192",4), rep("n=10M, p=1",4), rep("n=50M, p=192",4), rep("n=50M, p=1",4)) 
+bench <- c(rep("n=100M, p=192",4), rep("n=100M, p=1",4), rep("n=500M, p=192",4), rep("n=500M, p=1",4)) 
 techniques <- rep(c("one layer+serial median", 
   "one layer+parallel median", 
   "one layer+sample median", 
   "six layer+sample median"), 4)
 slow <- c(
-9.46,
-6.25,
-2.86,
+5.28,
+3.69,
+2.37,
 1.00,
-1.39,
-1.72,
-0.80,
+1.74,
+2.18,
+0.99,
 1.00,
-13.50,
-10.27,
-5.23,
+10.41,
+7.40,
+5.29,
 1.00,
-1.72,
-2.10,
-0.98,
-1.00)
+1.51,
+1.86,
+0.88,
+1.00
+)
 
 t <- data.frame(bench,techniques,slow)
 t$techniques <- factor(t$techniques, levels = c("six layer+sample median", "one layer+sample median","one layer+parallel median","one layer+serial median"))
@@ -64,7 +65,7 @@ plt<-ggplot(t, aes(fill=techniques, y=slow, x=bench)) +
       ) + 
     # scale_y_continuous(breaks=seq(1,15,by=3))
     scale_y_continuous(breaks=c(0,1,4,7,10,13))+
-    scale_fill_brewer(palette="Set2")
+    scale_fill_brewer(palette="Pastel1")
     
 ggsave("script/plot/technique.pdf", dpi=1800)
 ```

@@ -44,17 +44,22 @@ class ParallelKDtree {
     static constexpr uint_fast8_t INBALANCE_RATIO = 30;
 
     //*------------------- Tree Structures--------------------*//
-    //@ tree node types and functions
+    //@ kd tree node types and functions
     struct node;
     struct leaf;
     struct interior;
+    //@ range query tree node
+    struct simple_node;
 
     static leaf* alloc_leaf_node( slice In );
     static leaf* alloc_dummy_leaf( slice In );
     static leaf* alloc_empty_leaf();
     static interior* alloc_interior_node( node* L, node* R, const splitter& split );
+    static simple_node* alloc_simple_node( simple_node* L, simple_node* R );
+    static simple_node* alloc_simple_node( size_t sz );
     static void free_leaf( node* T );
     static void free_interior( node* T );
+    static void free_simple_node( simple_node* T );
     static inline bool inbalance_node( const size_t& l, const size_t& n );
 
     using node_box = std::pair<node*, box>;
@@ -114,6 +119,7 @@ class ParallelKDtree {
                                     const tag_nodes& rev_tag );
     node* delete_tree();
     static void delete_tree_recursive( node* T );
+    static void delete_simple_tree_recursive( simple_node* T );
 
     //@ batch insert
     node* rebuild_with_insert( node* T, slice In, const dim_type DIM );
@@ -132,15 +138,27 @@ class ParallelKDtree {
                                 const tag_nodes& rev_tag, const dim_type DIM );
 
     //@ query stuffs
-    static inline coord ppDistanceSquared( const point& p, const point& q,
-                                           const dim_type DIM );
+    static inline coord p2p_distance( const point& p, const point& q,
+                                      const dim_type DIM );
+    static inline coord p2b_distance( const point& p, const box& a, const dim_type DIM );
+    static inline coord interruptible_distance( const point& p, const point& q, coord up,
+                                                dim_type DIM );
 
     template<typename StoreType>
     static void k_nearest( node* T, const point& q, const dim_type DIM,
                            kBoundedQueue<point, StoreType>& bq, size_t& visNodeNum );
 
+    template<typename StoreType>
+    static void k_nearest( node* T, const point& q, const dim_type DIM,
+                           kBoundedQueue<point, StoreType>& bq, const box& bx,
+                           size_t& visNodeNum );
+
     size_t range_count( const box& queryBox );
+
     static size_t range_count_value( node* T, const box& queryBox, const box& nodeBox );
+
+    simple_node* range_count_save_path( node* T, const box& queryBox,
+                                        const box& nodeBox );
 
     template<typename Slice>
     size_t range_query( const box& queryBox, Slice Out );
@@ -170,7 +188,7 @@ class ParallelKDtree {
     }
 
     inline box
-    get_box() {
+    get_root_box() {
         return this->bbox;
     }
 

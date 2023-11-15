@@ -423,12 +423,12 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
             if ( !checkCorrect ) {  //! Ensure pkd.size() == wp.size()
                 pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
             }
+            auto bx = pkd.get_root_box();
             double aveVisNum = 0.0;
             parlay::parallel_for( 0, n, [&]( size_t i ) {
                 size_t visNodeNum = 0;
-                pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], visNodeNum );
+                pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], bx, visNodeNum );
                 kdknn[i] = bq[i].top().second;
-                // visNum[i] = ( 1.0 * visNodeNum ) / n;
                 visNum[i] = visNodeNum;
             } );
         },

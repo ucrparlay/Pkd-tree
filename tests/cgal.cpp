@@ -39,7 +39,6 @@ void
 testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, int K,
                   const int& rounds, const string& insertFile, const int& tag,
                   const int& queryType ) {
-
     using points = parlay::sequence<point>;
     using pkdTree = ParallelKDtree<point>;
     using box = typename pkdTree::box;
