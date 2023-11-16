@@ -70,12 +70,13 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
 
     if ( queryType & ( 1 << 1 ) ) {  //* batch NN query
-        size_t nq = static_cast<size_t>( 100000 );
-        points new_wp( nq );
-        parlay::copy( wp.cut( 0, nq ), new_wp.cut( 0, nq ) );
-        kdknn = new Typename[new_wp.size()];
+        points new_wp( batchQuerySize );
+        parlay::copy( wp.cut( 0, batchQuerySize ), new_wp.cut( 0, batchQuerySize ) );
+        kdknn = new Typename[batchQuerySize];
 
         queryKNN( Dim, new_wp, rounds, pkd, kdknn, K, true );
+
+        delete[] kdknn;
     }
 
     int recNum = 100;
@@ -179,6 +180,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
 
     std::cout << std::endl << std::flush;
+
     return;
 }
 

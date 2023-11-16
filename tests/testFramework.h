@@ -10,7 +10,7 @@ using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
-static constexpr size_t batchQuerySize = 100000;
+static constexpr size_t batchQuerySize = 1000000;
 
 //*---------- generate points within a 0-box_size --------------------
 template<typename point>
@@ -235,7 +235,11 @@ incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int ro
     pkd.delete_tree();
 
     double aveIncreBuild = time_loop(
-        rounds, 1.0, [&]() { parlay::copy( WP, wp ); },
+        rounds, 1.0,
+        [&]() {
+            parlay::copy( WP, wp );
+            parlay::random_shuffle( wp );
+        },
         [&]() {
             size_t l = 0, r = 0;
             while ( l < n ) {

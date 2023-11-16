@@ -77,7 +77,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     tree.template build<CGAL::Parallel_tag>();
     timer.stop();
 
-    std::cout << timer.total_time() << " -1 " << std::flush;
+    std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
 
     if ( tag >= 1 ) {
         timer.reset();
@@ -140,14 +140,12 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
         }
     }
 
-    if ( queryType & ( 1 << 1 ) ) {  //* KNN query
-        size_t sz = 100000;
-
+    if ( queryType & ( 1 << 1 ) ) {  //* batch query
         timer.reset();
         timer.start();
-        parlay::sequence<int> visNodeNum( sz, 0 );
+        parlay::sequence<int> visNodeNum( batchQuerySize, 0 );
 
-        tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, sz ),
+        tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, batchQuerySize ),
                            [&]( const tbb::blocked_range<std::size_t>& r ) {
                                for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
                                    // Neighbor search can be instantiated from
@@ -165,7 +163,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
         timer.stop();
         std::cout << timer.total_time() << " " << tree.root()->depth() << " "
-                  << 1.0 * parlay::reduce( visNodeNum ) / 100000 << " " << std::flush;
+                  << parlay::reduce( visNodeNum ) / batchQuerySize << " " << std::flush;
     }
 
     if ( queryType & ( 1 << 2 ) ) {  //* range count
@@ -253,6 +251,30 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
             timer.stop();
             std::cout << timer.total_time() << " " << std::flush;
         }
+    }
+
+    if ( queryType & ( 1 << 6 ) ) {  //* incremental construct
+        double ratios[4] = { 0.1, 0.2, 0.25, 0.5 };
+        for ( int i = 0; i < 4; i++ ) {
+            std::cout << "-1 -1 " << std::flush;
+        }
+    }
+
+    if ( queryType & ( 1 << 7 ) ) {  //* incremental delete
+        double ratios[4] = { 0.1, 0.2, 0.25, 0.5 };
+        for ( int i = 0; i < 4; i++ ) {
+            std::cout << "-1 -1 " << std::flush;
+        }
+    }
+
+    if ( queryType & ( 1 << 8 ) ) {  //* incremental then knn
+        std::cout << "-1 -1 -1 " << std::flush;
+        std::cout << "-1 -1 -1 " << std::flush;
+    }
+
+    if ( queryType & ( 1 << 9 ) ) {  //* decremental then knn
+        std::cout << "-1 -1 -1 " << std::flush;
+        std::cout << "-1 -1 -1 " << std::flush;
     }
 
     std::cout << std::endl << std::flush;

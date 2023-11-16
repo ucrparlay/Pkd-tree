@@ -41,7 +41,7 @@ class ParallelKDtree {
     static constexpr uint_fast8_t LOG2_BASE = 10;
     static constexpr uint_fast16_t BLOCK_SIZE = 1 << LOG2_BASE;
     //@ reconstruct weight threshold
-    static constexpr uint_fast8_t INBALANCE_RATIO = 30;
+    static constexpr uint_fast8_t INBALANCE_RATIO = 49;
 
     //*------------------- Tree Structures--------------------*//
     //@ kd tree node types and functions
@@ -60,7 +60,7 @@ class ParallelKDtree {
     static void free_leaf( node* T );
     static void free_interior( node* T );
     static void free_simple_node( simple_node* T );
-    static inline bool inbalance_node( const size_t& l, const size_t& n );
+    static inline bool inbalance_node( const size_t l, const size_t n );
 
     using node_box = std::pair<node*, box>;
     using node_tag = std::pair<node*, uint_fast8_t>;

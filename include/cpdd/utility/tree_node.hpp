@@ -132,7 +132,7 @@ ParallelKDtree<point>::free_simple_node( simple_node* T ) {
 
 template<typename point>
 inline bool
-ParallelKDtree<point>::inbalance_node( const size_t& l, const size_t& n ) {
+ParallelKDtree<point>::inbalance_node( const size_t l, const size_t n ) {
     if ( n == 0 ) return true;
     return Num::Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
 }

@@ -2,8 +2,8 @@
 
 Solvers=("cgal")
 Node=(100000000)
-Dim=(2 3 5 7 9)
-# Dim=(9)
+# Dim=(2 3 5 7 9)
+Dim=(7 9)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -26,9 +26,6 @@ for solver in ${Solvers[@]}; do
         resFile="res_highDim.out"
     elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal_highDim.out"
-    elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree.out"
-        exe="/home/zmen002/pbbsbench_x/build/zdtree"
     fi
 
     for dim in ${Dim[@]}; do
