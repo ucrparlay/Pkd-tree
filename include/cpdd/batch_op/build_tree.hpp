@@ -47,16 +47,17 @@ ParallelKDtree<point>::divide_rotate( slice In, splitter_s& pivots, dim_type dim
       ( _split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim( bx, DIM ) : dim );
   assert( d >= 0 && d < DIM );
 
-  //  std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
-  //                            [&]( const point& p1, const point& p2 ) {
-  //                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
-  //                            } );
-  //  pivots[idx] = splitter( In[n / 2].pnt[d], d );
+  std::ranges::nth_element( In.begin(), In.begin() + n / 2, In.end(),
+                            [&]( const point& p1, const point& p2 ) {
+                              return Num::Lt( p1.pnt[d], p2.pnt[d] );
+                            } );
+  pivots[idx] = splitter( In[n / 2].pnt[d], d );
 
-  point kth = *( parlay::kth_smallest( In, n / 2, [&]( const point& a, const point& b ) {
-    return Num::Lt( a.pnt[d], b.pnt[d] );
-  } ) );
-  pivots[idx] = splitter( kth.pnt[d], d );
+  // point kth = *( parlay::kth_smallest( In, n / 2, [&]( const point& a, const point& b )
+  // {
+  //       return Num::Lt( a.pnt[d], b.pnt[d] );
+  //       } ) );
+  // pivots[idx] = splitter( kth.pnt[d], d );
 
   box lbox( bx ), rbox( bx );
   lbox.second.pnt[d] = pivots[idx].first;  //* loose
@@ -83,8 +84,8 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivot
     arr[i] = In[i * ( n / size )];
   }
   bucket_type bucket = 0;
-  divide_rotate( In, pivots, dim, 1, 1, bucket, DIM, boxs, bx );
-  // divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM, boxs, bx );
+  // divide_rotate( In, pivots, dim, 1, 1, bucket, DIM, boxs, bx );
+  divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM, boxs, bx );
   assert( bucket == BUCKET_NUM );
   return;
 }
@@ -291,7 +292,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
   timer.stop();
 
   if ( zeros == BUCKET_NUM - 1 ) {  // * switch to seral
-                                    // TODO add parallelsim within this call
+    // TODO add parallelsim within this call
     return serial_build_recursive( In, Out, dim, DIM, bx, deep );
   }
 
