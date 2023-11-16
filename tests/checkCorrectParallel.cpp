@@ -14,8 +14,8 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
-// using point = PointID<coord, 5>;
-using point = PointType<coord, 5>;
+using point = PointID<coord, 5>;
+// using point = PointType<coord, 7>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;
@@ -86,7 +86,9 @@ runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum,
     assert( tree.is_built() );
 
     if ( queryType == 0 ) {  //* NN
-        tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, wp.size() ),
+        // size_t S = wp.size();
+        size_t S = batchQuerySize;
+        tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, S ),
                            [&]( const tbb::blocked_range<std::size_t>& r ) {
                                for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
                                    // Neighbor search can be instantiated from
@@ -170,6 +172,8 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int que
     assert( tag == 1 || wp.size() == N );
     LOG << "begin kd query" << ENDL;
     if ( queryType == 0 ) {
+        points new_wp( batchQuerySize );
+        parlay::copy( wp.cut( 0, batchQuerySize ), new_wp.cut( 0, batchQuerySize ) );
         queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, true );
     } else if ( queryType == 1 ) {
         rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
@@ -311,7 +315,8 @@ main( int argc, char* argv[] ) {
     //* verify
     if ( queryType == 0 ) {
         LOG << "check NN" << ENDL;
-        for ( size_t i = 0; i < N; i++ ) {
+        size_t S = batchQuerySize;
+        for ( size_t i = 0; i < S; i++ ) {
             if ( std::abs( cgknn[i] - kdknn[i] ) > 1e-4 ) {
                 puts( "" );
                 puts( "wrong" );

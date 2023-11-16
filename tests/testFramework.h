@@ -10,6 +10,8 @@ using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
+static constexpr size_t batchQuerySize = 100000;
+
 //*---------- generate points within a 0-box_size --------------------
 template<typename point>
 void
@@ -396,7 +398,7 @@ template<typename point>
 void
 queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds,
           ParallelKDtree<point>& pkd, Typename* kdknn, const int K,
-          const bool checkCorrect ) {
+          const bool flattenTreeTag ) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
@@ -420,7 +422,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
         rounds, 1.0,
         [&]() { parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } ); },
         [&]() {
-            if ( !checkCorrect ) {  //! Ensure pkd.size() == wp.size()
+            if ( !flattenTreeTag ) {  //! Ensure pkd.size() == wp.size()
                 pkd.flatten( pkd.get_root(), parlay::make_slice( wp ) );
             }
             auto bx = pkd.get_root_box();

@@ -11,7 +11,7 @@ out="log.in"
 tag=2
 count=1 # count the number of ok in the output
 dim=5
-queryTypes=(0)
+queryTypes=(2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
 Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
@@ -20,7 +20,7 @@ Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 for queryType in ${queryTypes[@]}; do
     for path in ${Paths[@]}; do
         for node in ${Nodes[@]}; do
-            if [ ${queryType} -ge 1 ] && [ ${node} -gt 8000000 ]; then
+            if [ ${queryType} -gt 1 ] && [ ${node} -gt 8000000 ]; then
                 continue
             fi
 

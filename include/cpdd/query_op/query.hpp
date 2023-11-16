@@ -226,16 +226,57 @@ template<typename Slice>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& queryBox,
                                     Slice Out ) {
-    auto tree = range_count_save_path( this->root, queryBox, this->bbox );
-
-    return tree->size;
+    auto ST = range_count_save_path( this->root, queryBox, this->bbox );
+    size_t sz = ST->size;
+    range_query_parallel( this->root, ST, Out.cut( 0, sz ), queryBox );
+    delete_simple_tree_recursive( ST );
+    return sz;
 }
 
 template<typename point>
 template<typename Slice>
 void
-ParallelKDtree<point>::range_query_recursive( node* T, Slice Out, size_t& s,
-                                              const box& queryBox, const box& nodeBox ) {
+ParallelKDtree<point>::range_query_parallel( node* T, simple_node* ST, Slice Out,
+                                             const box& queryBox ) {
+    if ( ST->size == 0 ) {
+        return;
+    }
+    if ( ST->size == T->size ) {
+        assert( Out.size() == T->size );
+        flatten( T, Out.cut( 0, T->size ) );
+        return;
+    }
+    if ( T->is_leaf ) {
+        assert( ST->size == Out.size() );
+        leaf* TL = static_cast<leaf*>( T );
+        int s = 0;
+        for ( int i = 0; i < TL->size; i++ ) {
+            if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
+                Out[s++] = TL->pts[( !T->is_dummy ) * i];
+            }
+        }
+        return;
+    }
+
+    interior* TI = static_cast<interior*>( T );
+    //! granularity control
+    parlay::par_do(
+        [&]() {
+            range_query_parallel( TI->left, ST->left, Out.cut( 0, ST->left->size ),
+                                  queryBox );
+        },
+        [&]() {
+            range_query_parallel( TI->right, ST->right,
+                                  Out.cut( ST->left->size, Out.size() ), queryBox );
+        } );
+
+    return;
+}
+template<typename point>
+template<typename Slice>
+void
+ParallelKDtree<point>::range_query_serial( node* T, Slice Out, size_t& s,
+                                           const box& queryBox, const box& nodeBox ) {
     if ( !intersect_box( nodeBox, queryBox ) ) {
         return;
     }

@@ -164,8 +164,11 @@ class ParallelKDtree {
     size_t range_query( const box& queryBox, Slice Out );
 
     template<typename Slice>
-    static void range_query_recursive( node* T, Slice Out, size_t& s, const box& queryBox,
-                                       const box& nodeBox );
+    static void range_query_serial( node* T, Slice Out, size_t& s, const box& queryBox,
+                                    const box& nodeBox );
+    template<typename Slice>
+    static void range_query_parallel( node* T, simple_node* ST, Slice Out,
+                                      const box& queryBox );
 
     //@ validations
     static bool checkBox( node* T, const box& bx );
