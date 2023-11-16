@@ -12,8 +12,9 @@ ParallelKDtree<point>::pick_rebuild_dim( const node* T, const dim_type DIM ) {
         if ( T == this->root ) {
             return 0;
         } else {
-            assert( !( T->parent->is_leaf ) );
-            return ( static_cast<interior*>( T->parent )->split.second + 1 ) % DIM;
+            // assert( !( T->parent->is_leaf ) );
+            // return ( static_cast<interior*>( T->parent )->split.second + 1 ) % DIM;
+            return 0;
         }
     }
 }
