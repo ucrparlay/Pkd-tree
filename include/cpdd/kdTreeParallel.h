@@ -161,7 +161,7 @@ class ParallelKDtree {
                                         const box& nodeBox );
 
     template<typename Slice>
-    size_t range_query( const box& queryBox, Slice Out );
+    size_t range_query( const box& queryBox, Slice Out, double& timer );
 
     template<typename Slice>
     static void range_query_serial( node* T, Slice Out, size_t& s, const box& queryBox,

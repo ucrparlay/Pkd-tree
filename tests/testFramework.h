@@ -490,6 +490,7 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
     size_t step = Out.size() / queryNum;
     using ref_t = std::reference_wrapper<point>;
     parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
+    parlay::sequence<double> preTime( queryNum, 0 );
 
     double aveQuery = time_loop(
         rounds, 1.0, [&]() {},
@@ -498,8 +499,8 @@ rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
                 box queryBox =
                     pkd.get_box( box( wp[i], wp[i] ),
                                  box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-                kdknn[i] = pkd.range_query( queryBox,
-                                            out_ref.cut( i * step, ( i + 1 ) * step ) );
+                kdknn[i] = pkd.range_query(
+                    queryBox, out_ref.cut( i * step, ( i + 1 ) * step ), preTime[i] );
             } );
         },
         [&]() {} );
@@ -559,18 +560,21 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
     size_t step = Out.size() / recNum;
     using ref_t = std::reference_wrapper<point>;
     parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
+    parlay::sequence<double> preTime( recNum, 0 );
 
     double aveQuery = time_loop(
         rounds, 1.0, [&]() {},
         [&]() {
             parlay::parallel_for( 0, recNum, [&]( size_t i ) {
-                kdknn[i] = pkd.range_query( queryBox[i],
-                                            out_ref.cut( i * step, ( i + 1 ) * step ) );
+                preTime[i] = 0.0;
+                kdknn[i] = pkd.range_query(
+                    queryBox[i], out_ref.cut( i * step, ( i + 1 ) * step ), preTime[i] );
             } );
         },
         [&]() {} );
 
-    LOG << aveQuery << " " << std::flush;
+    LOG << aveQuery << " " << parlay::reduce( preTime ) / recNum / aveQuery << " "
+        << std::flush;
     return;
 }
 

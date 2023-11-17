@@ -225,11 +225,20 @@ template<typename point>
 template<typename Slice>
 size_t
 ParallelKDtree<point>::range_query( const typename ParallelKDtree<point>::box& queryBox,
-                                    Slice Out ) {
+                                    Slice Out, double& tim ) {
+    parlay::internal::timer t;
+    tim = 0.0;
+    t.start();
     auto ST = range_count_save_path( this->root, queryBox, this->bbox );
     size_t sz = ST->size;
+    tim += t.next_time();
+
     range_query_parallel( this->root, ST, Out.cut( 0, sz ), queryBox );
+
+    t.start();
     delete_simple_tree_recursive( ST );
+    t.stop();
+    tim += t.next_time();
     return sz;
 }
 
@@ -260,7 +269,8 @@ ParallelKDtree<point>::range_query_parallel( node* T, simple_node* ST, Slice Out
 
     interior* TI = static_cast<interior*>( T );
     //! granularity control
-    parlay::par_do(
+    parlay::par_do_if(
+        ST->size >= SERIAL_BUILD_CUTOFF,
         [&]() {
             range_query_parallel( TI->left, ST->left, Out.cut( 0, ST->left->size ),
                                   queryBox );
@@ -272,6 +282,7 @@ ParallelKDtree<point>::range_query_parallel( node* T, simple_node* ST, Slice Out
 
     return;
 }
+
 template<typename point>
 template<typename Slice>
 void

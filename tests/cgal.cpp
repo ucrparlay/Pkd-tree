@@ -143,7 +143,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     if ( queryType & ( 1 << 1 ) ) {  //* batch query
         timer.reset();
         timer.start();
-        parlay::sequence<int> visNodeNum( batchQuerySize, 0 );
+        parlay::sequence<size_t> visNodeNum( batchQuerySize, 0 );
 
         tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, batchQuerySize ),
                            [&]( const tbb::blocked_range<std::size_t>& r ) {
