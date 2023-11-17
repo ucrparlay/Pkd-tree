@@ -14,8 +14,8 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
-using point = PointID<coord, 5>;
-// using point = PointType<coord, 7>;
+// using point = PointID<coord, 5>;
+using point = PointType<coord, 5>;
 using points = parlay::sequence<point>;
 
 typedef CGAL::Cartesian_d<Typename> Kernel;

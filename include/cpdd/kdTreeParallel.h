@@ -41,7 +41,7 @@ class ParallelKDtree {
     static constexpr uint_fast8_t LOG2_BASE = 10;
     static constexpr uint_fast16_t BLOCK_SIZE = 1 << LOG2_BASE;
     //@ reconstruct weight threshold
-    static constexpr uint_fast8_t INBALANCE_RATIO = 49;
+    static constexpr uint_fast8_t INBALANCE_RATIO = 30;
 
     //*------------------- Tree Structures--------------------*//
     //@ kd tree node types and functions
@@ -160,15 +160,20 @@ class ParallelKDtree {
     simple_node* range_count_save_path( node* T, const box& queryBox,
                                         const box& nodeBox );
 
-    template<typename Slice>
-    size_t range_query( const box& queryBox, Slice Out, double& timer );
+    template<typename StoreType>
+    size_t range_query_serial( const box& queryBox, StoreType Out );
 
-    template<typename Slice>
-    static void range_query_serial( node* T, Slice Out, size_t& s, const box& queryBox,
-                                    const box& nodeBox );
-    template<typename Slice>
-    static void range_query_parallel( node* T, simple_node* ST, Slice Out,
-                                      const box& queryBox );
+    template<typename StoreType>
+    size_t range_query_parallel( const typename ParallelKDtree<point>::box& queryBox,
+                                 StoreType Out, double& tim );
+
+    template<typename StoreType>
+    static void range_query_recursive_serial( node* T, StoreType Out, size_t& s,
+                                              const box& queryBox, const box& nodeBox );
+
+    template<typename StoreType>
+    static void range_query_recursive_parallel( node* T, simple_node* ST, StoreType Out,
+                                                const box& queryBox );
 
     //@ validations
     static bool checkBox( node* T, const box& bx );
