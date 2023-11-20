@@ -1,7 +1,8 @@
 #!/bin/bash
 
+# Solvers=("zdtree" "test" "cgal")
 Solvers=("cgal")
-Node=(10000000 50000000 100000000 500000000)
+Node=(100000000)
 Dim=(2 3)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
@@ -11,10 +12,8 @@ tag=0
 k=100
 onecore=0
 insNum=2
-# queryType=3 # 001 011 111
-queryType=$((2#1100111)) # 1110000
-echo $queryType
-
+queryType=$((2#1101)) # 1110000
+type="querys"
 resFile=""
 
 for solver in ${Solvers[@]}; do
@@ -22,15 +21,12 @@ for solver in ${Solvers[@]}; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        resFile="res.out"
+        resFile="res_${type}.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal.out"
+        resFile="cgal_${type}.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree.out"
+        resFile="zdtree_${type}.out"
         exe="/home/zmen002/pbbsbench_x/build/zdtree"
-    elif [[ ${solver} == "cpam" ]]; then
-        resFile="cpam.out"
-        exe="/home/zmen002/CPAM_x/build/cpam_query"
     fi
 
     for dim in ${Dim[@]}; do
@@ -62,3 +58,6 @@ for solver in ${Solvers[@]}; do
         done
     done
 done
+
+current_date_time="$(date "+%d %H:%M:%S")"
+echo $current_date_time

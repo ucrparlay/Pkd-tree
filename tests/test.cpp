@@ -179,6 +179,71 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         delete[] kdknn;
     }
 
+    if ( queryType & ( 1 << 10 ) ) {  //* test inbalance ratio
+        points np, nq;
+        std::string prefix, path;
+        size_t batchSize = wp.size() / 10;
+        kdknn = new Typename[wp.size()];
+
+        //@ helper functions
+        auto clean = [&]() {
+            prefix = insertFile.substr( 0, insertFile.rfind( "/" ) );
+            np.clear();
+            nq.clear();
+        };
+
+        auto run = [&]() {
+            //* first normal build
+            // buildTree<point, 0>( Dim, np, rounds, pkd );
+            // queryKNN<point>( Dim, np, rounds, pkd, kdknn, K, false );
+            //* then incremental build
+            incrementalBuild<point, 1>( Dim, np, rounds, pkd, 0.1 );
+            queryKNN<point>( Dim, np, rounds, pkd, kdknn, K, false );
+        };
+
+        LOG << "alpha: " << static_cast<int>( tree::INBALANCE_RATIO ) << ENDL;
+        //! start with varden file
+        //@ 1: 10*0.1 different vardens.
+        clean();
+        for ( int i = 1; i <= 10; i++ ) {
+            path = prefix + "/" + std::to_string( i ) + ".in";
+            // std::cout << path << std::endl;
+            read_points<point>( path.c_str(), nq, K );
+            np.append( nq.cut( 0, batchSize ) );
+            nq.clear();
+        }
+        assert( np.size() == wp.size() );
+        run();
+
+        //@ 2: 1 uniform, and 9*0.1 same varden
+        //* read varden first
+        clean();
+        path = prefix + "/1.in";
+        // std::cout << path << std::endl;
+        read_points<point>( path.c_str(), np, K );
+        //* then read uniforprefixm
+        prefix = prefix.substr( 0, prefix.rfind( "/" ) );  // 1000000_3
+        prefix = prefix.substr( 0, prefix.rfind( "/" ) );  // ss_varden
+        path = prefix + "/uniform/" + std::to_string( np.size() ) + "_" +
+               std::to_string( Dim ) + "/1.in";
+        // std::cout << path << std::endl;
+
+        read_points<point>( path.c_str(), nq, K );
+        parlay::parallel_for( 0, batchSize, [&]( size_t i ) { np[i] = nq[i]; } );
+        run();
+
+        //@ 3: 1 varden, but flatten;
+        clean();
+        path = prefix + "/1.in";
+        // std::cout << path << std::endl;
+        read_points<point>( path.c_str(), np, K );
+        buildTree<point, 0>( Dim, np, rounds, pkd );
+        pkd.flatten( pkd.get_root(), parlay::make_slice( np ) );
+        run();
+
+        delete[] kdknn;
+    }
+
     std::cout << std::endl << std::flush;
 
     return;
@@ -200,8 +265,8 @@ main( int argc, char* argv[] ) {
     int queryType = P.getOptionIntValue( "-q", 0 );
 
     int LEAVE_WRAP = 32;
-    // parlay::sequence<PointType<coord, 15>> wp;
-    parlay::sequence<PointID<coord, 15>> wp;
+    parlay::sequence<PointType<coord, 15>> wp;
+    // parlay::sequence<PointID<coord, 15>> wp;
     std::string name, insertFile;
 
     //* initialize points
@@ -209,14 +274,14 @@ main( int argc, char* argv[] ) {
         name = std::string( iFile );
         name = name.substr( name.rfind( "/" ) + 1 );
         std::cout << name << " ";
-        // auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
-        auto [n, d] = read_points<PointID<coord, 15>>( iFile, wp, K );
+        auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
+        // auto [n, d] = read_points<PointID<coord, 15>>( iFile, wp, K );
         N = n;
         assert( d == Dim );
     } else {  //* construct data byself
         K = 100;
-        // generate_random_points<PointType<coord, 15>>( wp, 1000000, N, Dim );
-        generate_random_points<PointID<coord, 15>>( wp, 1000000, N, Dim );
+        generate_random_points<PointType<coord, 15>>( wp, 1000000, N, Dim );
+        // generate_random_points<PointID<coord, 15>>( wp, 1000000, N, Dim );
         std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
         std::cout << name << " ";
     }

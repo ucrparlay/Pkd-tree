@@ -1,4 +1,8 @@
 #!/bin/bash
+{
+    sleep 210m
+    kill $$
+} &
 
 Solvers=("test")
 # Node=(10000000 50000000 100000000 500000000)
@@ -23,15 +27,12 @@ for solver in ${Solvers[@]}; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        resFile="res.quality.out"
+        resFile="res_quality.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal.quality.out"
+        resFile="cgal_quality.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree.quality.out"
+        resFile="zdtree_quality.out"
         exe="/home/zmen002/pbbsbench_x/build/zdtree"
-    elif [[ ${solver} == "cpam" ]]; then
-        resFile="cpam.out"
-        exe="/home/zmen002/CPAM_x/build/cpam_query"
     fi
 
     for dim in ${Dim[@]}; do

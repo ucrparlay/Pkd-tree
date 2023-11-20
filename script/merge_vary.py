@@ -12,15 +12,32 @@ import csv
 print(os.getcwd())
 
 path = "../benchmark"
-# benchmarks = ["ss_varden"]
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
-Nodes = [10000000, 50000000, 100000000, 500000000]
-# Dims = [2, 3]
-Dims = [3]
+Nodes = [100000000]
+Dims = [2, 3]
 
-solverName = ["test", "zdtree"]
-resMap = {"test": "res.out", "cgal": "cgal.out", "zdtree": "zdtree.out"}
+# type = "batch_update"
+# type = "querys"
+type = "quality"
+
+#! order by test order
+files = []
+solverName = ["test", "zdtree", "cgal"]
+
+if type == "batch_update":
+    files = ["build", "insert", "delete"]
+elif type == "querys":
+    files = ["build", "knn", "count", "rquery"]
+elif type == "quality":
+    solverName = ["test"]
+    files = ["build", "increBuild", "decreBuild", "increKNN"]
+
+resMap = {
+    "test": "res_" + type + ".out",
+    "cgal": "cgal_" + type + ".out",
+    "zdtree": "zdtree_" + type + ".out",
+}
 
 common = [
     "solver",
@@ -28,18 +45,7 @@ common = [
     "nodes",
     "dims",
 ]
-
-#! order by test order
-files = [
-    "build",
-    "knn",
-    "count",
-    "rquery",
-    "insert",
-    "delete",
-]
-
-build_header = ["build"]
+build_header = ["build", "depth"]
 insert_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
 delete_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
 knn_header = [
@@ -55,6 +61,30 @@ knn_header = [
 ]
 count_header = ["100small", "100medium", "100large"]
 rquery_header = ["100small", "100medium", "100large"]
+increBuild_header = [
+    "step=0.1",
+    "ave-depth",
+    "step=0.2",
+    "ave-depth",
+    "step=0.25",
+    "ave-depth",
+    "step=0.5",
+    "ave-depth",
+]
+increKNN_header = [
+    "direct build",
+    "ave-depth",
+    "visNodeNum",
+    "incre build",
+    "ave-depth",
+    "visNodeNum",
+    "direct build",
+    "ave-depth",
+    "visNodeNum",
+    "decre build",
+    "ave-depth",
+    "visNodeNum",
+]
 file_header = {
     "build": build_header,
     "insert": insert_header,
@@ -62,6 +92,9 @@ file_header = {
     "knn": knn_header,
     "count": count_header,
     "rquery": rquery_header,
+    "increBuild": increBuild_header,
+    "decreBuild": increBuild_header,
+    "increKNN": increKNN_header,
 }
 
 prefix = [0] * len(files)
@@ -92,7 +125,7 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
                 line[k - l] = line[k - l] + float(sep_lines[j][k]) / num
 
         csvWriter.writerow(
-            [solver, benchName, node, dim] + list(map(lambda x: round(x, 3), line))
+            [solver, benchName, node, dim] + list(map(lambda x: round(x, 5), line))
         )
 
 

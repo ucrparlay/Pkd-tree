@@ -238,7 +238,7 @@ incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int ro
         rounds, 1.0,
         [&]() {
             parlay::copy( WP, wp );
-            parlay::random_shuffle( wp );
+            // parlay::random_shuffle( wp );
         },
         [&]() {
             size_t l = 0, r = 0;

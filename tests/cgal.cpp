@@ -117,7 +117,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
         for ( int i = 0; i < 3; i++ ) {
             timer.reset();
             timer.start();
-            parlay::sequence<int> visNodeNum( N, 0 );
+            parlay::sequence<size_t> visNodeNum( N, 0 );
             tbb::parallel_for( tbb::blocked_range<std::size_t>( 0, N ),
                                [&]( const tbb::blocked_range<std::size_t>& r ) {
                                    for ( std::size_t s = r.begin(); s != r.end(); ++s ) {
@@ -136,7 +136,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
             timer.stop();
             std::cout << timer.total_time() << " " << tree.root()->depth() << " "
-                      << 1.0 * parlay::reduce( visNodeNum ) / wp.size() << std::flush;
+                      << parlay::reduce( visNodeNum ) / wp.size() << " " << std::flush;
         }
     }
 
