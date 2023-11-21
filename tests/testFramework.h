@@ -398,7 +398,7 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
     return;
 }
 
-template<typename point>
+template<typename point, bool printHeight = 1, bool printVisNode = 1>
 void
 queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds,
           ParallelKDtree<point>& pkd, Typename* kdknn, const int K,
@@ -441,9 +441,13 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
         [&]() {} );
 
     LOG << aveQuery << " " << std::flush;
-
-    auto deep = pkd.getAveTreeHeight();
-    LOG << deep << " " << parlay::reduce( visNum.cut( 0, n ) ) / n << " " << std::flush;
+    if ( printHeight ) {
+        auto deep = pkd.getAveTreeHeight();
+        LOG << deep << " " << std::flush;
+    }
+    if ( printVisNode ) {
+        LOG << parlay::reduce( visNum.cut( 0, n ) ) / n << " " << std::flush;
+    }
 
     return;
 }

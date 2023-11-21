@@ -97,7 +97,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t n,
     parlay::sequence<parlay::sequence<balls_type>> offset(
         num_block, parlay::sequence<balls_type>( tagsNum ) );
     assert( offset.size() == num_block && offset[0].size() == tagsNum &&
-    [0][0] == 0 );
+            offset[0][0] == 0 );
     parlay::parallel_for( 0, num_block, [&]( size_t i ) {
         for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n );
               j++ ) {

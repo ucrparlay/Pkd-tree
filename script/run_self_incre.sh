@@ -1,6 +1,6 @@
 #!/bin/bash
 {
-    sleep 210m
+    # sleep 210m
     kill $$
 } &
 

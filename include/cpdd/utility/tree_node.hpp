@@ -131,10 +131,21 @@ ParallelKDtree<point>::free_simple_node( simple_node* T ) {
 }
 
 template<typename point>
+inline size_t
+ParallelKDtree<point>::get_imbalance_ratio() {
+    if ( const auto env_p = std::getenv( "INBALANCE_RATIO" ) ) {
+        return static_cast<size_t>( std::stoi( env_p ) );
+    } else {
+        return static_cast<size_t>( INBALANCE_RATIO );
+    }
+}
+
+template<typename point>
 inline bool
 ParallelKDtree<point>::inbalance_node( const size_t l, const size_t n ) {
     if ( n == 0 ) return true;
-    return Num::Gt( std::abs( 100.0 * l / n - 50.0 ), 1.0 * INBALANCE_RATIO );
+    return Num::Gt( static_cast<size_t>( std::abs( 1.0 * l / n - 50.0 ) ),
+                    get_imbalance_ratio() );
 }
 
 }  // namespace cpdd
