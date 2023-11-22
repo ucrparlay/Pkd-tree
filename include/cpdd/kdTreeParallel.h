@@ -26,6 +26,7 @@ class ParallelKDtree {
   using splitter_s = parlay::sequence<splitter>;
   using box = std::pair<point, point>;
   using box_s = parlay::sequence<box>;
+  using circle = std::pair<point, coord>;
 
   //@ Const variables
   //@ uint32t handle up to 4e9 at least
@@ -79,11 +80,15 @@ class ParallelKDtree {
   static inline bool legal_box( const box& bx );
   static inline bool within_box( const box& a, const box& b );
   static inline bool within_box( const point& p, const box& bx );
-  static inline bool intersect_box( const box& a, const box& b );
+  static inline bool box_intersect_box( const box& a, const box& b );
   static inline box get_empty_box();
   static box get_box( const box& x, const box& y );
   static box get_box( slice V );
   static box get_box( node* T );
+
+  static inline bool within_circle( const box& bx, const circle& cl );
+  static inline bool within_circle( const point& p, const circle& cl );
+  static inline bool circle_intersect_box( const circle& cl, const box& bx );
 
   //@ dimensionality
   inline dim_type pick_rebuild_dim( const node* T, const dim_type DIM );
@@ -141,49 +146,55 @@ class ParallelKDtree {
                               const tag_nodes& rev_tag, const dim_type DIM );
 
   //@ query stuffs
+
   static inline coord p2p_distance( const point& p, const point& q, const dim_type DIM );
-  static inline coord p2b_distance( const point& p, const box& a, const dim_type DIM );
+  static inline coord p2b_min_distance( const point& p, const box& a,
+                                        const dim_type DIM );
+  static inline coord p2b_max_distance( const point& p, const box& a,
+                                        const dim_type DIM );
   static inline coord interruptible_distance( const point& p, const point& q, coord up,
                                               dim_type DIM );
-
   template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
                          kBoundedQueue<point, StoreType>& bq, size_t& visNodeNum );
-
   template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
                          kBoundedQueue<point, StoreType>& bq, const box& bx,
                          size_t& visNodeNum );
 
   size_t range_count( const box& queryBox );
-
-  static size_t range_count_value( node* T, const box& queryBox, const box& nodeBox );
-
+  size_t range_count( const circle& cl );
+  static size_t range_count_rectangle( node* T, const box& queryBox, const box& nodeBox );
+  static size_t range_count_radius( node* T, const circle& cl, const box& nodeBox );
   simple_node* range_count_save_path( node* T, const box& queryBox, const box& nodeBox );
 
   template<typename StoreType>
   size_t range_query_serial( const box& queryBox, StoreType Out );
-
   template<typename StoreType>
   size_t range_query_parallel( const typename ParallelKDtree<point>::box& queryBox,
                                StoreType Out, double& tim );
-
   template<typename StoreType>
   static void range_query_recursive_serial( node* T, StoreType Out, size_t& s,
                                             const box& queryBox, const box& nodeBox );
-
   template<typename StoreType>
   static void range_query_recursive_parallel( node* T, simple_node* ST, StoreType Out,
                                               const box& queryBox );
 
   //@ validations
   static bool checkBox( node* T, const box& bx );
+
   static size_t checkSize( node* T );
+
   void checkTreeSameSequential( node* T, int dim, const int& DIM );
+
   void validate( const dim_type DIM );
+
   size_t getTreeHeight();
+
   size_t getMaxTreeDepth( node* T, size_t deep );
+
   double getAveTreeHeight();
+
   void countTreeHeights( node* T, int deep, int& idx, parlay::sequence<int>& heights );
 
   //@ kdtree interfaces

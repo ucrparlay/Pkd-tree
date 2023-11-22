@@ -10,7 +10,7 @@
 #include <CGAL/Timer.h>
 #include <CGAL/point_generators_d.h>
 #include <CGAL/Fuzzy_iso_box.h>
-
+#include <CGAL/Fuzzy_sphere.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
@@ -20,7 +20,7 @@ typedef CGAL::Cartesian_d<Typename> Kernel;
 typedef Kernel::Point_d Point_d;
 typedef CGAL::Search_traits_d<Kernel> TreeTraits;
 typedef CGAL::Euclidean_distance<TreeTraits> Distance;
-
+typedef CGAL::Fuzzy_sphere<TreeTraits> Fuzzy_circle;
 //@ median tree
 typedef CGAL::Median_of_rectangle<TreeTraits> Median_of_rectangle;
 typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance, Median_of_rectangle>
@@ -33,51 +33,6 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance, Midpoint_of_rec
     Neighbor_search_Midpoint;
 typedef Neighbor_search_Midpoint::Tree Tree_Midpoint;
 typedef CGAL::Fuzzy_iso_box<TreeTraits> Fuzzy_iso_box;
-
-template<typename T>
-class counter_iterator {
- private:
-  struct accept_any {
-    template<typename U>
-    accept_any&
-    operator=( const U& ) {
-      return *this;
-    }
-  };
-
- public:
-  typedef std::output_iterator_tag iterator_category;
-
-  counter_iterator( T& counter ) : counter( counter ) {}
-  counter_iterator( const counter_iterator& other ) : counter( other.counter ) {}
-
-  bool
-  operator==( const counter_iterator& rhs ) const {
-    return counter == rhs.counter;
-  }
-  bool
-  operator!=( const counter_iterator& rhs ) const {
-    return counter != rhs.counter;
-  }
-
-  accept_any
-  operator*() const {
-    ++counter.get();
-    return {};
-  }
-
-  counter_iterator&
-  operator++() {  // ++a
-    return *this;
-  }
-  counter_iterator
-  operator++( int ) {  // a++
-    return *this;
-  }
-
- protected:
-  std::reference_wrapper<T> counter;
-};
 
 template<typename Splitter, typename Tree, typename Neighbor_search, typename point>
 void
@@ -225,10 +180,8 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
       //       b( Dim, std::begin( queryBox[i].second.pnt ),
       //          std::end( queryBox[i].second.pnt ) );
       //   Fuzzy_iso_box fib( a, b, 0.0 );
-
       //   size_t cnt = 0;
       //   counter_iterator<size_t> cnt_iter( cnt );
-
       //   auto it = tree.search( cnt_iter, fib );
       //   cgknn[i] = cnt;
       //   std::cout << "number: " << cgknn[i] << ENDL;

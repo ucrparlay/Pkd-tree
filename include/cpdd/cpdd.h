@@ -17,4 +17,6 @@
 #include "batch_op/batch_helpers.hpp"
 
 #include "query_op/nn_search_helpers.h"
-#include "query_op/query.hpp"
+#include "query_op/nn_search.hpp"
+#include "query_op/range_count.hpp"
+#include "query_op/range_query.hpp"
