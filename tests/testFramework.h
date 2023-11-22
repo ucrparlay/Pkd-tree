@@ -11,6 +11,7 @@ using Typename = coord;
 using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
+static constexpr int rangeQueryNum = 100;
 
 template<typename T>
 class counter_iterator {
@@ -126,7 +127,7 @@ get_random_index( size_t a, size_t b ) {
 }
 
 template<typename point>
-void
+size_t
 recurse_box( parlay::slice<point*, point*> In,
              parlay::sequence<std::pair<point, point>>& boxs, int DIM,
              std::pair<size_t, size_t> range, int& idx, int recNum, bool first ) {
@@ -134,7 +135,7 @@ recurse_box( parlay::slice<point*, point*> In,
   using box = typename tree::box;
 
   size_t n = In.size();
-  if ( idx >= recNum || n < range.first || n == 0 ) return;
+  if ( idx >= recNum || n < range.first || n == 0 ) return 0;
 
   if ( n >= range.first && n <= range.second ) {
     if ( first ) {
@@ -142,7 +143,7 @@ recurse_box( parlay::slice<point*, point*> In,
     } else {
       // LOG << n << ENDL;
       boxs[idx++] = tree::get_box( In );
-      return;
+      return In.size();
     }
   }
 
@@ -159,19 +160,21 @@ recurse_box( parlay::slice<point*, point*> In,
 
   assert( Out.size() == n );
   // LOG << dim << " " << Out[0] << Out[m] << ENDL;
-
+  size_t l, r;
   parlay::par_do_if(
       0,
-      [&]() { recurse_box<point>( Out.cut( 0, m ), boxs, DIM, range, idx, recNum, 0 ); },
       [&]() {
-        recurse_box<point>( Out.cut( m, n ), boxs, DIM, range, idx, recNum, 0 );
+        l = recurse_box<point>( Out.cut( 0, m ), boxs, DIM, range, idx, recNum, 0 );
+      },
+      [&]() {
+        r = recurse_box<point>( Out.cut( m, n ), boxs, DIM, range, idx, recNum, 0 );
       } );
 
-  return;
+  return std::max( l, r );
 }
 
 template<typename point>
-parlay::sequence<std::pair<point, point>>
+std::pair<parlay::sequence<std::pair<point, point>>, size_t>
 gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
@@ -198,12 +201,15 @@ gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM
 
   srand( 10 );
 
+  size_t maxSize = 0;
   while ( cnt < recNum ) {
     parlay::copy( WP, wp );
-    recurse_box<point>( parlay::make_slice( wp ), bxs, DIM, range, cnt, recNum, 1 );
+    auto r =
+        recurse_box<point>( parlay::make_slice( wp ), bxs, DIM, range, cnt, recNum, 1 );
+    maxSize = std::max( maxSize, r );
   }
 
-  return std::move( bxs );
+  return std::make_pair( bxs, maxSize );
 }
 
 template<typename tree>
@@ -553,6 +559,7 @@ rangeCountRadius( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 
   return;
 }
+
 template<typename point>
 void
 rangeQuery( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
@@ -603,7 +610,7 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
 
   int n = WP.size();
 
-  auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
+  auto [queryBox, maxSize] = gen_rectangles( recNum, recType, WP, DIM );
 
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
@@ -629,7 +636,8 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   using node = typename tree::node;
   using box = typename tree::box;
 
-  auto queryBox = gen_rectangles( recNum, recType, WP, DIM );
+  auto [queryBox, maxSize] = gen_rectangles( recNum, recType, WP, DIM );
+  Out.resize( recNum * maxSize );
 
   int n = WP.size();
   size_t step = Out.size() / recNum;

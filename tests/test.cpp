@@ -79,7 +79,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     delete[] kdknn;
   }
 
-  int recNum = 100;
+  int recNum = rangeQueryNum;
 
   if ( queryType & ( 1 << 2 ) ) {  //* range count
     kdknn = new Typename[recNum];
@@ -98,17 +98,16 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     for ( int i = 0; i < 3; i++ ) {
       //* run range count to obtain size
       kdknn = new Typename[recNum];
-      auto queryBox = gen_rectangles( recNum, type[i], wp, Dim );
-      parlay::parallel_for(
-          0, recNum, [&]( size_t i ) { kdknn[i] = pkd.range_count( queryBox[i] ); } );
-
-      //* reduce max size
-      auto maxReduceSize =
-          parlay::reduce( parlay::delayed_tabulate(
-                              recNum, [&]( size_t i ) { return size_t( kdknn[i] ); } ),
-                          parlay::maximum<Typename>() );
-      points Out( recNum * maxReduceSize );
-
+      // auto queryBox = gen_rectangles( recNum, type[i], wp, Dim );
+      // parlay::parallel_for(
+      //     0, recNum, [&]( size_t i ) { kdknn[i] = pkd.range_count( queryBox[i] ); } );
+      // //* reduce max size
+      // auto maxReduceSize =
+      //     parlay::reduce( parlay::delayed_tabulate(
+      //                         recNum, [&]( size_t i ) { return size_t( kdknn[i] ); } ),
+      //                     parlay::maximum<Typename>() );
+      // points Out( recNum * maxReduceSize );
+      points Out;
       //* range query
       rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim );
     }

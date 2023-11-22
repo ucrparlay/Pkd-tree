@@ -109,8 +109,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
   } else {
     cgknn = new Typename[N];
   }
-  size_t maxReduceSize = 0;
-  size_t queryNum = 100;
+  int queryNum = rangeQueryNum;
 
   if ( queryType & ( 1 << 0 ) ) {  //* KNN query
     int k[3] = { 1, 10, 100 };
@@ -170,7 +169,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     for ( int i = 0; i < 3; i++ ) {
       size_t n = wp.size();
       std::vector<Point_d> _ans( n );
-      auto queryBox = gen_rectangles( queryNum, type[i], wp, Dim );
+      auto [queryBox, maxSize] = gen_rectangles( queryNum, type[i], wp, Dim );
 
       timer.reset();
       timer.start();
@@ -210,20 +209,22 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
     int type[3] = { 0, 1, 2 };
     for ( int i = 0; i < 3; i++ ) {
       size_t n = wp.size();
-      std::vector<Point_d> _ans( n );
-      auto queryBox = gen_rectangles( queryNum, type[i], wp, Dim );
+      auto [queryBox, maxSize] = gen_rectangles( queryNum, type[i], wp, Dim );
+      std::vector<Point_d> _ans( queryNum * maxSize );
 
       timer.reset();
       timer.start();
-      for ( size_t i = 0; i < queryNum; i++ ) {
+
+      parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
         Point_d a( Dim, std::begin( queryBox[i].first.pnt ),
                    std::end( queryBox[i].first.pnt ) ),
             b( Dim, std::begin( queryBox[i].second.pnt ),
                std::end( queryBox[i].second.pnt ) );
         Fuzzy_iso_box fib( a, b, 0.0 );
-        auto it = tree.search( _ans.begin(), fib );
-        cgknn[i] = std::distance( _ans.begin(), it );
-      }
+        auto it = tree.search( _ans.begin() + i * maxSize, fib );
+        cgknn[i] = std::distance( _ans.begin() + i * maxSize, it );
+      } );
+
       timer.stop();
       std::cout << timer.total_time() << " " << std::flush;
     }
