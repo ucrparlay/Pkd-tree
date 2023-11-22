@@ -82,23 +82,40 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
   if ( tag >= 1 ) {
     timer.reset();
     timer.start();
-    tree.insert( _points_insert.begin(), _points_insert.end() );
+    size_t sz = _points_insert.size() * batchInsertRatio;
+    tree.insert( _points_insert.begin(), _points_insert.begin() + sz );
     tree.template build<CGAL::Parallel_tag>();
     std::cout << timer.total_time() << " " << std::flush;
 
     if ( tag == 1 ) wp.append( wi );
   }
 
-  if ( tag >= 2 ) {
-    assert( _points_insert.size() == wi.size() );
-
+  auto cgal_delete = [&]( bool afterInsert = 1, double ratio = 1.0 ) {
+    if ( !afterInsert ) {
+      tree.clear();
+      tree.insert( _points.begin(), _points.end() );
+      tree.template build<CGAL::Parallel_tag>();
+    }
     timer.reset();
     timer.start();
-    for ( auto p : _points_insert ) {
-      tree.remove( p );
+    if ( afterInsert ) {
+      size_t sz = _points_insert.size() * ratio;
+      for ( auto it = _points_insert.begin(); it != _points_insert.begin() + sz; it++ ) {
+        tree.remove( *it );
+      }
+    } else {
+      assert( tree.size() == wp.size() );
+      size_t sz = _points.size() * ratio;
+      for ( auto it = _points.begin(); it != _points.begin() + sz; it++ ) {
+        tree.remove( *it );
+      }
     }
     std::cout << timer.total_time() << " " << std::flush;
-    assert( tree.root()->num_items() == wp.size() );
+    // assert( tree.root()->num_items() == wp.size() );
+  };
+
+  if ( tag >= 2 ) {
+    cgal_delete( 0, batchInsertRatio );
   }
 
   //* start test
@@ -112,8 +129,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
   int queryNum = rangeQueryNum;
 
   if ( queryType & ( 1 << 0 ) ) {  //* KNN query
-    int k[3] = { 1, 10, 100 };
-    for ( int i = 0; i < 3; i++ ) {
+    auto run_cgal_knn = [&]( int kth ) {
       timer.reset();
       timer.start();
       parlay::sequence<size_t> visNodeNum( N, 0 );
@@ -124,7 +140,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
                              // several threads at the same time
                              Point_d query( Dim, std::begin( wp[s].pnt ),
                                             std::begin( wp[s].pnt ) + Dim );
-                             Neighbor_search search( tree, query, k[i] );
+                             Neighbor_search search( tree, query, kth );
                              auto it = search.end();
                              it--;
                              cgknn[s] = it->second;
@@ -132,10 +148,18 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
                                  search.internals_visited() + search.leafs_visited();
                            }
                          } );
-
       timer.stop();
       std::cout << timer.total_time() << " " << tree.root()->depth() << " "
                 << parlay::reduce( visNodeNum ) / wp.size() << " " << std::flush;
+    };
+
+    if ( tag == 0 ) {
+      int k[3] = { 1, 10, 100 };
+      for ( int i = 0; i < 3; i++ ) {
+        run_cgal_knn( k[i] );
+      }
+    } else {
+      run_cgal_knn( K );
     }
   }
 
@@ -173,18 +197,6 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
       timer.reset();
       timer.start();
-      // for ( size_t i = 0; i < queryNum; i++ ) {
-      //   Point_d a( Dim, std::begin( queryBox[i].first.pnt ),
-      //              std::end( queryBox[i].first.pnt ) ),
-      //       b( Dim, std::begin( queryBox[i].second.pnt ),
-      //          std::end( queryBox[i].second.pnt ) );
-      //   Fuzzy_iso_box fib( a, b, 0.0 );
-      //   size_t cnt = 0;
-      //   counter_iterator<size_t> cnt_iter( cnt );
-      //   auto it = tree.search( cnt_iter, fib );
-      //   cgknn[i] = cnt;
-      //   std::cout << "number: " << cgknn[i] << ENDL;
-      // }
 
       parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
         Point_d a( Dim, std::begin( queryBox[i].first.pnt ),

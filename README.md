@@ -30,7 +30,7 @@ Usage
 
 Test Framework Format
 --------
-The test starts with $n$ input points $P$, and $n$ points $Q$ for insertion and deletion. We also have one integer $t\in\{0,1,2\}$ marks tree state before query and another integer $q$ stands for the type of query.
+The test starts with $n$ input points $P$, and $\alpha\cdot n$ points $Q$ for insertion and deletion, where $\alpha\in[0,1]$. We also have one integer $t\in\{0,1,2\}$ marks tree state before query and another integer $q$ stands for the type of query.
 
 All outputs should be in one line, starts with the input file name and seperated by a single space. If any output item is unavaliable (i.e., tree depth w.r.t the BDL tree), outputs `-1` instead.
 
@@ -38,9 +38,9 @@ The execution flow is shown below:
 
 1. Function `buildTree (t>=0)` builds a $k$d-tree $T$ over $P$. 
 Outputs construction time and average tree depth separated by a single space.
-2. Function `insert (t>=1)` insert $Q$ into $T$.
+2. Function `insert (t>=1)` insert $Q[0,\cdots, \alpha\cdot n]$ into $T$.
 Outputs instertion time.
-3. Function `delete (t>=2)` delete $Q$ from $T$.
+3. Function `delete (t>=2)` delete $Q[0,\cdots, \alpha\cdot n]$ from $T$.
 Outputs delete time.
 4. Query `q & (1<<0)` asks KNN of $P$ on $T$ where $k=1, 10, 100$. 
 For each KNN, outputs time for query, average depth and average # nodes visited.

@@ -12,6 +12,7 @@ using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
 static constexpr int rangeQueryNum = 100;
+static constexpr double batchInsertRatio = 0.1;
 
 template<typename T>
 class counter_iterator {
@@ -420,7 +421,7 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
           pkd.build( parlay::make_slice( wp ), DIM );
           pkd.batchInsert( parlay::make_slice( wi ), DIM );
           parlay::copy( WP, wp ), parlay::copy( WI, wi );
-        } else {  //* only build wp and then delete
+        } else {  //* only build wp and then delete from wp
           parlay::copy( WP, wp ), parlay::copy( WP, wi );
           pkd.build( parlay::make_slice( wp ), DIM );
         }

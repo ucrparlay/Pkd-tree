@@ -4,21 +4,22 @@
 #     kill $$
 # } &
 
-Solvers=("test")
+Solvers=("zdtree" "cgal" "test")
 # Node=(10000000 50000000 100000000 500000000)
-Node=(100000000)
+Node=(100000000 1000000000)
 Dim=(2 3)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=0
+tag=2
 k=10
 onecore=0
 insNum=2
-# queryType=3 # 001 011 111
-queryType=$((2#1111000000)) # 1110000
+queryType=1
+# queryType=$((2#1111000000)) # 1110000
 echo $queryType
+type="summary"
 
 resFile=""
 
@@ -27,11 +28,11 @@ for solver in ${Solvers[@]}; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        resFile="res_quality.out"
+        resFile="res_${type}.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal_quality.out"
+        resFile="cgal_${type}.out"
     elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree_quality.out"
+        resFile="zdtree_${type}.out"
         exe="/home/zmen002/pbbsbench_x/build/zdtree"
     fi
 
@@ -52,13 +53,6 @@ for solver in ${Solvers[@]}; do
                     fi
                     PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
-                    retval=$?
-                    if [ ${retval} -eq 124 ]; then
-                        echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
-                        echo "timeout ${node}_${dim}"
-                    else
-                        echo "finish ${node}_${dim}"
-                    fi
                 done
             done
         done

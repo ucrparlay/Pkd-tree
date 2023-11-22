@@ -44,9 +44,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   //* batch insert
   if ( tag >= 1 ) {
-
-    batchInsert<point>( pkd, wp, wi, Dim, rounds );
-
+    batchInsert<point>( pkd, wp, wi, Dim, rounds, batchInsertRatio );
     if ( tag == 1 ) {
       wp.append( wi );
     }
@@ -54,17 +52,19 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   //* batch delete
   if ( tag >= 2 ) {
-    assert( wi.size() );
-    batchDelete<point>( pkd, wp, wi, Dim, rounds );
+    points tmp;
+    batchDelete<point>( pkd, wp, tmp, Dim, rounds, 0, batchInsertRatio );
   }
 
   if ( queryType & ( 1 << 0 ) ) {  //* KNN
     kdknn = new Typename[wp.size()];
-    // int k[3] = { 1, 10, 100 };
-    int k[3] = { 1, 10, 100 };
-    // for ( int i = 0; i < 3; i++ ) {
-    for ( int i = 0; i < 3; i++ ) {
-      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
+    if ( tag == 0 ) {
+      int k[3] = { 1, 10, 100 };
+      for ( int i = 0; i < 3; i++ ) {
+        queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
+      }
+    } else {
+      queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
     }
     delete[] kdknn;
   }
