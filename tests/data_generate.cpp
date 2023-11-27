@@ -1,3 +1,4 @@
+#include <string>
 #include "kdTree.h"
 
 const double EPS = 1e-9;
@@ -117,7 +118,7 @@ main( int argc, char* argv[] ) {
     path += "/" + toString( N ) + "_" + toString( Dim ) + "/";
     std::filesystem::create_directory( path );
     std::ofstream f;
-
+    
     for ( long long i = 0; i < numFile; i++ ) {
         std::string newpath = path + toString( i + 1 ) + ".in";
         std::cout << newpath << std::endl;

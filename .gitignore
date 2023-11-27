@@ -3,6 +3,7 @@
 !*.*
 !*/
 !Makefile
+/.cache
 
 # Debug files
 *.log

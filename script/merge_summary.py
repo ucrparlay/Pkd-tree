@@ -12,31 +12,17 @@ import csv
 print(os.getcwd())
 
 path = "../benchmark"
+# benchmarks = ["ss_varden"]
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3]
 
-# type = "batch_update"
-type = "querys"
-# type = "quality"
-
-#! order by test order
-files = []
-solverName = ["test", "zdtree", "cgal"]
-
-if type == "batch_update":
-    files = ["build", "insert", "delete"]
-elif type == "querys":
-    files = ["build", "knn", "count", "rquery"]
-elif type == "quality":
-    solverName = ["test"]
-    files = ["build", "increBuild", "decreBuild", "increKNN"]
-
+solverName = ["zdtree", "test", "cgal"]
 resMap = {
-    "test": "res_" + type + ".out",
-    "cgal": "cgal_" + type + ".out",
-    "zdtree": "zdtree_" + type + ".out",
+    "test": "res_summary.out",
+    "cgal": "cgal_summary.out",
+    "zdtree": "zdtree_summary.out",
 }
 
 common = [
@@ -45,56 +31,19 @@ common = [
     "nodes",
     "dims",
 ]
-build_header = ["build", "depth"]
-insert_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
-delete_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
-knn_header = [
-    "k=1",
-    "depth",
-    "visNum",
+
+#! order by test order
+files = ["summary"]
+
+build_header = [
+    "build",
+    "aveDepth",
     "k=10",
     "depth",
     "visNum",
-    "k=100",
-    "depth",
-    "visNum",
-]
-count_header = ["100small", "100medium", "100large"]
-rquery_header = ["100small", "100medium", "100large"]
-increBuild_header = [
-    "step=0.1",
-    "ave-depth",
-    "step=0.2",
-    "ave-depth",
-    "step=0.25",
-    "ave-depth",
-    "step=0.5",
-    "ave-depth",
-]
-increKNN_header = [
-    "direct build",
-    "ave-depth",
-    "visNodeNum",
-    "incre build",
-    "ave-depth",
-    "visNodeNum",
-    "direct build",
-    "ave-depth",
-    "visNodeNum",
-    "decre build",
-    "ave-depth",
-    "visNodeNum",
 ]
 file_header = {
-    "build": build_header,
-    "insert": insert_header,
-    "delete": delete_header,
-    "knn": knn_header,
-    "count": count_header,
-    "rquery": rquery_header,
-    "increBuild": increBuild_header,
-    "decreBuild": increBuild_header,
-    "increKNN": increKNN_header,
+    "summary": build_header,
 }
 
 prefix = [0] * len(files)
@@ -125,7 +74,7 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
                 line[k - l] = line[k - l] + float(sep_lines[j][k]) / num
 
         csvWriter.writerow(
-            [solver, benchName, node, dim] + list(map(lambda x: round(x, 5), line))
+            [solver, benchName, node, dim] + list(map(lambda x: round(x, 3), line))
         )
 
 
@@ -162,13 +111,13 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                     for node in Nodes:
                         P = (
                             path
-                            + "/"
-                            + bench
-                            + "/"
-                            + str(node)
-                            + "_"
-                            + str(dim)
-                            + "/"
-                            + resMap[solver]
+                                + "/"
+                                + bench
+                                + "/"
+                                + str(node)
+                                + "_"
+                                + str(dim)
+                                + "/"
+                                + resMap[solver]
                         )
                         combine(P, file, csvWriter, solver, bench, node, dim)
