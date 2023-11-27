@@ -30,7 +30,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
   tree pkd;
 
   points wi;
-  if ( tag >= 0 ) {
+  if ( insertFile != "" ) {
     auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
     if ( nd != Dim ) {
       puts( "read inserted points dimension wrong" );
@@ -202,7 +202,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
                 << std::flush;
       //* then incremental build
       // incrementalBuild<point, 0>( Dim, np, rounds, pkd, 0.01 );
-      // std::cout << pkd.getTreeHeight() << " " << pkd.getAveTreeHeight() << " "
+      // std::cout << pkd.getTreeHeight() << " " << pkd.getAveTreeHeight() << "
+      // "
       //           << std::flush;
       int k[3] = { 1, 5, 100 };
       for ( int i = 0; i < 3; i++ ) {
@@ -266,18 +267,18 @@ main( int argc, char* argv[] ) {
                  "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-q {0,1}] [-i "
                  "<_insertFile>]" );
   char* iFile = P.getOptionValue( "-p" );
-  char* _insertFile = P.getOptionValue( "-i" );
   int K = P.getOptionIntValue( "-k", 100 );
   int Dim = P.getOptionIntValue( "-d", 3 );
   size_t N = P.getOptionLongValue( "-n", -1 );
   int tag = P.getOptionIntValue( "-t", 1 );
   int rounds = P.getOptionIntValue( "-r", 3 );
   int queryType = P.getOptionIntValue( "-q", 0 );
+  int readInsertFile = P.getOptionIntValue( "-i", 1 );
 
   int LEAVE_WRAP = 32;
   parlay::sequence<PointType<coord, 15>> wp;
   // parlay::sequence<PointID<coord, 15>> wp;
-  std::string name, insertFile;
+  std::string name, insertFile = "";
 
   //* initialize points
   if ( iFile != NULL ) {
@@ -297,17 +298,13 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  if ( tag >= 0 ) {
-    if ( _insertFile == NULL ) {
-      int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test
-      if ( !id ) id++;
-      int pos = std::string( iFile ).rfind( "/" ) + 1;
-      insertFile =
-          std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
-    } else {
-      insertFile = std::string( _insertFile );
-    }
+  if ( readInsertFile == 1 ) {
+    int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
+    if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test
+    if ( !id ) id++;
+    int pos = std::string( iFile ).rfind( "/" ) + 1;
+    insertFile =
+        std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
   }
 
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
@@ -389,6 +386,13 @@ main( int argc, char* argv[] ) {
     decltype( wp )().swap( wp );
     testParallelKDtree<PointType<coord, 9>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
                                              insertFile, tag, queryType );
+  } else if ( Dim == 10 ) {
+    auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, 10> {
+      return PointType<coord, 10>( wp[i].pnt.begin() );
+    } );
+    decltype( wp )().swap( wp );
+    testParallelKDtree<PointType<coord, 10>>(
+        Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType );
   }
 
   return 0;

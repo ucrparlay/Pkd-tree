@@ -7,7 +7,8 @@ namespace cpdd {
 //* range count
 template<typename point>
 size_t
-ParallelKDtree<point>::range_count( const typename ParallelKDtree<point>::box& bx ) {
+ParallelKDtree<point>::range_count(
+    const typename ParallelKDtree<point>::box& bx ) {
   return range_count_rectangle( this->root, bx, this->bbox );
 }
 
@@ -36,8 +37,8 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
 
   size_t l, r;
   parlay::par_do_if(
-      TI->size >= SERIAL_BUILD_CUTOFF,
-      [&] { l = range_count_rectangle( TI->left, queryBox, lbox ); },
+      // TI->size >= SERIAL_BUILD_CUTOFF,
+      false, [&] { l = range_count_rectangle( TI->left, queryBox, lbox ); },
       [&] { r = range_count_rectangle( TI->right, queryBox, rbox ); } );
 
   return std::move( l + r );
