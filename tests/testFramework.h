@@ -1,12 +1,14 @@
 #pragma once
 
+#include <cstddef>
 #include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
+#include "parlay/primitives.h"
 
-using coord = double;
+using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
@@ -531,6 +533,8 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 
   int n = wp.size();
 
+  parlay::sequence<size_t> visNodeNum( queryNum, 0 );
+
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
@@ -538,7 +542,7 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ),
               box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_count( queryBox );
+          kdknn[i] = pkd.range_count( queryBox, visNodeNum[i] );
         } );
       },
       [&]() {} );
@@ -634,17 +638,30 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   int n = WP.size();
 
   auto [queryBox, maxSize] = gen_rectangles( recNum, recType, WP, DIM );
+  parlay::sequence<size_t> visNodeNum( recNum, 0 );
 
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
         parlay::parallel_for(
             0, recNum,
-            [&]( size_t i ) { kdknn[i] = pkd.range_count( queryBox[i] ); }, 1 );
+            [&]( size_t i ) {
+              visNodeNum[i] = 0;
+              kdknn[i] = pkd.range_count( queryBox[i], visNodeNum[i] );
+            },
+            1 );
       },
       [&]() {} );
 
   LOG << aveCount << " " << std::flush;
+  LOG << "queryType is " << recType
+      << " total tree nodes num: " << pkd.countTreeNodesNum( pkd.get_root() )
+      << ENDL;
+  visNodeNum = parlay::sort( visNodeNum );
+
+  LOG << "mean: " << parlay::reduce( visNodeNum )/visNodeNum.size()
+      << " median: " << visNodeNum[recNum / 2] << " max "
+      << *visNodeNum.rbegin() << ENDL;
 
   return;
 }
@@ -679,9 +696,6 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
       },
       [&]() {} );
 
-  // LOG << aveQuery << " " << parlay::reduce( preTime ) / recNum / aveQuery <<
-  // " "
-  //     << std::flush;
   LOG << aveQuery << " " << std::flush;
   return;
 }

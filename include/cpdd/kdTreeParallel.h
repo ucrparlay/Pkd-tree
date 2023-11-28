@@ -57,7 +57,8 @@ class ParallelKDtree {
   static leaf* alloc_leaf_node( slice In );
   static leaf* alloc_dummy_leaf( slice In );
   static leaf* alloc_empty_leaf();
-  static interior* alloc_interior_node( node* L, node* R, const splitter& split );
+  static interior* alloc_interior_node( node* L, node* R,
+                                        const splitter& split );
   static simple_node* alloc_simple_node( simple_node* L, simple_node* R );
   static simple_node* alloc_simple_node( size_t sz );
   static void free_leaf( node* T );
@@ -92,24 +93,28 @@ class ParallelKDtree {
 
   //@ dimensionality
   inline dim_type pick_rebuild_dim( const node* T, const dim_type DIM );
-  static inline dim_type pick_max_stretch_dim( const box& bx, const dim_type DIM );
+  static inline dim_type pick_max_stretch_dim( const box& bx,
+                                               const dim_type DIM );
 
   //@ Parallel KD tree cores
   //@ build
-  void divide_rotate( slice In, splitter_s& pivots, dim_type dim, bucket_type idx,
-                      bucket_type deep, bucket_type& bucket, const dim_type DIM,
-                      box_s& boxs, const box& bx );
-  void pick_pivots( slice In, const size_t& n, splitter_s& pivots, const dim_type dim,
-                    const dim_type DIM, box_s& boxs, const box& bx );
-  static inline bucket_type find_bucket( const point& p, const splitter_s& pivots );
-  static void partition( slice A, slice B, const size_t n, const splitter_s& pivots,
+  void divide_rotate( slice In, splitter_s& pivots, dim_type dim,
+                      bucket_type idx, bucket_type deep, bucket_type& bucket,
+                      const dim_type DIM, box_s& boxs, const box& bx );
+  void pick_pivots( slice In, const size_t& n, splitter_s& pivots,
+                    const dim_type dim, const dim_type DIM, box_s& boxs,
+                    const box& bx );
+  static inline bucket_type find_bucket( const point& p,
+                                         const splitter_s& pivots );
+  static void partition( slice A, slice B, const size_t n,
+                         const splitter_s& pivots,
                          parlay::sequence<balls_type>& sums );
   static node* build_inner_tree( bucket_type idx, splitter_s& pivots,
                                  parlay::sequence<node*>& treeNodes );
   void build( slice In, const dim_type DIM );
   points_iter serial_partition( slice In, dim_type d );
-  node* serial_build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
-                                const box& bx );
+  node* serial_build_recursive( slice In, slice Out, dim_type dim,
+                                const dim_type DIM, const box& bx );
   node* build_recursive( slice In, slice Out, dim_type dim, const dim_type DIM,
                          const box& bx );
 
@@ -118,13 +123,15 @@ class ParallelKDtree {
   static void flatten( node* T, Slice Out );
 
   void flatten_and_delete( node* T, slice Out );
-  static void seieve_points( slice A, slice B, const size_t n, const node_tags& tags,
+  static void seieve_points( slice A, slice B, const size_t n,
+                             const node_tags& tags,
                              parlay::sequence<balls_type>& sums,
                              const bucket_type tagsNum );
-  static inline bucket_type retrive_tag( const point& p, const node_tags& tags );
+  static inline bucket_type retrive_tag( const point& p,
+                                         const node_tags& tags );
   static node* update_inner_tree( bucket_type idx, const node_tags& tags,
-                                  parlay::sequence<node*>& treeNodes, bucket_type& p,
-                                  const tag_nodes& rev_tag );
+                                  parlay::sequence<node*>& treeNodes,
+                                  bucket_type& p, const tag_nodes& rev_tag );
   node* delete_tree();
   static void delete_tree_recursive( node* T );
   static void delete_simple_tree_recursive( simple_node* T );
@@ -133,51 +140,62 @@ class ParallelKDtree {
   node* rebuild_with_insert( node* T, slice In, const dim_type DIM );
   static inline void update_interior( node* T, node* L, node* R );
   void batchInsert( slice In, const dim_type DIM );
-  node* serial_insert_recursive( node* T, slice In, slice Out, const dim_type DIM );
-  node* batchInsert_recusive( node* T, slice In, slice Out, const dim_type DIM );
+  node* serial_insert_recursive( node* T, slice In, slice Out,
+                                 const dim_type DIM );
+  node* batchInsert_recusive( node* T, slice In, slice Out,
+                              const dim_type DIM );
 
   //@ batch delete
   node_box rebuild_after_delete( node* T, const dim_type DIM );
   void batchDelete( slice In, const dim_type DIM );
-  node_box batchDelete_recursive( node* T, slice In, slice Out, const dim_type DIM,
-                                  bool hasTomb );
+  node_box batchDelete_recursive( node* T, slice In, slice Out,
+                                  const dim_type DIM, bool hasTomb );
   node_box delete_inner_tree( bucket_type idx, const node_tags& tags,
-                              parlay::sequence<node_box>& treeNodes, bucket_type& p,
-                              const tag_nodes& rev_tag, const dim_type DIM );
+                              parlay::sequence<node_box>& treeNodes,
+                              bucket_type& p, const tag_nodes& rev_tag,
+                              const dim_type DIM );
 
   //@ query stuffs
 
-  static inline coord p2p_distance( const point& p, const point& q, const dim_type DIM );
+  static inline coord p2p_distance( const point& p, const point& q,
+                                    const dim_type DIM );
   static inline coord p2b_min_distance( const point& p, const box& a,
                                         const dim_type DIM );
   static inline coord p2b_max_distance( const point& p, const box& a,
                                         const dim_type DIM );
-  static inline coord interruptible_distance( const point& p, const point& q, coord up,
-                                              dim_type DIM );
+  static inline coord interruptible_distance( const point& p, const point& q,
+                                              coord up, dim_type DIM );
   template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
-                         kBoundedQueue<point, StoreType>& bq, size_t& visNodeNum );
+                         kBoundedQueue<point, StoreType>& bq,
+                         size_t& visNodeNum );
   template<typename StoreType>
   static void k_nearest( node* T, const point& q, const dim_type DIM,
                          kBoundedQueue<point, StoreType>& bq, const box& bx,
                          size_t& visNodeNum );
 
-  size_t range_count( const box& queryBox );
+  size_t range_count( const box& queryBox, size_t& visNodeNum );
   size_t range_count( const circle& cl );
-  static size_t range_count_rectangle( node* T, const box& queryBox, const box& nodeBox );
-  static size_t range_count_radius( node* T, const circle& cl, const box& nodeBox );
-  simple_node* range_count_save_path( node* T, const box& queryBox, const box& nodeBox );
+  static size_t range_count_rectangle( node* T, const box& queryBox,
+                                       const box& nodeBox, size_t& visNodeNum );
+  static size_t range_count_radius( node* T, const circle& cl,
+                                    const box& nodeBox );
+  simple_node* range_count_save_path( node* T, const box& queryBox,
+                                      const box& nodeBox );
 
   template<typename StoreType>
   size_t range_query_serial( const box& queryBox, StoreType Out );
   template<typename StoreType>
-  size_t range_query_parallel( const typename ParallelKDtree<point>::box& queryBox,
-                               StoreType Out, double& tim );
+  size_t range_query_parallel(
+      const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
+      double& tim );
   template<typename StoreType>
   static void range_query_recursive_serial( node* T, StoreType Out, size_t& s,
-                                            const box& queryBox, const box& nodeBox );
+                                            const box& queryBox,
+                                            const box& nodeBox );
   template<typename StoreType>
-  static void range_query_recursive_parallel( node* T, simple_node* ST, StoreType Out,
+  static void range_query_recursive_parallel( node* T, simple_node* ST,
+                                              StoreType Out,
                                               const box& queryBox );
 
   //@ validations
@@ -195,7 +213,10 @@ class ParallelKDtree {
 
   double getAveTreeHeight();
 
-  void countTreeHeights( node* T, int deep, int& idx, parlay::sequence<int>& heights );
+  size_t countTreeNodesNum( node* T );
+
+  void countTreeHeights( node* T, int deep, int& idx,
+                         parlay::sequence<int>& heights );
 
   //@ kdtree interfaces
   inline void
@@ -216,8 +237,8 @@ class ParallelKDtree {
  private:
   node* root = nullptr;
   parlay::internal::timer timer;
-  // split_rule _split_rule = ROTATE_DIM;
-  split_rule _split_rule = MAX_STRETCH_DIM;
+  split_rule _split_rule = ROTATE_DIM;
+  // split_rule _split_rule = MAX_STRETCH_DIM;
   box bbox;
 };
 

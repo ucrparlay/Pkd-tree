@@ -19,9 +19,6 @@ ParallelKDtree<point>::legal_box( const box& bx ) {
 template<typename point>
 inline bool
 ParallelKDtree<point>::within_box( const box& a, const box& b ) {
-  if ( !legal_box( a ) ) {
-    LOG << a.first << " " << a.second << ENDL;
-  }
   assert( legal_box( a ) );
   assert( legal_box( b ) );
   for ( dim_type i = 0; i < a.first.get_dim(); i++ ) {
@@ -38,7 +35,8 @@ inline bool
 ParallelKDtree<point>::within_box( const point& p, const box& bx ) {
   assert( legal_box( bx ) );
   for ( dim_type i = 0; i < p.get_dim(); i++ ) {
-    if ( Num::Lt( p.pnt[i], bx.first.pnt[i] ) || Num::Gt( p.pnt[i], bx.second.pnt[i] ) ) {
+    if ( Num::Lt( p.pnt[i], bx.first.pnt[i] ) ||
+         Num::Gt( p.pnt[i], bx.second.pnt[i] ) ) {
       return false;
     }
   }
@@ -50,7 +48,8 @@ inline bool
 ParallelKDtree<point>::box_intersect_box( const box& a, const box& b ) {
   assert( legal_box( a ) && legal_box( b ) );
   for ( dim_type i = 0; i < a.first.get_dim(); i++ ) {
-    if ( Num::Gt( a.first.pnt[i], b.second.pnt[i] ) ) {
+    if ( Num::Lt( a.second.pnt[i], b.first.pnt[i] ) ||
+         Num::Gt( a.first.pnt[i], b.second.pnt[i] ) ) {
       return false;
     }
   }
@@ -67,7 +66,8 @@ ParallelKDtree<point>::get_empty_box() {
 template<typename point>
 typename ParallelKDtree<point>::box
 ParallelKDtree<point>::get_box( const box& x, const box& y ) {
-  return std::move( box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) ) );
+  return std::move(
+      box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) ) );
 }
 
 template<typename point>
@@ -77,11 +77,13 @@ ParallelKDtree<point>::get_box( slice V ) {
     return std::move( get_empty_box() );
   } else {
     auto minmax = [&]( const box& x, const box& y ) {
-      return box( x.first.minCoords( y.first ), x.second.maxCoords( y.second ) );
+      return box( x.first.minCoords( y.first ),
+                  x.second.maxCoords( y.second ) );
     };
     auto boxes = parlay::delayed_seq<box>(
         V.size(), [&]( size_t i ) { return box( V[i].pnt, V[i].pnt ); } );
-    return std::move( parlay::reduce( boxes, parlay::make_monoid( minmax, boxes[0] ) ) );
+    return std::move(
+        parlay::reduce( boxes, parlay::make_monoid( minmax, boxes[0] ) ) );
   }
 }
 
@@ -99,11 +101,13 @@ ParallelKDtree<point>::within_circle( const box& bx, const circle& cl ) {
   //* the logical is same as p2b_max_distance <= radius
   coord r = 0;
   for ( dim_type i = 0; i < cl.first.get_dim(); i++ ) {
-    if ( Num::Lt( cl.first.pnt[i], ( bx.first.pnt[i] + bx.second.pnt[i] ) / 2 ) ) {
-      r +=
-          ( bx.second.pnt[i] - cl.first.pnt[i] ) * ( bx.second.pnt[i] - cl.first.pnt[i] );
+    if ( Num::Lt( cl.first.pnt[i],
+                  ( bx.first.pnt[i] + bx.second.pnt[i] ) / 2 ) ) {
+      r += ( bx.second.pnt[i] - cl.first.pnt[i] ) *
+           ( bx.second.pnt[i] - cl.first.pnt[i] );
     } else {
-      r += ( cl.first.pnt[i] - bx.first.pnt[i] ) * ( cl.first.pnt[i] - bx.first.pnt[i] );
+      r += ( cl.first.pnt[i] - bx.first.pnt[i] ) *
+           ( cl.first.pnt[i] - bx.first.pnt[i] );
     }
     if ( Num::Gt( r, cl.second * cl.second ) ) return false;
   }
@@ -130,10 +134,11 @@ ParallelKDtree<point>::circle_intersect_box( const circle& cl, const box& bx ) {
   coord r = 0;
   for ( dim_type i = 0; i < cl.first.get_dim(); i++ ) {
     if ( Num::Lt( cl.first.pnt[i], bx.first.pnt[i] ) ) {
-      r += ( bx.first.pnt[i] - cl.first.pnt[i] ) * ( bx.first.pnt[i] - cl.first.pnt[i] );
+      r += ( bx.first.pnt[i] - cl.first.pnt[i] ) *
+           ( bx.first.pnt[i] - cl.first.pnt[i] );
     } else if ( Num::Gt( cl.first.pnt[i], bx.second.pnt[i] ) ) {
-      r +=
-          ( cl.first.pnt[i] - bx.second.pnt[i] ) * ( cl.first.pnt[i] - bx.second.pnt[i] );
+      r += ( cl.first.pnt[i] - bx.second.pnt[i] ) *
+           ( cl.first.pnt[i] - bx.second.pnt[i] );
     }
     if ( Num::Gt( r, cl.second * cl.second ) ) return false;  //* not intersect
   }

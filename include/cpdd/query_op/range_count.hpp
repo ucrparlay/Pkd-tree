@@ -8,14 +8,17 @@ namespace cpdd {
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count(
-    const typename ParallelKDtree<point>::box& bx ) {
-  return range_count_rectangle( this->root, bx, this->bbox );
+    const typename ParallelKDtree<point>::box& bx, size_t& visNodeNum ) {
+  return range_count_rectangle( this->root, bx, this->bbox, visNodeNum );
 }
 
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
-                                              const box& nodeBox ) {
+                                              const box& nodeBox,
+                                              size_t& visNodeNum ) {
+  visNodeNum++;
+
   if ( !box_intersect_box( nodeBox, queryBox ) ) return 0;
   if ( within_box( nodeBox, queryBox ) ) return T->size;
 
@@ -38,8 +41,13 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
   size_t l, r;
   parlay::par_do_if(
       // TI->size >= SERIAL_BUILD_CUTOFF,
-      false, [&] { l = range_count_rectangle( TI->left, queryBox, lbox ); },
-      [&] { r = range_count_rectangle( TI->right, queryBox, rbox ); } );
+      false,
+      [&] {
+        l = range_count_rectangle( TI->left, queryBox, lbox, visNodeNum );
+      },
+      [&] {
+        r = range_count_rectangle( TI->right, queryBox, rbox, visNodeNum );
+      } );
 
   return std::move( l + r );
 }

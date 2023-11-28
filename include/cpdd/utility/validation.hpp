@@ -1,5 +1,6 @@
 #pragma once
 
+#include <parlay/parallel.h>
 #include "../kdTreeParallel.h"
 
 namespace cpdd {
@@ -31,7 +32,8 @@ ParallelKDtree<point>::checkSize( node* T ) {
 
 template<typename point>
 void
-ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim, const int& DIM ) {
+ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim,
+                                                const int& DIM ) {
   if ( T->is_leaf ) {
     assert( pick_rebuild_dim( T, DIM ) == dim );
     return;
@@ -100,6 +102,20 @@ ParallelKDtree<point>::getAveTreeHeight() {
   // for ( auto i : kv )
   //     LOG << i.first << " " << i.second << ENDL;
   return double( 1.0 * parlay::reduce( heights.cut( 0, idx ) ) / idx );
+}
+
+template<typename point>
+size_t
+ParallelKDtree<point>::countTreeNodesNum( node* T ) {
+  if ( T->is_leaf ) {
+    return 1;
+  }
+
+  interior* TI = static_cast<interior*>( T );
+  size_t l, r;
+  parlay::par_do( [&]() { l = countTreeNodesNum( TI->left ); },
+                  [&]() { r = countTreeNodesNum( TI->right ); } );
+  return l + r + 1;
 }
 
 template<typename point>
