@@ -21,9 +21,6 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
                                               size_t& visLeafNum,
                                               size_t& visInterNum ) {
 
-  // if ( !box_intersect_box( nodeBox, queryBox ) ) return 0;
-  // if ( within_box( nodeBox, queryBox ) ) return T->size;
-
   if ( T->is_leaf ) {
     visLeafNum++;
     size_t cnt = 0;
@@ -58,16 +55,6 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
 
   recurse( TI->left, lbox, l );
   recurse( TI->right, rbox, r );
-
-  // parlay::par_do_if(
-  //     // TI->size >= SERIAL_BUILD_CUTOFF,
-  //     false,
-  //     [&] {
-  //       l = range_count_rectangle( TI->left, queryBox, lbox, visNodeNum );
-  //     },
-  //     [&] {
-  //       r = range_count_rectangle( TI->right, queryBox, rbox, visNodeNum );
-  //     } );
 
   return std::move( l + r );
 }

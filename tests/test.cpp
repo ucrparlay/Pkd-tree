@@ -3,10 +3,9 @@
 
 template<typename point>
 void
-testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
-                    parlay::sequence<point>& wp, const size_t& N, const int& K,
-                    const int& rounds, const string& insertFile, const int& tag,
-                    const int& queryType ) {
+testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<point>& wp,
+                    const size_t& N, const int& K, const int& rounds,
+                    const string& insertFile, const int& tag, const int& queryType ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -73,8 +72,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
 
   if ( queryType & ( 1 << 1 ) ) {  //* batch NN query
     points new_wp( batchQuerySize );
-    parlay::copy( wp.cut( 0, batchQuerySize ),
-                  new_wp.cut( 0, batchQuerySize ) );
+    parlay::copy( wp.cut( 0, batchQuerySize ), new_wp.cut( 0, batchQuerySize ) );
     kdknn = new Typename[batchQuerySize];
 
     queryKNN( Dim, new_wp, rounds, pkd, kdknn, K, true );
@@ -212,10 +210,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
           queryKNN<point, 0, 1>( Dim, np, rounds, pkd, kdknn, k[i], false );
         }
       } else if ( qtype == 1 ) {
-        int type[3] = { 0, 1, 2 };
-        for ( int i = 0; i < 3; i++ ) {
-          rangeCountFix<point>( wp, pkd, kdknn, rounds, type[i], recNum, Dim );
-        }
+        int type = 2;
+        rangeCountFix<point>( wp, pkd, kdknn, rounds, type, recNum, Dim );
       }
     };
 
@@ -300,8 +296,7 @@ main( int argc, char* argv[] ) {
     K = 100;
     generate_random_points<PointType<coord, 15>>( wp, 1000000, N, Dim );
     // generate_random_points<PointID<coord, 15>>( wp, 1000000, N, Dim );
-    std::string name =
-        std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
+    std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
     std::cout << name << " ";
   }
 
@@ -310,8 +305,7 @@ main( int argc, char* argv[] ) {
     if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test
     if ( !id ) id++;
     int pos = std::string( iFile ).rfind( "/" ) + 1;
-    insertFile =
-        std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
+    insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
   }
 
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
@@ -398,8 +392,8 @@ main( int argc, char* argv[] ) {
       return PointType<coord, 10>( wp[i].pnt.begin() );
     } );
     decltype( wp )().swap( wp );
-    testParallelKDtree<PointType<coord, 10>>(
-        Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType );
+    testParallelKDtree<PointType<coord, 10>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+                                              insertFile, tag, queryType );
   }
 
   return 0;

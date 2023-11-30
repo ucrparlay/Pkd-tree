@@ -22,7 +22,11 @@ queryType=1024 # 001 011 111
 # queryType=$((2#1111000000)) # 1110000
 echo $queryType
 
-resFile="inba_ratio.out"
+if [[ ${inbarc} -eq 0 ]]; then
+    resFile="inba_ratio_knn.out"
+else
+    resFile="inba_ratio_rc.out"
+fi
 
 for solver in ${Solvers[@]}; do
     exe="../build/${solver}"

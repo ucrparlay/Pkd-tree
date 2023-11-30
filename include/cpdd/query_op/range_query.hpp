@@ -86,15 +86,6 @@ ParallelKDtree<point>::range_query_recursive_serial( node* T, StoreType Out,
                                                      size_t& s,
                                                      const box& queryBox,
                                                      const box& nodeBox ) {
-  // if ( !box_intersect_box( nodeBox, queryBox ) ) {
-  //   return;
-  // }
-  //
-  // if ( within_box( nodeBox, queryBox ) ) {
-  //   flatten( T, Out.cut( s, s + T->size ) );
-  //   s += T->size;
-  //   return;
-  // }
 
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
@@ -126,9 +117,6 @@ ParallelKDtree<point>::range_query_recursive_serial( node* T, StoreType Out,
 
   recurse( TI->left, lbox );
   recurse( TI->right, rbox );
-
-  // range_query_recursive_serial( TI->left, Out, s, queryBox, lbox );
-  // range_query_recursive_serial( TI->right, Out, s, queryBox, rbox );
 
   return;
 }
