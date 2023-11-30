@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "testFramework.h"
 
 template<typename point>
@@ -197,18 +198,24 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP,
 
     auto run = [&]() {
       //* first normal build
-      buildTree<point, 0>( Dim, np, rounds, pkd );
+      // buildTree<point, 0>( Dim, np, rounds, pkd );
+
+      //* then incremental build
+      incrementalBuild<point, 0>( Dim, np, rounds, pkd, 0.01 );
+
       std::cout << pkd.getTreeHeight() << " " << pkd.getAveTreeHeight() << " "
                 << std::flush;
-      //* then incremental build
-      // incrementalBuild<point, 0>( Dim, np, rounds, pkd, 0.01 );
-      // std::cout << pkd.getTreeHeight() << " " << pkd.getAveTreeHeight() << "
-      // "
-      //           << std::flush;
-      int k[3] = { 1, 5, 100 };
-      for ( int i = 0; i < 3; i++ ) {
-        queryKNN<point, 0, 1>( Dim, np, rounds, pkd, kdknn, k[i], false );
-        // LOG << "finish " << k[i] << ENDL;
+      auto qtype = std::stoi( std::getenv( "INBA_RC" ) );
+      if ( qtype == 0 ) {
+        int k[3] = { 1, 5, 100 };
+        for ( int i = 0; i < 3; i++ ) {
+          queryKNN<point, 0, 1>( Dim, np, rounds, pkd, kdknn, k[i], false );
+        }
+      } else if ( qtype == 1 ) {
+        int type[3] = { 0, 1, 2 };
+        for ( int i = 0; i < 3; i++ ) {
+          rangeCountFix<point>( wp, pkd, kdknn, rounds, type[i], recNum, Dim );
+        }
       }
     };
 

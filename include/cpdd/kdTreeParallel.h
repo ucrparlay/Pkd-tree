@@ -174,10 +174,12 @@ class ParallelKDtree {
                          kBoundedQueue<point, StoreType>& bq, const box& bx,
                          size_t& visNodeNum );
 
-  size_t range_count( const box& queryBox, size_t& visNodeNum );
+  size_t range_count( const box& queryBox, size_t& visLeafNum,
+                      size_t& visInterNum );
   size_t range_count( const circle& cl );
   static size_t range_count_rectangle( node* T, const box& queryBox,
-                                       const box& nodeBox, size_t& visNodeNum );
+                                       const box& nodeBox, size_t& visLeafNum,
+                                       size_t& visInterNum );
   static size_t range_count_radius( node* T, const circle& cl,
                                     const box& nodeBox );
   simple_node* range_count_save_path( node* T, const box& queryBox,

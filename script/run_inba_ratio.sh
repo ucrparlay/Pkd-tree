@@ -13,6 +13,7 @@ declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 # datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
+inbarc=1
 tag=0
 k=10
 onecore=0
@@ -35,8 +36,7 @@ for solver in ${Solvers[@]}; do
                 echo ">>>${dest}"
 
                 for ratio in ${Inba[@]}; do
-                    PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
-
+                    PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} INBA_RC=${inbarc} numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
                 done
             done
         done

@@ -108,14 +108,14 @@ runCGAL( points& wp, points& wi, Typename* cgknn, int queryNum,
       Point_d a( Dim, std::begin( wp[i].pnt ), std::end( wp[i].pnt ) ),
           b( Dim, std::begin( wp[( i + n / 2 ) % n].pnt ),
              std::end( wp[( i + n / 2 ) % n].pnt ) );
-      // Fuzzy_iso_box fib( a, b, 0.0 );
-      auto d = cpdd::ParallelKDtree<point>::p2p_distance( wp[i], wp[( i + n / 2 ) % n],
-                                                          wp[i].get_dim() );
-      d = static_cast<coord>( std::sqrt( d ) );
-      if ( i == 0 ) {
-        LOG << wp[i] << d << ENDL;
-      }
-      Fuzzy_circle fib( a, d );
+      Fuzzy_iso_box fib( a, b, 0.0 );
+      // auto d = cpdd::ParallelKDtree<point>::p2p_distance( wp[i], wp[( i + n / 2 ) % n],
+      //                                                     wp[i].get_dim() );
+      // d = static_cast<coord>( std::sqrt( d ) );
+      // if ( i == 0 ) {
+      //   LOG << wp[i] << d << ENDL;
+      // }
+      // Fuzzy_circle fib( a, d );
       size_t cnt = 0;
       counter_iterator<size_t> cnt_iter( cnt );
 
@@ -188,8 +188,8 @@ runKDParallel( points& wp, const points& wi, Typename* kdknn, points& p, int que
     parlay::copy( wp.cut( 0, batchQuerySize ), new_wp.cut( 0, batchQuerySize ) );
     queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, true );
   } else if ( queryType == 1 ) {
-    // rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
-    rangeCountRadius<point>( wp, pkd, kdknn, rounds, queryNum );
+    rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
+    // rangeCountRadius<point>( wp, pkd, kdknn, rounds, queryNum );
   } else if ( queryType == 2 ) {
     rangeCount<point>( wp, pkd, kdknn, rounds, queryNum );
     maxReduceSize = parlay::reduce(

@@ -13,7 +13,7 @@ using Typename = coord;
 using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
-static constexpr int rangeQueryNum = 1000;
+static constexpr int rangeQueryNum = 10000;
 static constexpr double batchInsertRatio = 0.1;
 
 template<typename T>
@@ -533,7 +533,8 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
 
   int n = wp.size();
 
-  parlay::sequence<size_t> visNodeNum( queryNum, 0 );
+  parlay::sequence<size_t> visLeafNum( queryNum, 0 );
+  parlay::sequence<size_t> visInterNum( queryNum, 0 );
 
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
@@ -542,7 +543,7 @@ rangeCount( const parlay::sequence<point>& wp, ParallelKDtree<point>& pkd,
           box queryBox = pkd.get_box(
               box( wp[i], wp[i] ),
               box( wp[( i + n / 2 ) % n], wp[( i + n / 2 ) % n] ) );
-          kdknn[i] = pkd.range_count( queryBox, visNodeNum[i] );
+          kdknn[i] = pkd.range_count( queryBox, visLeafNum[i], visInterNum[i] );
         } );
       },
       [&]() {} );
@@ -638,7 +639,7 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   int n = WP.size();
 
   auto [queryBox, maxSize] = gen_rectangles( recNum, recType, WP, DIM );
-  parlay::sequence<size_t> visNodeNum( recNum, 0 );
+  parlay::sequence<size_t> visLeafNum( recNum, 0 ), visInterNum( recNum, 0 );
 
   double aveCount = time_loop(
       rounds, 1.0, [&]() {},
@@ -646,8 +647,10 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
         parlay::parallel_for(
             0, recNum,
             [&]( size_t i ) {
-              visNodeNum[i] = 0;
-              kdknn[i] = pkd.range_count( queryBox[i], visNodeNum[i] );
+              visInterNum[i] = 0;
+              visLeafNum[i] = 0;
+              kdknn[i] =
+                  pkd.range_count( queryBox[i], visLeafNum[i], visInterNum[i] );
             },
             1 );
       },
@@ -657,11 +660,16 @@ rangeCountFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   LOG << "queryType is " << recType
       << " total tree nodes num: " << pkd.countTreeNodesNum( pkd.get_root() )
       << ENDL;
-  visNodeNum = parlay::sort( visNodeNum );
+  auto visTotal = parlay::tabulate( recNum, [&]( size_t i ) -> size_t {
+    return visInterNum[i] + visLeafNum[i];
+  } );
+  visInterNum = parlay::sort( visInterNum );
+  visLeafNum = parlay::sort( visLeafNum );
+  visTotal = parlay::sort( visTotal );
 
-  LOG << "mean: " << parlay::reduce( visNodeNum )/visNodeNum.size()
-      << " median: " << visNodeNum[recNum / 2] << " max "
-      << *visNodeNum.rbegin() << ENDL;
+  LOG << " " << visLeafNum[recNum / 2] << " " << *visLeafNum.rbegin() << " "
+      << visInterNum[recNum / 2] << " " << *visInterNum.rbegin() << " "
+      << visTotal[recNum / 2] << " " << *visTotal.rbegin() << ENDL;
 
   return;
 }

@@ -4,27 +4,31 @@
 
 namespace cpdd {
 
-//* range count
+/*TODO range count */
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count(
-    const typename ParallelKDtree<point>::box& bx, size_t& visNodeNum ) {
-  return range_count_rectangle( this->root, bx, this->bbox, visNodeNum );
+    const typename ParallelKDtree<point>::box& bx, size_t& visLeafNum,
+    size_t& visInterNum ) {
+  return range_count_rectangle( this->root, bx, this->bbox, visLeafNum,
+                                visInterNum );
 }
 
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
                                               const box& nodeBox,
-                                              size_t& visNodeNum ) {
-  visNodeNum++;
+                                              size_t& visLeafNum,
+                                              size_t& visInterNum ) {
 
-  if ( !box_intersect_box( nodeBox, queryBox ) ) return 0;
-  if ( within_box( nodeBox, queryBox ) ) return T->size;
+  // if ( !box_intersect_box( nodeBox, queryBox ) ) return 0;
+  // if ( within_box( nodeBox, queryBox ) ) return T->size;
 
   if ( T->is_leaf ) {
+    visLeafNum++;
     size_t cnt = 0;
     leaf* TL = static_cast<leaf*>( T );
+    if ( T->is_dummy ) LOG << "meet dummy" << ENDL;
     for ( int i = 0; i < TL->size; i++ ) {
       if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
         cnt++;
@@ -33,21 +37,37 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
     return std::move( cnt );
   }
 
+  visInterNum++;
   interior* TI = static_cast<interior*>( T );
   box lbox( nodeBox ), rbox( nodeBox );
-  lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+  lbox.second.pnt[TI->split.second] = TI->split.first;  //TODO loose
   rbox.first.pnt[TI->split.second] = TI->split.first;
 
   size_t l, r;
-  parlay::par_do_if(
-      // TI->size >= SERIAL_BUILD_CUTOFF,
-      false,
-      [&] {
-        l = range_count_rectangle( TI->left, queryBox, lbox, visNodeNum );
-      },
-      [&] {
-        r = range_count_rectangle( TI->right, queryBox, rbox, visNodeNum );
-      } );
+
+  auto recurse = [&]( node* Ts, const box& bx, size_t& conter ) {
+    if ( !box_intersect_box( bx, queryBox ) ) {
+      conter = 0;
+    } else if ( within_box( bx, queryBox ) ) {
+      conter = Ts->size;
+    } else {
+      conter =
+          range_count_rectangle( Ts, queryBox, bx, visLeafNum, visInterNum );
+    }
+  };
+
+  recurse( TI->left, lbox, l );
+  recurse( TI->right, rbox, r );
+
+  // parlay::par_do_if(
+  //     // TI->size >= SERIAL_BUILD_CUTOFF,
+  //     false,
+  //     [&] {
+  //       l = range_count_rectangle( TI->left, queryBox, lbox, visNodeNum );
+  //     },
+  //     [&] {
+  //       r = range_count_rectangle( TI->right, queryBox, rbox, visNodeNum );
+  //     } );
 
   return std::move( l + r );
 }
@@ -58,6 +78,7 @@ ParallelKDtree<point>::range_count( const circle& cl ) {
   return range_count_radius( this->root, cl, this->bbox );
 }
 
+// TODO as range_count_rectangle
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count_radius( node* T, const circle& cl,
