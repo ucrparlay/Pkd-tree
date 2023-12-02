@@ -9,6 +9,7 @@
 #include "utility/box_op.hpp"
 #include "utility/dimensinality.hpp"
 #include "utility/validation.hpp"
+#include "utility/random_support.hpp"
 
 #include "batch_op/build_tree.hpp"
 #include "batch_op/batch_insert.hpp"

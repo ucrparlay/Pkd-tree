@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test" "cgal")
+Solvers=("zdtree test")
 Node=(100000000)
 Dim=(2 3)
 declare -A datas
@@ -44,14 +44,6 @@ for solver in ${Solvers[@]}; do
                         continue
                     fi
                     PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
-
-                    retval=$?
-                    if [ ${retval} -eq 124 ]; then
-                        echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
-                        echo "timeout ${node}_${dim}"
-                    else
-                        echo "finish ${node}_${dim}"
-                    fi
                 done
             done
         done

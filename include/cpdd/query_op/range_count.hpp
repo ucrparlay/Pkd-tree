@@ -25,7 +25,6 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
     visLeafNum++;
     size_t cnt = 0;
     leaf* TL = static_cast<leaf*>( T );
-    if ( T->is_dummy ) LOG << "meet dummy" << ENDL;
     for ( int i = 0; i < TL->size; i++ ) {
       if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
         cnt++;

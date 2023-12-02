@@ -1,7 +1,8 @@
 #!/bin/bash
+set -o xtrace
 
 # Solvers=("zdtree" "test" "cgal")
-Solvers=("test")
+Solvers=("test" "cgal")
 Node=(100000000)
 Dim=(2 3)
 declare -A datas

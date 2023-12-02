@@ -59,10 +59,19 @@ ParallelKDtree<point>::pick_pivots( slice In, const size_t& n, splitter_s& pivot
                                     const box& bx ) {
   size_t size = std::min( n, (size_t)32 * BUCKET_NUM );
   assert( size <= n );
+
+  //* samples
   points arr = points::uninitialized( size );
+  auto indexs = parlay::sequence<uint64_t>::uninitialized( size );
   for ( size_t i = 0; i < size; i++ ) {
-    arr[i] = In[i * ( n / size )];
+    indexs[i] = _hash64( i ) % n;
   }
+  std::sort( indexs.begin(), indexs.end() );
+  for ( size_t i = 0; i < size; i++ ) {
+    arr[i] = In[indexs[i]];
+  }
+
+  //* pick pivots
   bucket_type bucket = 0;
   divide_rotate( arr.cut( 0, size ), pivots, dim, 1, 1, bucket, DIM, boxs, bx );
   assert( bucket == BUCKET_NUM );

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
@@ -13,7 +15,7 @@ using Typename = coord;
 using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
-static constexpr int rangeQueryNum = 50000;
+static constexpr int rangeQueryNum = 10000;
 static constexpr double batchInsertRatio = 0.1;
 
 template<typename T>
@@ -125,8 +127,9 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K,
 
 //* [a,b)
 size_t
-get_random_index( size_t a, size_t b ) {
+get_random_index( size_t a, size_t b, int seed ) {
   return size_t( ( rand() % ( b - a ) ) + a );
+  // return size_t( ( parlay::hash64( static_cast<uint64_t>( seed ) ) % ( b - a ) ) + a );
 }
 
 template<typename point>
@@ -141,17 +144,21 @@ recurse_box( parlay::slice<point*, point*> In,
   if ( idx >= recNum || n < range.first || n == 0 ) return 0;
 
   size_t mx = 0;
+  bool goon = false;
   if ( n >= range.first && n <= range.second ) {
     boxs[idx++] = tree::get_box( In );
-    if ( type == 2 && In.size() > range.first * 100 ) {
+    // if ( type == 2 ) LOG << In.size() << ENDL;
+    if ( type == 2 &&
+         !parlay::all_of( In, [&]( const point& p ) { return p == In[0]; } ) ) {
+      goon = true;
       mx = In.size();
     } else {
       return In.size();
     }
   }
 
-  int dim = get_random_index( 0, DIM );
-  size_t pos = get_random_index( 0, n );
+  int dim = get_random_index( 0, DIM, rand() );
+  size_t pos = get_random_index( 0, n, rand() );
   parlay::sequence<bool> flag( n, 0 );
   parlay::parallel_for( 0, n, [&]( size_t i ) {
     if ( cpdd::Num_Comparator<coord>::Gt( In[i].pnt[dim], In[pos].pnt[dim] ) )
@@ -164,24 +171,19 @@ recurse_box( parlay::slice<point*, point*> In,
   assert( Out.size() == n );
   // LOG << dim << " " << Out[0] << Out[m] << ENDL;
   size_t l, r;
-  parlay::par_do_if(
-      0,
-      [&]() {
-        l = recurse_box<point>( Out.cut( 0, m ), boxs, DIM, range, idx, recNum, type );
-      },
-      [&]() {
-        r = recurse_box<point>( Out.cut( m, n ), boxs, DIM, range, idx, recNum, type );
-      } );
+  l = recurse_box<point>( Out.cut( 0, m ), boxs, DIM, range, idx, recNum, type );
+  r = recurse_box<point>( Out.cut( m, n ), boxs, DIM, range, idx, recNum, type );
 
-  if ( type != 3 )
-    return std::max( l, r );
-  else
+  if ( goon ) {
     return mx;
+  } else {
+    return std::max( l, r );
+  }
 }
 
 template<typename point>
 std::pair<parlay::sequence<std::pair<point, point>>, size_t>
-gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM ) {
+gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, int DIM ) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -198,7 +200,12 @@ gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM
     range.second = size_t( std::sqrt( n ) );
   } else {  //* large bracket
     range.first = size_t( std::sqrt( n ) );
-    range.second = n - 1;
+
+    // NOTE: special handle for duplicated points in 2-dimension varden
+    if ( n >= 100000000 )
+      range.second = n / 100 - 1;
+    else
+      range.second = n - 1;
   }
 
   boxs bxs( recNum );
@@ -207,15 +214,17 @@ gen_rectangles( int recNum, int type, const parlay::sequence<point>& WP, int DIM
 
   srand( 10 );
 
+  // LOG << " " << range.first << " " << range.second << ENDL;
+
   size_t maxSize = 0;
   while ( cnt < recNum ) {
-    // parlay::copy( WP, wp );
+    parlay::copy( WP, wp );
     auto r = recurse_box<point>( parlay::make_slice( wp ), bxs, DIM, range, cnt, recNum,
                                  type );
     maxSize = std::max( maxSize, r );
-    // LOG << cnt << " " << r << ENDL;
+    // LOG << cnt << " " << maxSize << ENDL;
   }
-
+  // LOG << "finish generate " << ENDL;
   return std::make_pair( bxs, maxSize );
 }
 
@@ -670,20 +679,23 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
   using box = typename tree::box;
 
   auto [queryBox, maxSize] = gen_rectangles( recNum, recType, WP, DIM );
+  // LOG << maxSize << ENDL;
   Out.resize( recNum * maxSize );
 
   int n = WP.size();
   size_t step = Out.size() / recNum;
   using ref_t = std::reference_wrapper<point>;
-  parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
-  //    parlay::sequence<double> preTime( recNum, 0 );
+  // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
 
   double aveQuery = time_loop(
       rounds, 1.0, [&]() {},
       [&]() {
         parlay::parallel_for( 0, recNum, [&]( size_t i ) {
+          // kdknn[i] = pkd.range_query_serial( queryBox[i],
+          //                                    out_ref.cut( i * step, ( i + 1 ) * step )
+          //                                    );
           kdknn[i] = pkd.range_query_serial( queryBox[i],
-                                             out_ref.cut( i * step, ( i + 1 ) * step ) );
+                                             Out.cut( i * step, ( i + 1 ) * step ) );
         } );
       },
       [&]() {} );

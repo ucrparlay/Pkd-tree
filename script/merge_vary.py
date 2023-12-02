@@ -1,12 +1,5 @@
-from signal import pause
-import subprocess
 import os
 import sys
-from multiprocessing import Pool
-from tabnanny import check
-from timeit import default_timer as timer
-from unittest import case
-import math
 import csv
 
 print(os.getcwd())
@@ -59,8 +52,8 @@ knn_header = [
     "depth",
     "visNum",
 ]
-count_header = ["100small", "100medium", "100large"]
-rquery_header = ["100small", "100medium", "100large"]
+count_header = ["10000small", "10000medium", "10000large"]
+rquery_header = ["10000small", "10000medium", "10000large"]
 increBuild_header = [
     "step=0.1",
     "ave-depth",
@@ -124,12 +117,15 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
             for k in range(l, r):
                 line[k - l] = line[k - l] + float(sep_lines[j][k]) / num
 
+            # print([solver, benchName, node, dim] + list(map(lambda x: round(x, 5), line)))
+
         csvWriter.writerow(
             [solver, benchName, node, dim] + list(map(lambda x: round(x, 5), line))
         )
 
 
 def csvSetup(solver):
+    print(solver)
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
     csvFilePointer.truncate()
     csvWriter = csv.writer(csvFilePointer)
@@ -147,11 +143,10 @@ def calculatePrefix():
         prefix[i] = l + prefix[i - 1]
         l = r
 
-    print(prefix)
-
 
 # * merge the result
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
+    print(type)
     calculatePrefix()
     for file in files:
         csvWriter = csvSetup(file)
@@ -162,13 +157,13 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                     for node in Nodes:
                         P = (
                             path
-                            + "/"
-                            + bench
-                            + "/"
-                            + str(node)
-                            + "_"
-                            + str(dim)
-                            + "/"
-                            + resMap[solver]
+                                + "/"
+                                + bench
+                                + "/"
+                                + str(node)
+                                + "_"
+                                + str(dim)
+                                + "/"
+                                + resMap[solver]
                         )
                         combine(P, file, csvWriter, solver, bench, node, dim)
