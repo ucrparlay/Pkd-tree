@@ -323,8 +323,8 @@ incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int ro
     l = r;
   }
 
-  //! warning watch format;
-  LOG << aveIncreBuild << " ";
+  // WARN: watch format
+  // LOG << aveIncreBuild << " ";
   if ( print ) {
     auto deep = pkd.getAveTreeHeight();
     LOG << aveIncreBuild << " " << deep << " " << std::flush;

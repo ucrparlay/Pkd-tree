@@ -11,8 +11,8 @@ Nodes = [100000000]
 Dims = [2, 3]
 
 # type = "batch_update"
-type = "querys"
-# type = "quality"
+# type = "querys"
+type = "quality"
 
 #! order by test order
 files = []
