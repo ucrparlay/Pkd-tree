@@ -1,0 +1,96 @@
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(xtable)
+library(gsubfn)
+library(fmtr)
+library(stringr)
+library(common)
+library(proto)
+library(patchwork)
+library(forcats)
+library(scales)
+library(hash)
+library(ggthemes)
+library(ggsci)
+library(egg)
+library(grid)
+library(RColorBrewer)
+library(scales)
+theme_set(theme_light())
+"%!in%" <- function(x, y) !("%in%"(x, y)) # nolint: object_name_linter.
+options(digits = 5, nsmall = 3)
+```
+
+Better plots: 
+https://www.cedricscherer.com/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/
+
+colors:
+https://nanx.me/ggsci/articles/ggsci.html#introduction
+
+Read the data
+
+```{r func-update}
+plot <- function(t, bench, title) {
+  # NOTE: Wash data
+  t$solver[t$solver == "test"] <- "Ours"
+  t$solver[t$solver == "zdtree"] <- "ZdTree"
+  t$solver[t$solver == "cgal"] <- "CGAL"
+  t$solver[t$solver == "BHLtree"] <- "BhlTree"
+  t$solver[t$solver == "Logtree"] <- "LogTree"
+
+  # NOTE: levels
+  nameLevel <- c("Ours", "ZdTree", "LogTree", "BhlTree", "CGAL")
+  shapeLevel <- c(19, 17, 18, 20, 15)
+  t$solver <- factor(t$solver, levels = nameLevel)
+
+  t <- t %>%
+    filter(dims == 3, benchType == bench) %>%
+    select(-c(benchType, nodes, dims)) %>%
+    pivot_longer(!solver, names_to = "BatchSize", values_to = "time")
+
+  t$BatchSize <- factor(t$BatchSize, levels = unique(t$BatchSize))
+
+  g <- ggplot(t, aes(
+    x = BatchSize, y = time, color = solver,
+    shape = solver, group = solver
+  )) +
+    geom_point(size = 4, alpha = 0.8) + # point property
+    geom_line() +
+    labs(x = "Batch size", y = "time/sec (log-scale)") +
+    scale_x_discrete(labels = c(
+      "10%", "20%", "30%", "40%",
+      "50%", "60%", "70%", "80%", "90%", "100%"
+    )) +
+    scale_y_log10() +
+    scale_shape_manual(values = shapeLevel) +
+    ggtitle(title) +
+    theme(
+      plot.margin = unit(c(.1, .01, .1, .01), "cm"),
+      plot.title = element_text(hjust = 0.5, size = 11), # title size
+      axis.text.x = element_text(angle = 30, size = 9), # axe size
+      axis.title = element_text(margin = margin(0.5, 0.1, 0.1, 0.1), size = 10),
+    ) +
+    # coord_fixed(ratio = 1) +
+    # scale_color_brewer(palette = "Set1")
+    scale_color_locuszoom()
+  # scale_color_npg()
+  # scale_color_tableau()
+  # scale_color_tableau("Classic 10 Medium")
+  return(g)
+}
+```
+
+## Main function for batchupdate
+```{r}
+ti <- read.csv("summary/insert.csv")
+td <- read.csv("summary/delete.csv")
+g <- plot(ti, "ss_varden", "Batch insertion on 3D-V-100M") +
+  plot(ti, "uniform", "Batch insertion on 3D-U-100M") +
+  plot(td, "ss_varden", "Batch deletion on 3D-V-100M") +
+  plot(td, "ss_varden", "Batch deletion on 3D-U-100M") +
+  plot_layout(guides = "collect")
+
+ggsave("figures/batchupdate.pdf", width = 7, height = 5, dpi = 3600)
+``````

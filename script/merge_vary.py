@@ -10,13 +10,13 @@ storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3]
 
-# type = "batch_update"
+type = "batch_update"
 # type = "querys"
-type = "quality"
+# type = "quality"
 
 #! order by test order
 files = []
-solverName = ["test", "zdtree", "cgal"]
+solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
 
 if type == "batch_update":
     files = ["build", "insert", "delete"]
@@ -30,6 +30,8 @@ resMap = {
     "test": "res_" + type + ".out",
     "cgal": "cgal_" + type + ".out",
     "zdtree": "zdtree_" + type + ".out",
+    "LogTree": "LogTree_" + type + ".out",
+    "BhlTree": "BhlTree_" + type + ".out",
 }
 
 common = [
@@ -94,7 +96,6 @@ prefix = [0] * len(files)
 
 # TODO change order
 
-
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
@@ -110,7 +111,7 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     width = len(file_header[file])
     l = prefix[files.index(file)]
     r = l + width
-    num = 2
+    num = 2 if solverName.index(solver)<=2 else 1
     for i in range(0, len(sep_lines), num):
         line = [0] * width
         for j in range(i, num):
