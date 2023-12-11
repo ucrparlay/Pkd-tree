@@ -132,7 +132,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   }
 
   if ( queryType & ( 1 << 5 ) ) {  //* batch deletion with fraction
-    double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
+    const double ratios[10] = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
+    // double ratios[10] = { 1.0 };
     points tmp;
     for ( int i = 0; i < 10; i++ ) {
       batchDelete<point>( pkd, wp, tmp, Dim, rounds, 0, ratios[i] );

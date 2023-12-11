@@ -21,14 +21,17 @@ ParallelKDtree<point>::rebuild_after_delete( node* T, const dim_type DIM ) {
   points wo = points::uninitialized( T->size );
   points wx = points::uninitialized( T->size );
   uint_fast8_t d = pick_rebuild_dim( T, DIM );
-  flatten( T, wx.cut( 0, T->size ) );
-  delete_tree_recursive( T );
+  flatten( T, wx.cut( 0, T->size ), false );
+  delete_tree_recursive( T, false );  // FIXME: enable granularity control after deletion
   box bx = get_box( parlay::make_slice( wx ) );
   node* o =
       build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM, bx );
   return node_box( std::move( o ), std::move( bx ) );
 }
 
+// NOTE: the node which needs to be rebuilt has tag BUCKET_NUM+3
+// NOTE: the node whose ancestor has been rebuilt has tag BUCKET_NUM+2
+// NOTE: otherwise it has tag BUCKET_NUM+1
 template<typename point>
 typename ParallelKDtree<point>::node_box
 ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags,
@@ -48,7 +51,8 @@ ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags
     interior* const TI = static_cast<interior*>( tags[idx].first );
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
     if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
-      delete_tree_recursive( tags[idx].first );
+      delete_tree_recursive( tags[idx].first,
+                             false );  // FIXME: enable granularity control
       return node_box( alloc_empty_leaf(), get_empty_box() );
     }
     return rebuild_after_delete( tags[idx].first, DIM );

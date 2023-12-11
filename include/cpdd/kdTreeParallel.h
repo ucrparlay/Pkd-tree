@@ -118,7 +118,7 @@ class ParallelKDtree {
 
   //@ batch helpers:
   template<typename Slice>
-  static void flatten( node* T, Slice Out );
+  static void flatten( node* T, Slice Out, bool granularity = true );
 
   void flatten_and_delete( node* T, slice Out );
   static void seieve_points( slice A, slice B, const size_t n, const node_tags& tags,
@@ -129,7 +129,7 @@ class ParallelKDtree {
                                   parlay::sequence<node*>& treeNodes, bucket_type& p,
                                   const tag_nodes& rev_tag );
   node* delete_tree();
-  static void delete_tree_recursive( node* T );
+  static void delete_tree_recursive( node* T, bool granularity = true );
   static void delete_simple_tree_recursive( simple_node* T );
 
   //@ batch insert
