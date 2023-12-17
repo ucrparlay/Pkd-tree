@@ -1,3 +1,4 @@
+#include <initializer_list>
 #include "testFramework_pg.h"
 
 template<class TreeDesc, typename point>
@@ -118,7 +119,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     }
     else if(del_mode==1) // delete all
     {
-      const auto wi2 = wi;
+      auto wi2 = wi;
       pkd->bulk_erase(wi2);
     }
     else if(del_mode==2) // delete in seg mode
@@ -155,8 +156,9 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   }
 
   if ( queryType & ( 1 << 1 ) ) {  //* range count
-    kdknn = new Typename[queryNum];
-    rangeCount<TreeDesc,point>( wp, pkd, kdknn, rounds, queryNum );
+    // kdknn = new Typename[queryNum];
+    // rangeCount<TreeDesc,point>( wp, pkd, rounds, queryNum );
+    std::cout << "-1 " << std::flush;
   } else {
     std::cout << "-1 " << std::flush;
   }
@@ -182,7 +184,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     points Out( queryNum * maxReduceSize );
     */
     points Out;
-    rangeQuery<TreeDesc,point>( wp, pkd, kdknn, rounds, queryNum, Out );
+    for(int num_rect : {100,1000,10000})
+    {
+      std::cout << "[num_rect " << num_rect << "] " << std::flush;
+      for(int type_rect : {0,1,2})
+        rangeQuery<TreeDesc,point>( wp, pkd, Dim, rounds, num_rect, type_rect);
+    }
     
   } else {
     std::cout << "-1 " << std::flush;
