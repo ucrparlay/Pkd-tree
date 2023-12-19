@@ -4,8 +4,8 @@
 #     kill $$
 # } &
 
-# Solvers=("zdtree" "cgal" "test")
-Solvers=("zdtree")
+Solvers=("zdtree" "cgal" "test")
+# Solvers=("zdtree")
 # Node=(10000000 50000000 100000000 500000000)
 Node=(100000000)
 Dim=(2 3)
@@ -17,8 +17,8 @@ tag=2
 k=10
 onecore=0
 insNum=2
-queryType=1
-# queryType=$((2#1111000000)) # 1110000
+# queryType=1
+queryType=$((2#1010)) # 1110000
 echo $queryType
 type="summary"
 

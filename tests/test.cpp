@@ -206,7 +206,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
                 << std::flush;
       auto qtype = std::stoi( std::getenv( "INBA_RC" ) );
       if ( qtype == 0 ) {
-        int k[3] = { 1, 5, 100 };
+        const int k[3] = { 1, 5, 100 };
         for ( int i = 0; i < 3; i++ ) {
           queryKNN<point, 0, 1>( Dim, np, rounds, pkd, kdknn, k[i], false );
         }

@@ -7,6 +7,7 @@ file2Dims["Cosmo50"]="3"
 file2Dims["GeoLifeNoScale"]="3"
 file2Dims["Household"]="7"
 file2Dims["HT"]="10"
+file2Dims["OpenStreetMap"]="2"
 
 tag=0
 k=100

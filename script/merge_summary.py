@@ -38,6 +38,8 @@ files = ["summary"]
 build_header = [
     "build",
     "aveDepth",
+    "insert",
+    "delete",
     "k=10",
     "depth",
     "visNum",
@@ -78,12 +80,22 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
         )
 
 
+def reorder():
+    if not os.path.isfile("data/summary.csv"):
+        print("No file fonund: " + P)
+        return
+    with open("../script/data/summary.csv", mode="r") as file:
+        csvFile = csv.reader(file)
+        for lines in csvFile:
+            print(lines)
+
+
 def csvSetup(solver):
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
     csvFilePointer.truncate()
     csvWriter = csv.writer(csvFilePointer)
     csvWriter.writerow(common + file_header[file])
-    return csvWriter
+    return csvWriter, csvFilePointer
 
 
 def calculatePrefix():
@@ -103,21 +115,23 @@ def calculatePrefix():
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
     calculatePrefix()
     for file in files:
-        csvWriter = csvSetup(file)
-
+        csvWriter, csvFilePointer = csvSetup(file)
         for dim in Dims:
             for bench in benchmarks:
                 for solver in solverName:
                     for node in Nodes:
                         P = (
                             path
-                                + "/"
-                                + bench
-                                + "/"
-                                + str(node)
-                                + "_"
-                                + str(dim)
-                                + "/"
-                                + resMap[solver]
+                            + "/"
+                            + bench
+                            + "/"
+                            + str(node)
+                            + "_"
+                            + str(dim)
+                            + "/"
+                            + resMap[solver]
                         )
                         combine(P, file, csvWriter, solver, bench, node, dim)
+        csvFilePointer.close()
+
+    # reorder()
