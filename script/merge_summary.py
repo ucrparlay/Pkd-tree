@@ -43,6 +43,9 @@ build_header = [
     "k=10",
     "depth",
     "visNum",
+    "rangeQuerySmall",
+    "rangeQueryMedium",
+    "rangeQueryLarge",
 ]
 file_header = {
     "summary": build_header,

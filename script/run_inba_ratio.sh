@@ -3,26 +3,24 @@
 #     sleep 210m
 #     kill $$
 # } &
-
+set -o xtrace
 Solvers=("test")
-# Node=(10000000 50000000 100000000 500000000)
 Node=(100000000)
 Inba=(1 2 3 4 5 6 10 20 30 40 45 46 47 48 49 50)
 Dim=(3)
 declare -A datas
+# datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-# datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-inbarc=1
+inbaQuery=0
 tag=0
 k=10
 onecore=0
 insNum=1
 queryType=1024 # 001 011 111
-# queryType=$((2#1111000000)) # 1110000
 echo $queryType
 
-if [[ ${inbarc} -eq 0 ]]; then
+if [[ ${inbaQuery} -eq 0 ]]; then
     resFile="inba_ratio_knn.out"
 else
     resFile="inba_ratio_rc.out"
@@ -38,9 +36,13 @@ for solver in ${Solvers[@]}; do
                 dest="data/${resFile}"
                 : >${dest}
                 echo ">>>${dest}"
+                
+                # NOTE: run basic first
+                PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
+                # NOTE: run others then
                 for ratio in ${Inba[@]}; do
-                    PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} INBA_RC=${inbarc} numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+                    PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} INBA_QUERY=${inbaQuery} INBA_BUILD=1 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
                 done
             done
         done

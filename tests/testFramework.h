@@ -17,6 +17,7 @@ using namespace cpdd;
 static constexpr size_t batchQuerySize = 1000000;
 static constexpr int rangeQueryNum = 10000;
 static constexpr double batchInsertRatio = 0.1;
+static constexpr int summaryRangeQueryType = 3;
 
 template<typename T>
 class counter_iterator {
@@ -198,14 +199,17 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
   } else if ( type == 1 ) {  //* medium bracket
     range.first = size_t( std::sqrt( std::sqrt( n ) ) );
     range.second = size_t( std::sqrt( n ) );
-  } else {  //* large bracket
+  } else if ( type == 2 ) {  //* large bracket
     range.first = size_t( std::sqrt( n ) );
 
-    // NOTE: special handle for duplicated points in 2-dimension varden
+    // NOTE: special handle for large dimension datasets
     if ( n >= 100000000 )
       range.second = n / 100 - 1;
     else
       range.second = n - 1;
+  } else if ( type == 3 ) {
+    if ( n == 100000000 ) {
+    }
   }
 
   boxs bxs( recNum );
@@ -257,7 +261,7 @@ checkTreesSize( typename tree::node* T ) {
   return T->size;
 }
 
-template<typename point, bool print = 1>
+template<typename point, int print = 1>
 void
 buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
            ParallelKDtree<point>& pkd ) {
@@ -277,16 +281,20 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   pkd.build( wp.cut( 0, n ), Dim );
 
-  if ( print ) {
+  if ( print == 1 ) {
     LOG << aveBuild << " " << std::flush;
     auto deep = pkd.getAveTreeHeight();
     LOG << deep << " " << std::flush;
+  } else if ( print == 2 ) {
+    size_t max_deep = 0;
+    LOG << aveBuild << " " << pkd.getMaxTreeDepth( pkd.get_root(), max_deep ) << " "
+        << pkd.getAveTreeHeight() << " " << std::flush;
   }
 
   return;
 }
 
-template<typename point, bool print = 1>
+template<typename point, int print = 1>
 void
 incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int rounds,
                   ParallelKDtree<point>& pkd, double stepRatio ) {
@@ -323,11 +331,13 @@ incrementalBuild( const int Dim, const parlay::sequence<point>& WP, const int ro
     l = r;
   }
 
-  // WARN: watch format
-  // LOG << aveIncreBuild << " ";
-  if ( print ) {
+  if ( print == 1 ) {
     auto deep = pkd.getAveTreeHeight();
     LOG << aveIncreBuild << " " << deep << " " << std::flush;
+  } else if ( print == 2 ) {
+    size_t max_deep = 0;
+    LOG << aveIncreBuild << " " << pkd.getMaxTreeDepth( pkd.get_root(), max_deep ) << " "
+        << pkd.getAveTreeHeight() << " " << std::flush;
   }
   return;
 }

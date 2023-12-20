@@ -221,10 +221,9 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
   }
 
   if ( queryType & ( 1 << 3 ) ) {  //* range query
-    int type[3] = { 0, 1, 2 };
-    for ( int i = 0; i < 3; i++ ) {
+    auto run_cgal_range_query = [&]( int type ) {
       size_t n = wp.size();
-      auto [queryBox, maxSize] = gen_rectangles( queryNum, type[i], wp, Dim );
+      auto [queryBox, maxSize] = gen_rectangles( queryNum, type, wp, Dim );
       using ref_t = std::reference_wrapper<Point_d>;
       // std::vector<ref_t> out_ref( queryNum * maxSize, std::ref( _points[0] ) );
       std::vector<Point_d> _ans( queryNum * maxSize );
@@ -246,6 +245,15 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
 
       timer.stop();
       std::cout << timer.total_time() << " " << std::flush;
+    };
+
+    if ( tag == 0 ) {
+      const int type[3] = { 0, 1, 2 };
+      for ( int i = 0; i < 3; i++ ) {
+        run_cgal_range_query( type[i] );
+      }
+    } else {
+      run_cgal_range_query( summaryRangeQueryType );
     }
   }
 

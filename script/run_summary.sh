@@ -7,8 +7,8 @@
 Solvers=("zdtree" "cgal" "test")
 # Solvers=("zdtree")
 # Node=(10000000 50000000 100000000 500000000)
-Node=(100000000)
-Dim=(2 3)
+Node=(100000000 1000000000)
+Dim=(2 3 5 9)
 declare -A datas
 datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -18,7 +18,7 @@ k=10
 onecore=0
 insNum=2
 # queryType=1
-queryType=$((2#1010)) # 1110000
+queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
 
@@ -48,12 +48,7 @@ for solver in ${Solvers[@]}; do
         echo ">>>${dest}"
 
         for ((i = 1; i <= ${insNum}; i++)); do
-          if [[ ${serial} == 1 ]]; then
-            PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 -q ${queryType} >>${dest}
-            continue
-          fi
           PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
-
         done
       done
     done

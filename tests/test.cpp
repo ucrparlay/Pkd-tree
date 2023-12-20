@@ -64,7 +64,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       for ( int i = 0; i < 3; i++ ) {
         queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
       }
-    } else {
+    } else {  // test summary
       queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );
     }
     delete[] kdknn;
@@ -95,24 +95,20 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 3 ) ) {  //* range query
 
-    int type[3] = { 0, 1, 2 };
-    for ( int i = 0; i < 3; i++ ) {
-      //* run range count to obtain size
+    if ( tag == 0 ) {
+      const int type[3] = { 0, 1, 2 };
+      for ( int i = 0; i < 3; i++ ) {
+        //* run range count to obtain size
+        kdknn = new Typename[recNum];
+        points Out;
+        //* range query
+        rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim );
+      }
+    } else if ( tag == 2 ) {
       kdknn = new Typename[recNum];
-      // auto queryBox = gen_rectangles( recNum, type[i], wp, Dim );
-      // parlay::parallel_for(
-      //     0, recNum, [&]( size_t i ) { kdknn[i] = pkd.range_count(
-      //     queryBox[i] ); } );
-      // //* reduce max size
-      // auto maxReduceSize =
-      //     parlay::reduce( parlay::delayed_tabulate(
-      //                         recNum, [&]( size_t i ) { return size_t(
-      //                         kdknn[i] ); } ),
-      //                     parlay::maximum<Typename>() );
-      // points Out( recNum * maxReduceSize );
       points Out;
-      //* range query
-      rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim );
+      rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, summaryRangeQueryType, recNum,
+                            Dim );
     }
 
     delete[] kdknn;
@@ -188,6 +184,9 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     size_t batchSize = wp.size() / 10;
     kdknn = new Typename[wp.size()];
 
+    auto inbaQueryType = std::stoi( std::getenv( "INBA_QUERY" ) );
+    auto inbaBuildType = std::stoi( std::getenv( "INBA_BUILD" ) );
+
     //@ helper functions
     auto clean = [&]() {
       prefix = insertFile.substr( 0, insertFile.rfind( "/" ) );
@@ -196,21 +195,18 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     };
 
     auto run = [&]() {
-      //* first normal build
-      // buildTree<point, 0>( Dim, np, rounds, pkd );
+      if ( inbaBuildType == 0 ) {
+        buildTree<point, 2>( Dim, np, rounds, pkd );
+      } else {
+        incrementalBuild<point, 2>( Dim, np, rounds, pkd, 0.01 );
+      }
 
-      //* then incremental build
-      incrementalBuild<point, 0>( Dim, np, rounds, pkd, 0.01 );
-
-      std::cout << pkd.getTreeHeight() << " " << pkd.getAveTreeHeight() << " "
-                << std::flush;
-      auto qtype = std::stoi( std::getenv( "INBA_RC" ) );
-      if ( qtype == 0 ) {
+      if ( inbaQueryType == 0 ) {
         const int k[3] = { 1, 5, 100 };
         for ( int i = 0; i < 3; i++ ) {
           queryKNN<point, 0, 1>( Dim, np, rounds, pkd, kdknn, k[i], false );
         }
-      } else if ( qtype == 1 ) {
+      } else if ( inbaQueryType == 1 ) {
         int type = 2;
         rangeCountFix<point>( wp, pkd, kdknn, rounds, type, recNum, Dim );
       }
