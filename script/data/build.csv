@@ -9,7 +9,9 @@ test,ss_varden,100000000,3,0.33546,22.17565
 zdtree,ss_varden,100000000,3,0.5414,34.5
 cgal,ss_varden,100000000,3,33.6365,28.0
 LogTree,ss_varden,100000000,3,-1.0,-1.0
+BhlTree,ss_varden,100000000,3,-1.0,-1.0
 test,uniform,100000000,3,0.31475,22.1754
 zdtree,uniform,100000000,3,0.56225,24.0
 cgal,uniform,100000000,3,99.7102,27.0
 LogTree,uniform,100000000,3,-1.0,-1.0
+BhlTree,uniform,100000000,3,-1.0,-1.0

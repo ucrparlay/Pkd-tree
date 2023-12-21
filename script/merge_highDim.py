@@ -18,11 +18,13 @@ storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3, 5, 7, 9]
 
-solverName = ["test", "cgal"]
+solverName = ["test", "cgal", "BhlTree", "LogTree"]
 resMap = {
     "test": "res_highDim.out",
     "cgal": "cgal_highDim.out",
-    "zdtree": "zdtree_highDim.out",
+    "BhlTree": "BhlTree_highDim.out",
+    "LogTree": "LogTree_highDim.out",
+    # "zdtree": "zdtree_highDim.out",
 }
 
 common = [
@@ -66,7 +68,7 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     width = len(file_header[file])
     l = prefix[files.index(file)]
     r = l + width
-    num = 2
+    num = 2 if solverName.index(solver)<=1 else 1
     for i in range(0, len(sep_lines), num):
         line = [0] * width
         for j in range(i, num):

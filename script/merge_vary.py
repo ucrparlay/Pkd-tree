@@ -22,7 +22,7 @@ if type == "batch_update":
     solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["build", "insert", "delete"]
 elif type == "querys":
-    solverName = ["test", "zdtree", "cgal", "LogTree"]
+    solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["build", "knn", "count", "rquery"]
 elif type == "quality":
     solverName = ["test"]
