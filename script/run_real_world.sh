@@ -1,7 +1,7 @@
 #!/bin/bash
 
 Solvers=("zdtree" "test" "cgal")
-DataPath="/data9/zmen002/kdtree/geometry"
+DataPath="/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["Cosmo50"]="3"
 file2Dims["GeoLifeNoScale"]="3"

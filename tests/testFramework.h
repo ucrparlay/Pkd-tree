@@ -208,8 +208,8 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
     else
       range.second = n - 1;
   } else if ( type == 3 ) {
-    if ( n == 100000000 ) {
-    }
+    range.first = size_t( std::sqrt( n ) );
+    range.second = n / 1000 - 1;
   }
 
   boxs bxs( recNum );

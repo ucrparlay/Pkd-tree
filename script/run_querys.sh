@@ -1,13 +1,13 @@
 #!/bin/bash
 set -o xtrace
 
-# Solvers=("zdtree" "test" "cgal")
-Solvers=("test" "cgal")
+Solvers=("zdtree" "test" "cgal")
+# Solvers=("test" "cgal")
 Node=(100000000)
 Dim=(2 3)
 declare -A datas
-datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
 k=100

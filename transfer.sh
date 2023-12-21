@@ -24,9 +24,10 @@ if [[ ${folder} == "KDtree" ]]; then
 else
     if [[ ${src} == "cheetah" ]]; then
         srcDisk="ssd0"
-        destDisk="data9"
+        # srcDisk="ssd1"
+        destDisk="data3"
     else
-        srcDisk="data9"
+        srcDisk="data3"
         destDisk="ssd0"
     fi
     scp -r "zmen002@${src}.cs.ucr.edu:/${srcDisk}/zmen002/kdtree/${name}" "zmen002@${dest}.cs.ucr.edu:/${destDisk}/zmen002/kdtree/${name}"
