@@ -4,10 +4,10 @@
 #     kill $$
 # } &
 
+# Solvers=("test" "cgal")
 Solvers=("zdtree" "test" "cgal")
-# Solvers=("zdtree")
-# Node=(10000000 50000000 100000000 500000000)
-Node=(100000000 1000000000)
+Node=(100000000)
+# Node=(100000000 1000000000)
 Dim=(2 3 5 9)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
@@ -17,8 +17,8 @@ tag=2
 k=10
 onecore=0
 insNum=2
-queryType=1
-# queryType=$((2#1001)) # 1110000
+# queryType=1
+queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
 
@@ -53,11 +53,11 @@ for solver in ${Solvers[@]}; do
         echo ">>>${dest}"
 
         for ((i = 1; i <= ${insNum}; i++)); do
-          # if [[ ${solver} == "cgal" ]] && [[ ${node} == 1000000000 ]]; then
-          #   rounds=1
-          # else
-          #   rounds=3 
-          # fi 
+          if [[ ${dim} == 9 ]]; then
+            rounds=1
+          else
+            rounds=3 
+          fi 
           PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
         done
       done

@@ -46,15 +46,11 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   //* batch insert
   if ( tag >= 1 ) {
     batchInsert<point>( pkd, wp, wi, Dim, rounds, batchInsertRatio );
-    if ( tag == 1 ) {
-      wp.append( wi );
-    }
   }
 
   //* batch delete
   if ( tag >= 2 ) {
-    points tmp;
-    batchDelete<point>( pkd, wp, tmp, Dim, rounds, 0, batchInsertRatio );
+    batchDelete<point>( pkd, wp, wi, Dim, rounds, 0, batchInsertRatio );
   }
 
   if ( queryType & ( 1 << 0 ) ) {  //* KNN
@@ -208,7 +204,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         }
       } else if ( inbaQueryType == 1 ) {
         int type = 2;
-        rangeCountFix<point>( wp, pkd, kdknn, rounds, type, recNum, Dim );
+        rangeCountFix<point>( wp, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim );
       }
     };
 

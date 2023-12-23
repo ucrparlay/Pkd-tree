@@ -16,6 +16,7 @@ using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
 static constexpr int rangeQueryNum = 10000;
+static constexpr int rangeQueryNumInbaRatio = 50000;
 static constexpr double batchInsertRatio = 0.1;
 static constexpr int summaryRangeQueryType = 3;
 
@@ -446,7 +447,7 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
         if ( afterInsert ) {  //* first insert wi then delete wi
           parlay::copy( WP, wp ), parlay::copy( WI, wi );
           pkd.build( parlay::make_slice( wp ), DIM );
-          pkd.batchInsert( parlay::make_slice( wi ), DIM );
+          pkd.batchInsert( wi.cut( 0, size_t( wi.size() * ratio ) ), DIM );
           parlay::copy( WP, wp ), parlay::copy( WI, wi );
         } else {  //* only build wp and then delete from wp
           parlay::copy( WP, wp ), parlay::copy( WP, wi );
@@ -461,13 +462,13 @@ batchDelete( ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
   if ( afterInsert ) {
     parlay::copy( WP, wp ), parlay::copy( WI, wi );
     pkd.build( parlay::make_slice( wp ), DIM );
-    pkd.batchInsert( parlay::make_slice( wi ), DIM );
+    pkd.batchInsert( wi.cut( 0, size_t( wi.size() * ratio ) ), DIM );
     parlay::copy( WP, wp ), parlay::copy( WI, wi );
-    pkd.batchDelete( parlay::make_slice( wi ), DIM );
-  } else {
-    parlay::copy( WP, wp ), parlay::copy( WP, wi );
-    pkd.build( parlay::make_slice( wp ), DIM );
     pkd.batchDelete( wi.cut( 0, size_t( wi.size() * ratio ) ), DIM );
+  } else {
+    parlay::copy( WP, wp );
+    pkd.build( parlay::make_slice( wp ), DIM );
+    // pkd.batchDelete( wi.cut( 0, size_t( wi.size() * ratio ) ), DIM );
   }
 
   std::cout << aveDelete << " " << std::flush;
@@ -694,7 +695,7 @@ rangeQueryFix( const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd,
 
   int n = WP.size();
   size_t step = Out.size() / recNum;
-  using ref_t = std::reference_wrapper<point>;
+  // using ref_t = std::reference_wrapper<point>;
   // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
 
   double aveQuery = time_loop(
