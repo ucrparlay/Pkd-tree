@@ -4,11 +4,12 @@
 #     kill $$
 # } &
 
-# Solvers=("test" "cgal")
-Solvers=("zdtree" "test" "cgal")
-Node=(100000000)
+Solvers=("cgal")
+# Solvers=("zdtree" "test" "cgal")
+Node=(1000000000)
 # Node=(100000000 1000000000)
 Dim=(2 3 5 9)
+# Dim=(9)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -53,7 +54,7 @@ for solver in ${Solvers[@]}; do
         echo ">>>${dest}"
 
         for ((i = 1; i <= ${insNum}; i++)); do
-          if [[ ${dim} == 9 ]]; then
+          if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
             rounds=1
           else
             rounds=3 
