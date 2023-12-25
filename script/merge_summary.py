@@ -15,8 +15,8 @@ path = "../benchmark"
 # benchmarks = ["ss_varden"]
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
-Nodes = [100000000]
-Dims = [2, 3]
+Nodes = [100000000, 1000000000]
+Dims = [2, 3, 5, 9]
 
 solverName = ["zdtree", "test", "cgal"]
 resMap = {
@@ -43,9 +43,7 @@ build_header = [
     "k=10",
     "depth",
     "visNum",
-    "rangeQuerySmall",
-    "rangeQueryMedium",
-    "rangeQueryLarge",
+    "rangeQuery",
 ]
 file_header = {
     "summary": build_header,
@@ -60,8 +58,10 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
         return
-
+    print(P)
     lines = open(P, "r").readlines()
+    if len(lines)==0:
+        return
     sep_lines = []
     for line in lines:
         l = " ".join(line.split())
@@ -71,7 +71,7 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     width = len(file_header[file])
     l = prefix[files.index(file)]
     r = l + width
-    num = 2
+    num = len(lines)
     for i in range(0, len(sep_lines), num):
         line = [0] * width
         for j in range(i, num):
