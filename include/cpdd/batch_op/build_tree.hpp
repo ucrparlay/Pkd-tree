@@ -264,7 +264,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
   }
 
   if ( zeros == BUCKET_NUM - 1 ) {  // * switch to seral
-                                    // TODO add parallelsim within this call
+                                    // TODO: add parallelsim within this call
     return serial_build_recursive( In, Out, dim, DIM, bx );
   }
 
