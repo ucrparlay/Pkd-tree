@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include "testFramework.h"
 
@@ -251,6 +252,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     delete[] kdknn;
   }
 
+  // generate_knn( Dim, wp, K, "knn.out" );
+
   std::cout << std::endl << std::flush;
 
   return;
@@ -312,35 +315,35 @@ main( int argc, char* argv[] ) {
   //     return PointID<coord, 2>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointID<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K,
-  //   rounds, insertFile,
+  //   testParallelKDtree<PointID<coord, 2>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
   //                                          tag, queryType );
   // } else if ( Dim == 3 ) {
   //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 3> {
   //     return PointID<coord, 3>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointID<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K,
-  //   rounds, insertFile,
+  //   testParallelKDtree<PointID<coord, 3>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
   //                                          tag, queryType );
   // } else if ( Dim == 5 ) {
   //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 5> {
   //     return PointID<coord, 5>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointID<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K,
-  //   rounds, insertFile,
+  //   testParallelKDtree<PointID<coord, 5>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
   //                                          tag, queryType );
   // } else if ( Dim == 7 ) {
   //   auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointID<coord, 7> {
   //     return PointID<coord, 7>( wp[i].pnt.begin(), i );
   //   } );
   //   decltype( wp )().swap( wp );
-  //   testParallelKDtree<PointID<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K,
-  //   rounds, insertFile,
+  //   testParallelKDtree<PointID<coord, 7>>( Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //   insertFile,
   //                                          tag, queryType );
   // }
-
+  //
   if ( tag == -1 ) {
     //* serial run
     // todo rewrite test serial code

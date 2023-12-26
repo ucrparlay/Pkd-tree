@@ -735,21 +735,21 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
 
   pkd.build( parlay::make_slice( wp ), Dim );
 
-  parlay::sequence<nn_pair> Out( K * n, nn_pair( std::ref( wp[0] ), 0 ) );
+  parlay::sequence<nn_pair> Out( K * n );
   parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
       parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized( n );
-  parlay::parallel_for(
-      0, n, [&]( size_t i ) { bq[i].resize( Out.cut( i * K, i * K + K ) ); } );
-
-  node* KDParallelRoot = pkd.get_root();
-  parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } );
-
-  std::cout << "begin query" << std::endl;
   parlay::parallel_for( 0, n, [&]( size_t i ) {
-    size_t visNodeNum = 0;
-    pkd.k_nearest( KDParallelRoot, WP[i], Dim, bq[i], visNodeNum );
+    bq[i].resize( Out.cut( i * K, i * K + K ) );
+    bq[i].reset();
   } );
 
+  std::cout << "begin query" << std::endl;
+  node* KDParallelRoot = pkd.get_root();
+  auto bx = pkd.get_root_box();
+  parlay::parallel_for( 0, n, [&]( size_t i ) {
+    size_t visNodeNum = 0;
+    pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], bx, visNodeNum );
+  } );
   std::cout << "finish query" << std::endl;
 
   std::ofstream ofs( outFile );
