@@ -26,42 +26,42 @@ type="summary"
 resFile=""
 
 for solver in ${Solvers[@]}; do
-  exe="../build/${solver}"
+	exe="../build/${solver}"
 
-  #* decide output file
-  if [[ ${solver} == "test" ]]; then
-    resFile="res_${type}.out"
-  elif [[ ${solver} == "cgal" ]]; then
-    resFile="cgal_${type}.out"
-  elif [[ ${solver} == "zdtree" ]]; then
-    resFile="zdtree_${type}.out"
-    exe="/home/zmen002/pbbsbench_x/build/zdtree"
-  fi
+	#* decide output file
+	if [[ ${solver} == "test" ]]; then
+		resFile="res_${type}.out"
+	elif [[ ${solver} == "cgal" ]]; then
+		resFile="cgal_${type}.out"
+	elif [[ ${solver} == "zdtree" ]]; then
+		resFile="zdtree_${type}.out"
+		exe="/home/zmen002/pbbsbench_x/build/zdtree"
+	fi
 
-  for dim in ${Dim[@]}; do
+	for dim in ${Dim[@]}; do
 
-    if [ ${dim} -gt 3 ] && [ ${solver} == "zdtree" ]; then
-      continue
-    fi
+		if [ ${dim} -gt 3 ] && [ ${solver} == "zdtree" ]; then
+			continue
+		fi
 
-    for dataPath in "${!datas[@]}"; do
-      for node in ${Node[@]}; do
-        files_path="${dataPath}${node}_${dim}"
-        log_path="${datas[${dataPath}]}${node}_${dim}"
-        mkdir -p ${log_path}
-        dest="${log_path}/${resFile}"
-        : >${dest}
-        echo ">>>${dest}"
+		for dataPath in "${!datas[@]}"; do
+			for node in ${Node[@]}; do
+				files_path="${dataPath}${node}_${dim}"
+				log_path="${datas[${dataPath}]}${node}_${dim}"
+				mkdir -p ${log_path}
+				dest="${log_path}/${resFile}"
+				: >${dest}
+				echo ">>>${dest}"
 
-        for ((i = 1; i <= ${insNum}; i++)); do
-          if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
-            rounds=1
-          else
-            rounds=3 
-          fi 
-          PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
-        done
-      done
-    done
-  done
+				for ((i = 1; i <= ${insNum}; i++)); do
+					if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
+						rounds=1
+					else
+						rounds=3
+					fi
+					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+				done
+			done
+		done
+	done
 done
