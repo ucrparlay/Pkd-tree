@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-set -o xtrace
+# set -o xtrace
 
-Solvers=("test")
-Node=(10000000)
+# Solvers=("test")
+Solvers=("zdtree" "cgal")
+Node=(100000000)
 declare -A datas
-datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
-datas["/ssd0/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
+datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
+datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
 declare -a cores=(2 4 8 16 24 48 96 192)
 
@@ -39,6 +40,7 @@ k=100
 resFile=""
 
 for solver in "${Solvers[@]}"; do
+	exe="../build/${solver}"
 	#* decide output file
 	if [[ ${solver} == "test" ]]; then
 		resFile="res.out"
@@ -49,7 +51,6 @@ for solver in "${Solvers[@]}"; do
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
 	fi
 
-	exe="../build/${solver}"
 
 	for i in "${!threads[@]}"; do
 		for dataPath in "${!datas[@]}"; do
@@ -64,7 +65,7 @@ for solver in "${Solvers[@]}"; do
 				echo ">>>${dest}"
 
 				export "${threads[${i}]}"
-				"${commands[${i}]}" "${exe}" -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -r 2 -q 0 -i 1 >>"${dest}"
+				${commands[${i}]} "${exe}" -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -r 2 -q 0 -i 1 >>"${dest}"
 
 			done
 		done
