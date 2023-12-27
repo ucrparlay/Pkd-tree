@@ -744,6 +744,7 @@ generate_knn( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
   } );
 
   std::cout << "begin query" << std::endl;
+  parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) );
   node* KDParallelRoot = pkd.get_root();
   auto bx = pkd.get_root_box();
   parlay::parallel_for( 0, n, [&]( size_t i ) {

@@ -11,8 +11,9 @@ Nodes = [100000000]
 Dims = [2, 3]
 
 # type = "batch_update"
-type = "querys"
+# type = "querys"
 # type = "quality"
+type = "real_world"
 
 #! order by test order
 files = []
@@ -27,6 +28,9 @@ elif type == "querys":
 elif type == "quality":
     solverName = ["test"]
     files = ["build", "increBuild", "decreBuild", "increKNN"]
+elif type == "real_world":
+    solverName = ["test", "zdtree", "cgal"]
+    files = ["real_world"]
 
 resMap = {
     "test": "res_" + type + ".out",
