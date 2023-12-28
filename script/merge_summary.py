@@ -40,7 +40,7 @@ build_header = [
     "aveDepth",
     "insert",
     "delete",
-    "k=10",
+    "k",
     "depth",
     "visNum",
     "rangeQuery",
@@ -57,10 +57,18 @@ prefix = [0] * len(files)
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
+        if solver == "zdtree":
+            csvWriter.writerow(
+                [solver, benchName, node, dim] + ["-"] * len(build_header)
+            )
+        elif solver == "cgal":
+            csvWriter.writerow(
+                [solver, benchName, node, dim] + ["T"] * len(build_header)
+            )
         return
     print(P)
     lines = open(P, "r").readlines()
-    if len(lines)==0:
+    if len(lines) == 0:
         return
     sep_lines = []
     for line in lines:
@@ -81,16 +89,6 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
         csvWriter.writerow(
             [solver, benchName, node, dim] + list(map(lambda x: round(x, 3), line))
         )
-
-
-def reorder():
-    if not os.path.isfile("data/summary.csv"):
-        print("No file fonund: " + P)
-        return
-    with open("../script/data/summary.csv", mode="r") as file:
-        csvFile = csv.reader(file)
-        for lines in csvFile:
-            print(lines)
 
 
 def csvSetup(solver):
