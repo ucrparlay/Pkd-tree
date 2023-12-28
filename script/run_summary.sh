@@ -4,7 +4,7 @@
 #     kill $$
 # } &
 
-Solvers=("zdtree")
+Solvers=("test")
 # Solvers=("zdtree" "test" "cgal")
 # Node=(1000000000)
 Node=(100000000 1000000000)
@@ -39,7 +39,6 @@ for solver in ${Solvers[@]}; do
 	fi
 
 	for dim in ${Dim[@]}; do
-
 		if [ ${dim} -gt 3 ] && [ ${solver} == "zdtree" ]; then
 			continue
 		fi
