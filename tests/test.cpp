@@ -104,8 +104,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     } else if ( tag == 2 ) {
       kdknn = new Typename[recNum];
       points Out;
-      rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, summaryRangeQueryType, recNum,
-                            Dim );
+      rangeQueryFix<point>( wp, pkd, kdknn, rounds, Out, 2, recNum, Dim );
     }
 
     delete[] kdknn;

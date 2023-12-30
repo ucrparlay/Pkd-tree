@@ -4,10 +4,10 @@
 #     kill $$
 # } &
 
-Solvers=("test")
+Solvers=("test" "cgal")
 # Solvers=("zdtree" "test" "cgal")
-# Node=(1000000000)
-Node=(100000000 1000000000)
+# Node=(100000000 1000000000)
+Node=(100000000)
 Dim=(2 3 5 9)
 # Dim=(9)
 declare -A datas
@@ -58,7 +58,16 @@ for solver in ${Solvers[@]}; do
 					else
 						rounds=3
 					fi
-					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+
+					timeout 7200s PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+
+					retval=$?
+					if [ ${retval} -eq 124 ]; then
+						echo -e "timeout" >>${dest}
+						echo "timeout ${node}_${dim}"
+					else
+						echo "finish ${node}_${dim}"
+					fi
 				done
 			done
 		done

@@ -204,15 +204,13 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
     range.first = size_t( std::sqrt( n ) );
 
     // NOTE: special handle for large dimension datasets
-    if ( n >= 100000000 )
+    if ( n == 100000000 )
       range.second = n / 100 - 1;
+    else if ( n == 1000000000 )
+      range.second = n / 1000 - 1;
     else
       range.second = n - 1;
-  } else if ( type == 3 ) {
-    range.first = size_t( std::sqrt( n ) );
-    range.second = n / 1000 - 1;
   }
-
   boxs bxs( recNum );
   int cnt = 0;
   points wp( n );
@@ -489,6 +487,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   // using nn_pair = std::pair<point, coord>;
   size_t n = WP.size();
   int LEAVE_WRAP = 32;
+  double loopLate = rounds > 1 ? 1.0 : -0.1;
   node* KDParallelRoot = pkd.get_root();
   points wp = points::uninitialized( n );
   parlay::copy( WP, wp );
@@ -501,7 +500,7 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   parlay::sequence<size_t> visNum( n );
 
   double aveQuery = time_loop(
-      rounds, 1.0,
+      rounds, loopLate,
       [&]() { parlay::parallel_for( 0, n, [&]( size_t i ) { bq[i].reset(); } ); },
       [&]() {
         if ( !flattenTreeTag ) {  //! Ensure pkd.size() == wp.size()

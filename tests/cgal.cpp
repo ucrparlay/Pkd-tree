@@ -269,7 +269,7 @@ testCGALParallel( int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, i
         run_cgal_range_query( type[i] );
       }
     } else {
-      run_cgal_range_query( summaryRangeQueryType );
+      run_cgal_range_query( 2 );
     }
   }
 
