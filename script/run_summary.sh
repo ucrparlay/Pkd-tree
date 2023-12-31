@@ -59,7 +59,8 @@ for solver in ${Solvers[@]}; do
 						rounds=3
 					fi
 
-					timeout 7200s PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+					export PARLAY_NUM_THREADS=192
+					timeout 7200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
 
 					retval=$?
 					if [ ${retval} -eq 124 ]; then
