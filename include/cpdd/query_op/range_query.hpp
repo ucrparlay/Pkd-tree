@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "../kdTreeParallel.h"
 
 namespace cpdd {
@@ -86,21 +87,28 @@ ParallelKDtree<point>::range_query_recursive_serial( node* T, StoreType Out,
                                                      size_t& s,
                                                      const box& queryBox,
                                                      const box& nodeBox ) {
-
   if ( T->is_leaf ) {
     leaf* TL = static_cast<leaf*>( T );
-    for ( int i = 0; i < TL->size; i++ ) {
-      if ( within_box( TL->pts[( !T->is_dummy ) * i], queryBox ) ) {
-        Out[s++] = TL->pts[( !T->is_dummy ) * i];
+    if(T->is_dummy) {
+      if ( within_box( TL->pts[0], queryBox ) ) {
+        for(int i = 0; i < TL->size; i++ ) 
+          Out[s++] = TL->pts[0];
       }
+    }
+    else {
+      for ( int i = 0; i < TL->size; i++ )
+        if ( within_box( TL->pts[i], queryBox ) ) {
+          Out[s++] = TL->pts[i];
+        }
     }
     return;
   }
 
   interior* TI = static_cast<interior*>( T );
-  box lbox( nodeBox ), rbox( nodeBox );
-  lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
-  rbox.first.pnt[TI->split.second] = TI->split.first;
+  //box lbox( nodeBox ), rbox( nodeBox );
+  box abox(nodeBox);
+  //lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+  //rbox.first.pnt[TI->split.second] = TI->split.first;
 
   auto recurse = [&]( node* Ts, const box& bx ) -> void {
     if ( !box_intersect_box( bx, queryBox ) ) {
@@ -115,8 +123,14 @@ ParallelKDtree<point>::range_query_recursive_serial( node* T, StoreType Out,
     }
   };
 
-  recurse( TI->left, lbox );
-  recurse( TI->right, rbox );
+  auto &mod_dim = abox.second.pnt[TI->split.second]; 
+  auto split = TI->split.first;
+  std::swap(mod_dim, split);
+  recurse( TI->left, abox );
+
+  std::swap(mod_dim, split);
+  abox.first.pnt[TI->split.second] = split;
+  recurse( TI->right, abox );
 
   return;
 }
