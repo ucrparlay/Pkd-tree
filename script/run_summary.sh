@@ -4,10 +4,10 @@
 #     kill $$
 # } &
 
-Solvers=("test" "cgal")
+Solvers=("cgal")
 # Solvers=("zdtree" "test" "cgal")
 # Node=(100000000 1000000000)
-Node=(100000000)
+Node=(1000000000)
 Dim=(2 3 5 9)
 # Dim=(9)
 declare -A datas
@@ -52,15 +52,18 @@ for solver in ${Solvers[@]}; do
 				: >${dest}
 				echo ">>>${dest}"
 
+				if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
+					rounds=1
+					insNum=1
+				else
+					rounds=3
+					insNum=2
+				fi
+
 				for ((i = 1; i <= ${insNum}; i++)); do
-					if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
-						rounds=1
-					else
-						rounds=3
-					fi
 
 					export PARLAY_NUM_THREADS=192
-					timeout 7200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+					timeout 11200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
 
 					retval=$?
 					if [ ${retval} -eq 124 ]; then
