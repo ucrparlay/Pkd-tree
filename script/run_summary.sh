@@ -4,10 +4,10 @@
 #     kill $$
 # } &
 
-Solvers=("cgal")
-# Solvers=("zdtree" "test" "cgal")
-# Node=(100000000 1000000000)
-Node=(1000000000)
+# Solvers=("cgal")
+Solvers=("zdtree" "test")
+Node=(100000000 1000000000)
+# Node=(1000000000)
 Dim=(2 3 5 9)
 # Dim=(9)
 declare -A datas
