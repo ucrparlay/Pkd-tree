@@ -10,10 +10,9 @@ storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3]
 
-# type = "batch_update"
+type = "batch_update"
 # type = "querys"
 # type = "quality"
-type = "real_world"
 
 #! order by test order
 files = []
@@ -29,7 +28,7 @@ elif type == "quality":
     solverName = ["test"]
     files = ["build", "increBuild", "decreBuild", "increKNN"]
 elif type == "real_world":
-    solverName = ["test", "zdtree", "cgal"]
+    solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["real_world"]
 
 resMap = {
@@ -102,11 +101,12 @@ prefix = [0] * len(files)
 
 # TODO change order
 
+
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
         return
-
+    print(P)
     lines = open(P, "r").readlines()
     sep_lines = []
     for line in lines:
@@ -117,7 +117,8 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     width = len(file_header[file])
     l = prefix[files.index(file)]
     r = l + width
-    num = 2 if solverName.index(solver)<=2 else 1
+    # num = 2 if solverName.index(solver)<=2 else 1
+    num = len(lines)
     for i in range(0, len(sep_lines), num):
         line = [0] * width
         for j in range(i, num):
@@ -164,13 +165,13 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                     for node in Nodes:
                         P = (
                             path
-                                + "/"
-                                + bench
-                                + "/"
-                                + str(node)
-                                + "_"
-                                + str(dim)
-                                + "/"
-                                + resMap[solver]
+                            + "/"
+                            + bench
+                            + "/"
+                            + str(node)
+                            + "_"
+                            + str(dim)
+                            + "/"
+                            + resMap[solver]
                         )
                         combine(P, file, csvWriter, solver, bench, node, dim)
