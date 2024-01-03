@@ -2,8 +2,8 @@
 #
 # set -o xtrace
 
-Solvers=("zdtree")
-# Solvers=("test" "zdtree" "cgal")
+# Solvers=("zdtree")
+Solvers=("test" "zdtree")
 Node=(100000000)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"

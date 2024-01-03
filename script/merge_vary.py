@@ -10,9 +10,10 @@ storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3]
 
-type = "batch_update"
+# type = "batch_update"
 # type = "querys"
 # type = "quality"
+type = "count"
 
 #! order by test order
 files = []
@@ -30,6 +31,10 @@ elif type == "quality":
 elif type == "real_world":
     solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["real_world"]
+elif type == "count":
+    solverName = ["test"]
+    files = ["count"]
+    Dims = [2,3,5,9]
 
 resMap = {
     "test": "res_" + type + ".out",
@@ -99,14 +104,11 @@ file_header = {
 
 prefix = [0] * len(files)
 
-# TODO change order
-
-
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
         return
-    print(P)
+
     lines = open(P, "r").readlines()
     sep_lines = []
     for line in lines:
