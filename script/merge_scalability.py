@@ -15,15 +15,6 @@ path = "../benchmark"
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
 
-
-def csvSetup(solver):
-    csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
-    csvFilePointer.truncate()
-    csvWriter = csv.writer(csvFilePointer)
-    csvWriter.writerow(header)
-    return csvWriter
-
-
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
     Nodes = [100000000]
     cores = [1, 2, 4, 8, 16, 24, 48, 96, 192]

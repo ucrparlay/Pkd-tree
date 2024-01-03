@@ -33,8 +33,8 @@ elif type == "real_world":
     files = ["real_world"]
 elif type == "count":
     solverName = ["test"]
-    files = ["count"]
-    Dims = [2,3,5,9]
+    files = ["build", "count"]
+    Dims = [2, 3, 5, 9]
 
 resMap = {
     "test": "res_" + type + ".out",
@@ -103,6 +103,7 @@ file_header = {
 }
 
 prefix = [0] * len(files)
+
 
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
