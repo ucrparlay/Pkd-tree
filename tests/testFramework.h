@@ -10,7 +10,8 @@
 #include "common/time_loop.h"
 #include "parlay/primitives.h"
 
-using coord = long;
+// using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
