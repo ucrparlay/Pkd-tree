@@ -33,9 +33,9 @@ template<typename point>
 struct ParallelKDtree<point>::leaf : node {
   points pts;
   leaf() : node{ true, false, static_cast<size_t>( 0 ), nullptr } {};
-  leaf( slice In ) :
-      node{ true, false, static_cast<size_t>( In.size() ), nullptr } {
-    pts = points::uninitialized( LEAVE_WRAP );
+  leaf( slice In ) : node{ true, false, static_cast<size_t>( In.size() ), nullptr } {
+    // pts = points::uninitialized( LEAVE_WRAP );
+    pts = points::uninitialized( In.size() );
     for ( int i = 0; i < In.size(); i++ ) {
       pts[i] = In[i];
     }
@@ -91,8 +91,7 @@ ParallelKDtree<point>::alloc_empty_leaf() {
 
 template<typename point>
 typename ParallelKDtree<point>::interior*
-ParallelKDtree<point>::alloc_interior_node( node* L, node* R,
-                                            const splitter& split ) {
+ParallelKDtree<point>::alloc_interior_node( node* L, node* R, const splitter& split ) {
   interior* o = parlay::type_allocator<interior>::alloc();
   new ( o ) interior( L, R, split );
   return std::move( o );

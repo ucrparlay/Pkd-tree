@@ -191,7 +191,11 @@ ParallelKDtree<point>::serial_build_recursive( slice In, slice Out, dim_type dim
               ( diffEleIter = std::ranges::find_if_not( In, [&]( const point& p ) {
                   return p.sameDimension( In[0] );
                 } ) ) ) {  //* check whether all elements are identical
-    return alloc_dummy_leaf( In );
+    if ( In.begin()->id == In.rbegin()->id ) {
+      return alloc_dummy_leaf( In );
+    } else {
+      return alloc_leaf_node( In );
+    }
   } else {  //* current dim d is same but other dims are not
     if ( _split_rule == MAX_STRETCH_DIM ) {  //* next recursion redirects to new dim
       return serial_build_recursive( In, Out, d, DIM, get_box( In ) );

@@ -77,9 +77,9 @@ if(JEMA)
 	target_link_libraries(test PUBLIC libjemalloc.so)
 endif()
 
-add_executable(data_generator ${PROJECT_SOURCE_DIR}/tests/data_generate.cpp)
-target_link_libraries(data_generator PUBLIC kdTreeParallel)
-target_include_directories(data_generator PUBLIC ${PROJECT_SOURCE_DIR}/include)
+# add_executable(data_generator ${PROJECT_SOURCE_DIR}/tests/data_generate.cpp)
+# target_link_libraries(data_generator PUBLIC kdTreeParallel)
+# target_include_directories(data_generator PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 # CGAL
 if(CGAL)
@@ -106,12 +106,12 @@ if(CGAL)
 	list(APPEND CGAL_3RD_PARTY_LIBRARIES ${TBB_LIBRARIES})
 
 	# executables
-	add_executable(cgal ${PROJECT_SOURCE_DIR}/tests/cgal.cpp)
-	target_link_libraries(cgal PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
-	target_include_directories(cgal PUBLIC ${PROJECT_SOURCE_DIR}/include )
-
-	add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
-	target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
+	# add_executable(cgal ${PROJECT_SOURCE_DIR}/tests/cgal.cpp)
+	# target_link_libraries(cgal PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
+	# target_include_directories(cgal PUBLIC ${PROJECT_SOURCE_DIR}/include )
+	#
+	# add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
+	# target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 endif()
 
 FIND_PROGRAM(CLANG_FORMAT "clang-format")
