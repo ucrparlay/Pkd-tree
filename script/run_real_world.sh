@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test" "cgal")
+Solvers=("test" "zdtree" "cgal")
 DataPath="/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["Cosmo50"]="3"
@@ -20,33 +20,33 @@ type="real_world"
 resFile=""
 
 for solver in ${Solvers[@]}; do
-  exe="../build/${solver}"
+	exe="../build/${solver}"
 
-  #* decide output file
-  if [[ ${solver} == "test" ]]; then
-    resFile="res_${type}.out"
-  elif [[ ${solver} == "cgal" ]]; then
-    resFile="cgal_${type}.out"
-  elif [[ ${solver} == "zdtree" ]]; then
-    resFile="zdtree_${type}.out"
-    exe="/home/zmen002/pbbsbench_x/build/zdtree"
-  fi
+	#* decide output file
+	if [[ ${solver} == "test" ]]; then
+		resFile="res_${type}.out"
+	elif [[ ${solver} == "cgal" ]]; then
+		resFile="cgal_${type}.out"
+	elif [[ ${solver} == "zdtree" ]]; then
+		resFile="zdtree_${type}.out"
+		exe="/home/zmen002/pbbsbench_x/build/zdtree"
+	fi
 
-  log_path="../benchmark/real_world"
-  mkdir -p ${log_path}
-  dest="${log_path}/${resFile}"
-  : >${dest}
-  echo ">>>${dest}"
+	log_path="../benchmark/real_world"
+	mkdir -p ${log_path}
+	dest="${log_path}/${resFile}"
+	: >${dest}
+	echo ">>>${dest}"
 
-  for filename in "${!file2Dims[@]}"; do
-    if [ ${solver} == "zdtree" ] && [ ${file2Dims[${filename}]} -gt "3" ]; then
-      continue
-    fi
-    echo ${filename}
+	for filename in "${!file2Dims[@]}"; do
+		if [ ${solver} == "zdtree" ] && [ ${file2Dims[${filename}]} -gt "3" ]; then
+			continue
+		fi
+		echo ${filename}
 
-    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} >>${dest}
+		PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} >>${dest}
 
-  done
+	done
 done
 
 current_date_time="$(date "+%d %H:%M:%S")"
