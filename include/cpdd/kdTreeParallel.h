@@ -13,7 +13,8 @@ template<typename point>
 class ParallelKDtree {
  public:
   using bucket_type = uint_fast8_t;
-  using balls_type = uint_fast32_t;
+  // using balls_type = uint_fast32_t;
+  using balls_type = uint_fast64_t;
   using dim_type = uint_fast8_t;
 
   using coord = typename point::coord;
@@ -201,7 +202,8 @@ class ParallelKDtree {
 
   size_t countTreeNodesNum( node* T );
 
-  void countTreeHeights( node* T, int deep, int& idx, parlay::sequence<int>& heights );
+  void countTreeHeights( node* T, size_t deep, size_t& idx,
+                         parlay::sequence<size_t>& heights );
 
   //@ kdtree interfaces
   inline void

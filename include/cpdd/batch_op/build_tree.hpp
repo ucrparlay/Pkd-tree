@@ -9,6 +9,7 @@ void
 ParallelKDtree<point>::build( slice A, const dim_type DIM ) {
   points B = points::uninitialized( A.size() );
   this->bbox = get_box( A );
+  LOG << A.size() << A[0] << ENDL;
   this->root = build_recursive( A, B.cut( 0, A.size() ), 0, DIM, this->bbox );
   assert( this->root != nullptr );
   return;
@@ -110,22 +111,24 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t n,
   for ( size_t i = 0; i < num_block; i++ ) {
     auto t = offset[i];
     offset[i] = sums;
-    for ( int j = 0; j < BUCKET_NUM; j++ ) {
+    for ( bucket_type j = 0; j < BUCKET_NUM; j++ ) {
       sums[j] += t[j];
     }
   }
 
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
     auto v = parlay::sequence<balls_type>::uninitialized( BUCKET_NUM );
-    int tot = 0, s_offset = 0;
-    for ( int k = 0; k < BUCKET_NUM - 1; k++ ) {
+    size_t tot = 0, s_offset = 0;
+    for ( bucket_type k = 0; k < BUCKET_NUM - 1; k++ ) {
       v[k] = tot + offset[i][k];
       tot += sums[k];
       s_offset += offset[i][k];
     }
     v[BUCKET_NUM - 1] = tot + ( ( i << LOG2_BASE ) - s_offset );
     for ( size_t j = i << LOG2_BASE; j < std::min( ( i + 1 ) << LOG2_BASE, n ); j++ ) {
-      B[v[std::move( find_bucket( A[j], pivots ) )]++] = A[j];
+      uint_fast8_t k = find_bucket( A[j], pivots );
+      // B[v[std::move( find_bucket( A[j], pivots ) )]++] = A[j];
+      B[v[k]++] = A[j];
     }
   } );
 

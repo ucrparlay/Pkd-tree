@@ -32,8 +32,7 @@ ParallelKDtree<point>::checkSize( node* T ) {
 
 template<typename point>
 void
-ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim,
-                                                const int& DIM ) {
+ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim, const int& DIM ) {
   if ( T->is_leaf ) {
     assert( pick_rebuild_dim( T, DIM ) == dim );
     return;
@@ -93,8 +92,8 @@ ParallelKDtree<point>::getMaxTreeDepth( node* T, size_t deep ) {
 template<typename point>
 double
 ParallelKDtree<point>::getAveTreeHeight() {
-  parlay::sequence<int> heights( this->root->size );
-  int idx = 0;
+  parlay::sequence<size_t> heights( this->root->size );
+  size_t idx = 0;
   countTreeHeights( this->root, 0, idx, heights );
   // auto kv = parlay::histogram_by_key( heights.cut( 0, idx ) );
   // std::sort( kv.begin(), kv.end(),
@@ -120,8 +119,8 @@ ParallelKDtree<point>::countTreeNodesNum( node* T ) {
 
 template<typename point>
 void
-ParallelKDtree<point>::countTreeHeights( node* T, int deep, int& idx,
-                                         parlay::sequence<int>& heights ) {
+ParallelKDtree<point>::countTreeHeights( node* T, size_t deep, size_t& idx,
+                                         parlay::sequence<size_t>& heights ) {
   if ( T->is_leaf ) {
     heights[idx++] = deep;
     return;

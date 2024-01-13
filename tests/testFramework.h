@@ -10,7 +10,7 @@
 #include "common/time_loop.h"
 #include "parlay/primitives.h"
 
-// using coord = long;
+// using coord = long long;
 using coord = double;
 using Typename = coord;
 using namespace cpdd;
@@ -102,7 +102,7 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K,
   static coords samplePoint;
   parlay::sequence<char> S = readStringFromFile( iFile );
   parlay::sequence<char*> W = stringToWords( S );
-  size_t N = atol( W[0] );
+  size_t N = std::stoul( W[0], nullptr, 10 );
   int Dim = atoi( W[1] );
   assert( N >= 0 && Dim >= 1 && N >= K );
 
@@ -111,9 +111,9 @@ read_points( const char* iFile, parlay::sequence<point>& wp, int K,
   size_t n = pts.size() / Dim;
   auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {
     if constexpr ( std::is_integral_v<coord> )
-      return atol( pts[i] );
+      return std::stol( pts[i] );
     else if ( std::is_floating_point_v<coord> )
-      return atof( pts[i] );
+      return std::stod( pts[i] );
   } );
   wp.resize( N );
   parlay::parallel_for( 0, n, [&]( size_t i ) {

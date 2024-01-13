@@ -36,7 +36,7 @@ struct PointType {
   inline const PointType
   minCoords( const PointType& b ) const {
     coords pts;
-    for ( int i = 0; i < d; i++ ) {
+    for ( uint_fast8_t i = 0; i < d; i++ ) {
       pts[i] = Num::min( pnt[i], b.pnt[i] );
     }
     return std::move( PointType( pts ) );
@@ -45,7 +45,7 @@ struct PointType {
   inline const PointType
   maxCoords( const PointType& b ) const {
     coords pts;
-    for ( int i = 0; i < d; i++ ) {
+    for ( uint_fast8_t i = 0; i < d; i++ ) {
       pts[i] = Num::max( pnt[i], b.pnt[i] );
     }
     return std::move( PointType( pts ) );
