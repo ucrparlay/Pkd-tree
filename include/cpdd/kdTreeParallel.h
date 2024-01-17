@@ -92,7 +92,7 @@ class ParallelKDtree {
   static inline bool circle_intersect_box( const circle& cl, const box& bx );
 
   //@ dimensionality
-  inline dim_type pick_rebuild_dim( const node* T, const dim_type DIM );
+  inline dim_type pick_rebuild_dim( const node* T, const dim_type d, const dim_type DIM );
   static inline dim_type pick_max_stretch_dim( const box& bx, const dim_type DIM );
 
   //@ Parallel KD tree cores
@@ -134,11 +134,11 @@ class ParallelKDtree {
   static void delete_simple_tree_recursive( simple_node* T );
 
   //@ batch insert
-  node* rebuild_with_insert( node* T, slice In, const dim_type DIM );
+  node* rebuild_with_insert( node* T, slice In, const dim_type d, const dim_type DIM );
   static inline void update_interior( node* T, node* L, node* R );
   void batchInsert( slice In, const dim_type DIM );
-  node* serial_insert_recursive( node* T, slice In, slice Out, const dim_type DIM );
-  node* batchInsert_recusive( node* T, slice In, slice Out, const dim_type DIM );
+  node* batchInsert_recusive( node* T, slice In, slice Out, dim_type d,
+                              const dim_type DIM );
 
   //@ batch delete
   node_box rebuild_after_delete( node* T, const dim_type DIM );

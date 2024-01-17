@@ -70,6 +70,16 @@ struct ParallelKDtree<point>::InnerTree {
     return;
   }
 
+  dim_type
+  get_depth_by_index( bucket_type tag ) {
+    dim_type h = 0;
+    while ( tag > 1 ) {
+      tag >>= 1;
+      ++h;
+    }
+    return h;
+  }
+
   void
   pick_tag( bucket_type idx ) {
     if ( idx > PIVOT_NUM || tags[idx].first->is_leaf ) {

@@ -5,16 +5,12 @@
 namespace cpdd {
 template<typename point>
 inline ParallelKDtree<point>::dim_type
-ParallelKDtree<point>::pick_rebuild_dim( const node* T, const dim_type DIM ) {
+ParallelKDtree<point>::pick_rebuild_dim( const node* T, const dim_type d,
+                                         const dim_type DIM ) {
   if ( this->_split_rule == MAX_STRETCH_DIM ) {
     return 0;
   } else if ( this->_split_rule == ROTATE_DIM ) {
-    if ( T == this->root ) {
-      return 0;
-    } else {
-      assert( !( T->parent->is_leaf ) );
-      return ( static_cast<interior*>( T->parent )->split.second + 1 ) % DIM;
-    }
+    return d;
   } else {
     // WARN: customize it before using
     return 0;
