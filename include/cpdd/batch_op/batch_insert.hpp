@@ -126,19 +126,19 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out, dim_t
         for ( int j = 0; j < i; j++ ) {
           s += IT.sums_tree[IT.rev_tag[j]];
         }
-        // TODO: start here
-        dim_type h = IT.get_depth_by_index( i );
 
-        if ( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 ) {  //* continue sieve
+        dim_type curDim = ( d + IT.get_depth_by_index( IT.rev_tag[i] ) ) % DIM;
+        if ( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 ) {  // NOTE: continue sieve
           treeNodes[i] = batchInsert_recusive(
               IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
-              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), DIM );
-        } else {  //* launch rebuild subtree
+              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), d, DIM );
+        } else {  // NOTE: launch rebuild subtree
           assert( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 2 );
           assert( IT.tags[IT.rev_tag[i]].first->size + IT.sums_tree[IT.rev_tag[i]] >= 0 );
-          treeNodes[i] =
-              rebuild_with_insert( IT.tags[IT.rev_tag[i]].first,
-                                   Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), DIM );
+
+          treeNodes[i] = rebuild_with_insert(
+              IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
+              curDim, DIM );
         }
       },
       1 );

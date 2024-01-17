@@ -65,8 +65,6 @@ ParallelKDtree<point>::update_interior( typename ParallelKDtree<point>::node* T,
   TI->size = L->size + R->size;
   TI->left = L;
   TI->right = R;
-  L->parent = T;
-  R->parent = T;
   return;
 }
 

@@ -138,7 +138,7 @@ struct ParallelKDtree<point>::InnerTree {
 
   void
   tag_inbalance_node_deletion( bool hasTomb ) {
-    reduce_sums( 1 );
+    // reduce_sums( 1 );
     reset_tags_num();
     mark_tomb( 1, hasTomb );
     assert( assert_size( tags[1].first ) );

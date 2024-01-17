@@ -141,13 +141,14 @@ class ParallelKDtree {
                               const dim_type DIM );
 
   //@ batch delete
-  node_box rebuild_after_delete( node* T, const dim_type DIM );
+  node_box rebuild_after_delete( node* T, const dim_type d, const dim_type DIM );
   void batchDelete( slice In, const dim_type DIM );
-  node_box batchDelete_recursive( node* T, slice In, slice Out, const dim_type DIM,
-                                  bool hasTomb );
+  node_box batchDelete_recursive( node* T, slice In, slice Out, dim_type d,
+                                  const dim_type DIM, bool hasTomb );
   node_box delete_inner_tree( bucket_type idx, const node_tags& tags,
                               parlay::sequence<node_box>& treeNodes, bucket_type& p,
-                              const tag_nodes& rev_tag, const dim_type DIM );
+                              const tag_nodes& rev_tag, const dim_type d,
+                              const dim_type DIM );
 
   //@ query stuffs
 
