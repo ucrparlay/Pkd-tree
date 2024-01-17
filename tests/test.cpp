@@ -60,6 +60,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       int k[3] = { 1, 10, 100 };
       for ( int i = 0; i < 3; i++ ) {
         queryKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
+        // veryLargeKNN<point>( Dim, wp, rounds, pkd, kdknn, k[i], false );
       }
     } else {  // test summary
       queryKNN<point>( Dim, wp, rounds, pkd, kdknn, K, false );

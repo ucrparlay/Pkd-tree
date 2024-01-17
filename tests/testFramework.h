@@ -8,7 +8,10 @@
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
 #include "common/time_loop.h"
+#include "parlay/internal/group_by.h"
+#include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/slice.h"
 
 // using coord = long long;
 using coord = double;
@@ -269,12 +272,13 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   using points = typename tree::points;
   using node = typename tree::node;
 
+  double loopLate = rounds > 1 ? 1.0 : -0.1;
   size_t n = WP.size();
   points wp = points::uninitialized( n );
   pkd.delete_tree();
 
   double aveBuild = time_loop(
-      rounds, 1.0, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
+      rounds, loopLate, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
       [&]() { pkd.build( wp.cut( 0, n ), Dim ); }, [&]() { pkd.delete_tree(); } );
 
   //* return a built tree
@@ -509,11 +513,17 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
         }
         auto bx = pkd.get_root_box();
         double aveVisNum = 0.0;
+        // parlay::sequence<size_t> cnt( parlay::num_workers() );
         parlay::parallel_for( 0, n, [&]( size_t i ) {
           size_t visNodeNum = 0;
           pkd.k_nearest( KDParallelRoot, wp[i], Dim, bq[i], bx, visNodeNum );
           kdknn[i] = bq[i].top().second;
           visNum[i] = visNodeNum;
+          // cnt[parlay::worker_id()]++;
+          // if ( i % 1000000 == 0 ) {  // 345590000
+          //   auto sum_cnt = parlay::reduce( cnt );
+          //   LOG << 100.0 * sum_cnt / n << '%' << ENDL;
+          // }
         } );
       },
       [&]() {} );

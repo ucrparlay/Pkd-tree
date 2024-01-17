@@ -87,35 +87,6 @@ template<typename point>
 template<typename StoreType>
 void
 ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
-                                  kBoundedQueue<point, StoreType>& bq,
-                                  size_t& visNodeNum ) {
-  visNodeNum++;
-
-  if ( T->is_leaf ) {
-    leaf* TL = static_cast<leaf*>( T );
-    for ( int i = 0; i < TL->size; i++ ) {
-      bq.insert(
-          std::make_pair( std::ref( TL->pts[( !T->is_dummy ) * i] ),
-                          p2p_distance( q, TL->pts[( !T->is_dummy ) * i], DIM ) ) );
-    }
-    return;
-  }
-
-  interior* TI = static_cast<interior*>( T );
-  auto dx = [&]() -> coord { return TI->split.first - q.pnt[TI->split.second]; };
-
-  k_nearest( Num::Gt( dx(), 0 ) ? TI->left : TI->right, q, DIM, bq, visNodeNum );
-  // TODO change to compare arbirtrary box
-  if ( Num::Gt( dx() * dx(), bq.top().second ) && bq.full() ) {
-    return;
-  }
-  k_nearest( Num::Gt( dx(), 0 ) ? TI->right : TI->left, q, DIM, bq, visNodeNum );
-}
-
-template<typename point>
-template<typename StoreType>
-void
-ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
                                   kBoundedQueue<point, StoreType>& bq, const box& nodeBox,
                                   size_t& visNodeNum ) {
   visNodeNum++;
@@ -132,9 +103,10 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
     while ( i < TL->size ) {
       coord r =
           interruptible_distance( q, TL->pts[( !T->is_dummy ) * i], bq.top_value(), DIM );
-      if ( Num::Leq( r, bq.top_value() ) ) {
+      if ( Num::Lt( r, bq.top_value() ) ) {
         bq.insert( std::make_pair( std::ref( TL->pts[( !T->is_dummy ) * i] ), r ) );
-      }
+      } else if ( TL->is_dummy )
+        break;
       i++;
     }
     return;
