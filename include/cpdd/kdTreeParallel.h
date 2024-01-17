@@ -13,8 +13,8 @@ template<typename point>
 class ParallelKDtree {
  public:
   using bucket_type = uint_fast8_t;
-  // using balls_type = uint_fast32_t;
-  using balls_type = uint_fast64_t;
+  using balls_type = uint_fast32_t;
+  // using balls_type = uint_fast64_t;
   using dim_type = uint_fast8_t;
 
   using coord = typename point::coord;

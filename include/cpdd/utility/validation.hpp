@@ -123,11 +123,6 @@ ParallelKDtree<point>::countTreeHeights( node* T, size_t deep, size_t& idx,
                                          parlay::sequence<size_t>& heights ) {
   if ( T->is_leaf ) {
     heights[idx++] = deep;
-    if ( T->is_dummy ) {
-      leaf* TL = static_cast<leaf*>( T );
-      if ( Num::Eq( TL->pts[0].pnt[0], 0 ) && Num::Eq( TL->pts[0].pnt[1], 0 ) )
-        LOG << TL->pts[0] << " " << TL->size << ENDL;
-    }
     return;
   }
   interior* TI = static_cast<interior*>( T );

@@ -22,7 +22,7 @@ ParallelKDtree<point>::rebuild_after_delete( node* T, const dim_type DIM ) {
   points wx = points::uninitialized( T->size );
   uint_fast8_t d = pick_rebuild_dim( T, DIM );
   flatten( T, wx.cut( 0, T->size ), false );
-  delete_tree_recursive( T, false );  // FIXME: enable granularity control after deletion
+  delete_tree_recursive( T, false );  // WARN: enable granularity control after deletion
   box bx = get_box( parlay::make_slice( wx ) );
   node* o =
       build_recursive( parlay::make_slice( wx ), parlay::make_slice( wo ), d, DIM, bx );
@@ -52,7 +52,7 @@ ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
     if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
       delete_tree_recursive( tags[idx].first,
-                             false );  // FIXME: enable granularity control
+                             false );  // WARN: enable granularity control
       return node_box( alloc_empty_leaf(), get_empty_box() );
     }
     return rebuild_after_delete( tags[idx].first, DIM );
