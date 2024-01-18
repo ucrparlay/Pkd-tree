@@ -54,10 +54,7 @@ struct ParallelKDtree<point>::interior : node {
       node{ false, false, _left->size + _right->size },
       left( _left ),
       right( _right ),
-      split( _split ) {
-    left->parent = this;
-    right->parent = this;
-  }
+      split( _split ) {}
 };
 
 template<typename point>

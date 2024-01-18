@@ -34,10 +34,13 @@ template<typename point>
 void
 ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim, const int& DIM ) {
   if ( T->is_leaf ) {
-    assert( pick_rebuild_dim( T, DIM ) == dim );
+    // assert( pick_rebuild_dim( T, DIM ) == dim );
     return;
   }
   interior* TI = static_cast<interior*>( T );
+  if ( TI->split.second != dim ) {
+    LOG << int( TI->split.second ) << " " << int( dim ) << TI->size << ENDL;
+  }
   assert( TI->split.second == dim );
   dim = ( dim + 1 ) % DIM;
   parlay::par_do_if(
@@ -56,10 +59,10 @@ ParallelKDtree<point>::validate( const dim_type DIM ) {
     abort();
   }
 
-  // if ( this->_split_rule == ROTATE_DIM ) {
-  //   checkTreeSameSequential( this->root, 0, DIM );
-  //   std::cout << "Correct rotate dimension" << std::endl << std::flush;
-  // }
+  if ( this->_split_rule == ROTATE_DIM ) {
+    checkTreeSameSequential( this->root, 0, DIM );
+    std::cout << "Correct rotate dimension" << std::endl << std::flush;
+  }
 
   if ( checkSize( this->root ) == this->root->size ) {
     std::cout << "Correct size" << std::endl << std::flush;

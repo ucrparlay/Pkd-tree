@@ -121,13 +121,13 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out, dim_
     hasTomb = putTomb ? false : hasTomb;
     assert( putTomb ? ( !hasTomb ) : true );
 
-    d = ( d + 1 ) % DIM;
+    dim_type nextDim = ( d + 1 ) % DIM;
     auto [L, Lbox] = batchDelete_recursive(
         TI->left, In.cut( 0, _2ndGroup.begin() - In.begin() ),
-        Out.cut( 0, _2ndGroup.begin() - In.begin() ), d, DIM, hasTomb );
+        Out.cut( 0, _2ndGroup.begin() - In.begin() ), nextDim, DIM, hasTomb );
     auto [R, Rbox] = batchDelete_recursive(
         TI->right, In.cut( _2ndGroup.begin() - In.begin(), n ),
-        Out.cut( _2ndGroup.begin() - In.begin(), n ), d, DIM, hasTomb );
+        Out.cut( _2ndGroup.begin() - In.begin(), n ), nextDim, DIM, hasTomb );
     update_interior( T, L, R );
     assert( T->size == L->size + R->size && TI->split.second >= 0 &&
             TI->is_leaf == false );
@@ -159,10 +159,10 @@ ParallelKDtree<point>::batchDelete_recursive( node* T, slice In, slice Out, dim_
           start += IT.sums[j];
         }
 
-        dim_type curDim = ( d + IT.get_depth_by_index( IT.rev_tag[i] ) ) % DIM;
+        dim_type nextDim = ( d + IT.get_depth_by_index( IT.rev_tag[i] ) ) % DIM;
         treeNodes[i] = batchDelete_recursive(
             IT.tags[IT.rev_tag[i]].first, Out.cut( start, start + IT.sums[i] ),
-            In.cut( start, start + IT.sums[i] ), curDim, DIM,
+            In.cut( start, start + IT.sums[i] ), nextDim, DIM,
             IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 );
       },
       1 );

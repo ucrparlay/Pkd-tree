@@ -127,18 +127,18 @@ ParallelKDtree<point>::batchInsert_recusive( node* T, slice In, slice Out, dim_t
           s += IT.sums_tree[IT.rev_tag[j]];
         }
 
-        dim_type curDim = ( d + IT.get_depth_by_index( IT.rev_tag[i] ) ) % DIM;
+        dim_type nextDim = ( d + IT.get_depth_by_index( IT.rev_tag[i] ) ) % DIM;
         if ( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1 ) {  // NOTE: continue sieve
           treeNodes[i] = batchInsert_recusive(
               IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
-              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), d, DIM );
+              In.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ), nextDim, DIM );
         } else {  // NOTE: launch rebuild subtree
           assert( IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 2 );
           assert( IT.tags[IT.rev_tag[i]].first->size + IT.sums_tree[IT.rev_tag[i]] >= 0 );
 
           treeNodes[i] = rebuild_with_insert(
               IT.tags[IT.rev_tag[i]].first, Out.cut( s, s + IT.sums_tree[IT.rev_tag[i]] ),
-              curDim, DIM );
+              nextDim, DIM );
         }
       },
       1 );
