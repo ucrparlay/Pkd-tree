@@ -112,7 +112,7 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t n,
   for ( size_t i = 0; i < num_block; i++ ) {
     auto t = offset[i];
     offset[i] = sums;
-    for ( bucket_type j = 0; j < BUCKET_NUM; j++ ) {
+    for ( bucket_type j = 0; j < BUCKET_NUM; ++j ) {
       sums[j] += t[j];
     }
   }
@@ -120,7 +120,7 @@ ParallelKDtree<point>::partition( slice A, slice B, const size_t n,
   parlay::parallel_for( 0, num_block, [&]( size_t i ) {
     auto v = parlay::sequence<balls_type>::uninitialized( BUCKET_NUM );
     size_t tot = 0, s_offset = 0;
-    for ( bucket_type k = 0; k < BUCKET_NUM - 1; k++ ) {
+    for ( bucket_type k = 0; k < BUCKET_NUM - 1; ++k ) {
       v[k] = tot + offset[i][k];
       tot += sums[k];
       s_offset += offset[i][k];
@@ -275,9 +275,9 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
   auto nodesMap = parlay::sequence<bucket_type>::uninitialized( BUCKET_NUM );
 
   bucket_type zeros = 0, cnt = 0;
-  for ( bucket_type i = 0; i < BUCKET_NUM; i++ ) {
+  for ( bucket_type i = 0; i < BUCKET_NUM; ++i ) {
     if ( !sums[i] ) {
-      zeros++;
+      ++zeros;
       treeNodes[i] = alloc_empty_leaf();
     } else {
       nodesMap[cnt++] = i;
@@ -295,7 +295,7 @@ ParallelKDtree<point>::build_recursive( slice In, slice Out, dim_type dim,
       0, BUCKET_NUM - zeros,
       [&]( bucket_type i ) {
         size_t start = 0;
-        for ( bucket_type j = 0; j < nodesMap[i]; j++ ) {
+        for ( bucket_type j = 0; j < nodesMap[i]; ++j ) {
           start += sums[j];
         }
 

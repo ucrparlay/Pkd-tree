@@ -1,6 +1,7 @@
 #!/bin/bash
 
-Nodes=(1000000 5000000 8000000 10000000 50000000)
+# Nodes=(1000000 5000000 8000000 10000000 50000000)
+Nodes=(1000000 5000000 8000000 10000000)
 
 K=100
 tester="checkCorrectParallel"
@@ -14,7 +15,7 @@ dim=5
 queryTypes=(0 1 2)
 
 # Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
-Paths=("/localdata/zmen002/kdtree/ss_varden/" "/localdata/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/ss_varden/" "/ssd0/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for queryType in ${queryTypes[@]}; do

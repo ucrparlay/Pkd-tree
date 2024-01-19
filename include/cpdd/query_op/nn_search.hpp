@@ -10,10 +10,10 @@ inline typename ParallelKDtree<point>::coord
 ParallelKDtree<point>::p2p_distance( const point& p, const point& q,
                                      const dim_type DIM ) {
   coord r = 0;
-  for ( dim_type i = 0; i < DIM; i++ ) {
+  for ( dim_type i = 0; i < DIM; ++i ) {
     r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
   }
-  return std::move( r );
+  return r;
 }
 
 //* distance between a point and a box
@@ -23,7 +23,7 @@ ParallelKDtree<point>::p2b_min_distance( const point& p,
                                          const typename ParallelKDtree<point>::box& a,
                                          const dim_type DIM ) {
   coord r = 0;
-  for ( dim_type i = 0; i < DIM; i++ ) {
+  for ( dim_type i = 0; i < DIM; ++i ) {
     if ( Num::Lt( p.pnt[i], a.first.pnt[i] ) ) {
       r += ( a.first.pnt[i] - p.pnt[i] ) * ( a.first.pnt[i] - p.pnt[i] );
     } else if ( Num::Gt( p.pnt[i], a.second.pnt[i] ) ) {
@@ -39,7 +39,7 @@ ParallelKDtree<point>::p2b_max_distance( const point& p,
                                          const typename ParallelKDtree<point>::box& a,
                                          const dim_type DIM ) {
   coord r = 0;
-  for ( dim_type i = 0; i < DIM; i++ ) {
+  for ( dim_type i = 0; i < DIM; ++i ) {
     if ( Num::Lt( p.pnt[i], ( a.second.pnt[i] + a.first.pnt[i] ) / 2 ) ) {
       r += ( a.second.pnt[i] - p.pnt[i] ) * ( a.second.pnt[i] - p.pnt[i] );
     } else {
@@ -60,13 +60,13 @@ ParallelKDtree<point>::interruptible_distance( const point& p, const point& q, c
   if ( DIM >= 6 ) {
     while ( 1 ) {
       r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
-      i++;
+      ++i;
       r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
-      i++;
+      ++i;
       r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
-      i++;
+      ++i;
       r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
-      i++;
+      ++i;
 
       if ( Num::Gt( r, up ) ) {
         return r;
@@ -78,7 +78,7 @@ ParallelKDtree<point>::interruptible_distance( const point& p, const point& q, c
   }
   while ( i < DIM ) {
     r += ( p.pnt[i] - q.pnt[i] ) * ( p.pnt[i] - q.pnt[i] );
-    i++;
+    ++i;
   }
   return r;
 }

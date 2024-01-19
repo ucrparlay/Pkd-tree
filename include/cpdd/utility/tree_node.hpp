@@ -32,15 +32,18 @@ template<typename point>
 struct ParallelKDtree<point>::leaf : node {
   points pts;
   leaf() : node{ true, false, static_cast<size_t>( 0 ) } {};
-  leaf( slice In ) : node{ true, false, static_cast<size_t>( In.size() ) } {
-    pts = points::uninitialized( LEAVE_WRAP );
+  leaf( slice In ) :
+      node{ true, false, static_cast<size_t>( In.size() ) },
+      pts( points::uninitialized( LEAVE_WRAP ) ) {
+    // pts = points::uninitialized( LEAVE_WRAP );
     for ( int i = 0; i < In.size(); i++ ) {
       pts[i] = In[i];
     }
   }
   leaf( slice In, bool _is_dummy ) :
-      node{ true, true, static_cast<size_t>( In.size() ) } {
-    pts = points::uninitialized( 1 );
+      node{ true, true, static_cast<size_t>( In.size() ) },
+      pts( points::uninitialized( 1 ) ) {
+    // pts = points::uninitialized( 1 );
     pts[0] = In[0];
   }
 };

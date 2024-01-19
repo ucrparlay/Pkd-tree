@@ -72,9 +72,8 @@ template<typename point>
 uint_fast8_t
 ParallelKDtree<point>::retrive_tag( const point& p, const node_tags& tags ) {
   uint_fast8_t k = 1;
-  interior* TI;
   while ( k <= PIVOT_NUM && ( !tags[k].first->is_leaf ) ) {
-    TI = static_cast<interior*>( tags[k].first );
+    interior* TI = static_cast<interior*>( tags[k].first );
     k = Num::Lt( p.pnt[TI->split.second], TI->split.first ) ? k << 1 : k << 1 | 1;
   }
   assert( tags[k].second < BUCKET_NUM );
@@ -98,6 +97,7 @@ ParallelKDtree<point>::seieve_points( slice A, slice B, const size_t n,
     }
   } );
 
+  // PERF: bottlnect when n is large
   sums = parlay::sequence<balls_type>( tagsNum );
   for ( size_t i = 0; i < num_block; i++ ) {
     auto t = offset[i];

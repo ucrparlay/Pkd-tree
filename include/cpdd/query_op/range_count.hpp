@@ -7,18 +7,15 @@ namespace cpdd {
 /*TODO range count */
 template<typename point>
 size_t
-ParallelKDtree<point>::range_count(
-    const typename ParallelKDtree<point>::box& bx, size_t& visLeafNum,
-    size_t& visInterNum ) {
-  return range_count_rectangle( this->root, bx, this->bbox, visLeafNum,
-                                visInterNum );
+ParallelKDtree<point>::range_count( const typename ParallelKDtree<point>::box& bx,
+                                    size_t& visLeafNum, size_t& visInterNum ) {
+  return range_count_rectangle( this->root, bx, this->bbox, visLeafNum, visInterNum );
 }
 
 template<typename point>
 size_t
 ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
-                                              const box& nodeBox,
-                                              size_t& visLeafNum,
+                                              const box& nodeBox, size_t& visLeafNum,
                                               size_t& visInterNum ) {
 
   if ( T->is_leaf ) {
@@ -30,13 +27,13 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
         cnt++;
       }
     }
-    return std::move( cnt );
+    return cnt;
   }
 
   visInterNum++;
   interior* TI = static_cast<interior*>( T );
   box lbox( nodeBox ), rbox( nodeBox );
-  lbox.second.pnt[TI->split.second] = TI->split.first;  //TODO loose
+  lbox.second.pnt[TI->split.second] = TI->split.first;  // TODO loose
   rbox.first.pnt[TI->split.second] = TI->split.first;
 
   size_t l, r;
@@ -47,8 +44,7 @@ ParallelKDtree<point>::range_count_rectangle( node* T, const box& queryBox,
     } else if ( within_box( bx, queryBox ) ) {
       conter = Ts->size;
     } else {
-      conter =
-          range_count_rectangle( Ts, queryBox, bx, visLeafNum, visInterNum );
+      conter = range_count_rectangle( Ts, queryBox, bx, visLeafNum, visInterNum );
     }
   };
 
@@ -80,7 +76,7 @@ ParallelKDtree<point>::range_count_radius( node* T, const circle& cl,
         cnt++;
       }
     }
-    return std::move( cnt );
+    return cnt;
   }
 
   interior* TI = static_cast<interior*>( T );
