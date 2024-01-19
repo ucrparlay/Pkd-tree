@@ -105,8 +105,9 @@ ParallelKDtree<point>::k_nearest( node* T, const point& q, const dim_type DIM,
           interruptible_distance( q, TL->pts[( !T->is_dummy ) * i], bq.top_value(), DIM );
       if ( Num::Lt( r, bq.top_value() ) ) {
         bq.insert( std::make_pair( std::ref( TL->pts[( !T->is_dummy ) * i] ), r ) );
-      } else if ( TL->is_dummy )
+      } else if ( TL->is_dummy ) {
         break;
+      }
       i++;
     }
     return;

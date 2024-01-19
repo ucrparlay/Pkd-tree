@@ -80,8 +80,7 @@ class Num_Comparator {
   }
 
  private:
-  // static constexpr T eps = std::numeric_limits<T>::epsilon();
-  static constexpr T eps = 1e-9;
+  static constexpr T eps = std::numeric_limits<T>::epsilon();
 };
 
 }  // namespace cpdd

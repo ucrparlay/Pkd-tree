@@ -13,8 +13,8 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-// using coord = long long;
-using coord = double;
+using coord = long;
+// using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -276,7 +276,6 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, const int& rounds,
   size_t n = WP.size();
   points wp = points::uninitialized( n );
   pkd.delete_tree();
-  LOG << "here" << ENDL;
   double aveBuild = time_loop(
       rounds, loopLate, [&]() { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); },
       [&]() { pkd.build( wp.cut( 0, n ), Dim ); }, [&]() { pkd.delete_tree(); } );
