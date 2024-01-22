@@ -2,6 +2,7 @@
 
 #include "../kdTreeParallel.h"
 #include "inner_tree.hpp"
+#include <ranges>
 
 namespace cpdd {
 // TODO add member test before delete
@@ -10,6 +11,7 @@ void
 ParallelKDtree<point>::batchDelete( slice A, const dim_type DIM ) {
   points B = points::uninitialized( A.size() );
   node* T = this->root;
+  int a = 1;
   dim_type d = T->is_leaf ? 0 : static_cast<interior*>( T )->split.second;
   std::tie( this->root, this->bbox ) =
       batchDelete_recursive( T, A, parlay::make_slice( B ), d, DIM, 1 );
@@ -42,7 +44,7 @@ ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags
                                           dim_type d, const dim_type DIM ) {
   if ( tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2 ) {
     assert( rev_tag[p] == idx );
-    return treeNodes[p++];  // PERF: this blocks the parallelsim
+    return treeNodes[p++];  // WARN: this blocks the parallelsim
   }
 
   auto [L, Lbox] =
@@ -52,7 +54,7 @@ ParallelKDtree<point>::delete_inner_tree( bucket_type idx, const node_tags& tags
   update_interior( tags[idx].first, L, R );
 
   if ( tags[idx].second == BUCKET_NUM + 3 ) {
-    interior* const TI = static_cast<interior*>( tags[idx].first );
+    interior const* TI = static_cast<interior*>( tags[idx].first );
     assert( inbalance_node( TI->left->size, TI->size ) || TI->size < THIN_LEAVE_WRAP );
     if ( tags[idx].first->size == 0 ) {  //* special judge for empty tree
       delete_tree_recursive( tags[idx].first,

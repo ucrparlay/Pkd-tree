@@ -1,5 +1,7 @@
 #pragma once
-#include "bits/stdc++.h"
+#include <cstdio>
+#include <iostream>
+#include <cfloat>
 
 namespace cpdd {
 //*----------- double precision comparision ----------------
