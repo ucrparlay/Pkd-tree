@@ -1,12 +1,5 @@
-from signal import pause
-import subprocess
 import os
 import sys
-from multiprocessing import Pool
-from tabnanny import check
-from timeit import default_timer as timer
-from unittest import case
-import math
 import csv
 
 print(os.getcwd())

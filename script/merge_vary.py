@@ -8,12 +8,12 @@ path = "../benchmark"
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
 Nodes = [100000000]
-Dims = [2, 3]
+Dims = [3]
 
-type = "batch_update"
+# type = "batch_update"
 # type = "querys"
 # type = "quality"
-# type = "count"
+type = "count"
 
 #! order by test order
 files = []
