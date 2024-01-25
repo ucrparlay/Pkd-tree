@@ -7,7 +7,7 @@
 Solvers=("test")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
-Node=(1000000000)
+Node=(100000000 1000000000)
 # Dim=(2 3 5)
 Dim=(9)
 declare -A datas
@@ -52,7 +52,7 @@ for solver in ${Solvers[@]}; do
 				: >${dest}
 				echo ">>>${dest}"
 
-				if [[ ${dim} == 9 ]] || [[ ${solver} == "cgal" ]]; then
+				if [[ ${dim} == 9 ]] && [[ ${solver} == "cgal" ]]; then
 					rounds=1
 					insNum=1
 				else
