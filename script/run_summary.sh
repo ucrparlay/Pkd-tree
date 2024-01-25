@@ -4,12 +4,12 @@
 #     kill $$
 # } &
 
-Solvers=("cgal")
+Solvers=("test")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-Dim=(2 3 5 9)
-# Dim=(9)
+# Dim=(2 3 5)
+Dim=(9)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"

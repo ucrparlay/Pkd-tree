@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("cgal" "test")
+Solvers=("test")
 Node=(100000000)
 Dim=(2 3 5 7 9)
 # Dim=(7 9)
@@ -19,29 +19,29 @@ echo $queryType
 resFile=""
 
 for solver in ${Solvers[@]}; do
-    exe="../build/${solver}"
+	exe="../build/${solver}"
 
-    #* decide output file
-    if [[ ${solver} == "test" ]]; then
-        resFile="res_highDim.out"
-    elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal_highDim.out"
-    fi
+	#* decide output file
+	if [[ ${solver} == "test" ]]; then
+		resFile="res_highDim.out"
+	elif [[ ${solver} == "cgal" ]]; then
+		resFile="cgal_highDim.out"
+	fi
 
-    for dim in ${Dim[@]}; do
-        for dataPath in "${!datas[@]}"; do
-            for node in ${Node[@]}; do
-                files_path="${dataPath}${node}_${dim}"
-                log_path="${datas[${dataPath}]}${node}_${dim}"
-                mkdir -p ${log_path}
-                dest="${log_path}/${resFile}"
-                : >${dest}
-                echo ">>>${dest}"
+	for dim in ${Dim[@]}; do
+		for dataPath in "${!datas[@]}"; do
+			for node in ${Node[@]}; do
+				files_path="${dataPath}${node}_${dim}"
+				log_path="${datas[${dataPath}]}${node}_${dim}"
+				mkdir -p ${log_path}
+				dest="${log_path}/${resFile}"
+				: >${dest}
+				echo ">>>${dest}"
 
-                for ((i = 1; i <= ${insNum}; i++)); do
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
-                done
-            done
-        done
-    done
+				for ((i = 1; i <= ${insNum}; i++)); do
+					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+				done
+			done
+		done
+	done
 done

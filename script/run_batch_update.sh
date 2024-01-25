@@ -1,8 +1,8 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test")
+Solvers=("test")
 Node=(100000000)
-Dim=(2 3)
+Dim=(3)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"

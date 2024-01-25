@@ -10,10 +10,10 @@ storePrefix = "data/"
 Nodes = [100000000]
 Dims = [2, 3]
 
-# type = "batch_update"
+type = "batch_update"
 # type = "querys"
 # type = "quality"
-type = "count"
+# type = "count"
 
 #! order by test order
 files = []
@@ -22,6 +22,7 @@ solverName = []
 if type == "batch_update":
     solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["build", "insert", "delete"]
+    Dims = [3]
 elif type == "querys":
     solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
     files = ["build", "knn", "count", "rquery"]
