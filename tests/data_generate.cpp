@@ -111,10 +111,11 @@ generatePointsSerial( std::ofstream& f ) {
 int
 main( int argc, char* argv[] ) {
   assert( argc >= 4 );
-  N = std::stoll( argv[1] );
-  Dim = std::stoll( argv[2] );
-  numFile = std::stoll( argv[3] );
-  int serial = std::stoi( argv[4] );
+  path = std::string(argv[1]);
+  N = std::stoll( argv[2] );
+  Dim = std::stoll( argv[3] );
+  numFile = std::stoll( argv[4] );
+  int serial = std::stoi( argv[5] );
 
   path += "/" + toString( N ) + "_" + toString( Dim ) + "/";
   std::filesystem::create_directory( path );

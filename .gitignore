@@ -4,6 +4,13 @@
 !*/
 !Makefile
 /.cache
+/docs
+/script/backup_data
+/script/data
+/script/plots
+run_transfers.sh
+transfer.sh
+beatles.txt
 
 # Debug files
 *.log

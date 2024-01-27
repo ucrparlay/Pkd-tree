@@ -14,12 +14,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # works
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++20 ")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 ")
 
-option(DEBUG "" ON)
+option(DEBUG "" OFF)
 option(CILKPLUS "" OFF)
 option(OPENCILK "" OFF)
 option(SERIAL "" OFF)
 option(STDALLOC "" OFF)
-option(CGAL "" ON)
+option(CGAL "" OFF)
 option(MEMCHECK "" OFF)
 option(JEMA "" OFF)
 
