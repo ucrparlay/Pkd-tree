@@ -1,9 +1,0 @@
-wget https://github.com/rstudio/cheatsheets/raw/main/reticulate.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/factors.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/tidyeval.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/strings.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/purrr.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/data-import.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/data-transformation.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/rmarkdown-2.0.pdf
-wget https://github.com/rstudio/cheatsheets/raw/main/data-visualization-2.1.pdf

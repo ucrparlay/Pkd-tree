@@ -175,11 +175,13 @@ The execution flow is shown below:
 - Zdtree
 
   1.  Clone the repository of [PBBS](https://github.com/cmuparlay/pbbsbench), then checkout the version [`9820e9f`](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92).
-  2.  Copy folder in `tests/zdtree/octTree` to `pbbsbench_x/benchmarks/nearestNeighbors/`
-  3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench_x/benchmarks/nearestNeighbors/bench/`
+  2.  Copy folder `tests/zdtree/octTree` to `pbbsbench/benchmarks/nearestNeighbors/`.
+  3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench/benchmarks/nearestNeighbors/bench/`.
+  4.  Copy file `tests/common/time_loop.h` to `pbbsbench/common/`.
   4.  Run the program according to the tutorial in PBBS.
 
 - ParGeo
+  
   See `ParGeo` branch for more details.
 
 - CGAL

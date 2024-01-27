@@ -1,5 +1,0 @@
-solver,benchType,nodes,dims,build,aveDepth,k=10,depth,visNum
-test,ss_varden,1000000000,2,3.575,25.515,0.007,25.515,58.5
-test,uniform,1000000000,2,3.097,25.51,0.013,25.51,59.0
-test,ss_varden,1000000000,3,4.577,25.655,0.009,25.655,105.0
-test,uniform,1000000000,3,7.677,25.5,205.002,25.5,128.0

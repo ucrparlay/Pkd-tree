@@ -8,9 +8,8 @@
 /script/backup_data
 /script/data
 /script/plots
-run_transfers.sh
+run_transfer.sh
 transfer.sh
-beatles.txt
 
 # Debug files
 *.log
