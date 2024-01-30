@@ -1,4 +1,4 @@
-# Pkd-tree: a parallel $k$d-tree with batch update
+# Pkd-tree: a parallel kd-tree with batch update
 
 Pkd-tree is a library of $k$d-tree that:
 
