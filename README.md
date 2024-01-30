@@ -1,6 +1,6 @@
 # Pkd-tree: a parallel kd-tree with batch update
 
-Pkd-tree is a library of $k$d-tree that:
+Pkd-tree is a library of kd-tree that:
 
 - Surprisingly fast,
 - Scale to billions input size,
@@ -8,7 +8,7 @@ Pkd-tree is a library of $k$d-tree that:
   - tree construction,
   - batch insertion/deletion,
   - $k$-NN,
-  - range count/query.
+  - range count & range query
 
 ## Requirements
 
@@ -22,13 +22,19 @@ Optional:
 
 - [jemalloc](https://github.com/jemalloc/jemalloc), slightly memory allocation improvement.
 - [NUMA control](https://manpages.ubuntu.com/manpages/trusty/man8/numactl.8.html), improve the performance for parallelism.
-- We use [Zdtree](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92), [ParGeo](https://github.com/ParAlg/ParGeo) and [CGAL](https://www.cgal.org/index.html) to perform benchmark comparison.
+- [Zdtree](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92), [ParGeo](https://github.com/ParAlg/ParGeo) and [CGAL](https://www.cgal.org/index.html), for benchmark comparison.
 
 ## Getting Code
 
 Try:
 
 1. Clone the repository.
+
+```{bash}
+git clone git@github.com:ucrparlay/KDtree.git
+cd KDtree
+```
+
 2. Initialize the submodule:
 
 ```bash
@@ -62,6 +68,13 @@ cmake -DDEBUG=OFF ..
 make
 ```
 
+For better performance, please use `clang++` for compilation, i.e.,
+
+```{bash}
+cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ..
+make
+```
+
 Useful flags:
 
 |   Name   |                 Usage                  | Default Value |
@@ -69,7 +82,7 @@ Useful flags:
 | `DEBUG`  |         Compile in debug mode          |     `OFF`     |
 | `SERIAL` |        Disable the parallelism         |     `OFF`     |
 |  `CGAL`  | Compile all executable related to CGAL |     `OFF`     |
-|  `JEMA`  |  Allocate the memory using `jemmaloc`  |     `OFF`     |
+|  `JEMA`  |  Allocate the memory using `jemalloc`  |     `OFF`     |
 
 More options can be found in `CMakeLists.txt`.
 
@@ -109,7 +122,7 @@ which will generate two files named `1.in` and `2.in` in `benchmark/10000_3/`. T
 ./test -p ../benchmark/10000_3/1.in -d 3 -t 1 -q 1 -r 3 -i 1
 ```
 
-To parse the output, see [ section ](#test-framework-format) below.
+To parse the output, see [ Test Framework Format ](#test-framework-format) below.
 
 ### Default setting
 
@@ -188,3 +201,8 @@ The execution flow is shown below:
   1.  Make sure `CGAL` is installed.
   2.  Compile the whole program with the flag `-DCGAL=ON` attached.
   3.  There should be binary named `cgal` in `build/`, which can be run using the same argument as mentioned in [Usage](##usage) above.
+
+
+## Ciatation
+
+If you use our code, please contact `zmen002@ucr.edu` for ciatation.
