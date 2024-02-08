@@ -1,6 +1,6 @@
 # Pkd-tree: a parallel kd-tree with batch update
 
-Pkd-tree is a library of kd-tree that:
+Pkd-tree is a library of kd-tree that is:
 
 - Surprisingly fast,
 - Scale to billions input size,
@@ -15,7 +15,7 @@ Pkd-tree is a library of kd-tree that:
 Necessary:
 
 - CMake >= 3.15
-- g++ or clang with C++20 features support (Tested with g++13 and clang17) on Linux machines.
+- g++ or clang++ with C++20 features support (Tested with g++13 and clang17) on Linux machines, we suggest clang++ for better performance.
 - We use [ParlayLib](https://github.com/cmuparlay/parlaylib) to support fork-join parallelism and some parallel primitives. It is provided as a submodule in our repository.
 
 Optional:
