@@ -259,6 +259,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
 
   std::cout << std::endl << std::flush;
 
+  pkd.delete_tree();
+
   return;
 }
 
