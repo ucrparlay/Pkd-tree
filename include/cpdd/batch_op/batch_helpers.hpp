@@ -129,10 +129,11 @@ void ParallelKDtree<point>::seieve_points(slice A, slice B, const size_t n,
 }
 
 template<typename point>
-typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree(
-    bucket_type idx, const node_tags& tags, parlay::sequence<node*>& treeNodes,
-    bucket_type& p, const tag_nodes& rev_tag) {
-
+typename ParallelKDtree<point>::node_box
+ParallelKDtree<point>::update_inner_tree(bucket_type idx, const node_tags& tags,
+                                         parlay::sequence<node_box>& treeNodes,
+                                         bucket_type& p,
+                                         const tag_nodes& rev_tag) {
   if (tags[idx].second < BUCKET_NUM) {
     assert(rev_tag[p] == idx);
     return treeNodes[p++];
@@ -140,11 +141,10 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree(
 
   assert(tags[idx].second == BUCKET_NUM);
   assert(tags[idx].first != nullptr);
-  node *L, *R;
-  L = update_inner_tree(idx << 1, tags, treeNodes, p, rev_tag);
-  R = update_inner_tree(idx << 1 | 1, tags, treeNodes, p, rev_tag);
+  auto [L, Lbox] = update_inner_tree(idx << 1, tags, treeNodes, p, rev_tag);
+  auto [R, Rbox] = update_inner_tree(idx << 1 | 1, tags, treeNodes, p, rev_tag);
   update_interior(tags[idx].first, L, R);
-  return tags[idx].first;
+  return node_box(tags[idx].first, get_box(Lbox, Rbox));
 }
 
 // NOTE: rebuild a single (sub)-tree
@@ -166,11 +166,11 @@ ParallelKDtree<point>::rebuild_single_tree(node* T, const dim_type d,
 
 template<typename point>
 typename ParallelKDtree<point>::node_box
-ParallelKDtree<point>::rebuild_tree_recursive(node* T, const dim_type d,
+ParallelKDtree<point>::rebuild_tree_recursive(node* T, dim_type d,
                                               const dim_type DIM,
                                               const bool granularity) {
   if (T->is_leaf) {
-    return T;
+    return node_box(T, get_box(T));
   }
 
   interior* TI = static_cast<interior*>(T);
@@ -179,16 +179,24 @@ ParallelKDtree<point>::rebuild_tree_recursive(node* T, const dim_type d,
   }
 
   node *L, *R;
+  box Lbox, Rbox;
+  d = (d + 1) % DIM;
   parlay::par_do_if(
       // NOTE: if granularity is disabled, always traverse the tree in
       // parallel
       (granularity && T->size > SERIAL_BUILD_CUTOFF) || !granularity,
-      [&] { L = rebuild_tree_recursive(TI->left, granularity); },
-      [&] { R = rebuild_tree_recursive(TI->right, granularity); });
+      [&] {
+        std::tie(L, Lbox) =
+            rebuild_tree_recursive(TI->left, d, DIM, granularity);
+      },
+      [&] {
+        std::tie(R, Rbox) =
+            rebuild_tree_recursive(TI->right, d, DIM, granularity);
+      });
 
   update_interior(T, L, R);
 
-  return T;
+  return node_box(T, get_box(Lbox, Rbox));
 }
 
 template<typename point>

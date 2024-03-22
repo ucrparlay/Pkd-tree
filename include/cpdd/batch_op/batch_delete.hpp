@@ -9,11 +9,8 @@ namespace cpdd {
 // NOTE: default batch delete
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
-  points B = points::uninitialized(A.size());
-  node* T = this->root;
-  dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
-  std::tie(this->root, this->bbox) = batchDelete_recursive(
-      T, A, parlay::make_slice(B), d, DIM, 1, FullCoveredTag());
+  // batchDelete(A, DIM, FullCoveredTag());
+  batchDelete(A, DIM, PartialCoverTag());
   return;
 }
 
@@ -21,7 +18,11 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM,
                                         FullCoveredTag) {
-  batchDelete(A, DIM);
+  points B = points::uninitialized(A.size());
+  node* T = this->root;
+  dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
+  std::tie(this->root, this->bbox) = batchDelete_recursive(
+      T, A, parlay::make_slice(B), d, DIM, 1, FullCoveredTag());
   return;
 }
 
@@ -31,14 +32,14 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM,
                                         PartialCoverTag) {
   points B = points::uninitialized(A.size());
   node* T = this->root;
+  box bx = this->bbox;
   dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
-
   // NOTE: first sieve the points
   std::tie(T, this->bbox) = batchDelete_recursive(T, A, parlay::make_slice(B),
                                                   d, DIM, PartialCoverTag());
-
   // NOTE: then rebuild the tree with full parallelsim
-  this->root = rebuild_tree_recursive(this->root, d, DIM, false);
+  std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
+  assert(bx == this->bbox);
 
   return;
 }
@@ -214,7 +215,9 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
 
     // PERF: slow when In.size() is large
     for (size_t i = 0; TL->size && i < In.size(); i++) {
-      if (TL->pts[0] == In[i]) TL->size--;
+      if (TL->pts[0] == In[i]) {
+        TL->size -= 1;
+      }
     }
     assert(TL->size >= 0);
     return node_box(T, box(TL->pts[0], TL->pts[0]));
@@ -229,13 +232,14 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
       it = std::ranges::find(TL->pts.begin(), end, In[i]);
       if (it != end) {  // NOTE: find a point
         std::ranges::iter_swap(it, --end);
-        TL->size--;
+        TL->size -= 1;
       }
     }
     return node_box(T, get_box(TL->pts.cut(0, TL->size)));
   }
 
   if (In.size() <= SERIAL_BUILD_CUTOFF) {
+    // if (In.size()) {
     interior* TI = static_cast<interior*>(T);
     auto _2ndGroup = std::ranges::partition(In, [&](const point& p) {
       return Num::Lt(p.pnt[TI->split.second], TI->split.first);
@@ -279,7 +283,6 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
   IT.assign_node_tag(T, 1);
   assert(IT.tagsNum > 0 && IT.tagsNum <= BUCKET_NUM);
   seieve_points(In, Out, n, IT.tags, IT.sums, IT.tagsNum);
-  // IT.tag_inbalance_node_deletion(hasTomb);
 
   auto treeNodes = parlay::sequence<node_box>::uninitialized(IT.tagsNum);
 

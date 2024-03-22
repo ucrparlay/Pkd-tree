@@ -137,14 +137,14 @@ class ParallelKDtree {
 
   static inline bucket_type retrive_tag(const point& p, const node_tags& tags);
 
-  static node* update_inner_tree(bucket_type idx, const node_tags& tags,
-                                 parlay::sequence<node*>& treeNodes,
-                                 bucket_type& p, const tag_nodes& rev_tag);
+  static node_box update_inner_tree(bucket_type idx, const node_tags& tags,
+                                    parlay::sequence<node_box>& treeNodes,
+                                    bucket_type& p, const tag_nodes& rev_tag);
 
   node_box rebuild_single_tree(node* T, const dim_type d, const dim_type DIM,
                                const bool granularity = true);
 
-  node_box rebuild_tree_recursive(node* T, const dim_type d, const dim_type DIM,
+  node_box rebuild_tree_recursive(node* T, dim_type d, const dim_type DIM,
                                   const bool granularity = true);
 
   node* delete_tree();

@@ -13,8 +13,8 @@ count=1 # count the number of ok in the output
 dim=5
 queryTypes=(0 1 2)
 
-# Paths=("/ssd0/zmen002/kdtree/uniform_float/" "/ssd0/zmen002/kdtree/ss_varden/")
-Paths=("/localdata/zmen002/kdtree/ss_varden/" "/localdata/zmen002/kdtree/uniform_bigint/")
+Paths=("/ssd0/zmen002/kdtree/uniform_bigint/" "/ssd0/zmen002/kdtree/ss_varden/")
+# Paths=("/localdata/zmen002/kdtree/ss_varden/" "/localdata/zmen002/kdtree/uniform_bigint/")
 
 #* check node
 for queryType in "${queryTypes[@]}"; do

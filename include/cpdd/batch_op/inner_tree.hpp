@@ -42,7 +42,8 @@ struct ParallelKDtree<point>::InnerTree {
   void assign_node_tag(node* T, bucket_type idx) {
     if (T->is_leaf || idx > PIVOT_NUM) {
       assert(tagsNum < BUCKET_NUM);
-      tags[idx] = node_tag(T, tagsNum++);
+      tags[idx] = node_tag(T, tagsNum);
+      rev_tag[tagsNum++] = idx;
       return;
     }
     //* BUCKET ID in [0, BUCKET_NUM)
