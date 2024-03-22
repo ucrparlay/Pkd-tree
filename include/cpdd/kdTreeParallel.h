@@ -14,7 +14,6 @@ class ParallelKDtree {
  public:
   using bucket_type = uint_fast8_t;
   using balls_type = uint_fast32_t;
-  // using balls_type = uint_fast64_t;
   using dim_type = uint_fast8_t;
 
   using coord = typename point::coord;
@@ -33,19 +32,22 @@ class ParallelKDtree {
   //@ uint32t handle up to 4e9 at least
   //! bucket num should smaller than 1<<8 to handle type overflow
 
-  // TODO wrap the variables using std::getenv()
+  // TODO: wrap the variables using std::getenv()
   static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
   static constexpr bucket_type PIVOT_NUM = (1 << BUILD_DEPTH_ONCE) - 1;
   static constexpr bucket_type BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
-  //@ tree structure
+  // NOTE: tree structure
   static constexpr uint_fast8_t LEAVE_WRAP = 32;
   static constexpr uint_fast8_t THIN_LEAVE_WRAP = 24;
   static constexpr uint_fast16_t SERIAL_BUILD_CUTOFF = 1 << 10;
-  //@ block param in partition
+  // NOTE: block param in partition
   static constexpr uint_fast8_t LOG2_BASE = 10;
   static constexpr uint_fast16_t BLOCK_SIZE = 1 << LOG2_BASE;
-  //@ reconstruct weight threshold
+  // NOTE: reconstruct weight threshold
   static constexpr uint_fast8_t INBALANCE_RATIO = 30;
+  // NOTE: tag indicates whether poitns are full covered in the tree
+  struct FullCoveredTag {};
+  struct PartialCoverTag {};
 
   //*------------------- Tree Structures--------------------*//
   //@ kd tree node types and functions
@@ -127,31 +129,63 @@ class ParallelKDtree {
   static void flatten(node* T, Slice Out, bool granularity = true);
 
   void flatten_and_delete(node* T, slice Out);
+
   static void seieve_points(slice A, slice B, const size_t n,
                             const node_tags& tags,
                             parlay::sequence<balls_type>& sums,
                             const bucket_type tagsNum);
+
   static inline bucket_type retrive_tag(const point& p, const node_tags& tags);
+
   static node* update_inner_tree(bucket_type idx, const node_tags& tags,
                                  parlay::sequence<node*>& treeNodes,
                                  bucket_type& p, const tag_nodes& rev_tag);
+
+  node_box rebuild_single_tree(node* T, const dim_type d, const dim_type DIM,
+                               const bool granularity = true);
+
+  node_box rebuild_tree_recursive(node* T, const dim_type d, const dim_type DIM,
+                                  const bool granularity = true);
+
   node* delete_tree();
+
   static void delete_tree_recursive(node* T, bool granularity = true);
+
   static void delete_simple_tree_recursive(simple_node* T);
 
   //@ batch insert
   node* rebuild_with_insert(node* T, slice In, const dim_type d,
                             const dim_type DIM);
+
   static inline void update_interior(node* T, node* L, node* R);
+
   void batchInsert(slice In, const dim_type DIM);
+
   node* batchInsert_recusive(node* T, slice In, slice Out, dim_type d,
                              const dim_type DIM);
 
+  static node* update_inner_tree_by_tag(bucket_type idx, const node_tags& tags,
+                                        parlay::sequence<node*>& treeNodes,
+                                        bucket_type& p,
+                                        const tag_nodes& rev_tag);
   //@ batch delete
-  node_box rebuild_after_delete(node* T, const dim_type d, const dim_type DIM);
+
+  // NOTE: in default, all points to be deleted are assumed in the tree
   void batchDelete(slice In, const dim_type DIM);
+
+  // NOTE: explicitly specify all points to be deleted are in the tree
+  void batchDelete(slice In, const dim_type DIM, FullCoveredTag);
+
+  // NOTE: for the case that some points to be deleted are not in the tree
+  void batchDelete(slice In, const dim_type DIM, PartialCoverTag);
+
   node_box batchDelete_recursive(node* T, slice In, slice Out, dim_type d,
-                                 const dim_type DIM, bool hasTomb);
+                                 const dim_type DIM, bool hasTomb,
+                                 FullCoveredTag);
+
+  node_box batchDelete_recursive(node* T, slice In, slice Out, dim_type d,
+                                 const dim_type DIM, PartialCoverTag);
+
   node_box delete_inner_tree(bucket_type idx, const node_tags& tags,
                              parlay::sequence<node_box>& treeNodes,
                              bucket_type& p, const tag_nodes& rev_tag,

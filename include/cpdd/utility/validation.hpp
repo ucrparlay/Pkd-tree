@@ -6,65 +6,62 @@
 namespace cpdd {
 
 template<typename point>
-bool
-ParallelKDtree<point>::checkBox( node* T, const box& bx ) {
-  assert( T != nullptr );
-  assert( legal_box( bx ) );
-  points wx = points::uninitialized( T->size );
-  flatten( T, parlay::make_slice( wx ) );
-  auto b = get_box( parlay::make_slice( wx ) );
+bool ParallelKDtree<point>::checkBox(node* T, const box& bx) {
+  assert(T != nullptr);
+  assert(legal_box(bx));
+  points wx = points::uninitialized(T->size);
+  flatten(T, parlay::make_slice(wx));
+  auto b = get_box(parlay::make_slice(wx));
   // LOG << b.first << b.second << ENDL;
-  return within_box( b, bx );
+  return within_box(b, bx);
 }
 
 template<typename point>
-size_t
-ParallelKDtree<point>::checkSize( node* T ) {
-  if ( T->is_leaf ) {
+size_t ParallelKDtree<point>::checkSize(node* T) {
+  if (T->is_leaf) {
     return T->size;
   }
-  interior* TI = static_cast<interior*>( T );
-  size_t l = checkSize( TI->left );
-  size_t r = checkSize( TI->right );
-  assert( l + r == T->size );
+  interior* TI = static_cast<interior*>(T);
+  size_t l = checkSize(TI->left);
+  size_t r = checkSize(TI->right);
+  assert(l + r == T->size);
   return T->size;
 }
 
 template<typename point>
-void
-ParallelKDtree<point>::checkTreeSameSequential( node* T, int dim, const int& DIM ) {
-  if ( T->is_leaf ) {
+void ParallelKDtree<point>::checkTreeSameSequential(node* T, int dim,
+                                                    const int& DIM) {
+  if (T->is_leaf) {
     // assert( pick_rebuild_dim( T, DIM ) == dim );
     return;
   }
-  interior* TI = static_cast<interior*>( T );
-  if ( TI->split.second != dim ) {
-    LOG << int( TI->split.second ) << " " << int( dim ) << TI->size << ENDL;
+  interior* TI = static_cast<interior*>(T);
+  if (TI->split.second != dim) {
+    LOG << int(TI->split.second) << " " << int(dim) << TI->size << ENDL;
   }
-  assert( TI->split.second == dim );
-  dim = ( dim + 1 ) % DIM;
+  assert(TI->split.second == dim);
+  dim = (dim + 1) % DIM;
   parlay::par_do_if(
-      T->size > 1000, [&]() { checkTreeSameSequential( TI->left, dim, DIM ); },
-      [&]() { checkTreeSameSequential( TI->right, dim, DIM ); } );
+      T->size > 1000, [&]() { checkTreeSameSequential(TI->left, dim, DIM); },
+      [&]() { checkTreeSameSequential(TI->right, dim, DIM); });
   return;
 }
 
 template<typename point>
-void
-ParallelKDtree<point>::validate( const dim_type DIM ) {
-  if ( checkBox( this->root, this->bbox ) && legal_box( this->bbox ) ) {
+void ParallelKDtree<point>::validate(const dim_type DIM) {
+  if (checkBox(this->root, this->bbox) && legal_box(this->bbox)) {
     std::cout << "Correct bounding box" << std::endl << std::flush;
   } else {
     std::cout << "wrong bounding box" << std::endl << std::flush;
     abort();
   }
 
-  if ( this->_split_rule == ROTATE_DIM ) {
-    checkTreeSameSequential( this->root, 0, DIM );
+  if (this->_split_rule == ROTATE_DIM) {
+    checkTreeSameSequential(this->root, 0, DIM);
     std::cout << "Correct rotate dimension" << std::endl << std::flush;
   }
 
-  if ( checkSize( this->root ) == this->root->size ) {
+  if (checkSize(this->root) == this->root->size) {
     std::cout << "Correct size" << std::endl << std::flush;
   } else {
     std::cout << "wrong tree size" << std::endl << std::flush;
@@ -74,63 +71,58 @@ ParallelKDtree<point>::validate( const dim_type DIM ) {
 }
 
 template<typename point>
-size_t
-ParallelKDtree<point>::getTreeHeight() {
+size_t ParallelKDtree<point>::getTreeHeight() {
   size_t deep = 0;
-  return getMaxTreeDepth( this->root, deep );
+  return getMaxTreeDepth(this->root, deep);
 }
 
 template<typename point>
-size_t
-ParallelKDtree<point>::getMaxTreeDepth( node* T, size_t deep ) {
-  if ( T->is_leaf ) {
+size_t ParallelKDtree<point>::getMaxTreeDepth(node* T, size_t deep) {
+  if (T->is_leaf) {
     return deep;
   }
-  interior* TI = static_cast<interior*>( T );
-  int l = getMaxTreeDepth( TI->left, deep + 1 );
-  int r = getMaxTreeDepth( TI->right, deep + 1 );
-  return std::max( l, r );
+  interior* TI = static_cast<interior*>(T);
+  int l = getMaxTreeDepth(TI->left, deep + 1);
+  int r = getMaxTreeDepth(TI->right, deep + 1);
+  return std::max(l, r);
 }
 
 template<typename point>
-double
-ParallelKDtree<point>::getAveTreeHeight() {
-  parlay::sequence<size_t> heights( this->root->size );
+double ParallelKDtree<point>::getAveTreeHeight() {
+  parlay::sequence<size_t> heights(this->root->size);
   size_t idx = 0;
-  countTreeHeights( this->root, 0, idx, heights );
+  countTreeHeights(this->root, 0, idx, heights);
   // auto kv = parlay::histogram_by_key( heights.cut( 0, idx ) );
   // std::sort( kv.begin(), kv.end(),
   //            [&]( auto a, auto b ) { return a.first < b.first; } );
   // for ( auto i : kv )
   //     LOG << i.first << " " << i.second << ENDL;
-  return double( 1.0 * parlay::reduce( heights.cut( 0, idx ) ) / idx );
+  return double(1.0 * parlay::reduce(heights.cut(0, idx)) / idx);
 }
 
 template<typename point>
-size_t
-ParallelKDtree<point>::countTreeNodesNum( node* T ) {
-  if ( T->is_leaf ) {
+size_t ParallelKDtree<point>::countTreeNodesNum(node* T) {
+  if (T->is_leaf) {
     return 1;
   }
 
-  interior* TI = static_cast<interior*>( T );
+  interior* TI = static_cast<interior*>(T);
   size_t l, r;
-  parlay::par_do( [&]() { l = countTreeNodesNum( TI->left ); },
-                  [&]() { r = countTreeNodesNum( TI->right ); } );
+  parlay::par_do([&]() { l = countTreeNodesNum(TI->left); },
+                 [&]() { r = countTreeNodesNum(TI->right); });
   return l + r + 1;
 }
 
 template<typename point>
-void
-ParallelKDtree<point>::countTreeHeights( node* T, size_t deep, size_t& idx,
-                                         parlay::sequence<size_t>& heights ) {
-  if ( T->is_leaf ) {
+void ParallelKDtree<point>::countTreeHeights(
+    node* T, size_t deep, size_t& idx, parlay::sequence<size_t>& heights) {
+  if (T->is_leaf) {
     heights[idx++] = deep;
     return;
   }
-  interior* TI = static_cast<interior*>( T );
-  countTreeHeights( TI->left, deep + 1, idx, heights );
-  countTreeHeights( TI->right, deep + 1, idx, heights );
+  interior* TI = static_cast<interior*>(T);
+  countTreeHeights(TI->left, deep + 1, idx, heights);
+  countTreeHeights(TI->right, deep + 1, idx, heights);
   return;
 }
 

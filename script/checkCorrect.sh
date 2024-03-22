@@ -17,9 +17,9 @@ queryTypes=(0 1 2)
 Paths=("/localdata/zmen002/kdtree/ss_varden/" "/localdata/zmen002/kdtree/uniform_bigint/")
 
 #* check node
-for queryType in ${queryTypes[@]}; do
-	for path in ${Paths[@]}; do
-		for node in ${Nodes[@]}; do
+for queryType in "${queryTypes[@]}"; do
+	for path in "${Paths[@]}"; do
+		for node in "${Nodes[@]}"; do
 			if [ ${queryType} -gt 0 ] && [ ${node} -gt 8000000 ]; then
 				continue
 			fi

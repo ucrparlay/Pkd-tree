@@ -22,6 +22,7 @@ void ParallelKDtree<point>::flatten(typename ParallelKDtree<point>::node* T,
   interior* TI = static_cast<interior*>(T);
   assert(TI->size == TI->left->size + TI->right->size);
   parlay::par_do_if(
+      // PERF: check parallelisim using node size can be biased
       (granularity && TI->size > SERIAL_BUILD_CUTOFF) || !granularity,
       [&]() { flatten(TI->left, Out.cut(0, TI->left->size), granularity); },
       [&]() {
@@ -128,6 +129,69 @@ void ParallelKDtree<point>::seieve_points(slice A, slice B, const size_t n,
 }
 
 template<typename point>
+typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree(
+    bucket_type idx, const node_tags& tags, parlay::sequence<node*>& treeNodes,
+    bucket_type& p, const tag_nodes& rev_tag) {
+
+  if (tags[idx].second < BUCKET_NUM) {
+    assert(rev_tag[p] == idx);
+    return treeNodes[p++];
+  }
+
+  assert(tags[idx].second == BUCKET_NUM);
+  assert(tags[idx].first != nullptr);
+  node *L, *R;
+  L = update_inner_tree(idx << 1, tags, treeNodes, p, rev_tag);
+  R = update_inner_tree(idx << 1 | 1, tags, treeNodes, p, rev_tag);
+  update_interior(tags[idx].first, L, R);
+  return tags[idx].first;
+}
+
+// NOTE: rebuild a single (sub)-tree
+template<typename point>
+typename ParallelKDtree<point>::node_box
+ParallelKDtree<point>::rebuild_single_tree(node* T, const dim_type d,
+                                           const dim_type DIM,
+                                           const bool granularity) {
+  points wo = points::uninitialized(T->size);
+  points wx = points::uninitialized(T->size);
+  uint_fast8_t curDim = pick_rebuild_dim(T, d, DIM);
+  flatten(T, wx.cut(0, T->size), granularity);
+  delete_tree_recursive(T, granularity);
+  box bx = get_box(parlay::make_slice(wx));
+  node* o = build_recursive(parlay::make_slice(wx), parlay::make_slice(wo),
+                            curDim, DIM, bx);
+  return node_box(std::move(o), std::move(bx));
+}
+
+template<typename point>
+typename ParallelKDtree<point>::node_box
+ParallelKDtree<point>::rebuild_tree_recursive(node* T, const dim_type d,
+                                              const dim_type DIM,
+                                              const bool granularity) {
+  if (T->is_leaf) {
+    return T;
+  }
+
+  interior* TI = static_cast<interior*>(T);
+  if (inbalance_node(TI->left->size, TI->size)) {
+    return rebuild_single_tree(T, d, DIM, granularity);
+  }
+
+  node *L, *R;
+  parlay::par_do_if(
+      // NOTE: if granularity is disabled, always traverse the tree in
+      // parallel
+      (granularity && T->size > SERIAL_BUILD_CUTOFF) || !granularity,
+      [&] { L = rebuild_tree_recursive(TI->left, granularity); },
+      [&] { R = rebuild_tree_recursive(TI->right, granularity); });
+
+  update_interior(T, L, R);
+
+  return T;
+}
+
+template<typename point>
 typename ParallelKDtree<point>::node* ParallelKDtree<point>::delete_tree() {
   if (this->root == nullptr) {
     return this->root;
@@ -137,7 +201,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::delete_tree() {
   return this->root;
 }
 
-template<typename point>  //* delete tree in parallel
+template<typename point>  // NOTE: delete tree in parallel
 void ParallelKDtree<point>::delete_tree_recursive(node* T, bool granularity) {
   if (T == nullptr) return;
   if (T->is_leaf) {
@@ -155,7 +219,7 @@ void ParallelKDtree<point>::delete_tree_recursive(node* T, bool granularity) {
   }
 }
 
-template<typename point>  //* delete tree in parallel
+template<typename point>  // NOTE: (minor) delete simple tree in parallel
 void ParallelKDtree<point>::delete_simple_tree_recursive(simple_node* T) {
   if (T == nullptr) return;
   parlay::par_do_if(
@@ -163,4 +227,5 @@ void ParallelKDtree<point>::delete_simple_tree_recursive(simple_node* T) {
       [&] { delete_simple_tree_recursive(T->right); });
   free_simple_node(T);
 }
+
 }  // namespace cpdd
