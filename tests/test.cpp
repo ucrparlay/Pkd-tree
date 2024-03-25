@@ -55,7 +55,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     batchDelete<point>(pkd, wp, wi, Dim, rounds, 0, batchInsertRatio);
   }
 
-  if (queryType & (1 << 0)) {  //* KNN
+  if (queryType & (1 << 0)) {  // NOTE: KNN
     kdknn = new Typename[wp.size()];
     if (tag == 0) {
       int k[3] = {1, 10, 100};
@@ -69,21 +69,30 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     delete[] kdknn;
   }
 
-  if (queryType & (1 << 1)) {  //* batch NN query
-    points new_wp(batchQuerySize);
-    parlay::copy(wp.cut(0, batchQuerySize), new_wp.cut(0, batchQuerySize));
-    kdknn = new Typename[batchQuerySize];
+  if (queryType & (1 << 1)) {  // NOTE: batch NN query
+    // WARN: this changes the original batch query for high dimension
+    auto run_batch_knn = [&](const points& pts, size_t batchSize) {
+      points newPts(batchSize);
+      parlay::copy(pts.cut(0, batchSize), newPts.cut(0, batchSize));
+      kdknn = new Typename[batchSize];
+      queryKNN<point, false, false>(Dim, newPts, rounds, pkd, kdknn, K, true);
+      delete[] kdknn;
+    };
 
-    queryKNN(Dim, new_wp, rounds, pkd, kdknn, K, true);
-
-    delete[] kdknn;
+    const std::vector<double> batchRatios = {0.001, 0.01, 0.1, 0.2, 0.5};
+    for (auto ratio : batchRatios) {
+      run_batch_knn(wp, static_cast<size_t>(wp.size() * ratio));
+    }
+    for (auto ratio : batchRatios) {
+      run_batch_knn(wi, static_cast<size_t>(wi.size() * ratio));
+    }
   }
 
   int recNum = rangeQueryNum;
 
-  if (queryType & (1 << 2)) {  //* range count
+  if (queryType & (1 << 2)) {  // NOTE: range count
     kdknn = new Typename[recNum];
-    int type[3] = {0, 1, 2};
+    const int type[3] = {0, 1, 2};
 
     for (int i = 0; i < 3; i++) {
       rangeCountFix<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
@@ -92,8 +101,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     delete[] kdknn;
   }
 
-  if (queryType & (1 << 3)) {  //* range query
-
+  if (queryType & (1 << 3)) {  // NOTE: range query
     if (tag == 0) {
       const int type[3] = {0, 1, 2};
       for (int i = 0; i < 3; i++) {
@@ -101,9 +109,13 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         kdknn = new Typename[recNum];
         points Out;
         //* range query
-        rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim);
+        // rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum,
+        // Dim);
+        // WARN: this will change the rangeq query routine
+        rangeQuerySerialWithLog<point>(wp, pkd, kdknn, rounds, Out, type[i],
+                                       recNum, Dim);
       }
-    } else if (tag == 2) {
+    } else if (tag == 2) {  // NOTE: for summary
       kdknn = new Typename[recNum];
       points Out;
       rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, recNum, Dim);
@@ -112,25 +124,29 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     delete[] kdknn;
   }
 
-  // if ( queryType & ( 1 << 3 ) ) {  //* generate knn
+  // if ( queryType & ( 1 << 3 ) ) {  //NOTE: generate knn
   // generate_knn<point>( Dim, wp, K,
   // "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out"
   // );
   // }
 
   if (queryType & (1 << 4)) {  //* batch insertion with fraction
-    double ratios[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-    for (int i = 0; i < 10; i++) {
+    // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
+    //                            0.6, 0.7, 0.8, 0.9, 1.0};
+    const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1,
+                                             0.2,  0.5,  1.0};
+    for (int i = 0; i < ratios.size(); i++) {
       batchInsert<point>(pkd, wp, wi, Dim, rounds, ratios[i]);
     }
   }
 
   if (queryType & (1 << 5)) {  //* batch deletion with fraction
-    const double ratios[10] = {0.1, 0.2, 0.3, 0.4, 0.5,
-                               0.6, 0.7, 0.8, 0.9, 1.0};
-    // double ratios[10] = { 1.0 };
+    // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
+    // 0.6, 0.7, 0.8, 0.9, 1.0};
+    const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1,
+                                             0.2,  0.5,  1.0};
     points tmp;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < ratios.size(); i++) {
       batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
     }
   }

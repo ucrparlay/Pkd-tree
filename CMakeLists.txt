@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(
 	kdTree
-	VERSION 1.0
+	VERSION 2.0
 	DESCRIPTION "KD tree"
 	HOMEPAGE_URL ""
 	LANGUAGES CXX
@@ -90,7 +90,6 @@ if(CGAL)
 
 	# copied from CGAL default cmake
 	if(TBB_FOUND AND NOT TARGET CGAL::TBB_support)
-		message("here")
 
 		if(NOT TARGET Threads::Threads)
 			find_package(Threads REQUIRED)
@@ -114,9 +113,15 @@ if(CGAL)
 	target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 endif()
 
+set(all_files
+	include/*.cpp
+	tests/*.cpp
+)
+
 FIND_PROGRAM(CLANG_FORMAT "clang-format")
 
 IF(CLANG_FORMAT)
+	message("here")
 	add_custom_target(
 		format
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

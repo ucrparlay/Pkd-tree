@@ -38,6 +38,7 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM,
   std::tie(T, this->bbox) = batchDelete_recursive(T, A, parlay::make_slice(B),
                                                   d, DIM, PartialCoverTag());
   // NOTE: then rebuild the tree with full parallelsim
+  // std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
   std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
   assert(bx == this->bbox);
 

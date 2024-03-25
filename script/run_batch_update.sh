@@ -9,13 +9,12 @@ datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
 k=100
-onecore=0
 insNum=2
 queryType=$((2#110000)) # 1110000
 type="batch_update"
 resFile=""
 
-for solver in ${Solvers[@]}; do
+for solver in "${Solvers[@]}"; do
 	exe="../build/${solver}"
 
 	#* decide output file
@@ -28,9 +27,9 @@ for solver in ${Solvers[@]}; do
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
 	fi
 
-	for dim in ${Dim[@]}; do
+	for dim in "${Dim[@]}"; do
 		for dataPath in "${!datas[@]}"; do
-			for node in ${Node[@]}; do
+			for node in "${Node[@]}"; do
 				files_path="${dataPath}${node}_${dim}"
 				log_path="${datas[${dataPath}]}${node}_${dim}"
 				mkdir -p ${log_path}
