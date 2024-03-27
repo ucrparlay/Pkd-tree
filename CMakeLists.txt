@@ -35,12 +35,10 @@ endif()
 
 if(DEBUG)
 	set(CMAKE_BUILD_TYPE "Debug")
-
 	add_compile_options(-g -mcx16 -march=native)
-	# add_compile_options(-O3 -mcx16 -march=native)
 elseif(MEMCHECK)
 	set(CMAKE_BUILD_TYPE "Debug")
-	add_compile_options(-Og -mcx16 -DPARLAY_SEQUENTIAL)
+	add_compile_options(-g -mcx16 -DPARLAY_SEQUENTIAL)
 else()
 	set(CMAKE_BUILD_TYPE "Release")
 	add_compile_options(-O3 -mcx16 -march=native)

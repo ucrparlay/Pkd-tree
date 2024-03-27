@@ -19,8 +19,7 @@ using Typename = coord;
 using namespace cpdd;
 
 static constexpr size_t batchQuerySize = 1000000;
-// static constexpr int rangeQueryNum = 10000;
-static constexpr int rangeQueryNum = 100;
+static constexpr int rangeQueryNum = 10000;
 static constexpr int rangeQueryNumInbaRatio = 50000;
 static constexpr double batchInsertRatio = 0.1;
 static constexpr int summaryRangeQueryType = 3;
