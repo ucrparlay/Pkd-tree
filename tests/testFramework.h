@@ -271,24 +271,24 @@ void buildTree(const int& Dim, const parlay::sequence<point>& WP,
   double loopLate = rounds > 1 ? 1.0 : -0.1;
   size_t n = WP.size();
   points wp = points::uninitialized(n);
-  pkd.delete_tree();
-  double aveBuild = time_loop(
-      rounds, loopLate, [&]() { parlay::copy(WP.cut(0, n), wp.cut(0, n)); },
-      [&]() { pkd.build(wp.cut(0, n), Dim); }, [&]() { pkd.delete_tree(); });
+  // pkd.delete_tree();
+  // double aveBuild = time_loop(
+  //     rounds, loopLate, [&]() { parlay::copy(WP.cut(0, n), wp.cut(0, n)); },
+  //     [&]() { pkd.build(wp.cut(0, n), Dim); }, [&]() { pkd.delete_tree(); });
 
   //* return a built tree
   parlay::copy(WP.cut(0, n), wp.cut(0, n));
   pkd.build(wp.cut(0, n), Dim);
 
-  if (print == 1) {
-    LOG << aveBuild << " " << std::flush;
-    auto deep = pkd.getAveTreeHeight();
-    LOG << deep << " " << std::flush;
-  } else if (print == 2) {
-    size_t max_deep = 0;
-    LOG << aveBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep)
-        << " " << pkd.getAveTreeHeight() << " " << std::flush;
-  }
+  // if (print == 1) {
+  //   LOG << aveBuild << " " << std::flush;
+  //   auto deep = pkd.getAveTreeHeight();
+  //   LOG << deep << " " << std::flush;
+  // } else if (print == 2) {
+  //   size_t max_deep = 0;
+  //   LOG << aveBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep)
+  //       << " " << pkd.getAveTreeHeight() << " " << std::flush;
+  // }
 
   return;
 }
@@ -404,21 +404,21 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
   pkd.delete_tree();
 
-  double aveInsert = time_loop(
-      rounds, 1.0,
-      [&]() {
-        parlay::copy(WP, wp), parlay::copy(WI, wi);
-        pkd.build(parlay::make_slice(wp), DIM);
-      },
-      [&]() { pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM); },
-      [&]() { pkd.delete_tree(); });
+  // double aveInsert = time_loop(
+  //     rounds, 1.0,
+  //     [&]() {
+  //       parlay::copy(WP, wp), parlay::copy(WI, wi);
+  //       pkd.build(parlay::make_slice(wp), DIM);
+  //     },
+  //     [&]() { pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM); },
+  //     [&]() { pkd.delete_tree(); });
 
   //* set status to be finish insert
   parlay::copy(WP, wp), parlay::copy(WI, wi);
   pkd.build(parlay::make_slice(wp), DIM);
   pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
 
-  LOG << aveInsert << " " << std::flush;
+  // LOG << aveInsert << " " << std::flush;
 
   return;
 }
@@ -436,21 +436,21 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
 
   pkd.delete_tree();
 
-  double aveDelete = time_loop(
-      rounds, 1.0,
-      [&]() {
-        if (afterInsert) {  //* first insert wi then delete wi
-          parlay::copy(WP, wp), parlay::copy(WI, wi);
-          pkd.build(parlay::make_slice(wp), DIM);
-          pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
-          parlay::copy(WP, wp), parlay::copy(WI, wi);
-        } else {  //* only build wp and then delete from wp
-          parlay::copy(WP, wp), parlay::copy(WP, wi);
-          pkd.build(parlay::make_slice(wp), DIM);
-        }
-      },
-      [&]() { pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM); },
-      [&]() { pkd.delete_tree(); });
+  // double aveDelete = time_loop(
+  //     rounds, 1.0,
+  //     [&]() {
+  //       if (afterInsert) {  //* first insert wi then delete wi
+  //         parlay::copy(WP, wp), parlay::copy(WI, wi);
+  //         pkd.build(parlay::make_slice(wp), DIM);
+  //         pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+  //         parlay::copy(WP, wp), parlay::copy(WI, wi);
+  //       } else {  //* only build wp and then delete from wp
+  //         parlay::copy(WP, wp), parlay::copy(WP, wi);
+  //         pkd.build(parlay::make_slice(wp), DIM);
+  //       }
+  //     },
+  //     [&]() { pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM); },
+  //     [&]() { pkd.delete_tree(); });
 
   //* set status to be finish delete
 
@@ -463,10 +463,10 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
   } else {
     parlay::copy(WP, wp);
     pkd.build(parlay::make_slice(wp), DIM);
-    // pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+    pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
   }
 
-  std::cout << aveDelete << " " << std::flush;
+  // std::cout << aveDelete << " " << std::flush;
 
   return;
 }
