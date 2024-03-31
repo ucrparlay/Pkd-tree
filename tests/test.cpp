@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstddef>
 #include <cstdlib>
 #include "testFramework.h"
 
@@ -124,27 +125,19 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     delete[] kdknn;
   }
 
-  // if ( queryType & ( 1 << 3 ) ) {  //NOTE: generate knn
-  // generate_knn<point>( Dim, wp, K,
-  // "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out"
-  // );
-  // }
-
-  if (queryType & (1 << 4)) {  //* batch insertion with fraction
-    // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
-    //                            0.6, 0.7, 0.8, 0.9, 1.0};
-    const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1,
-                                             0.2,  0.5,  1.0};
+  if (queryType & (1 << 4)) {  // NOTE: batch insertion with fraction
+    const parlay::sequence<double> ratios = {
+        0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
+        0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
     for (int i = 0; i < ratios.size(); i++) {
       batchInsert<point>(pkd, wp, wi, Dim, rounds, ratios[i]);
     }
   }
 
-  if (queryType & (1 << 5)) {  //* batch deletion with fraction
-    // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
-    // 0.6, 0.7, 0.8, 0.9, 1.0};
-    const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1,
-                                             0.2,  0.5,  1.0};
+  if (queryType & (1 << 5)) {  // NOTE: batch deletion with fraction
+    const parlay::sequence<double> ratios = {
+        0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
+        0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
     points tmp;
     for (int i = 0; i < ratios.size(); i++) {
       batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
@@ -196,7 +189,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
   if (queryType & (1 << 10)) {  //* test inbalance ratio
     points np, nq;
     std::string prefix, path;
-    size_t batchSize = wp.size() / 10;
+    const size_t batchSize =
+        static_cast<size_t>(wp.size() * insertBatchInbaRatio);
     kdknn = new Typename[wp.size()];
 
     auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));

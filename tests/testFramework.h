@@ -18,10 +18,17 @@ using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
-static constexpr size_t batchQuerySize = 1000000;
-static constexpr int rangeQueryNum = 10000;
+// NOTE: KNN size
+static constexpr size_t batchQuerySize = 1e7;
+// NOTE: rectangle numbers
+static constexpr int rangeQueryNum = 100;
+// NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
-static constexpr double batchInsertRatio = 0.1;
+// NOTE: insert batch ratio for inba ratio
+static constexpr double insertBatchInbaRatio = 0.0001;
+// NOTE: Insert Ratio when summary
+static constexpr double batchInsertRatio = 0.001;
+// NOTE: rectange type used in summary
 static constexpr int summaryRangeQueryType = 3;
 
 template<typename T>

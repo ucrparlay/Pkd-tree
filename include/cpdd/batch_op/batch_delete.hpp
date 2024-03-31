@@ -9,8 +9,8 @@ namespace cpdd {
 // NOTE: default batch delete
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
-  // batchDelete(A, DIM, FullCoveredTag());
-  batchDelete(A, DIM, PartialCoverTag());
+  batchDelete(A, DIM, FullCoveredTag());
+  // batchDelete(A, DIM, PartialCoverTag());
   return;
 }
 
