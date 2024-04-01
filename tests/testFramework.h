@@ -470,7 +470,7 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
   } else {
     parlay::copy(WP, wp);
     pkd.build(parlay::make_slice(wp), DIM);
-    // pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+    pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
   }
 
   std::cout << aveDelete << " " << std::flush;

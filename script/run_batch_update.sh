@@ -1,6 +1,7 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test" "cgal")
+Solvers=("cgal")
+# Solvers=("zdtree" "test" "cgal")
 Node=(1000000000)
 Dim=(3)
 declare -A datas
@@ -9,7 +10,7 @@ datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
 k=10
-insNum=2
+insNum=1
 queryType=$((2#110000)) # 1110000
 type="batch_update"
 resFile=""
