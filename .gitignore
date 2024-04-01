@@ -6,7 +6,6 @@
 /.cache
 /docs
 /script/backup_data
-/script/data
 /script/plots
 run_transfer.sh
 transfer.sh

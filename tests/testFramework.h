@@ -340,7 +340,7 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP,
   if (print == 1) {
     auto deep = pkd.getAveTreeHeight();
     LOG << aveIncreBuild << " " << deep << " " << std::flush;
-  } else if (print == 2) {
+  } else if (print == 2) {  // NOTE: print the maxtree height and avetree height
     size_t max_deep = 0;
     LOG << aveIncreBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep)
         << " " << pkd.getAveTreeHeight() << " " << std::flush;

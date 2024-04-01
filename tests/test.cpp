@@ -195,27 +195,29 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
   }
 
   if (queryType & (1 << 10)) {  // NOTE: test inbalance ratio
+    const int fileNum = 10;
+    const size_t batchPointNum = wp.size() / fileNum;
+
     points np, nq;
     std::string prefix, path;
-    const size_t batchSize =
-        static_cast<size_t>(wp.size() * insertBatchInbaRatio);
     kdknn = new Typename[wp.size()];
 
     auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
     auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
 
-    //@ helper functions
+    // NOTE: helper functions
     auto clean = [&]() {
       prefix = insertFile.substr(0, insertFile.rfind("/"));
       np.clear();
       nq.clear();
     };
 
+    // NOTE: run the test
     auto run = [&]() {
       if (inbaBuildType == 0) {
         buildTree<point, 2>(Dim, np, rounds, pkd);
       } else {
-        incrementalBuild<point, 2>(Dim, np, rounds, pkd, 0.01);
+        incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
       }
 
       if (inbaQueryType == 0) {
@@ -231,14 +233,14 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     };
 
     LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
-    //! start with varden file
-    //@ 1: 10*0.1 different vardens.
+    // HACK: need start with varden file
+    // NOTE: 1: 10*0.1 different vardens.
     clean();
     for (int i = 1; i <= 10; i++) {
       path = prefix + "/" + std::to_string(i) + ".in";
       // std::cout << path << std::endl;
       read_points<point>(path.c_str(), nq, K);
-      np.append(nq.cut(0, batchSize));
+      np.append(nq.cut(0, batchPointNum));
       nq.clear();
     }
     assert(np.size() == wp.size());
@@ -258,7 +260,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     // std::cout << path << std::endl;
 
     read_points<point>(path.c_str(), nq, K);
-    parlay::parallel_for(0, batchSize, [&](size_t i) { np[i] = nq[i]; });
+    parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });
     run();
 
     //@ 3: 1 varden, but flatten;
