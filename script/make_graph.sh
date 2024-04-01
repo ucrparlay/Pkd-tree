@@ -8,7 +8,7 @@
 # ./gen_ss_varden.sh -g 2 -n 1000000000 -d 5 -v 1
 # ./gen_ss_varden.sh -g 2 -n 1000000000 -d 9 -v 1
 # ./gen_ss_varden.sh -g 10 -n 500000000 -d 2 -v 1
-./gen_ss_varden.sh -g 10 -n 1000000000 -d 3 -v 1
+./gen_ss_varden.sh -g 2 -n 1000000000 -d 3 -v 1
 
 # ./gen_ss_varden.sh -g 2 -n 100000000 -d 5 -v 1
 # ./gen_ss_varden.sh -g 2 -n 100000000 -d 7 -v 1

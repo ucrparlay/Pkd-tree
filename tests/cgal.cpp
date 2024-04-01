@@ -282,12 +282,12 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
         cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
 
         timer.stop();
-        LOG << cgknn[s] << " " << timer.total_time() << " "
-            << (cgknn[s] == queryBox[s].second) << ENDL;
+        LOG << queryBox[s].second << " " << timer.total_time() << ENDL;
       }
     };
 
     if (tag == 0) {
+      LOG << ENDL;
       const int type[3] = {0, 1, 2};
       for (int i = 0; i < 3; i++) {
         run_cgal_range_query(type[i]);

@@ -742,10 +742,8 @@ void rangeQuerySerialWithLog(const parlay::sequence<point>& WP,
     kdknn[i] = pkd.range_query_serial(queryBox[i].first,
                                       Out.cut(i * step, (i + 1) * step));
     t.stop();
-    LOG << kdknn[i] << " " << t.total_time() << " "
-        << (kdknn[i] == queryBox[i].second) << ENDL;
+    LOG << queryBox[i].second << " " << t.total_time() << ENDL;
   }
-  LOG << "-----------------------------------" << ENDL;
 
   return;
 }

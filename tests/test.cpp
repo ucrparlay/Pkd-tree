@@ -117,10 +117,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         //* run range count to obtain size
         kdknn = new Typename[recNum];
         points Out;
-        //* range query
-        // rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum,
-        // Dim);
-        // WARN: this will change the rangeq query routine
+        LOG << ENDL;
         rangeQuerySerialWithLog<point>(wp, pkd, kdknn, rounds, Out, type[i],
                                        recNum, Dim);
       }
