@@ -1,23 +1,23 @@
 #!/bin/bash
-set -o xtrace
+# set -o xtrace
 
-# Solvers=("zdtree" "test" "cgal")
-Solvers=("test")
-Node=(100000000)
-Dim=(2 3)
+Solvers=("zdtree" "test" "cgal")
+# Solvers=("test")
+Node=(1000000000)
+Dim=(3)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
 k=100
-onecore=0
 insNum=2
-queryType=$((2#1101)) # 1110000
-type="querys"
+queryType=$((2#1))
+type="batch_knn_query"
 resFile=""
+readFile=0
 
-for solver in ${Solvers[@]}; do
+for solver in "${Solvers[@]}"; do
 	exe="../build/${solver}"
 
 	#* decide output file
@@ -30,26 +30,22 @@ for solver in ${Solvers[@]}; do
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
 	fi
 
-	for dim in ${Dim[@]}; do
+	for dim in "${Dim[@]}"; do
 		for dataPath in "${!datas[@]}"; do
-			for node in ${Node[@]}; do
+			for node in "${Node[@]}"; do
 				files_path="${dataPath}${node}_${dim}"
 				log_path="${datas[${dataPath}]}${node}_${dim}"
-				mkdir -p ${log_path}
+				mkdir -p "${log_path}"
 				dest="${log_path}/${resFile}"
-				: >${dest}
+				: >"${dest}"
 				echo ">>>${dest}"
 
-				for ((i = 1; i <= ${insNum}; i++)); do
-					if [[ ${serial} == 1 ]]; then
-						PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 -q ${queryType} >>${dest}
-						continue
-					fi
-					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+				for ((i = 1; i <= insNum; i++)); do
+					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -i ${readFile} >>"${dest}"
 
 					retval=$?
 					if [ ${retval} -eq 124 ]; then
-						echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>${dest}
+						echo -e "${node}_${dim}.in ${T} -1 -1 -1 -1" >>"${dest}"
 						echo "timeout ${node}_${dim}"
 					else
 						echo "finish ${node}_${dim}"

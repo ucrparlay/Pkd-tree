@@ -13,6 +13,7 @@
 #include <CGAL/Fuzzy_sphere.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
+#include <cstddef>
 
 using Typename = coord;
 
@@ -141,11 +142,11 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
   int queryNum = rangeQueryNum;
 
   if (queryType & (1 << 0)) {  // NOTE: KNN query
-    auto run_cgal_knn = [&](int kth) {
+    auto run_cgal_knn = [&](int kth, size_t batchSize) {
       timer.reset();
       timer.start();
-      parlay::sequence<size_t> visNodeNum(N, 0);
-      tbb::parallel_for(tbb::blocked_range<std::size_t>(0, N),
+      parlay::sequence<size_t> visNodeNum(batchSize, 0);
+      tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize),
                         [&](const tbb::blocked_range<std::size_t>& r) {
                           for (std::size_t s = r.begin(); s != r.end(); ++s) {
                             // Neighbor search can be instantiated from
@@ -162,16 +163,17 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
                         });
       timer.stop();
       std::cout << timer.total_time() << " " << tree.root()->depth() << " "
-                << parlay::reduce(visNodeNum) / wp.size() << " " << std::flush;
+                << parlay::reduce(visNodeNum) / batchSize << " " << std::flush;
     };
 
+    size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
     if (tag == 0) {
-      int k[3] = {1, 10, 100};
+      const int k[3] = {1, 10, 100};
       for (int i = 0; i < 3; i++) {
-        run_cgal_knn(k[i]);
+        run_cgal_knn(k[i], batchSize);
       }
     } else {
-      run_cgal_knn(K);
+      run_cgal_knn(K, batchSize);
     }
   }
 
@@ -196,16 +198,18 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
                           }
                         });
       timer.stop();
-      std::cout << timer.total_time() << " " << std::flush;
+      std::cout << timer.total_time() << " " << tree.root()->depth() << " "
+                << parlay::reduce(visNodeNum) / wp.size() << " " << std::flush;
     };
 
-    const std::vector<double> batchRatios = {0.001, 0.01, 0.1, 0.2, 0.5};
-    for (auto r : batchRatios) {
-      cgal_batch_knn(wp, static_cast<size_t>(wp.size() * r));
-    }
-    for (auto r : batchRatios) {
-      cgal_batch_knn(wi, static_cast<size_t>(wp.size() * r));
-    }
+    cgal_batch_knn(wp, static_cast<size_t>(wp.size() * batchQueryRatio));
+    // const std::vector<double> batchRatios = {0.001, 0.01, 0.1, 0.2, 0.5};
+    // for (auto r : batchRatios) {
+    //   cgal_batch_knn(wp, static_cast<size_t>(wp.size() * r));
+    // }
+    // for (auto r : batchRatios) {
+    //   cgal_batch_knn(wi, static_cast<size_t>(wp.size() * r));
+    // }
   }
 
   if (queryType & (1 << 2)) {  // NOTE: range count

@@ -19,7 +19,7 @@ using Typename = coord;
 using namespace cpdd;
 
 // NOTE: KNN size
-static constexpr size_t batchQuerySize = 1e7;
+static constexpr double batchQueryRatio = 0.01;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
 // NOTE: rectangle numbers for inba ratio

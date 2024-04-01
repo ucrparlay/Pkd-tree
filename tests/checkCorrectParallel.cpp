@@ -38,6 +38,7 @@ int queryType;
 size_t N;
 
 size_t maxReduceSize = 0;
+const size_t batchQuerySize = 1000000;
 
 void runCGAL(points& wp, points& wi, Typename* cgknn, int queryNum,
              parlay::sequence<Point_d>& Out) {
