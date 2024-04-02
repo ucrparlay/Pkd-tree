@@ -136,12 +136,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 5)) {  // NOTE: batch deletion with fraction
-        /*
-        const parlay::sequence<double> ratios = {
-            0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
-            0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
-        */
-        const parlay::sequence<double> ratios = {1e-5, 1e-7, 1e-6, 1e-5, 1e-4};
+        const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
+                                                 0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
         points tmp;
         for (int i = 0; i < ratios.size(); i++) {
             batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);

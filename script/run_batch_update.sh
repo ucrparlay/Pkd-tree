@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Solvers=("cgal")
+Solvers=("zdtree" "test")
 # Solvers=("zdtree" "test" "cgal")
 Node=(1000000000)
 Dim=(3)
