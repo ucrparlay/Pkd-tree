@@ -10,7 +10,7 @@ datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
 k=10
-insNum=1
+insNum=2
 queryType=$((2#110000)) # 1110000
 type="batch_update"
 resFile=""

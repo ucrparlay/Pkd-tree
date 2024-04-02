@@ -26,7 +26,7 @@ BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: 'true'
-ColumnLimit: '120'
+ColumnLimit: '80'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
 Cpp11BracedListStyle: 'true'
@@ -34,7 +34,7 @@ FixNamespaceComments: 'true'
 IncludeBlocks: Preserve
 IndentCaseLabels: 'true'
 IndentPPDirectives: None
-IndentWidth: '4'
+IndentWidth: '2'
 IndentWrappedFunctionNames: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'true'
 Language: Cpp

@@ -36,11 +36,11 @@ for solver in "${Solvers[@]}"; do
 				echo ">>>${dest}"
 
 				# NOTE: run basic first
-				PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+				PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
 
 				# NOTE: run others then
 				for ratio in "${Inba[@]}"; do
-					PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} INBA_QUERY=${inbaQuery} INBA_BUILD=1 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+					PARLAY_NUM_THREADS=192 INBALANCE_RATIO=${ratio} INBA_QUERY=${inbaQuery} INBA_BUILD=1 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
 				done
 			done
 		done
