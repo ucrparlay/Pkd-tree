@@ -446,6 +446,7 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
       WP.size());  //! warnning need to adjust space if necessary
 
   pkd.delete_tree();
+  size_t batchSize = static_cast<size_t>(WP.size() * ratio);
 
   double aveDelete = time_loop(
       rounds, 1.0,
@@ -456,11 +457,17 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
           pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
           parlay::copy(WP, wp), parlay::copy(WI, wi);
         } else {  //* only build wp and then delete from wp
-          parlay::copy(WP, wp), parlay::copy(WP, wi);
+          LOG << " after insert " << ENDL;
+          parlay::copy(WP, wp);
+          parlay::copy(WP, wi);
           pkd.build(parlay::make_slice(wp), DIM);
         }
       },
-      [&]() { pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM); },
+      [&]() {
+        LOG << "start batch delete " << ratio << ENDL;
+        pkd.batchDelete(wi.cut(0, batchSize), DIM);
+        LOG << "end one batch delete " << ratio << ENDL;
+      },
       [&]() { pkd.delete_tree(); });
 
   //* set status to be finish delete
@@ -472,7 +479,7 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
     parlay::copy(WP, wp), parlay::copy(WI, wi);
     pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
   } else {
-    parlay::copy(WP, wp);
+    parlay::copy(WP, wp), parlay::copy(WP, wi);
     pkd.build(parlay::make_slice(wp), DIM);
     pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
   }
