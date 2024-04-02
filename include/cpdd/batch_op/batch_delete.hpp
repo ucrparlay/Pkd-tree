@@ -94,7 +94,7 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
                                              bool hasTomb, FullCoveredTag) {
   size_t n = In.size();
 
-  if (n == 0) return node_box(T, get_box(T));
+  if (n == 0) return node_box(T, get_empty_box());
 
   // if ( n == T->size ) {
   //     if ( hasTomb ) {

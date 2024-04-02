@@ -3,16 +3,16 @@
 #     sleep 210m
 #     kill $$
 # } &
-# set -o xtrace
+set -o xtrace
 Solvers=("test")
 Node=(1000000000)
 Inba=(1 2 3 4 5 6 10 20 30 40 45 46 47 48 49 50)
 Dim=(3)
 declare -A datas
 # datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 
-inbaQuery=1
+inbaQuery=0
 tag=0
 k=10
 queryType=1024 # 001 011 111

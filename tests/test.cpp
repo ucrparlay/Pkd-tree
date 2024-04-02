@@ -8,7 +8,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
                         parlay::sequence<point>& wp, const size_t& N,
                         const int& K, const int& rounds,
                         const string& insertFile, const int& tag,
-                        const int& queryType) {
+                        const int& queryType, const int readInsertFile) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
@@ -33,7 +33,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
   tree pkd;
 
   points wi;
-  if (insertFile != "") {
+  if (readInsertFile && insertFile != "") {
     auto [nn, nd] = read_points<point>(insertFile.c_str(), wi, K);
     if (nd != Dim) {
       puts("read inserted points dimension wrong");
@@ -140,9 +140,12 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
   }
 
   if (queryType & (1 << 5)) {  // NOTE: batch deletion with fraction
+    /*
     const parlay::sequence<double> ratios = {
         0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
         0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
+    */
+    const parlay::sequence<double> ratios = {1e-5, 1e-7, 1e-6, 1e-5, 1e-4};
     points tmp;
     for (int i = 0; i < ratios.size(); i++) {
       batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
@@ -193,11 +196,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
 
   if (queryType & (1 << 10)) {  // NOTE: test inbalance ratio
     const int fileNum = 10;
+
     const size_t batchPointNum = wp.size() / fileNum;
 
     points np, nq;
     std::string prefix, path;
-    kdknn = new Typename[wp.size()];
 
     auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
     auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
@@ -218,10 +221,15 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
       }
 
       if (inbaQueryType == 0) {
+        size_t batchSize = static_cast<size_t>(np.size() * knnBatchInbaRatio);
+        points newPts(batchSize);
+        parlay::copy(np.cut(0, batchSize), newPts.cut(0, batchSize));
+        kdknn = new Typename[batchSize];
         const int k[3] = {1, 5, 100};
         for (int i = 0; i < 3; i++) {
-          queryKNN<point, 0, 1>(Dim, np, rounds, pkd, kdknn, k[i], false);
+          queryKNN<point, 0, 1>(Dim, newPts, rounds, pkd, kdknn, k[i], true);
         }
+        delete[] kdknn;
       } else if (inbaQueryType == 1) {
         int type = 2;
         rangeCountFix<point>(wp, pkd, kdknn, rounds, type,
@@ -233,7 +241,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
     // HACK: need start with varden file
     // NOTE: 1: 10*0.1 different vardens.
     clean();
-    for (int i = 1; i <= 10; i++) {
+    for (int i = 1; i <= fileNum; i++) {
       path = prefix + "/" + std::to_string(i) + ".in";
       // std::cout << path << std::endl;
       read_points<point>(path.c_str(), nq, K);
@@ -317,13 +325,11 @@ int main(int argc, char* argv[]) {
     std::cout << name << " ";
   }
 
-  if (readInsertFile == 1) {
-    int id = std::stoi(name.substr(0, name.find_first_of('.')));
-    id = (id + 1) % 3;  //! MOD graph number used to test
-    if (!id) id++;
-    int pos = std::string(iFile).rfind("/") + 1;
-    insertFile = std::string(iFile).substr(0, pos) + std::to_string(id) + ".in";
-  }
+  int id = std::stoi(name.substr(0, name.find_first_of('.')));
+  id = (id + 1) % 3;  //! MOD graph number used to test
+  if (!id) id++;
+  int pos = std::string(iFile).rfind("/") + 1;
+  insertFile = std::string(iFile).substr(0, pos) + std::to_string(id) + ".in";
 
   assert(N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1);
 
@@ -375,42 +381,48 @@ int main(int argc, char* argv[]) {
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType);
+                                            insertFile, tag, queryType,
+                                            readInsertFile);
   } else if (Dim == 3) {
     auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 3> {
       return PointType<coord, 3>(wp[i].pnt.begin());
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType);
+                                            insertFile, tag, queryType,
+                                            readInsertFile);
   } else if (Dim == 5) {
     auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 5> {
       return PointType<coord, 5>(wp[i].pnt.begin());
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType);
+                                            insertFile, tag, queryType,
+                                            readInsertFile);
   } else if (Dim == 7) {
     auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 7> {
       return PointType<coord, 7>(wp[i].pnt.begin());
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType);
+                                            insertFile, tag, queryType,
+                                            readInsertFile);
   } else if (Dim == 9) {
     auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 9> {
       return PointType<coord, 9>(wp[i].pnt.begin());
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 9>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                            insertFile, tag, queryType);
+                                            insertFile, tag, queryType,
+                                            readInsertFile);
   } else if (Dim == 10) {
     auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 10> {
       return PointType<coord, 10>(wp[i].pnt.begin());
     });
     decltype(wp)().swap(wp);
     testParallelKDtree<PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                             insertFile, tag, queryType);
+                                             insertFile, tag, queryType,
+                                             readInsertFile);
   }
 
   return 0;

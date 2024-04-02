@@ -22,10 +22,14 @@ using namespace cpdd;
 static constexpr double batchQueryRatio = 0.01;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
+
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
 // NOTE: insert batch ratio for inba ratio
 static constexpr double insertBatchInbaRatio = 0.0001;
+// NOTE: knn batch ratio for inba ratio
+static constexpr double knnBatchInbaRatio = 0.1;
+
 // NOTE: Insert Ratio when summary
 static constexpr double batchInsertRatio = 0.001;
 // NOTE: rectange type used in summary
