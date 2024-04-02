@@ -457,16 +457,16 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP,
           pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
           parlay::copy(WP, wp), parlay::copy(WI, wi);
         } else {  //* only build wp and then delete from wp
-          LOG << " after insert " << ENDL;
+          // LOG << " after insert " << ENDL;
           parlay::copy(WP, wp);
           parlay::copy(WP, wi);
           pkd.build(parlay::make_slice(wp), DIM);
         }
       },
       [&]() {
-        LOG << "start batch delete " << ratio << ENDL;
+        // LOG << "start batch delete " << ratio << ENDL;
         pkd.batchDelete(wi.cut(0, batchSize), DIM);
-        LOG << "end one batch delete " << ratio << ENDL;
+        // LOG << "end one batch delete " << ratio << ENDL;
       },
       [&]() { pkd.delete_tree(); });
 

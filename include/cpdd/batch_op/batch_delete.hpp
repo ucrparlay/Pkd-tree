@@ -21,17 +21,18 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM,
   points B = points::uninitialized(A.size());
   node* T = this->root;
   dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
-  LOG << "Begin batch delete .. the size of A: " << A.size() << ENDL;
-  point p;
-  p.pnt[0] = 70528, p.pnt[1] = 42516, p.pnt[2] = 81031;
-  int cnt = 0;
-  for (int i = 0; i < A.size(); i++) {
-    if (A[i] == p) {
-      LOG << "pos: " << i << " ";
-      cnt++;
-    }
-  }
-  LOG << "input cnt: " << cnt << ENDL;
+  // LOG << "Begin batch delete .. the size of A: " << A.size() << ENDL;
+  // point p;
+  // p.pnt[0] = 70528, p.pnt[1] = 42516, p.pnt[2] = 81031;
+  // int cnt = 0;
+  // for (int i = 0; i < A.size(); i++) {
+  //   if (A[i] == p) {
+  //     LOG << "pos: " << i << " ";
+  //     cnt++;
+  //
+  //   }
+  // }
+  // LOG << "input cnt: " << cnt << ENDL;
   std::tie(this->root, this->bbox) = batchDelete_recursive(
       T, A, parlay::make_slice(B), d, DIM, 1, FullCoveredTag());
   return;
@@ -105,7 +106,7 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
                                              bool hasTomb, FullCoveredTag) {
   size_t n = In.size();
 
-  if (n == 0) return node_box(T, get_empty_box());
+  if (n == 0) return node_box(T, get_box(T));
 
   // if ( n == T->size ) {
   //     if ( hasTomb ) {
@@ -127,25 +128,25 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
 
   if (T->is_leaf) {
     assert(!T->is_dummy);
-    if (T->size < In.size()) {
-      leaf* TL = static_cast<leaf*>(T);
-      for (int i = 0; i < T->size; i++) {
-        LOG << TL->pts[i];
-      }
-      LOG << ENDL;
-      for (int i = 0; i < In.size(); i++) {
-        LOG << In[i] << " ";
-      }
-      LOG << ENDL;
-    }
+    // if (T->size < In.size()) {
+    //   leaf* TL = static_cast<leaf*>(T);
+    //   for (int i = 0; i < T->size; i++) {
+    //     LOG << TL->pts[i];
+    //   }
+    //   LOG << ENDL;
+    //   for (int i = 0; i < In.size(); i++) {
+    //     LOG << In[i] << " ";
+    //   }
+    //   LOG << ENDL;
+    // }
     assert(T->size >= In.size());
 
     leaf* TL = static_cast<leaf*>(T);
     auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
     for (int i = 0; i < In.size(); i++) {
       it = std::ranges::find(TL->pts.begin(), end, In[i]);
-      point p;
-      p.pnt[0] = 70528, p.pnt[1] = 42516, p.pnt[2] = 81031;
+      // point p;
+      // p.pnt[0] = 70528, p.pnt[1] = 42516, p.pnt[2] = 81031;
       // if (In[i] == p) {
       //   LOG << "begin of leaf: " << ENDL;
       //   for (int i = 0; i < T->size; i++) {
@@ -157,16 +158,16 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
       //   }
       //   LOG << "--------------------------------------" << ENDL;
       // }
-      if (it == end) {
-        LOG << "begin of leaf: " << ENDL;
-        for (int i = 0; i < T->size; i++) {
-          LOG << TL->pts[i];
-        }
-        LOG << ENDL << "begin of interior: " << ENDL;
-        for (int i = 0; i < In.size(); i++) {
-          LOG << In[i] << " ";
-        }
-      }
+      // if (it == end) {
+      //   LOG << "begin of leaf: " << ENDL;
+      //   for (int i = 0; i < T->size; i++) {
+      //     LOG << TL->pts[i];
+      //   }
+      //   LOG << ENDL << "begin of interior: " << ENDL;
+      //   for (int i = 0; i < In.size(); i++) {
+      //     LOG << In[i] << " ";
+      //   }
+      // }
       assert(it != end);
       std::ranges::iter_swap(it, --end);
     }
@@ -229,7 +230,6 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
   parlay::parallel_for(
       0, IT.tagsNum,
       [&](size_t i) {
-        // for (int i = 0; i < IT.tagsNum; i++) {
         size_t start = 0;
         for (int j = 0; j < i; j++) {
           start += IT.sums[j];
@@ -247,7 +247,6 @@ ParallelKDtree<point>::batchDelete_recursive(node* T, slice In, slice Out,
             IT.tags[IT.rev_tag[i]].first, Out.cut(start, start + IT.sums[i]),
             In.cut(start, start + IT.sums[i]), nextDim, DIM,
             IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1, FullCoveredTag());
-        // }
       },
       1);
 
