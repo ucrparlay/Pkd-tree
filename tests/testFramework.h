@@ -262,23 +262,23 @@ size_t checkTreesSize(typename tree::node* T) {
 }
 
 template<typename point, int print = 1>
-void buildTree(const int& Dim, const parlay::sequence<point>& WP,
-               const int& rounds, ParallelKDtree<point>& pkd) {
+void buildTree(const int& Dim, parlay::sequence<point>& WP, const int& rounds,
+               ParallelKDtree<point>& pkd) {
   using tree = ParallelKDtree<point>;
   using points = typename tree::points;
   using node = typename tree::node;
 
   double loopLate = rounds > 1 ? 1.0 : -0.1;
   size_t n = WP.size();
-  points wp = points::uninitialized(n);
+  // points wp = points::uninitialized(n);
   // pkd.delete_tree();
   // double aveBuild = time_loop(
   //     rounds, loopLate, [&]() { parlay::copy(WP.cut(0, n), wp.cut(0, n)); },
   //     [&]() { pkd.build(wp.cut(0, n), Dim); }, [&]() { pkd.delete_tree(); });
 
   //* return a built tree
-  parlay::copy(WP.cut(0, n), wp.cut(0, n));
-  pkd.build(wp.cut(0, n), Dim);
+  // parlay::copy(WP.cut(0, n), wp.cut(0, n));
+  pkd.build(WP.cut(0, n), Dim);
 
   // if (print == 1) {
   //   LOG << aveBuild << " " << std::flush;

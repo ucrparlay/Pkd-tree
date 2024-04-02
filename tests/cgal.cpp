@@ -39,7 +39,8 @@ typedef CGAL::Fuzzy_iso_box<TreeTraits> Fuzzy_iso_box;
 template<typename Splitter, typename Tree, typename Neighbor_search,
          typename point>
 void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
-                      int N, int K, const int& rounds, const string& insertFile,
+                      std::vector<Point_d>& _points, int N, int K,
+                      const int& rounds, const string& insertFile,
                       const int& tag, const int& queryType) {
   using points = parlay::sequence<point>;
   using pkdTree = ParallelKDtree<point>;
@@ -65,16 +66,11 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
   N = wp.size();
 
   //* cgal
-  std::vector<Point_d> _points(N);
-  std::vector<Point_d> _points_insert(wi.size());
-  parlay::parallel_for(0, N, [&](size_t i) {
-    _points[i] =
-        Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
-  });
-  parlay::parallel_for(0, wi.size(), [&](size_t i) {
-    _points_insert[i] =
-        Point_d(Dim, std::begin(wi[i].pnt), (std::begin(wi[i].pnt) + Dim));
-  });
+  std::vector<Point_d> _points_insert;
+  // parlay::parallel_for(0, N, [&](size_t i) {
+  //   _points[i] =
+  //       Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
+  // });
 
   timer.start();
   Splitter split;
@@ -368,6 +364,39 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
   return;
 }
 
+template<typename point>
+std::pair<size_t, int> cgal_read_points(const char* iFile,
+                                        std::vector<Point_d>& wp, int K,
+                                        bool withID = false) {
+  using coord = typename point::coord;
+  using coords = typename point::coords;
+  static coords samplePoint;
+  parlay::sequence<char> S = readStringFromFile(iFile);
+  parlay::sequence<char*> W = stringToWords(S);
+  size_t N = std::stoul(W[0], nullptr, 10);
+  int Dim = atoi(W[1]);
+  assert(N >= 0 && Dim >= 1 && N >= K);
+
+  auto pts = W.cut(2, W.size());
+  assert(pts.size() % Dim == 0);
+  size_t n = pts.size() / Dim;
+  auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
+    if constexpr (std::is_integral_v<coord>)
+      return std::stol(pts[i]);
+    else if (std::is_floating_point_v<coord>)
+      return std::stod(pts[i]);
+  });
+  wp.resize(N);
+  parlay::parallel_for(0, n, [&](size_t i) {
+    std::array<coord, 3> arr = {a[i * Dim + 0], a[i * Dim + 1], a[i * Dim + 2]};
+    wp[i] = Point_d(Dim, std::begin(arr), (std::begin(arr) + Dim));
+    // for (int j = 0; j < Dim; j++) {
+    //   wp[i].pnt[j] = a[i * Dim + j];
+    // }
+  });
+  return std::make_pair(N, Dim);
+}
+
 int main(int argc, char* argv[]) {
   commandLine P(argc, argv,
                 "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
@@ -383,10 +412,11 @@ int main(int argc, char* argv[]) {
   int queryType = P.getOptionIntValue("-q", 0);
   int readInsertFile = P.getOptionIntValue("-i", 1);
 
-  using point = PointType<coord, 10>;
+  using point = PointType<coord, 3>;
   using points = parlay::sequence<point>;
 
   points wp;
+  std::vector<Point_d> _points;
   std::string name, insertFile = "";
   int LEAVE_WRAP = 32;
 
@@ -395,15 +425,9 @@ int main(int argc, char* argv[]) {
     name = std::string(iFile);
     name = name.substr(name.rfind("/") + 1);
     std::cout << name << " ";
-    auto [n, d] = read_points<point>(iFile, wp, K);
+    auto [n, d] = cgal_read_points<point>(iFile, _points, K);
     N = n;
     assert(Dim == d);
-  } else {  //* construct data byself
-    K = 100;
-    generate_random_points<point>(wp, 10000, N, Dim);
-    assert(wp.size() == N);
-    std::string name = std::to_string(N) + "_" + std::to_string(Dim) + ".in";
-    std::cout << name << " ";
   }
 
   if (readInsertFile == 1) {
@@ -416,59 +440,69 @@ int main(int argc, char* argv[]) {
 
   assert(N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1);
 
-  if (tag == -1) {
-    //* serial run
-    // todo rewrite test serial code
-    // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-  } else if (Dim == 2) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 2> {
-      return PointType<coord, 2>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                          insertFile, tag, queryType);
-  } else if (Dim == 3) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 3> {
-      return PointType<coord, 3>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                          insertFile, tag, queryType);
-  } else if (Dim == 5) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 5> {
-      return PointType<coord, 5>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                          insertFile, tag, queryType);
-  } else if (Dim == 7) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 7> {
-      return PointType<coord, 7>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                          insertFile, tag, queryType);
-  } else if (Dim == 9) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 9> {
-      return PointType<coord, 9>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 9>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                          insertFile, tag, queryType);
-  } else if (Dim == 10) {
-    auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 10> {
-      return PointType<coord, 10>(wp[i].pnt.begin());
-    });
-    decltype(wp)().swap(wp);
-    testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
-                     PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
-                                           insertFile, tag, queryType);
-  }
+  testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median,
+                   PointType<coord, 3>>(Dim, LEAVE_WRAP, wp, _points, N, K,
+                                        rounds, insertFile, tag, queryType);
+  // if (tag == -1) {
+  //   //* serial run
+  //   // todo rewrite test serial code
+  //   // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+  // } else if (Dim == 2) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 2> {
+  //     return PointType<coord, 2>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //                                         insertFile, tag, queryType);
+  // } else if (Dim == 3) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 3> {
+  //     return PointType<coord, 3>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //                                         insertFile, tag, queryType);
+  // } else if (Dim == 5) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 5> {
+  //     return PointType<coord, 5>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //                                         insertFile, tag, queryType);
+  // } else if (Dim == 7) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 7> {
+  //     return PointType<coord, 7>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //                                         insertFile, tag, queryType);
+  // } else if (Dim == 9) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 9> {
+  //     return PointType<coord, 9>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 9>>(Dim, LEAVE_WRAP, pts, N, K, rounds,
+  //                                         insertFile, tag, queryType);
+  // } else if (Dim == 10) {
+  //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 10> {
+  //     return PointType<coord, 10>(wp[i].pnt.begin());
+  //   });
+  //   decltype(wp)().swap(wp);
+  //   testCGALParallel<Median_of_rectangle, Tree_Median,
+  //   Neighbor_search_Median,
+  //                    PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K,
+  //                    rounds,
+  //                                          insertFile, tag, queryType);
+  // }
 
   // else if ( tag == -1 )
   //   testCGALSerial<Median_of_rectangle, Tree_Median, Neighbor_search_Median>(
