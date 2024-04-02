@@ -7,21 +7,27 @@ print(os.getcwd())
 path = "../benchmark"
 benchmarks = ["ss_varden", "uniform"]
 storePrefix = "data/"
-Nodes = [100000000]
+Nodes = [1000000000]
 Dims = [3]
 
-# type = "batch_update"
+type = "batch_update"
+# type = "batch_knn_query"
 # type = "querys"
 # type = "quality"
-type = "count"
+# type = "count"
 
 #! order by test order
 files = []
 solverName = []
 
 if type == "batch_update":
-    solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
+    # solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
+    solverName = ["test", "zdtree", "cgal"]
     files = ["build", "insert", "delete"]
+    Dims = [3]
+elif type == "batch_knn_query":
+    solverName = ["test", "zdtree", "cgal"]
+    files = ["build", "knn"]
     Dims = [3]
 elif type == "querys":
     solverName = ["test", "zdtree", "cgal", "LogTree", "BhlTree"]
@@ -52,8 +58,36 @@ common = [
     "dims",
 ]
 build_header = ["build", "depth"]
-insert_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
-delete_header = ["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"]
+insert_header = [
+    "0.1M",
+    "0.2M",
+    "0.5M",
+    "1M",
+    "2M",
+    "5M",
+    "10M",
+    "20M",
+    "50M",
+    "100M",
+    "200M",
+    "500M",
+    "1000M",
+]
+delete_header = [
+    "0.1M",
+    "0.2M",
+    "0.5M",
+    "1M",
+    "2M",
+    "5M",
+    "10M",
+    "20M",
+    "50M",
+    "100M",
+    "200M",
+    "500M",
+    "1000M",
+]
 knn_header = [
     "k=1",
     "depth",
@@ -140,6 +174,7 @@ def csvSetup(solver):
     print(solver)
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
     csvFilePointer.truncate()
+    print(csvFilePointer)
     csvWriter = csv.writer(csvFilePointer)
     csvWriter.writerow(common + file_header[file])
     return csvWriter
