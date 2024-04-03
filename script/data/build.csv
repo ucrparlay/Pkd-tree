@@ -1,7 +1,7 @@
 solver,benchType,nodes,dims,build,depth
-test,ss_varden,1000000000,3,4.75748,25.52555
-zdtree,ss_varden,1000000000,3,6.53707,35.0
+test,ss_varden,1000000000,3,4.63942,25.5256
+zdtree,ss_varden,1000000000,3,6.30483,35.0
 cgal,ss_varden,1000000000,3,360.186,34.0
-test,uniform,1000000000,3,3.68675,25.5263
-zdtree,uniform,1000000000,3,6.68478,27.0
+test,uniform,1000000000,3,3.7565,25.5263
+zdtree,uniform,1000000000,3,6.6094,27.0
 cgal,uniform,1000000000,3,1085.3,31.0
