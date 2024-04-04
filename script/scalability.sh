@@ -2,9 +2,9 @@
 #
 # set -o xtrace
 
-Solvers=("test")
-# Solvers=("test" "zdtree")
-Node=(100000000)
+# Solvers=("test")
+Solvers=("zdtree" "test")
+Node=(1000000000)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
@@ -38,7 +38,7 @@ declare -a commands=(
 
 tag=2
 dim=3
-k=100
+k=10
 
 resFile=""
 
