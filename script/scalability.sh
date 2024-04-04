@@ -67,7 +67,7 @@ for solver in "${Solvers[@]}"; do
 				echo ">>>${dest}"
 
 				export "${threads[${i}]}"
-				${commands[${i}]} "${exe}" -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -r 2 -q 0 -i 1 >>"${dest}"
+				${commands[${i}]} "${exe}" -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -r 1 -q 0 -i 1 >>"${dest}"
 
 			done
 		done
