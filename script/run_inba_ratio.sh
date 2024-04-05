@@ -12,7 +12,7 @@ declare -A datas
 # datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 
-inbaQuery=0
+inbaQuery=1
 tag=0
 k=10
 queryType=1024 # 001 011 111
