@@ -1,7 +1,9 @@
 import osmium as osm
 import pandas as pd
+import os
 
 # https://github.com/osmcode/pyosmium/blob/master/examples/amenity_list.py
+# https://docs.osmcode.org/pyosmium/latest/
 
 
 class OSMHandler(osm.SimpleHandler):
@@ -24,27 +26,52 @@ class OSMHandler(osm.SimpleHandler):
         self.tag_inventory(n, "node")
 
 
-osmhandler = OSMHandler()
-# scan the input file and fills the handler list accordingly
-osmhandler.apply_file("../benchmark/real_world/antarctica-latest.osm.pbf")
+osm_path = "/data/zmen002/kdtree/real_world/osm/"
+file_names = os.listdir(osm_path)
+df_osm = pd.DataFrame(
+    {
+        "lon": [],
+        "lat": [],
+    }
+)
 
-# transform the list into a pandas DataFrame
-data_colnames = [
-    "id",
-    "ts",
-    "lon",
-    "lat",
-]
-df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
-df = df.drop_duplicates()
-df["ts"] = df["ts"].dt.tz_localize(None)
-df.set_index("ts", inplace=True)
-print(df.dtypes)
-
-start_time = "2014-04-02 08:00:00"
-end_time = "2024-04-02 08:00:00"
-df = df.sort_index().loc[start_time:end_time, :]
-
-print(len(df.index))
-print(df.head())
-df.to_csv("osm_data.csv")
+for file in file_names:
+    osmhandler = OSMHandler()
+    file_path = osm_path + file
+    osmhandler.apply_file(file_path)
+    data_colnames = [
+        "id",
+        "ts",
+        "lon",
+        "lat",
+    ]
+    df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
+    df = df.drop_duplicates()
+    print(file, df.index.size)
+    df.to_csv(file_path + ".csv", index=False)
+# for file in file_names:
+#     osmhandler = OSMHandler()
+#     osmhandler.apply_file(file)
+#     data_colnames = [
+#         "id",
+#         "ts",
+#         "lon",
+#         "lat",
+#     ]
+#     df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
+#     df = df.drop_duplicates()
+#     df["ts"] = df["ts"].dt.tz_localize(None)
+#     df.set_index("ts", inplace=True)
+#     df_osm = pd.concat([df_osm, df.loc[:, ["lon", "lat"]]], ignore_index=False, axis=0)
+#
+# start_time = "2014-01-01 08:00:00"
+# end_time = "2024-01-01 08:00:00"
+# df_osm = df_osm.sort_index().loc[start_time:end_time, :]
+# print(df_osm.head())
+#
+# for year, group in df_osm.groupby(df_osm.index.year):
+#     filename = f"/data/zmen002/kdtree/real_world/osm/year/osm_{year}.csv"
+#     length = group.index.size
+#     group.loc[:, ["lon", "lat"]].to_csv(
+#         filename, index=False, sep=" ", header=[length, 2]
+#     )
