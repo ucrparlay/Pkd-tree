@@ -279,23 +279,22 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     }
 
     if (queryType & (1 << 4)) {  //* batch insert with fraction
-        // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
-        //                                          0.6, 0.7, 0.8, 0.9, 1.0};
         const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
                                                  0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
         for (int i = 0; i < ratios.size(); i++) {
             tree.clear();
 
             //* build tree
-            _points.resize(wp.size());
-            N = wp.size();
             tree.insert(_points.begin(), _points.end());
             tree.template build<CGAL::Parallel_tag>();
 
             auto sz = size_t(wi.size() * ratios[i]);
+
             timer.reset(), timer.start();
             tree.insert(_points_insert.begin(), _points_insert.begin() + sz);
+            tree.template build<CGAL::Parallel_tag>();
             timer.stop();
+
             std::cout << timer.total_time() << " " << std::flush;
         }
     }
@@ -307,15 +306,15 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             tree.clear();
 
             //* build tree
-            _points.resize(wp.size());
-            N = wp.size();
+            // _points.resize(wp.size());
+            // N = wp.size();
             tree.insert(_points.begin(), _points.end());
             tree.template build<CGAL::Parallel_tag>();
 
             auto sz = size_t(wp.size() * ratios[i]);
             timer.reset(), timer.start();
-            for (size_t i = 0; i < sz; i++) {
-                tree.remove(_points[i]);
+            for (size_t j = 0; j < sz; j++) {
+                tree.remove(_points[j]);
             }
             timer.stop();
             std::cout << timer.total_time() << " " << std::flush;

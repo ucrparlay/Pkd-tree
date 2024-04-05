@@ -1,7 +1,8 @@
 #!/bin/bash
 set -o xtrace
 
-Solvers=("test" "cgal")
+# Solvers=("test" "cgal")
+Solvers=("test")
 Node=(1000000000)
 Dim=(3)
 declare -A datas
@@ -9,10 +10,10 @@ datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=0
-k=100
+k=10
 insNum=1
 queryType=$((2#1000)) # 1110000
-type="range_qeury_log"
+type="range_query_log"
 resFile=""
 
 for solver in "${Solvers[@]}"; do

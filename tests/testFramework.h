@@ -647,19 +647,45 @@ void rangeCountFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
         [&]() {});
 
     LOG << aveCount << " " << std::flush;
-    // LOG << "queryType is " << recType
-    //     << " total tree nodes num: " << pkd.countTreeNodesNum( pkd.get_root() )
-    //     << ENDL;
-    // auto visTotal = parlay::tabulate( recNum, [&]( size_t i ) -> size_t {
-    //   return visInterNum[i] + visLeafNum[i];
-    // } );
-    // visInterNum = parlay::sort( visInterNum );
-    // visLeafNum = parlay::sort( visLeafNum );
-    // visTotal = parlay::sort( visTotal );
-    //
-    // LOG << " " << visLeafNum[recNum / 2] << " " << *visLeafNum.rbegin() << " "
-    //     << visInterNum[recNum / 2] << " " << *visInterNum.rbegin() << " "
-    //     << visTotal[recNum / 2] << " " << *visTotal.rbegin() << ENDL;
+
+    return;
+}
+
+template<typename point>
+void rangeCountFixWithLog(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd, Typename* kdknn,
+                          const int& rounds, int recType, int recNum, int DIM) {
+    using tree = ParallelKDtree<point>;
+    using points = typename tree::points;
+    using node = typename tree::node;
+    using box = typename tree::box;
+
+    int n = WP.size();
+
+    auto [queryBox, maxSize] = gen_rectangles(recNum, recType, WP, DIM);
+    parlay::sequence<size_t> visLeafNum(recNum, 0), visInterNum(recNum, 0);
+
+    // double aveCount = time_loop(
+    //     rounds, 1.0, [&]() {},
+    //     [&]() {
+    //         parlay::parallel_for(
+    //             0, recNum,
+    //             [&](size_t i) {
+    //                 visInterNum[i] = 0;
+    //                 visLeafNum[i] = 0;
+    //                 kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+    //             },
+    //             1);
+    //     },
+    //     [&]() {});
+    parlay::internal::timer t;
+    for (int i = 0; i < recNum; i++) {
+        t.reset(), t.start();
+        visInterNum[i] = 0;
+        visLeafNum[i] = 0;
+        kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+        t.stop();
+        LOG << queryBox[i].second << " " << t.total_time() << ENDL;
+    }
 
     return;
 }
