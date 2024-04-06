@@ -33,10 +33,10 @@ class ParallelKDtree {
     //! bucket num should smaller than 1<<8 to handle type overflow
 
     // TODO: wrap the variables using std::getenv()
-#ifndef ONE_LEVEL
-    static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
-#else
+#ifdef ONE_LEVEL
     static constexpr bucket_type BUILD_DEPTH_ONCE = 1;  //* last layer is leaf
+#else
+    static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
 #endif
     static constexpr bucket_type PIVOT_NUM = (1 << BUILD_DEPTH_ONCE) - 1;
     static constexpr bucket_type BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;

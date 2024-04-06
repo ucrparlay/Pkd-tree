@@ -267,14 +267,15 @@ void buildTree(const int& Dim, parlay::sequence<point>& WP, const int& rounds, P
     double loopLate = rounds > 1 ? 1.0 : -0.1;
     size_t n = WP.size();
 
-#ifndef CACHE
+#ifndef TEST_CACHE
     points wp = points::uninitialized(n);
     double aveBuild = time_loop(
         rounds, loopLate, [&]() { parlay::copy(WP.cut(0, n), wp.cut(0, n)); }, [&]() { pkd.build(wp.cut(0, n), Dim); },
         [&]() { pkd.delete_tree(); });
+    LOG << aveBuild << " " << ENDL;
 #else
     pkd.build(WP.cut(0, n), Dim);
-#endif  // !CACHE
+#endif  // !TEST_CACHE
 
     return;
 }
