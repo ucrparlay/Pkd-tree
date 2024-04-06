@@ -19,9 +19,24 @@ option(CILKPLUS "" OFF)
 option(OPENCILK "" OFF)
 option(SERIAL "" OFF)
 option(STDALLOC "" OFF)
-option(CGAL "" ON)
+option(CGAL "" OFF)
 option(MEMCHECK "" OFF)
 option(JEMA "" OFF)
+option(ONE_LEVEL "" OFF)
+option(KTH_ELEMENT "" OFF)
+option(CACHE "" OFF)
+
+if(ONE_LEVEL)
+  add_compile_options(-DONE_LEVEL)
+endif()
+
+if(KTH_ELEMENT)
+	add_compile_options(-DKTH_ELEMENT)
+endif()
+
+if(CACHE)
+	add_compile_options(-DCACHE)
+endif()
 
 if(CILKPLUS)
 	add_compile_options(-DPARLAY_CILKPLUS -DCILK -fcilkplus)
@@ -32,6 +47,7 @@ elseif(SERIAL)
 else()
 	add_compile_options(-pthread)
 endif()
+
 
 if(DEBUG)
 	set(CMAKE_BUILD_TYPE "Debug")

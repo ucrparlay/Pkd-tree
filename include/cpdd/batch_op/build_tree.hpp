@@ -30,9 +30,15 @@ void ParallelKDtree<point>::divide_rotate(slice In, splitter_s& pivots, dim_type
     uint_fast8_t d = (_split_rule == MAX_STRETCH_DIM ? pick_max_stretch_dim(bx, DIM) : dim);
     assert(d >= 0 && d < DIM);
 
+#ifndef KTH_ELEMENT
     std::ranges::nth_element(In.begin(), In.begin() + n / 2, In.end(),
                              [&](const point& p1, const point& p2) { return Num::Lt(p1.pnt[d], p2.pnt[d]); });
     pivots[idx] = splitter(In[n / 2].pnt[d], d);
+#else
+    point kth =
+        *(parlay::kth_smallest(In, n / 2, [&](const point& a, const point& b) { return Num::Lt(a.pnt[d], b.pnt[d]); }));
+    pivots[idx] = splitter(kth.pnt[d], d);
+#endif  // KTH_ELEMENT
 
     box lbox(bx), rbox(bx);
     lbox.second.pnt[d] = pivots[idx].first;  //* loose
@@ -51,7 +57,7 @@ void ParallelKDtree<point>::pick_pivots(slice In, const size_t& n, splitter_s& p
     size_t size = std::min(n, (size_t)32 * BUCKET_NUM);
     assert(size <= n);
 
-    //* samples
+#ifndef KTH_ELEMENT
     points arr = points::uninitialized(size);
     auto indexs = parlay::sequence<uint64_t>::uninitialized(size);
     for (size_t i = 0; i < size; i++) {
@@ -61,10 +67,15 @@ void ParallelKDtree<point>::pick_pivots(slice In, const size_t& n, splitter_s& p
     for (size_t i = 0; i < size; i++) {
         arr[i] = In[indexs[i]];
     }
+#endif
 
     //* pick pivots
     bucket_type bucket = 0;
+#ifndef KTH_ELEMENT
     divide_rotate(arr.cut(0, size), pivots, dim, 1, 1, bucket, DIM, boxs, bx);
+#else
+    divide_rotate(In, pivots, dim, 1, 1, bucket, DIM, boxs, bx);
+#endif
     assert(bucket == BUCKET_NUM);
     return;
 }

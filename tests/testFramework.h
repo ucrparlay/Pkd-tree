@@ -259,32 +259,22 @@ size_t checkTreesSize(typename tree::node* T) {
 }
 
 template<typename point, int print = 1>
-void buildTree(const int& Dim, const parlay::sequence<point>& WP, const int& rounds, ParallelKDtree<point>& pkd) {
+void buildTree(const int& Dim, parlay::sequence<point>& WP, const int& rounds, ParallelKDtree<point>& pkd) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
 
     double loopLate = rounds > 1 ? 1.0 : -0.1;
     size_t n = WP.size();
+
+#ifndef CACHE
     points wp = points::uninitialized(n);
-    pkd.delete_tree();
     double aveBuild = time_loop(
         rounds, loopLate, [&]() { parlay::copy(WP.cut(0, n), wp.cut(0, n)); }, [&]() { pkd.build(wp.cut(0, n), Dim); },
         [&]() { pkd.delete_tree(); });
-
-    //* return a built tree
-    parlay::copy(WP.cut(0, n), wp.cut(0, n));
-    pkd.build(wp.cut(0, n), Dim);
-
-    if (print == 1) {
-        LOG << aveBuild << " " << std::flush;
-        auto deep = pkd.getAveTreeHeight();
-        LOG << deep << " " << std::flush;
-    } else if (print == 2) {
-        size_t max_deep = 0;
-        LOG << aveBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight() << " "
-            << std::flush;
-    }
+#else
+    pkd.build(WP.cut(0, n), Dim);
+#endif  // !CACHE
 
     return;
 }
