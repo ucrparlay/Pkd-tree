@@ -22,30 +22,30 @@ run_cache() {
 	perf stat -e cache-misses PARLAY_NUM_THREADS=192 ./test -p ${varden_path} -d 3 -t 0 -q 0 -r 2 -i 0
 }
 
-# NOTE: lambda=6, sampling
-echo "----------------------------------------"
-cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT=ON -DONE_LEVEL=OFF -DSAMPLE=ON -DTEST_CACHE=OFF ..
-make test
-run_test
-echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+remove_technique() {
+	echo "----------------------------------------"
+	cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT="$1" -DONE_LEVEL="$2" -DSAMPLE="$3" -DTEST_CACHE="$4" ..
+	make test
+	run_test
+	echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
 
-# NOTE: lambda=1, sampling
-echo "----------------------------------------"
-cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT=ON -DONE_LEVEL=ON -DSAMPLE=ON -DTEST_CACHE=OFF ..
-make test
-run_test
-echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+test_cache_usage() {
+	echo "----------------------------------------"
+	cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT="$1" -DONE_LEVEL="$2" -DSAMPLE="$3" -DTEST_CACHE="$4" ..
+	make test
+	run_cache
+	echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
 
-# NOTE: lambda=1, parallel median
-echo "----------------------------------------"
-cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT=OFF -DONE_LEVEL=ON -DSAMPLE=OFF -DTEST_CACHE=OFF ..
-make test
-run_test
-echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# NOTE: NTH_ELEMENT | ONE_LEVEL | SAMPLE | TEST_CACHE
+remove_technique "ON" "OFF" "ON" "OFF"
+remove_technique "ON" "ON" "ON" "OFF"
+remove_technique "OFF" "ON" "OFF" "OFF"
+remove_technique "ON" "ON" "OFF" "OFF"
 
-# NOTE: lambda=1, serial median
-echo "----------------------------------------"
-cmake -DDEBUG=OFF -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DNTH_ELEMENT=ON -DONE_LEVEL=ON -DSAMPLE=OFF -DTEST_CACHE=OFF ..
-make test
-run_test
-echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+echo ">>>>>>>>>>>>>>>>begin cache>>>>>>>>>>>>>>>>"
+test_cache_usage "ON" "OFF" "ON" "ON"
+test_cache_usage "ON" "ON" "ON" "ON"
+test_cache_usage "OFF" "ON" "OFF" "ON"
+test_cache_usage "ON" "ON" "OFF" "ON"
