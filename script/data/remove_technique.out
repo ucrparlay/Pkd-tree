@@ -1,0 +1,359 @@
+=> zmen002 @ dynamic: ~/KDtree/script                    remove_technique [!*]
+$ ./run_remove_techniques.sh | tee log.in
+----------------------------------------
+-- The CXX compiler identification is Clang 17.0.6
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+NTH_ELEMENT=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- Looking for C++ include pthread.h
+-- Looking for C++ include pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+Scanning dependencies of target test
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in 255.81
+
+1.in 6.42344
+
+1.in 243.867
+
+1.in 9.50807
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in 236.746
+
+1.in 27.2766
+
+1.in 238.248
+
+1.in 27.6248
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in 518.142
+
+1.in 49.1027
+
+1.in 489.929
+
+1.in 51.4877
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in 412.709
+
+1.in 59.9449
+
+1.in 383.08
+
+1.in 55.836
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+>>>>>>>>>>>>>>>>begin cache>>>>>>>>>>>>>>>>
+----------------------------------------
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+TEST_CACHE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+Workload failed: No such file or directory
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
