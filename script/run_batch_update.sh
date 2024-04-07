@@ -1,7 +1,7 @@
 #!/bin/bash
 
-Solvers=("zdtree" "test")
-# Solvers=("zdtree" "test" "cgal")
+# Solvers=("zdtree" "test")
+Solvers=("cgal")
 Node=(1000000000)
 Dim=(3)
 declare -A datas

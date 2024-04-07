@@ -26,7 +26,7 @@ static constexpr int rangeQueryNum = 100;
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
 // NOTE: insert batch ratio for inba ratio
-static constexpr double insertBatchInbaRatio = 0.0001;
+static constexpr double insertBatchInbaRatio = 0.001;
 // NOTE: knn batch ratio for inba ratio
 static constexpr double knnBatchInbaRatio = 0.1;
 
@@ -300,9 +300,15 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP, const in
     points wp = points::uninitialized(n);
 
     pkd.delete_tree();
+    double delay = 1.0;
+    if (pkd.get_imbalance_ratio() == 1) {
+        delay = -0.1;
+    }
+    // LOG << "step ratio " << stepRatio << ENDL;
+    // LOG << "WP size: " << n << ENDL;
 
     double aveIncreBuild = time_loop(
-        rounds, 1.0,
+        rounds, delay,
         [&]() {
             parlay::copy(WP, wp);
             // parlay::random_shuffle( wp );
@@ -311,6 +317,7 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP, const in
             size_t l = 0, r = 0;
             while (l < n) {
                 r = std::min(l + step, n);
+                // LOG << l << " " << r << ENDL;
                 pkd.batchInsert(wp.cut(l, r), Dim);
                 l = r;
             }

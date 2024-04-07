@@ -261,15 +261,15 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         run();
 
         //@ 3: 1 varden, but flatten;
-        clean();
-        path = prefix + "/1.in";
-        // std::cout << path << std::endl;
-        read_points<point>(path.c_str(), np, K);
-        buildTree<point, 0>(Dim, np, rounds, pkd);
-        pkd.flatten(pkd.get_root(), parlay::make_slice(np));
-        run();
+        // clean();
+        // path = prefix + "/1.in";
+        // // std::cout << path << std::endl;
+        // read_points<point>(path.c_str(), np, K);
+        // buildTree<point, 0>(Dim, np, rounds, pkd);
+        // pkd.flatten(pkd.get_root(), parlay::make_slice(np));
+        // run();
 
-        delete[] kdknn;
+        // delete[] kdknn;
     }
 
     // generate_knn( Dim, wp, K, "knn.out" );
