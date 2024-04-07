@@ -107,6 +107,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             // rangeCountFix<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
             rangeCountFixWithLog<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
         }
+        //
+        // rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, rangeQueryNumInbaRatio, Dim);
 
         delete[] kdknn;
     }
@@ -226,7 +228,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 delete[] kdknn;
             } else if (inbaQueryType == 1) {
                 int type = 2;
-                rangeCountFix<point>(wp, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
+                rangeCountFix<point>(np, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
             }
         };
 

@@ -24,7 +24,7 @@ static constexpr double batchQueryRatio = 0.01;
 static constexpr int rangeQueryNum = 100;
 
 // NOTE: rectangle numbers for inba ratio
-static constexpr int rangeQueryNumInbaRatio = 50000;
+static constexpr int rangeQueryNumInbaRatio = 10000;
 // NOTE: insert batch ratio for inba ratio
 static constexpr double insertBatchInbaRatio = 0.001;
 // NOTE: knn batch ratio for inba ratio
@@ -638,6 +638,8 @@ void rangeCountFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
 
     auto [queryBox, maxSize] = gen_rectangles(recNum, recType, WP, DIM);
     parlay::sequence<size_t> visLeafNum(recNum, 0), visInterNum(recNum, 0);
+
+    LOG << "here" << ENDL;
 
     double aveCount = time_loop(
         rounds, 1.0, [&]() {},

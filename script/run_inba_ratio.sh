@@ -6,7 +6,8 @@
 set -o xtrace
 Solvers=("test")
 Node=(1000000000)
-Inba=(1 2 3 4 5 6 10 20 30 40 45 46 47 48 49 50)
+# Inba=(1 2 3 4 5 6 10 20 30 40 45 46 47 48 49 50)
+Inba=(46 47 48 49 50)
 Dim=(3)
 declare -A datas
 # datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
@@ -32,11 +33,11 @@ for solver in "${Solvers[@]}"; do
 			for node in "${Node[@]}"; do
 				files_path="${dataPath}${node}_${dim}"
 				dest="data/${resFile}"
-				: >${dest}
+				# : >${dest} # BUG: remove when next run
 				echo ">>>${dest}"
 
 				# NOTE: run basic first
-				PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
+				# PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
 
 				# NOTE: run others then
 				for ratio in "${Inba[@]}"; do

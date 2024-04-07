@@ -3,8 +3,6 @@
 #     sleep 210m
 #     kill $$
 # } &
-sleep 3h
-
 set -o xtrace
 Solvers=("test")
 Node=(1000000000)
