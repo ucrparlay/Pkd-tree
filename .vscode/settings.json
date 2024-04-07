@@ -1,0 +1,35 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none",
+    "files.associations": {
+        "array": "cpp",
+        "ranges": "cpp",
+        "*.ipp": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "span": "cpp",
+        "stacktrace": "cpp",
+        "regex": "cpp",
+        "utility": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "ostream": "cpp",
+        "chrono": "cpp",
+        "format": "cpp",
+        "type_traits": "cpp",
+        "cstdint": "cpp",
+        "tuple": "cpp",
+        "cstdlib": "cpp",
+        "algorithm": "cpp",
+        "functional": "cpp"
+    },
+    "r.lsp.promptToInstall": false
+}
