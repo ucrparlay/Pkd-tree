@@ -12,22 +12,25 @@ class OSMHandler(osm.SimpleHandler):
         self.osm_data = []
 
     def tag_inventory(self, elem, elem_type):
-        for tag in elem.tags:
-            self.osm_data.append(
-                [
-                    elem.id,
-                    pd.Timestamp(elem.timestamp),
-                    elem.location.lon,
-                    elem.location.lat,
-                ]
-            )
+        # for tag in elem.tags:
+        self.osm_data.append(
+            [
+                elem.id,
+                pd.Timestamp(elem.timestamp),
+                elem.location.lon,
+                elem.location.lat,
+            ]
+        )
 
     def node(self, n):
         self.tag_inventory(n, "node")
 
 
-osm_path = "/data/zmen002/kdtree/real_world/osm/"
+osm_path = "/data/zmen002/kdtree/real_world/osm/src/"
+wash_path = "/data/zmen002/kdtree/real_world/osm/wash/"
 file_names = os.listdir(osm_path)
+# file_names = ["antarctica-latest.osm.pbf"]
+# print(file_names, flush=True)
 df_osm = pd.DataFrame(
     {
         "lon": [],
@@ -46,9 +49,8 @@ for file in file_names:
         "lat",
     ]
     df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
-    df = df.drop_duplicates()
-    print(file, df.index.size)
-    df.to_csv(file_path + ".csv", index=False)
+    print(file, df.index.size, flush=True)
+    df.to_csv(wash_path + file + ".csv", index=False)
 # for file in file_names:
 #     osmhandler = OSMHandler()
 #     osmhandler.apply_file(file)

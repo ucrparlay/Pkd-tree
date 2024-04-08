@@ -639,19 +639,22 @@ void rangeCountFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     auto [queryBox, maxSize] = gen_rectangles(recNum, recType, WP, DIM);
     parlay::sequence<size_t> visLeafNum(recNum, 0), visInterNum(recNum, 0);
 
-    LOG << "here" << ENDL;
-
     double aveCount = time_loop(
         rounds, 1.0, [&]() {},
         [&]() {
-            parlay::parallel_for(
-                0, recNum,
-                [&](size_t i) {
-                    visInterNum[i] = 0;
-                    visLeafNum[i] = 0;
-                    kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-                },
-                1);
+            // parlay::parallel_for(
+            //     0, recNum,
+            //     [&](size_t i) {
+            //         visInterNum[i] = 0;
+            //         visLeafNum[i] = 0;
+            //         kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+            //     },
+            //     1);
+            for (int i = 0; i < recNum; i++) {
+                visInterNum[i] = 0;
+                visLeafNum[i] = 0;
+                kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+            }
         },
         [&]() {});
 

@@ -198,8 +198,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         points np, nq;
         std::string prefix, path;
 
-        auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
-        auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
+        // auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
+        // auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
+
+        auto inbaQueryType = 1;
+        auto inbaBuildType = 1;
 
         // NOTE: helper functions
         auto clean = [&]() {
@@ -227,8 +230,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 }
                 delete[] kdknn;
             } else if (inbaQueryType == 1) {
+                kdknn = new Typename[rangeQueryNum];
                 int type = 2;
                 rangeCountFix<point>(np, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
+                delete[] kdknn;
             }
         };
 
