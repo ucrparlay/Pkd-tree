@@ -24,7 +24,7 @@ static constexpr double batchQueryRatio = 0.01;
 static constexpr int rangeQueryNum = 100;
 
 // NOTE: rectangle numbers for inba ratio
-static constexpr int rangeQueryNumInbaRatio = 10000;
+static constexpr int rangeQueryNumInbaRatio = 50000;
 // NOTE: insert batch ratio for inba ratio
 static constexpr double insertBatchInbaRatio = 0.001;
 // NOTE: knn batch ratio for inba ratio
@@ -642,19 +642,19 @@ void rangeCountFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     double aveCount = time_loop(
         rounds, 1.0, [&]() {},
         [&]() {
-            // parlay::parallel_for(
-            //     0, recNum,
-            //     [&](size_t i) {
-            //         visInterNum[i] = 0;
-            //         visLeafNum[i] = 0;
-            //         kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-            //     },
-            //     1);
-            for (int i = 0; i < recNum; i++) {
-                visInterNum[i] = 0;
-                visLeafNum[i] = 0;
-                kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-            }
+            parlay::parallel_for(
+                0, recNum,
+                [&](size_t i) {
+                    visInterNum[i] = 0;
+                    visLeafNum[i] = 0;
+                    kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+                },
+                1);
+            // for (int i = 0; i < recNum; i++) {
+            //     visInterNum[i] = 0;
+            //     visLeafNum[i] = 0;
+            //     kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+            // }
         },
         [&]() {});
 
