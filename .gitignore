@@ -53,5 +53,5 @@ transfer.sh
 # test files
 *.in
 build/
-.vscode
+# .vscode
 external/
