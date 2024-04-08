@@ -274,6 +274,8 @@ void buildTree(const int& Dim, parlay::sequence<point>& WP, const int& rounds, P
         [&]() { pkd.delete_tree(); });
     LOG << aveBuild << " " << ENDL;
 #else
+    auto threads = std::stoi(std::getenv("PARLAY_NUM_THREADS"));
+    LOG << "threads num " << threads << ENDL;
     pkd.build(WP.cut(0, n), Dim);
 #endif  // !TEST_CACHE
 
