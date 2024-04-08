@@ -197,16 +197,16 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         points np, nq;
         std::string prefix, path;
+        const string insertFileBack = insertFile;
 
-        // auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
-        // auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
-
-        auto inbaQueryType = 1;
-        auto inbaBuildType = 1;
+        auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
+        auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
 
         // NOTE: helper functions
         auto clean = [&]() {
             prefix = insertFile.substr(0, insertFile.rfind("/"));
+            // prefix = insertFileBack.substr(0, insertFileBack.rfind("/"));
+            // LOG << insertFile << " " << insertFileBack << " " << prefix << ENDL;
             np.clear();
             nq.clear();
         };
@@ -230,7 +230,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 }
                 delete[] kdknn;
             } else if (inbaQueryType == 1) {
-                kdknn = new Typename[rangeQueryNum];
+                kdknn = new Typename[rangeQueryNumInbaRatio];
                 int type = 2;
                 rangeCountFix<point>(np, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
                 delete[] kdknn;
@@ -255,13 +255,13 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         //* read varden first
         clean();
         path = prefix + "/1.in";
-        // std::cout << path << std::endl;
+        // std::cout << "varden path" << path << std::endl;
         read_points<point>(path.c_str(), np, K);
         //* then read uniforprefixm
         prefix = prefix.substr(0, prefix.rfind("/"));  // 1000000_3
         prefix = prefix.substr(0, prefix.rfind("/"));  // ss_varden
-        path = prefix + "/uniform/" + std::to_string(np.size()) + "_" + std::to_string(Dim) + "/1.in";
-        // std::cout << path << std::endl;
+        path = prefix + "/uniform/" + std::to_string(wp.size()) + "_" + std::to_string(Dim) + "/1.in";
+        // std::cout << "uniform path:" << path << std::endl;
 
         read_points<point>(path.c_str(), nq, K);
         parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });

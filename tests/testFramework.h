@@ -31,7 +31,7 @@ static constexpr double insertBatchInbaRatio = 0.001;
 static constexpr double knnBatchInbaRatio = 0.1;
 
 // NOTE: Insert Ratio when summary
-static constexpr double batchInsertRatio = 0.001;
+static constexpr double batchInsertRatio = 0.01;
 // NOTE: rectange type used in summary
 static constexpr int summaryRangeQueryType = 3;
 
