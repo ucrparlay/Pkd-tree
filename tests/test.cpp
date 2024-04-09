@@ -46,12 +46,18 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     //* batch insert
     if (tag >= 1) {
-        batchInsert<point>(pkd, wp, wi, Dim, rounds, batchInsertRatio);
+        const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
+        for (int i = 0; i < ratios.size(); i++) {
+            batchInsert<point>(pkd, wp, wi, Dim, rounds, batchInsertRatio);
+        }
     }
 
     //* batch delete
     if (tag >= 2) {
-        batchDelete<point>(pkd, wp, wi, Dim, rounds, 0, batchInsertRatio);
+        const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
+        for (int i = 0; i < ratios.size(); i++) {
+            batchDelete<point>(pkd, wp, wi, Dim, rounds, 0, batchInsertRatio);
+        }
     }
 
     if (queryType & (1 << 0)) {  // NOTE: KNN
@@ -64,6 +70,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         };
 
         size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
+
         if (tag == 0) {
             int k[3] = {1, 10, 100};
             for (int i = 0; i < 3; i++) {
@@ -76,17 +83,18 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 1)) {  // NOTE: batch NN query
-                                 // auto run_batch_knn = [&](const points& pts, size_t
-                                 // batchSize) {
-                                 //   points newPts(batchSize);
-                                 //   parlay::copy(pts.cut(0, batchSize), newPts.cut(0,
-                                 //   batchSize)); kdknn = new Typename[batchSize];
-                                 //   queryKNN<point, true, true>(Dim, newPts, rounds, pkd,
-                                 //   kdknn, K, true); delete[] kdknn;
-                                 // };
-                                 //
-                                 // run_batch_knn(wp, static_cast<size_t>(wp.size() *
-                                 // batchQueryRatio));
+
+        // auto run_batch_knn = [&](const points& pts, size_t
+        // batchSize) {
+        //   points newPts(batchSize);
+        //   parlay::copy(pts.cut(0, batchSize), newPts.cut(0,
+        //   batchSize)); kdknn = new Typename[batchSize];
+        //   queryKNN<point, true, true>(Dim, newPts, rounds, pkd,
+        //   kdknn, K, true); delete[] kdknn;
+        // };
+        //
+        // run_batch_knn(wp, static_cast<size_t>(wp.size() *
+        // batchQueryRatio));
 
         // const std::vector<double> batchRatios = {0.001, 0.01, 0.1, 0.2, 0.5};
         // for (auto ratio : batchRatios) {
@@ -123,9 +131,9 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 rangeQuerySerialWithLog<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim);
             }
         } else if (tag == 2) {  // NOTE: for summary
-            kdknn = new Typename[recNum];
+            kdknn = new Typename[summaryRangeQueryNum];
             points Out;
-            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, recNum, Dim);
+            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, summaryRangeQueryNum, Dim);
         }
 
         delete[] kdknn;

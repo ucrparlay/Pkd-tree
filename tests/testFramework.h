@@ -33,101 +33,9 @@ static constexpr double knnBatchInbaRatio = 0.1;
 // NOTE: Insert Ratio when summary
 static constexpr double batchInsertRatio = 0.01;
 // NOTE: rectange type used in summary
-static constexpr int summaryRangeQueryType = 3;
-
-template<typename T>
-class counter_iterator {
-   private:
-    struct accept_any {
-        template<typename U>
-        accept_any& operator=(const U&) {
-            return *this;
-        }
-    };
-
-   public:
-    typedef std::output_iterator_tag iterator_category;
-
-    counter_iterator(T& counter) : counter(counter) {}
-    counter_iterator(const counter_iterator& other) : counter(other.counter) {}
-
-    bool operator==(const counter_iterator& rhs) const { return counter == rhs.counter; }
-    bool operator!=(const counter_iterator& rhs) const { return counter != rhs.counter; }
-
-    accept_any operator*() const {
-        ++counter.get();
-        return {};
-    }
-
-    counter_iterator& operator++() {  // ++a
-        return *this;
-    }
-    counter_iterator operator++(int) {  // a++
-        return *this;
-    }
-
-   protected:
-    std::reference_wrapper<T> counter;
-};
-
-//*---------- generate points within a 0-box_size --------------------
-template<typename point>
-void generate_random_points(parlay::sequence<point>& wp, coord _box_size, long n, int Dim) {
-    coord box_size = _box_size;
-
-    std::random_device rd;      // a seed source for the random number engine
-    std::mt19937 gen_mt(rd());  // mersenne_twister_engine seeded with rd()
-    std::uniform_int_distribution<int> distrib(1, box_size);
-
-    parlay::random_generator gen(distrib(gen_mt));
-    std::uniform_int_distribution<int> dis(0, box_size);
-
-    wp.resize(n);
-    // generate n random points in a cube
-    parlay::parallel_for(
-        0, n,
-        [&](long i) {
-            auto r = gen[i];
-            for (int j = 0; j < Dim; j++) {
-                wp[i].pnt[j] = dis(r);
-            }
-        },
-        1000);
-    return;
-}
-
-template<typename point>
-std::pair<size_t, int> read_points(const char* iFile, parlay::sequence<point>& wp, int K, bool withID = false) {
-    using coord = typename point::coord;
-    using coords = typename point::coords;
-    static coords samplePoint;
-    parlay::sequence<char> S = readStringFromFile(iFile);
-    parlay::sequence<char*> W = stringToWords(S);
-    size_t N = std::stoul(W[0], nullptr, 10);
-    int Dim = atoi(W[1]);
-    assert(N >= 0 && Dim >= 1 && N >= K);
-
-    auto pts = W.cut(2, W.size());
-    assert(pts.size() % Dim == 0);
-    size_t n = pts.size() / Dim;
-    auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
-        if constexpr (std::is_integral_v<coord>)
-            return std::stol(pts[i]);
-        else if (std::is_floating_point_v<coord>)
-            return std::stod(pts[i]);
-    });
-    wp.resize(N);
-    parlay::parallel_for(0, n, [&](size_t i) {
-        for (int j = 0; j < Dim; j++) {
-            wp[i].pnt[j] = a[i * Dim + j];
-            if constexpr (std::is_same_v<point, PointType<coord, samplePoint.size()>>) {
-            } else {
-                wp[i].id = i;
-            }
-        }
-    });
-    return std::make_pair(N, Dim);
-}
+static constexpr int summaryRangeQueryType = 2;
+// NOTE: range query num in summary
+static constexpr int summaryRangeQueryNum = 1000;
 
 //* [a,b)
 size_t get_random_index(size_t a, size_t b, int seed) {
@@ -832,4 +740,98 @@ void generate_knn(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, co
     }
     ofs.close();
     return;
+}
+
+template<typename T>
+class counter_iterator {
+   private:
+    struct accept_any {
+        template<typename U>
+        accept_any& operator=(const U&) {
+            return *this;
+        }
+    };
+
+   public:
+    typedef std::output_iterator_tag iterator_category;
+
+    counter_iterator(T& counter) : counter(counter) {}
+    counter_iterator(const counter_iterator& other) : counter(other.counter) {}
+
+    bool operator==(const counter_iterator& rhs) const { return counter == rhs.counter; }
+    bool operator!=(const counter_iterator& rhs) const { return counter != rhs.counter; }
+
+    accept_any operator*() const {
+        ++counter.get();
+        return {};
+    }
+
+    counter_iterator& operator++() {  // ++a
+        return *this;
+    }
+    counter_iterator operator++(int) {  // a++
+        return *this;
+    }
+
+   protected:
+    std::reference_wrapper<T> counter;
+};
+
+//*---------- generate points within a 0-box_size --------------------
+template<typename point>
+void generate_random_points(parlay::sequence<point>& wp, coord _box_size, long n, int Dim) {
+    coord box_size = _box_size;
+
+    std::random_device rd;      // a seed source for the random number engine
+    std::mt19937 gen_mt(rd());  // mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<int> distrib(1, box_size);
+
+    parlay::random_generator gen(distrib(gen_mt));
+    std::uniform_int_distribution<int> dis(0, box_size);
+
+    wp.resize(n);
+    // generate n random points in a cube
+    parlay::parallel_for(
+        0, n,
+        [&](long i) {
+            auto r = gen[i];
+            for (int j = 0; j < Dim; j++) {
+                wp[i].pnt[j] = dis(r);
+            }
+        },
+        1000);
+    return;
+}
+
+template<typename point>
+std::pair<size_t, int> read_points(const char* iFile, parlay::sequence<point>& wp, int K, bool withID = false) {
+    using coord = typename point::coord;
+    using coords = typename point::coords;
+    static coords samplePoint;
+    parlay::sequence<char> S = readStringFromFile(iFile);
+    parlay::sequence<char*> W = stringToWords(S);
+    size_t N = std::stoul(W[0], nullptr, 10);
+    int Dim = atoi(W[1]);
+    assert(N >= 0 && Dim >= 1 && N >= K);
+
+    auto pts = W.cut(2, W.size());
+    assert(pts.size() % Dim == 0);
+    size_t n = pts.size() / Dim;
+    auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
+        if constexpr (std::is_integral_v<coord>)
+            return std::stol(pts[i]);
+        else if (std::is_floating_point_v<coord>)
+            return std::stod(pts[i]);
+    });
+    wp.resize(N);
+    parlay::parallel_for(0, n, [&](size_t i) {
+        for (int j = 0; j < Dim; j++) {
+            wp[i].pnt[j] = a[i * Dim + j];
+            if constexpr (std::is_same_v<point, PointType<coord, samplePoint.size()>>) {
+            } else {
+                wp[i].id = i;
+            }
+        }
+    });
+    return std::make_pair(N, Dim);
 }
