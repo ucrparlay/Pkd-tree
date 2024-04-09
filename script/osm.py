@@ -28,9 +28,8 @@ class OSMHandler(osm.SimpleHandler):
 
 osm_path = "/data/zmen002/kdtree/real_world/osm/src/"
 wash_path = "/data/zmen002/kdtree/real_world/osm/wash/"
-file_names = os.listdir(osm_path)
-# file_names = ["antarctica-latest.osm.pbf"]
-# print(file_names, flush=True)
+# file_names = ["antarctica-latest.osm.pbf.csv"]
+file_names = ["north-america-latest.osm.pbf.csv"]
 df_osm = pd.DataFrame(
     {
         "lon": [],
@@ -39,41 +38,40 @@ df_osm = pd.DataFrame(
 )
 
 for file in file_names:
-    osmhandler = OSMHandler()
-    file_path = osm_path + file
-    osmhandler.apply_file(file_path)
     data_colnames = [
         "id",
         "ts",
         "lon",
         "lat",
     ]
-    df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
-    print(file, df.index.size, flush=True)
-    df.to_csv(wash_path + file + ".csv", index=False)
-# for file in file_names:
-#     osmhandler = OSMHandler()
-#     osmhandler.apply_file(file)
-#     data_colnames = [
-#         "id",
-#         "ts",
-#         "lon",
-#         "lat",
-#     ]
-#     df = pd.DataFrame(osmhandler.osm_data, columns=data_colnames)
-#     df = df.drop_duplicates()
-#     df["ts"] = df["ts"].dt.tz_localize(None)
-#     df.set_index("ts", inplace=True)
-#     df_osm = pd.concat([df_osm, df.loc[:, ["lon", "lat"]]], ignore_index=False, axis=0)
-#
-# start_time = "2014-01-01 08:00:00"
-# end_time = "2024-01-01 08:00:00"
-# df_osm = df_osm.sort_index().loc[start_time:end_time, :]
-# print(df_osm.head())
-#
+    df = pd.read_csv(wash_path + file)
+    print("finish read file")
+    df = df.drop_duplicates()
+    df["ts"] = pd.to_datetime(df["ts"])
+    df["ts"] = df["ts"].dt.tz_localize(None)
+    df.set_index("ts", inplace=True)
+    df_osm = pd.concat([df_osm, df.loc[:, ["lon", "lat"]]], ignore_index=False, axis=0)
+
+start_time = "2014-01-01 08:00:00"
+end_time = "2024-01-01 08:00:00"
+df_osm = df_osm.sort_index().loc[start_time:end_time, :]
+print(f"osm size is {len(df_osm.index)}")
+# print(df_osm.head(100).to_string())
+
 # for year, group in df_osm.groupby(df_osm.index.year):
 #     filename = f"/data/zmen002/kdtree/real_world/osm/year/osm_{year}.csv"
 #     length = group.index.size
+#     print(f"\t year {year} has {length} records")
 #     group.loc[:, ["lon", "lat"]].to_csv(
-#         filename, index=False, sep=" ", header=[length, 2]
+#         filename, index=False, sep=" ", header=[length, 2], float_format="%.7f"
 #     )
+
+for year, group in df_osm.groupby(df_osm.index.year):
+    for month, month_group in group.groupby(group.index.month):
+        os.makedirs(f"/data/zmen002/kdtree/real_world/osm/month/{year}/", exist_ok=True)
+        filename = f"/data/zmen002/kdtree/real_world/osm/month/{year}/{month}.csv"
+        length = month_group.index.size
+        print(f"\t year {year} \t month {month} has {length} records")
+        month_group.loc[:, ["lon", "lat"]].to_csv(
+            filename, index=False, sep=" ", header=[length, 2], float_format="%.7f"
+        )
