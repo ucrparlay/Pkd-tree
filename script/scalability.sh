@@ -2,14 +2,17 @@
 #
 set -o xtrace
 
-Solvers=("zdtree" "test")
+Solvers=("test")
+# Solvers=("zdtree" "test")
 Node=(1000000000)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalability/"
 
 # declare -a cores=(1)
-declare -a cores=(1 2 4 8 16 24 48 96 192)
+# declare -a cores=(1 2 4 8 16 24 48 96 192)
+declare -a cores=(1 2 4 8 16)
+# declare -a cores=(24 48 96 192)
 
 declare -a threads=(
 	"PARLAY_NUM_THREADS=1"
@@ -17,10 +20,10 @@ declare -a threads=(
 	"PARLAY_NUM_THREADS=4"
 	"PARLAY_NUM_THREADS=8"
 	"PARLAY_NUM_THREADS=16"
-	"PARLAY_NUM_THREADS=24"
-	"PARLAY_NUM_THREADS=48"
-	"PARLAY_NUM_THREADS=96"
-	"PARLAY_NUM_THREADS=192"
+	# "PARLAY_NUM_THREADS=24"
+	# "PARLAY_NUM_THREADS=48"
+	# "PARLAY_NUM_THREADS=96"
+	# "PARLAY_NUM_THREADS=192"
 )
 
 declare -a commands=(
@@ -29,10 +32,10 @@ declare -a commands=(
 	"taskset -c 0-15:4 numactl -i all" # 4 threads
 	"taskset -c 0-31:4 numactl -i all" # 8 threads
 	"taskset -c 0-63:4 numactl -i all" # 16 threads
-	"taskset -c 0-95:4 numactl -i all" # 24 threads
-	"taskset -c 0-95:2 numactl -i all" # 48 threads
-	"taskset -c 0-95 numactl -i all"   # 96 threads
-	"numactl -i all"                   # 192 threads
+	# "taskset -c 0-95:4 numactl -i all" # 24 threads
+	# "taskset -c 0-95:2 numactl -i all" # 48 threads
+	# "taskset -c 0-95 numactl -i all"   # 96 threads
+	# "numactl -i all"                   # 192 threads
 )
 
 tag=2
