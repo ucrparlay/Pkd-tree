@@ -35,7 +35,7 @@ static constexpr double batchInsertRatio = 0.01;
 // NOTE: rectange type used in summary
 static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
-static constexpr int summaryRangeQueryNum = 1000;
+static constexpr int summaryRangeQueryNum = 10000;
 
 //* [a,b)
 size_t get_random_index(size_t a, size_t b, int seed) {
@@ -373,9 +373,8 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
         parlay::copy(WP, wp), parlay::copy(WI, wi);
         pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
     } else {
-        parlay::copy(WP, wp), parlay::copy(WP, wi);
+        parlay::copy(WP, wp);
         pkd.build(parlay::make_slice(wp), DIM);
-        pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
     }
 
     std::cout << aveDelete << " " << std::flush;

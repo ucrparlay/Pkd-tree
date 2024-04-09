@@ -4,28 +4,25 @@
 #     kill $$
 # } &
 
-Solvers=("test")
-# Solvers=("zdtree" "test")
+# Solvers=("test")
+Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
-Node=(100000000 1000000000)
-# Dim=(2 3 5)
-Dim=(9)
+Node=(1000000000)
+Dim=(2 3 5 9)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=10
-onecore=0
 insNum=2
-# queryType=1
 queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
 
 resFile=""
 
-for solver in ${Solvers[@]}; do
+for solver in "${Solvers[@]}"; do
 	exe="../build/${solver}"
 
 	#* decide output file
@@ -38,18 +35,18 @@ for solver in ${Solvers[@]}; do
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
 	fi
 
-	for dim in ${Dim[@]}; do
-		if [ ${dim} -gt 3 ] && [ ${solver} == "zdtree" ]; then
+	for dim in "${Dim[@]}"; do
+		if [ "${dim}" -gt 3 ] && [ "${solver}" == "zdtree" ]; then
 			continue
 		fi
 
 		for dataPath in "${!datas[@]}"; do
-			for node in ${Node[@]}; do
+			for node in "${Node[@]}"; do
 				files_path="${dataPath}${node}_${dim}"
 				log_path="${datas[${dataPath}]}${node}_${dim}"
-				mkdir -p ${log_path}
+				mkdir -p "${log_path}"
 				dest="${log_path}/${resFile}"
-				: >${dest}
+				: >"${dest}"
 				echo ">>>${dest}"
 
 				if [[ ${dim} == 9 ]] && [[ ${solver} == "cgal" ]]; then
@@ -60,14 +57,14 @@ for solver in ${Solvers[@]}; do
 					insNum=2
 				fi
 
-				for ((i = 1; i <= ${insNum}; i++)); do
+				for ((i = 1; i <= insNum; i++)); do
 
 					export PARLAY_NUM_THREADS=192
-					timeout 11200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} >>${dest}
+					timeout 11200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -s 1 >>"${dest}"
 
 					retval=$?
 					if [ ${retval} -eq 124 ]; then
-						echo -e "timeout" >>${dest}
+						echo -e "timeout" >>"${dest}"
 						echo "timeout ${node}_${dim}"
 					else
 						echo "finish ${node}_${dim}"
