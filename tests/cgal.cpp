@@ -377,7 +377,7 @@ int main(int argc, char* argv[]) {
     commandLine P(argc, argv,
                   "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
                   "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-q {0,1}] [-i "
-                  "<_insertFile>]");
+                  "<_insertFile>] [-s <summary>]");
 
     char* iFile = P.getOptionValue("-p");
     int K = P.getOptionIntValue("-k", 100);
