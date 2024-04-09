@@ -1,0 +1,375 @@
+=> zmen002 @ dynamic: ~/KDtree/script                                     remove_technique [!*]
+$ ./run_remove_techniques.sh | tee log.in
+>>>>>>>>>>>>>>>>begin cache>>>>>>>>>>>>>>>>
+----------------------------------------
+-- The CXX compiler identification is Clang 17.0.6
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- Looking for C++ include pthread.h
+-- Looking for C++ include pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+Scanning dependencies of target test
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,954,105,206      cache-misses:u
+
+     218.307014805 seconds time elapsed
+
+     185.210155000 seconds user
+      32.668120000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     5,047,595,837      cache-misses:u
+
+      13.170454046 seconds time elapsed
+
+     812.622300000 seconds user
+      65.561250000 seconds sys
+
+
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,579,270,449      cache-misses:u
+
+     185.653307037 seconds time elapsed
+
+     157.158487000 seconds user
+      28.109961000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     4,626,398,490      cache-misses:u
+
+      10.986171318 seconds time elapsed
+
+     686.795173000 seconds user
+      68.963378000 seconds sys
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+SAMPLE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,954,344,137      cache-misses:u
+
+     217.988449904 seconds time elapsed
+
+     184.645112000 seconds user
+      32.900996000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     5,053,240,986      cache-misses:u
+
+      13.105573897 seconds time elapsed
+
+     788.563755000 seconds user
+      70.411535000 seconds sys
+
+
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,579,570,059      cache-misses:u
+
+     185.587746670 seconds time elapsed
+
+     156.924632000 seconds user
+      28.289205000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     4,628,853,789      cache-misses:u
+
+      11.751121486 seconds time elapsed
+
+     815.684378000 seconds user
+      72.239425000 seconds sys
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+TEST_CACHE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,954,260,701      cache-misses:u
+
+     217.944560152 seconds time elapsed
+
+     184.801465000 seconds user
+      32.707002000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     5,046,011,266      cache-misses:u
+
+      12.133798967 seconds time elapsed
+
+     635.306114000 seconds user
+      67.916582000 seconds sys
+
+
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,580,266,790      cache-misses:u
+
+     186.138434780 seconds time elapsed
+
+     156.994005000 seconds user
+      28.761869000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     4,621,722,571      cache-misses:u
+
+      11.009341094 seconds time elapsed
+
+     691.597109000 seconds user
+      69.780943000 seconds sys
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+----------------------------------------
+ONE_LEVEL=ON
+NTH_ELEMENT=ON
+TEST_CACHE=ON
+-- PARLAY VERSION 2.2.4
+-- ---------------------------- General configuration -----------------------------
+-- CMake Generator:                Unix Makefiles
+-- Compiler:                       Clang 17.0.6
+-- Build type:                     Release
+-- CMAKE_CXX_FLAGS:
+-- CMAKE_CXX_FLAGS_DEBUG:          -g
+-- CMAKE_CXX_FLAGS_RELEASE:        -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG -fno-omit-frame-pointer
+-- CMAKE_EXE_LINKER_FLAGS
+-- CMAKE_INSTALL_PREFIX:           /usr/local
+-- -------------------------------- Library options ------------------------------
+-- Using Parlay scheduler. Switch with -DPARLAY_{CILKPLUS,OPENCILK,OPENMP,TBB}=On
+-- Elastic parallelism enabled. Disable with -DPARLAY_ELASTIC_PARALLELISM=Off
+-- ------------------------------- Static Analysis --------------------------------
+-- cppcheck:                     Disabled (enable with -DENABLE_CPPCHECK=On)
+-- clang-tidy:                   Disabled (enable with -DENABLE_CLANG_TIDY=On)
+-- include-what-you-use:         Disabled (enable with -DENABLE_IWYU=On)
+-- ---------------------------------- Unit Tests ----------------------------------
+-- testing: Disabled (enable with -DPARLAY_TEST=On)
+-- ---------------------------------- Benchmarks ----------------------------------
+-- benchmarks: Disabled (enable with -DPARLAY_BENCHMARK=On)
+-- ----------------------------------- Examples -----------------------------------
+-- examples: Disabled (enable with -DPARLAY_EXAMPLES=On)
+-- example data: Off (add -DPARLAY_EXAMPLE_DATA=On to download)
+here
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/zmen002/KDtree/build
+[ 50%] Building CXX object CMakeFiles/test.dir/tests/test.cpp.o
+[100%] Linking CXX executable test
+[100%] Built target test
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,954,967,682      cache-misses:u
+
+     217.629793398 seconds time elapsed
+
+     184.422888000 seconds user
+      32.779682000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     5,037,652,864      cache-misses:u
+
+      12.948693793 seconds time elapsed
+
+     775.193334000 seconds user
+      68.929665000 seconds sys
+
+
+1.in threads num 1
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     3,579,378,276      cache-misses:u
+
+     185.033629875 seconds time elapsed
+
+     156.445176000 seconds user
+      28.220545000 seconds sys
+
+
+1.in threads num 192
+
+
+ Performance counter stats for './test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 2 -i 0':
+
+     4,634,576,388      cache-misses:u
+
+      11.385913534 seconds time elapsed
+
+     749.925393000 seconds user
+      67.444046000 seconds sys
+
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
