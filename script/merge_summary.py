@@ -6,12 +6,12 @@ print(os.getcwd())
 
 path = "../benchmark"
 # benchmarks = ["ss_varden"]
-benchmarks = ["ss_varden", "uniform"]
+benchmarks = ["uniform", "ss_varden"]
 storePrefix = "data/"
-Nodes = [100000000, 1000000000]
+Nodes = [1000000000]
 Dims = [2, 3, 5, 9]
 
-solverName = ["zdtree", "test", "cgal"]
+solverName = ["test", "zdtree"]
 resMap = {
     "test": "res_summary.out",
     "cgal": "cgal_summary.out",
@@ -31,8 +31,14 @@ files = ["summary"]
 build_header = [
     "build",
     "aveDepth",
-    "insert",
-    "delete",
+    "insert_0.0001",
+    "insert_0.001",
+    "insert_0.01",
+    "insert_0.1",
+    "delete_0.0001",
+    "delete_0.001",
+    "delete_0.01",
+    "delete_0.1",
     "k",
     "depth",
     "visNum",
