@@ -119,7 +119,6 @@ set(all_files
 FIND_PROGRAM(CLANG_FORMAT "clang-format")
 
 IF(CLANG_FORMAT)
-	message("here")
 	add_custom_target(
 		format
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

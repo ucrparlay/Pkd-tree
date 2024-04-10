@@ -297,24 +297,27 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     if (queryType & (1 << 11)) {  // NOTE: osm by year
         // WARN: remember using double
         string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
-        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018", "2019",
-                                                "2020", "2021", "2022", "2023", "2024"};
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());
         for (int i = 0; i < files.size(); i++) {
             std::string path = osm_prefix + "osm_" + files[i] + ".csv";
+            // LOG << path << ENDL;
             read_points(path.c_str(), node_by_year[i], K);
         }
         insertOsmByTime<point>(Dim, node_by_year, rounds, pkd);
 
         auto all_points = parlay::flatten(node_by_year);
+        kdknn = new Typename[all_points.size()];
         queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+        delete[] kdknn;
     }
 
     if (queryType & (1 << 12)) {  // NOTE: osm by month
         // WARN: remember using double
         string osm_prefix = "/data/zmen002/kdtree/real_world/osm/month/";
-        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018", "2019",
-                                                "2020", "2021", "2022", "2023", "2024"};
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
         const std::vector<std::string> month = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
 
         parlay::sequence<points> node(files.size() * month.size());
@@ -327,7 +330,9 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         insertOsmByTime<point>(Dim, node, rounds, pkd);
 
         auto all_points = parlay::flatten(node);
+        kdknn = new Typename[all_points.size()];
         queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+        delete[] kdknn;
     }
 
     std::cout << std::endl << std::flush;
