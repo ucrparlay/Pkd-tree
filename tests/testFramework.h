@@ -741,6 +741,52 @@ void generate_knn(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, co
     return;
 }
 
+template<typename point>
+void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<point>>& node_by_time, const int rounds,
+                     ParallelKDtree<point>& pkd) {
+    using tree = ParallelKDtree<point>;
+    using points = typename tree::points;
+    using node = typename tree::node;
+    using box = typename tree::box;
+
+    pkd.delete_tree();
+    int time_period_num = node_by_time.size();
+    parlay::sequence<points> wp(time_period_num);
+
+    double ave = time_loop(
+        rounds, 1.0,
+        [&]() {
+            for (int i = 0; i < time_period_num; i++) {
+                parlay::copy(node_by_time[i], wp[i]);
+            }
+        },
+        [&]() {
+            for (int i = 0; i < time_period_num; i++) {
+                pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+            }
+        },
+        [&]() { pkd.delete_tree(); });
+
+    // NOTE: begin revert
+    for (int i = 0; i < time_period_num; i++) {
+        parlay::copy(node_by_time[i], wp[i]);
+    }
+    for (int i = 0; i < time_period_num; i++) {
+        parlay::internal::timer t;
+        t.reset(), t.start();
+
+        pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+
+        LOG << t.stop() << " " << std::flush;
+    }
+
+    size_t max_deep = 0;
+    LOG << ave << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight() << " "
+        << std::flush;
+
+    return;
+}
+
 template<typename T>
 class counter_iterator {
    private:
