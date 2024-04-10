@@ -87,7 +87,6 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         } else {  // test summary
             run_batch_knn(wp, K, batchSize);
         }
-        delete[] kdknn;
     }
 
     if (queryType & (1 << 1)) {  // NOTE: batch NN query
@@ -136,14 +135,14 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 kdknn = new Typename[recNum];
                 points Out;
                 rangeQuerySerialWithLog<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim);
+                delete[] kdknn;
             }
         } else if (summary == 1) {  // NOTE: for summary
             kdknn = new Typename[summaryRangeQueryNum];
             points Out;
             rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, summaryRangeQueryNum, Dim);
+            delete[] kdknn;
         }
-
-        delete[] kdknn;
     }
 
     if (queryType & (1 << 4)) {  // NOTE: batch insertion with fraction

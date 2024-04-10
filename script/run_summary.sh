@@ -3,9 +3,9 @@
 #     sleep 210m
 #     kill $$
 # } &
-
-# Solvers=("test")
-Solvers=("zdtree" "test")
+set -o xtrace
+Solvers=("test")
+# Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
 Dim=(2 3 5 9)
@@ -60,7 +60,7 @@ for solver in "${Solvers[@]}"; do
 				for ((i = 1; i <= insNum; i++)); do
 
 					export PARLAY_NUM_THREADS=192
-					timeout 11200s numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -s 1 >>"${dest}"
+					numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -i 1 -s 1 >>"${dest}"
 
 					retval=$?
 					if [ ${retval} -eq 124 ]; then
