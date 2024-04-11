@@ -5,12 +5,14 @@ Solvers=("cgal")
 Node=(1000000000)
 Dim=(3)
 declare -A datas
-datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+# datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+# datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
+# datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 tag=0
 k=10
-insNum=2
+insNum=1
 queryType=$((2#110000)) # 1110000
 type="batch_update"
 resFile=""
@@ -38,8 +40,8 @@ for solver in "${Solvers[@]}"; do
 				: >"${dest}"
 				echo ">>>${dest}"
 
-				for ((i = 1; i <= ${insNum}; i++)); do
-					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -i 1 >>${dest}
+				for ((i = 1; i <= insNum; i++)); do
+					PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -i 1 >>"${dest}"
 				done
 			done
 		done
