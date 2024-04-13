@@ -204,5 +204,3 @@ The execution flow is shown below:
 
 
 ## Ciatation
-
-If you use our code, please contact `zmen002@ucr.edu` for ciatation.
