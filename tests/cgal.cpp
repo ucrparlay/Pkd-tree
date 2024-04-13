@@ -14,6 +14,7 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 #include <cstddef>
+#include <tbb/task_scheduler_init.h>
 
 using Typename = coord;
 
@@ -39,6 +40,11 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     using points = parlay::sequence<point>;
     using pkdTree = ParallelKDtree<point>;
     using box = typename pkdTree::box;
+
+    // NOTE: set cgal threads number
+    // TODO: remove it before test summary
+    int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
+    tbb::task_scheduler_init TBBinit(nthreads);
 
     parlay::internal::timer timer;
 
