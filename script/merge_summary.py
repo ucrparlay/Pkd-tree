@@ -11,7 +11,7 @@ storePrefix = "data/"
 Nodes = [1000000000]
 Dims = [2, 3, 5, 9]
 
-solverName = ["test", "zdtree"]
+solverName = ["test", "zdtree", "cgal"]
 resMap = {
     "test": "res_summary.out",
     "cgal": "cgal_summary.out",

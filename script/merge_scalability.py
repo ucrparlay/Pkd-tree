@@ -13,7 +13,7 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
     cores = [1, 2, 4, 8, 16, 24, 48, 96, 192]
 
     # solverName = ["test", "zdtree", "cgal"]
-    solverName = ["test", "zdtree"]
+    solverName = ["test", "zdtree", "cgal"]
     resMap = {"test": "res.out", "zdtree": "zdtree.out", "cgal": "cgal.out"}
     csvFilePointer = open(storePrefix + "scalability" + ".csv", "w", newline="")
     csvFilePointer.truncate()
@@ -67,7 +67,7 @@ if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
                                 l[1],
                                 l[2],
                                 l[3],
-                                l[4],
+                                l[4] if solver != "cgal" else "-1",
                                 str(core),
                             ]
                         )

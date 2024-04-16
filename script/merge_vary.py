@@ -10,8 +10,8 @@ storePrefix = "data/"
 Nodes = [1000000000]
 Dims = [3]
 
-# type = "batch_update"
-type = "batch_knn_query"
+type = "batch_update"
+# type = "batch_knn_query"
 # type = "querys"
 # type = "quality"
 # type = "count"
