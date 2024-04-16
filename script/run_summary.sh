@@ -4,14 +4,14 @@
 #     kill $$
 # } &
 set -o xtrace
-Solvers=("test")
+Solvers=("cgal")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
 Dim=(2 3 5 9)
 declare -A datas
-datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=10
@@ -60,6 +60,7 @@ for solver in "${Solvers[@]}"; do
 				for ((i = 1; i <= insNum; i++)); do
 
 					export PARLAY_NUM_THREADS=192
+					export TEST_CGAL_THREADS=192
 					numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -i 1 -s 1 >>"${dest}"
 
 					retval=$?
