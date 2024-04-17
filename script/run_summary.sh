@@ -8,7 +8,8 @@ Solvers=("cgal")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-Dim=(2 3 5 9)
+# Dim=(2 3 5 9)
+Dim=(2 9)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -19,6 +20,7 @@ insNum=2
 queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
+rounds=3
 
 resFile=""
 
@@ -48,14 +50,6 @@ for solver in "${Solvers[@]}"; do
 				dest="${log_path}/${resFile}"
 				: >"${dest}"
 				echo ">>>${dest}"
-
-				if [[ ${dim} == 9 ]] && [[ ${solver} == "cgal" ]]; then
-					rounds=1
-					insNum=1
-				else
-					rounds=3
-					insNum=2
-				fi
 
 				for ((i = 1; i <= insNum; i++)); do
 

@@ -1,5 +1,7 @@
 #include "common/parse_command_line.h"
 
+#include "parlay/internal/get_time.h"
+#include "parlay/parallel.h"
 #include "testFramework.h"
 
 #include <CGAL/Cartesian_d.h>
@@ -15,6 +17,9 @@
 #include <tbb/parallel_for.h>
 #include <cstddef>
 #include <tbb/task_scheduler_init.h>
+#include <tbb/task_arena.h>
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include <tbb/global_control.h>
 
 using Typename = coord;
 
@@ -44,7 +49,9 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     // NOTE: set cgal threads number
     // TODO: remove it before test summary
     int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
-    tbb::task_scheduler_init TBBinit(nthreads);
+    // tbb::task_scheduler_init TBBinit(nthreads); // Decrapted
+    // NOTE: Limit the number of threads to two for all oneTBB parallel interfaces
+    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
 
     parlay::internal::timer timer;
 
@@ -107,37 +114,36 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         if (tag == 1) wp.append(wi);
     }
 
-    auto cgal_delete = [&](bool afterInsert = 1, double ratio = 1.0) {
-        if (!afterInsert) {
-            tree.clear();
-            tree.insert(_points.begin(), _points.end());
-            tree.template build<CGAL::Parallel_tag>();
-        }
-        timer.reset();
-        timer.start();
-        if (afterInsert) {
-            size_t sz = _points_insert.size() * ratio;
-            for (auto it = _points_insert.begin(); it != _points_insert.begin() + sz; it++) {
-                tree.remove(*it);
-            }
-        } else {
-            assert(tree.size() == wp.size());
-            size_t sz = _points.size() * ratio;
-            for (auto it = _points.begin(); it != _points.begin() + sz; it++) {
-                tree.remove(*it);
-            }
-        }
-        if (summary) {
-            timer.stop();
-            std::cout << timer.total_time() << " " << std::flush;
-            tree.clear();
-            tree.insert(_points.begin(), _points.end());
-            tree.template build<CGAL::Parallel_tag>();
-            // assert( tree.root()->num_items() == wp.size() );
-        }
-    };
-
     if (tag >= 2) {
+        auto cgal_delete = [&](bool afterInsert = 1, double ratio = 1.0) {
+            if (!afterInsert) {
+                tree.clear();
+                tree.insert(_points.begin(), _points.end());
+                tree.template build<CGAL::Parallel_tag>();
+            }
+            timer.reset();
+            timer.start();
+            if (afterInsert) {
+                size_t sz = _points_insert.size() * ratio;
+                for (auto it = _points_insert.begin(); it != _points_insert.begin() + sz; it++) {
+                    tree.remove(*it);
+                }
+            } else {
+                assert(tree.size() == wp.size());
+                size_t sz = _points.size() * ratio;
+                for (auto it = _points.begin(); it != _points.begin() + sz; it++) {
+                    tree.remove(*it);
+                }
+            }
+            if (summary) {
+                timer.stop();
+                std::cout << timer.total_time() << " " << std::flush;
+                tree.clear();
+                tree.insert(_points.begin(), _points.end());
+                tree.template build<CGAL::Parallel_tag>();
+                // assert( tree.root()->num_items() == wp.size() );
+            }
+        };
         if (summary) {
             const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
             for (int i = 0; i < ratios.size(); i++) {
@@ -374,6 +380,108 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         std::cout << "-1 -1 -1 " << std::flush;
     }
 
+    auto insertOsmByTimaCgal = [&](const std::vector<std::vector<Point_d>>& pts) {
+        int fileNum = pts.size();
+        tree.clear();
+        parlay::internal::timer timer;
+        for (int i = 0; i < fileNum; i++) {
+            timer.reset(), timer.start();
+            tree.insert(pts[i].begin(), pts[i].end());
+            tree.template build<CGAL::Parallel_tag>();
+            timer.stop();
+            LOG << pts[i].size() << " " << timer.total_time() << " " << ENDL;
+        }
+    };
+
+    auto queryPointCgal = [&](const int kth, const std::vector<Point_d>& all_pts) {
+        timer.reset();
+        timer.start();
+        parlay::sequence<size_t> visNodeNum(all_pts.size(), 0);
+        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, all_pts.size()),
+                          [&](const tbb::blocked_range<std::size_t>& r) {
+                              for (std::size_t s = r.begin(); s != r.end(); ++s) {
+                                  // Neighbor search can be instantiated from
+                                  // several threads at the same time
+                                  Point_d query = all_pts[s];
+                                  Neighbor_search search(tree, query, kth);
+                                  auto it = search.end();
+                                  it--;
+                                  cgknn[s] = it->second;
+                                  visNodeNum[s] = search.internals_visited() + search.leafs_visited();
+                              }
+                          });
+        timer.stop();
+        std::cout << timer.total_time() << " " << tree.root()->depth() << " "
+                  << parlay::reduce(visNodeNum) / all_pts.size() << " " << std::flush;
+    };
+
+    if (queryType & (1 << 11)) {  // NOTE: osm by year
+
+        // WARN: remember using double
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
+        parlay::sequence<points> node_by_year(files.size());
+        for (int i = 0; i < files.size(); i++) {
+            std::string path = osm_prefix + "osm_" + files[i] + ".csv";
+            read_points(path.c_str(), node_by_year[i], K);
+        }
+
+        std::vector<std::vector<Point_d>> pts(files.size());
+        for (int i = 0; i < files.size(); i++) {
+            pts[i].resize(node_by_year[i].size());
+            parlay::parallel_for(0, node_by_year[i].size(), [&](size_t j) {
+                pts[i][j] = Point_d(Dim, std::begin(node_by_year[i][j].pnt), std::end(node_by_year[i][j].pnt));
+            });
+        }
+        insertOsmByTimaCgal(pts);
+
+        auto all_points = parlay::flatten(node_by_year);
+        cgknn = new Typename[all_points.size()];
+        std::vector<Point_d> all_pts(all_points.size());
+        parlay::parallel_for(0, all_points.size(), [&](size_t j) {
+            all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
+        });
+        queryPointCgal(K, all_pts);
+        delete[] cgknn;
+    }
+
+    if (queryType & (1 << 12)) {  // NOTE: osm by month
+        // WARN: remember using double
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/month/";
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
+        const std::vector<std::string> month = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+
+        parlay::sequence<points> node(files.size() * month.size());
+        for (int i = 0; i < files.size(); i++) {
+            for (int j = 0; j < month.size(); j++) {
+                std::string path = osm_prefix + files[i] + "/" + month[j] + ".csv";
+                read_points(path.c_str(), node[i * month.size() + j], K);
+            }
+        }
+
+        std::vector<std::vector<Point_d>> pts(node.size());
+        for (int i = 0; i < files.size(); i++) {
+            for (int j = 0; j < month.size(); j++) {
+                int idx = i * month.size() + j;
+                pts[idx].resize(node[idx].size());
+                parlay::parallel_for(0, node[idx].size(), [&](size_t k) {
+                    pts[idx][k] = Point_d(Dim, std::begin(node[idx][k].pnt), std::end(node[idx][k].pnt));
+                });
+            }
+        }
+        insertOsmByTimaCgal(pts);
+
+        auto all_points = parlay::flatten(node);
+        std::vector<Point_d> all_pts(all_points.size());
+        cgknn = new Typename[all_points.size()];
+        parlay::parallel_for(0, all_points.size(), [&](size_t j) {
+            all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
+        });
+        queryPointCgal(K, all_pts);
+        delete[] cgknn;
+    }
     std::cout << std::endl << std::flush;
 
     return;
