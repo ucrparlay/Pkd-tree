@@ -135,20 +135,17 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                     tree.remove(*it);
                 }
             }
-            if (summary) {
-                timer.stop();
-                std::cout << timer.total_time() << " " << std::flush;
-                tree.clear();
-                tree.insert(_points.begin(), _points.end());
-                tree.template build<CGAL::Parallel_tag>();
-                // assert( tree.root()->num_items() == wp.size() );
-            }
+            timer.stop();
+            std::cout << timer.total_time() << " " << std::flush;
         };
         if (summary) {
             const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
             for (int i = 0; i < ratios.size(); i++) {
                 cgal_delete(0, ratios[i]);
             }
+            tree.clear();
+            tree.insert(_points.begin(), _points.end());
+            tree.template build<CGAL::Parallel_tag>();
         } else {
             cgal_delete(0, batchInsertRatio);
         }
