@@ -41,6 +41,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
   }
 
   Typename* kdknn = nullptr;
+  // return;
 
   //* begin test
   buildTree<point>(Dim, wp, rounds, pkd);

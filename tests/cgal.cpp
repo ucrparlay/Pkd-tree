@@ -72,6 +72,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
   //       Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
   // });
 
+  // return;
   timer.start();
   Splitter split;
   Tree tree(_points.begin(), _points.end(), split);
