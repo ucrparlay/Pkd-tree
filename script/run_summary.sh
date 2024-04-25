@@ -1,23 +1,26 @@
 #!/bin/bash
 # {
-#     sleep 210m
-#     kill $$
+# 	sleep 10s
+# 	# kill $$
+# 	pkill -P $$
 # } &
 set -o xtrace
 Solvers=("cgal")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-# Dim=(2 3 5 9)
-Dim=(2 9)
+Dim=(2 3 5 9)
+# Dim=(2 9)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-tag=2
+# tag=2
+tag=0
 k=10
-insNum=2
-queryType=$((2#1001)) # 1110000
+insNum=1
+queryType=$((2#1)) # 1110000
+# queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
 rounds=3
@@ -31,7 +34,11 @@ for solver in "${Solvers[@]}"; do
 	if [[ ${solver} == "test" ]]; then
 		resFile="res_${type}.out"
 	elif [[ ${solver} == "cgal" ]]; then
-		resFile="cgal_${type}.out"
+		if [[ ${tag} == 0 ]]; then
+			resFile="cgal_${type}_knn.out"
+		else
+			resFile="cgal_${type}.out"
+		fi
 	elif [[ ${solver} == "zdtree" ]]; then
 		resFile="zdtree_${type}.out"
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
@@ -54,7 +61,7 @@ for solver in "${Solvers[@]}"; do
 				for ((i = 1; i <= insNum; i++)); do
 
 					export PARLAY_NUM_THREADS=192
-					export TEST_CGAL_THREADS=192
+					# export TEST_CGAL_THREADS=192
 					numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -i 1 -s 1 >>"${dest}"
 
 					retval=$?

@@ -1,6 +1,7 @@
 // #pragma once
 
 #include <algorithm>
+#include <boost/random/linear_feedback_shift.hpp>
 #include <cstddef>
 #include <cstdint>
 #include "cpdd/cpdd.h"
@@ -38,7 +39,7 @@ static constexpr int summaryRangeQueryType = 2;
 static constexpr int summaryRangeQueryNum = 10000;
 
 //* [a,b)
-size_t get_random_index(size_t a, size_t b, int seed) {
+inline size_t get_random_index(size_t a, size_t b, int seed) {
     return size_t((rand() % (b - a)) + a);
     // return size_t( ( parlay::hash64( static_cast<uint64_t>( seed ) ) % ( b - a
     // ) ) + a );
