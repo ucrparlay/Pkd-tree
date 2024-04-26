@@ -413,6 +413,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     };
 
     if (queryType & (1 << 11)) {  // NOTE: osm by year
+        LOG << ENDL;
 
         // WARN: remember using double
         string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
@@ -444,6 +445,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     }
 
     if (queryType & (1 << 12)) {  // NOTE: osm by month
+        LOG << ENDL;
         // WARN: remember using double
         string osm_prefix = "/data/zmen002/kdtree/real_world/osm/month/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
