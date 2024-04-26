@@ -483,95 +483,95 @@ $ ./run_perf.sh | tee log.in
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-       177,267,375      cache-misses:u
+        63,549,096      cache-misses:u
 
-       1.448996949 seconds time elapsed
+       0.236361814 seconds time elapsed
 
-      39.058363000 seconds user
-      17.483177000 seconds sys
+      30.037629000 seconds user
+       6.568667000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-       359,540,179      cache-misses:u
+       131,059,772      cache-misses:u
 
-       2.970117632 seconds time elapsed
+       0.425359279 seconds time elapsed
 
-      77.494461000 seconds user
-      30.727360000 seconds sys
+      60.228110000 seconds user
+       9.409793000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-       896,769,522      cache-misses:u
+       323,969,859      cache-misses:u
 
-       7.436213072 seconds time elapsed
+       0.951078578 seconds time elapsed
 
-     197.404894000 seconds user
-      62.435174000 seconds sys
+     144.516815000 seconds user
+      16.197894000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-     1,769,334,694      cache-misses:u
+       611,518,352      cache-misses:u
 
-      14.292413954 seconds time elapsed
+       1.647742892 seconds time elapsed
 
-     318.839719000 seconds user
-     118.262964000 seconds sys
+     255.867096000 seconds user
+      26.751937000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-     3,623,461,899      cache-misses:u
+     1,278,516,602      cache-misses:u
 
-      28.642032286 seconds time elapsed
+       3.633771257 seconds time elapsed
 
-     672.001853000 seconds user
-     230.757645000 seconds sys
+     576.926297000 seconds user
+      48.630617000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-     9,179,868,810      cache-misses:u
+     3,170,874,801      cache-misses:u
 
-      99.510256266 seconds time elapsed
+       8.915519901 seconds time elapsed
 
-    5847.947268000 seconds user
-     611.636016000 seconds sys
+    1430.264291000 seconds user
+     110.628888000 seconds sys
 
 
 1.in
  Performance counter stats for './../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10':
 
-    18,455,451,598      cache-misses:u
+     6,319,550,559      cache-misses:u
 
-     195.811514570 seconds time elapsed
+      17.655365479 seconds time elapsed
 
-   11093.325934000 seconds user
-    1208.255825000 seconds sys
+    2831.001772000 seconds user
+     226.985860000 seconds sys
 
 
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 39.40
-        System time (seconds): 16.19
-        Percent of CPU this job got: 3792%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.46
+        User time (seconds): 23.17
+        System time (seconds): 6.59
+        Percent of CPU this job got: 16448%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.18
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 1932880
+        Maximum resident set size (kbytes): 1535532
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 179
-        Minor (reclaiming a frame) page faults: 110418
-        Voluntary context switches: 119302
-        Involuntary context switches: 239
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 5333
+        Voluntary context switches: 22747
+        Involuntary context switches: 267
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -581,20 +581,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 72.20
-        System time (seconds): 30.78
-        Percent of CPU this job got: 3653%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.81
+        User time (seconds): 48.32
+        System time (seconds): 10.40
+        Percent of CPU this job got: 16974%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.34
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 3805724
+        Maximum resident set size (kbytes): 3026640
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 155
-        Minor (reclaiming a frame) page faults: 211698
-        Voluntary context switches: 236872
-        Involuntary context switches: 489
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 7579
+        Voluntary context switches: 49758
+        Involuntary context switches: 105
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -604,20 +604,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 185.12
-        System time (seconds): 62.58
-        Percent of CPU this job got: 3568%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.94
+        User time (seconds): 118.20
+        System time (seconds): 16.64
+        Percent of CPU this job got: 17287%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.78
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 9371500
+        Maximum resident set size (kbytes): 7480816
         Average resident set size (kbytes): 0
         Major (requiring I/O) page faults: 0
-        Minor (reclaiming a frame) page faults: 500716
-        Voluntary context switches: 580310
-        Involuntary context switches: 979
+        Minor (reclaiming a frame) page faults: 11641
+        Voluntary context switches: 125404
+        Involuntary context switches: 479
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -627,20 +627,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 319.93
-        System time (seconds): 126.41
-        Percent of CPU this job got: 3187%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:14.00
+        User time (seconds): 211.14
+        System time (seconds): 26.13
+        Percent of CPU this job got: 17408%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.36
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 18718568
+        Maximum resident set size (kbytes): 14910288
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 87
-        Minor (reclaiming a frame) page faults: 987063
-        Voluntary context switches: 1091187
-        Involuntary context switches: 2248
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 17609
+        Voluntary context switches: 220564
+        Involuntary context switches: 687
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -650,20 +650,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 667.30
-        System time (seconds): 240.64
-        Percent of CPU this job got: 3256%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:27.87
+        User time (seconds): 465.53
+        System time (seconds): 46.09
+        Percent of CPU this job got: 17444%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.93
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 37371964
+        Maximum resident set size (kbytes): 29756300
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 60
-        Minor (reclaiming a frame) page faults: 1962065
-        Voluntary context switches: 2212998
-        Involuntary context switches: 3828
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 30717
+        Voluntary context switches: 499484
+        Involuntary context switches: 1388
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -673,20 +673,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 5197.99
-        System time (seconds): 609.08
-        Percent of CPU this job got: 6189%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:33.82
+        User time (seconds): 1166.79
+        System time (seconds): 104.80
+        Percent of CPU this job got: 17486%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.27
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 93616408
+        Maximum resident set size (kbytes): 74286212
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 76
-        Minor (reclaiming a frame) page faults: 5801695
-        Voluntary context switches: 11530638
-        Involuntary context switches: 15202
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 70615
+        Voluntary context switches: 1254307
+        Involuntary context switches: 2947
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -696,20 +696,20 @@ $ ./run_perf.sh | tee log.in
         Page size (bytes): 4096
         Exit status: 0
 1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
-        User time (seconds): 10796.15
-        System time (seconds): 1161.21
-        Percent of CPU this job got: 6382%
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 3:07.35
+        User time (seconds): 2331.44
+        System time (seconds): 210.04
+        Percent of CPU this job got: 17487%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:14.53
         Average shared text size (kbytes): 0
         Average unshared data size (kbytes): 0
         Average stack size (kbytes): 0
         Average total size (kbytes): 0
-        Maximum resident set size (kbytes): 187179708
+        Maximum resident set size (kbytes): 148507672
         Average resident set size (kbytes): 0
-        Major (requiring I/O) page faults: 50
-        Minor (reclaiming a frame) page faults: 11695488
-        Voluntary context switches: 23660694
-        Involuntary context switches: 29997
+        Major (requiring I/O) page faults: 165
+        Minor (reclaiming a frame) page faults: 138947
+        Voluntary context switches: 2517115
+        Involuntary context switches: 6321
         Swaps: 0
         File system inputs: 0
         File system outputs: 0
@@ -718,5 +718,4 @@ $ ./run_perf.sh | tee log.in
         Signals delivered: 0
         Page size (bytes): 4096
         Exit status: 0
-__________________________________________________________________________________________________________________________________________________________________________________________________________
-=> zmen002 @ dynami
+

@@ -1,5 +1,5 @@
 ---
-BasedOnStyle: Google
+BasedOnStyle: LLVM
 AccessModifierOffset: '-1'
 AlignAfterOpenBracket: Align
 AlignConsecutiveMacros: 'true'
@@ -26,7 +26,7 @@ BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: 'true'
-ColumnLimit: '80'
+ColumnLimit: '120'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'true'
 Cpp11BracedListStyle: 'true'
@@ -34,7 +34,7 @@ FixNamespaceComments: 'true'
 IncludeBlocks: Preserve
 IndentCaseLabels: 'true'
 IndentPPDirectives: None
-IndentWidth: '2'
+IndentWidth: '4'
 IndentWrappedFunctionNames: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'true'
 Language: Cpp
