@@ -1,6 +1,7 @@
 #include "common/parse_command_line.h"
 
 #include "testFramework.h"
+#include <fstream>
 
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/K_neighbor_search.h>
@@ -11,6 +12,7 @@
 #include <CGAL/point_generators_d.h>
 #include <CGAL/Fuzzy_iso_box.h>
 #include <CGAL/Fuzzy_sphere.h>
+#include <string>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 
@@ -350,29 +352,47 @@ std::pair<size_t, int> cgal_read_points(const char* iFile, std::vector<Point_d>&
     using coord = typename point::coord;
     using coords = typename point::coords;
     static coords samplePoint;
-    parlay::sequence<char> S = readStringFromFile(iFile);
-    parlay::sequence<char*> W = stringToWords(S);
-    size_t N = std::stoul(W[0], nullptr, 10);
-    int Dim = atoi(W[1]);
-    assert(N >= 0 && Dim >= 1 && N >= K);
+    // parlay::sequence<char> S = readStringFromFile(iFile);
+    // parlay::sequence<char*> W = stringToWords(S);
+    // size_t N = std::stoul(W[0], nullptr, 10);
+    // int Dim = atoi(W[1]);
+    // assert(N >= 0 && Dim >= 1 && N >= K);
+    //
+    // auto pts = W.cut(2, W.size());
+    // assert(pts.size() % Dim == 0);
+    // size_t n = pts.size() / Dim;
+    // auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
+    //     if constexpr (std::is_integral_v<coord>)
+    //         return std::stol(pts[i]);
+    //     else if (std::is_floating_point_v<coord>)
+    //         return std::stod(pts[i]);
+    // });
+    // wp.resize(N);
+    // parlay::parallel_for(0, n, [&](size_t i) {
+    //     std::array<coord, 3> arr = {a[i * Dim + 0], a[i * Dim + 1], a[i * Dim + 2]};
+    //     wp[i] = Point_d(Dim, std::begin(arr), (std::begin(arr) + Dim));
+    //     // for (int j = 0; j < Dim; j++) {
+    //     //   wp[i].pnt[j] = a[i * Dim + j];
+    //     // }
+    // });
 
-    auto pts = W.cut(2, W.size());
-    assert(pts.size() % Dim == 0);
-    size_t n = pts.size() / Dim;
-    auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
-        if constexpr (std::is_integral_v<coord>)
-            return std::stol(pts[i]);
-        else if (std::is_floating_point_v<coord>)
-            return std::stod(pts[i]);
-    });
+    ifstream fs;
+    fs.open(iFile);
+    size_t N;
+    int Dim;
+    string str;
+    fs >> str, N = stol(str);
+    fs >> str, Dim = stoi(str);
     wp.resize(N);
-    parlay::parallel_for(0, n, [&](size_t i) {
-        std::array<coord, 3> arr = {a[i * Dim + 0], a[i * Dim + 1], a[i * Dim + 2]};
+    for (size_t i = 0; i < N; i++) {
+        std::array<coord, 3> arr;
+        for (int j = 0; j < Dim; j++) {
+            fs >> str;
+            arr[j] = stol(str);
+        }
         wp[i] = Point_d(Dim, std::begin(arr), (std::begin(arr) + Dim));
-        // for (int j = 0; j < Dim; j++) {
-        //   wp[i].pnt[j] = a[i * Dim + j];
-        // }
-    });
+    }
+
     return std::make_pair(N, Dim);
 }
 
