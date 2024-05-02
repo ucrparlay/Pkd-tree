@@ -20,7 +20,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     // for ( int i = 0; i < 10; i++ ) {
     //   LOG << boxs[i].first << " " << boxs[i].second << ENDL;
     // }
-    return;
+    // return;
 
     if (N != wp.size()) {
         puts("input parameter N is different to input points size");
@@ -32,6 +32,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     points wi;
     if (insertFile != "" && read_insert_file) {
         auto [nn, nd] = read_points<point>(insertFile.c_str(), wi, K);
+        LOG << "read insert file" << ENDL;
         if (nd != Dim) {
             puts("read inserted points dimension wrong");
             abort();
@@ -269,7 +270,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     std::cout << std::endl << std::flush;
 
-    pkd.delete_tree();
+    // pkd.delete_tree();
 
     return;
 }

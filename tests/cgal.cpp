@@ -68,7 +68,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     //       Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
     // });
 
-    return;
+    // return;
     timer.start();
     Splitter split;
     Tree tree(_points.begin(), _points.end(), split);
@@ -440,6 +440,7 @@ int main(int argc, char* argv[]) {
 
     assert(N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1);
 
+    // return 0;
     testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median, PointType<coord, 3>>(
         Dim, LEAVE_WRAP, wp, _points, N, K, rounds, insertFile, tag, queryType, readInsertFile);
     // if (tag == -1) {
