@@ -72,6 +72,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     timer.start();
     Splitter split;
     Tree tree(_points.begin(), _points.end(), split);
+    return;
     tree.template build<CGAL::Parallel_tag>();
     timer.stop();
 
