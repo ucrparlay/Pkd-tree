@@ -14,15 +14,15 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-// using coord = long;
-using coord = double;
+using coord = long;
+// using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
 // NOTE: KNN size
 static constexpr double batchQueryRatio = 0.01;
 // NOTE: rectangle numbers
-static constexpr int rangeQueryNum = 100;
+static constexpr int rangeQueryNum = 10;
 
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;

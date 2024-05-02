@@ -117,12 +117,12 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         kdknn = new Typename[recNum];
         const int type[3] = {0, 1, 2};
 
-        for (int i = 0; i < 3; i++) {
-            // rangeCountFix<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
-            rangeCountFixWithLog<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
-        }
-        //
+        // for (int i = 0; i < 3; i++) {
+        //     // rangeCountFix<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
+        //     rangeCountFixWithLog<point>(wp, pkd, kdknn, rounds, type[i], recNum, Dim);
+        // }
         // rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, rangeQueryNumInbaRatio, Dim);
+        rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, recNum, Dim);
 
         delete[] kdknn;
     }
