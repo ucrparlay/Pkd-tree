@@ -1,0 +1,978 @@
+_____________________________________________________________________________________________________________________________________________________________________________________________________________________
+=> zmen002 @ dynamic: ~/KDtree/script                                                                                                                                                                      perf [!?*]
+$ ./run_perf.sh | tee log.in
+ begin VARDEN ...
+ begin test varden >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 4.37
+        System time (seconds): 0.93
+        Percent of CPU this job got: 250%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.12
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 265780
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 9
+        Minor (reclaiming a frame) page faults: 1669
+        Voluntary context switches: 2570
+        Involuntary context switches: 164
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 6.19
+        System time (seconds): 1.09
+        Percent of CPU this job got: 176%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.14
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 499532
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 2149
+        Voluntary context switches: 2387
+        Involuntary context switches: 292
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 12.62
+        System time (seconds): 2.28
+        Percent of CPU this job got: 143%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.40
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1204272
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 3245
+        Voluntary context switches: 3044
+        Involuntary context switches: 218
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 22.98
+        System time (seconds): 3.19
+        Percent of CPU this job got: 126%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:20.72
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 2380024
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 4588
+        Voluntary context switches: 3309
+        Involuntary context switches: 268
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 43.52
+        System time (seconds): 6.06
+        Percent of CPU this job got: 119%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:41.43
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 4722872
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 15
+        Minor (reclaiming a frame) page faults: 7122
+        Voluntary context switches: 3299
+        Involuntary context switches: 333
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 107.00
+        System time (seconds): 15.99
+        Percent of CPU this job got: 119%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:43.24
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 11753696
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 14269
+        Voluntary context switches: 3214
+        Involuntary context switches: 479
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 213.16
+        System time (seconds): 31.31
+        Percent of CPU this job got: 118%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 3:26.45
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 23472856
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 25923
+        Voluntary context switches: 3069
+        Involuntary context switches: 849
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+ begin cgal varden >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 3.36
+        System time (seconds): 0.51
+        Percent of CPU this job got: 101%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.81
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 721064
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 280042
+        Voluntary context switches: 1108
+        Involuntary context switches: 22
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 6.79
+        System time (seconds): 1.00
+        Percent of CPU this job got: 100%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.74
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1428184
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 738315
+        Voluntary context switches: 1379
+        Involuntary context switches: 18
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 17.08
+        System time (seconds): 2.28
+        Percent of CPU this job got: 100%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.33
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 3537628
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 1936685
+        Voluntary context switches: 1299
+        Involuntary context switches: 45
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 33.90
+        System time (seconds): 4.29
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:38.21
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 7049020
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 3680357
+        Voluntary context switches: 1575
+        Involuntary context switches: 81
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 68.02
+        System time (seconds): 8.22
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:16.35
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 14080424
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 7499237
+        Voluntary context switches: 1158
+        Involuntary context switches: 132
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 173.50
+        System time (seconds): 21.42
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 3:15.22
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 35174084
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 19470218
+        Voluntary context switches: 1689
+        Involuntary context switches: 337
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 340.78
+        System time (seconds): 42.84
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 6:24.28
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 70330276
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 39077270
+        Voluntary context switches: 1307
+        Involuntary context switches: 666
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+ begin zdtree varden >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 810.67
+        System time (seconds): 5.79
+        Percent of CPU this job got: 16554%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.93
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1510836
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 5
+        Minor (reclaiming a frame) page faults: 4692
+        Voluntary context switches: 1332301
+        Involuntary context switches: 1593
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 1630.76
+        System time (seconds): 9.52
+        Percent of CPU this job got: 16627%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.86
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 2995748
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 8
+        Minor (reclaiming a frame) page faults: 8595
+        Voluntary context switches: 2673506
+        Involuntary context switches: 2450
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 4071.69
+        System time (seconds): 20.74
+        Percent of CPU this job got: 16643%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:24.58
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 7449604
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 15033
+        Voluntary context switches: 6682887
+        Involuntary context switches: 5852
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 8187.32
+        System time (seconds): 38.59
+        Percent of CPU this job got: 16641%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:49.42
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 14871836
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 4
+        Minor (reclaiming a frame) page faults: 22774
+        Voluntary context switches: 13437734
+        Involuntary context switches: 10258
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 16288.85
+        System time (seconds): 72.09
+        Percent of CPU this job got: 16642%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:38.30
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 29715920
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 13
+        Minor (reclaiming a frame) page faults: 45271
+        Voluntary context switches: 26755407
+        Involuntary context switches: 20069
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 40995.47
+        System time (seconds): 176.68
+        Percent of CPU this job got: 16631%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 4:07.56
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 74247020
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 8
+        Minor (reclaiming a frame) page faults: 118588
+        Voluntary context switches: 67446882
+        Involuntary context switches: 50320
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 81915.49
+        System time (seconds): 351.46
+        Percent of CPU this job got: 16627%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 8:14.76
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 148465916
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 75
+        Minor (reclaiming a frame) page faults: 239226
+        Voluntary context switches: 134793713
+        Involuntary context switches: 98406
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+ begin UNIFORM ...
+ begin test uniform >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 4.03
+        System time (seconds): 0.59
+        Percent of CPU this job got: 216%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.13
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 265732
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 1446
+        Voluntary context switches: 2200
+        Involuntary context switches: 352
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 6.41
+        System time (seconds): 1.09
+        Percent of CPU this job got: 171%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.38
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 501836
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 2121
+        Voluntary context switches: 2316
+        Involuntary context switches: 204
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 12.84
+        System time (seconds): 1.70
+        Percent of CPU this job got: 133%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.87
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1204328
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 30
+        Minor (reclaiming a frame) page faults: 2915
+        Voluntary context switches: 2487
+        Involuntary context switches: 293
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 23.31
+        System time (seconds): 2.87
+        Percent of CPU this job got: 124%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:21.03
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 2377932
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 4457
+        Voluntary context switches: 3144
+        Involuntary context switches: 276
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 45.99
+        System time (seconds): 6.61
+        Percent of CPU this job got: 121%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.33
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 4723004
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 3
+        Minor (reclaiming a frame) page faults: 7344
+        Voluntary context switches: 3240
+        Involuntary context switches: 329
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 111.73
+        System time (seconds): 14.87
+        Percent of CPU this job got: 115%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:49.41
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 11754028
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 14262
+        Voluntary context switches: 3076
+        Involuntary context switches: 609
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/test -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 223.79
+        System time (seconds): 30.94
+        Percent of CPU this job got: 117%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 3:36.82
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 23472892
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 25897
+        Voluntary context switches: 3178
+        Involuntary context switches: 676
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+ begin cgal uniform >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 3.46
+        System time (seconds): 0.46
+        Percent of CPU this job got: 100%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.89
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 720904
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 259168
+        Voluntary context switches: 1123
+        Involuntary context switches: 14
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 7.38
+        System time (seconds): 1.30
+        Percent of CPU this job got: 100%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.65
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1428176
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 737819
+        Voluntary context switches: 1200
+        Involuntary context switches: 22
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 17.67
+        System time (seconds): 2.31
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.98
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 3533440
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 1910921
+        Voluntary context switches: 1198
+        Involuntary context switches: 39
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 34.74
+        System time (seconds): 4.53
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:39.31
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 7049060
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 3706483
+        Voluntary context switches: 1257
+        Involuntary context switches: 89
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 71.14
+        System time (seconds): 8.28
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:19.52
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 14080508
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 7432956
+        Voluntary context switches: 1297
+        Involuntary context switches: 142
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 177.30
+        System time (seconds): 22.05
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 3:19.67
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 35174092
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 19318133
+        Voluntary context switches: 1367
+        Involuntary context switches: 384
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../build/cgal -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0"
+        User time (seconds): 355.92
+        System time (seconds): 42.84
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 6:39.40
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 70334360
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 39078810
+        Voluntary context switches: 1308
+        Involuntary context switches: 767
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+ begin zdtree uniform >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 815.47
+        System time (seconds): 5.76
+        Percent of CPU this job got: 16610%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.94
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1511540
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 5013
+        Voluntary context switches: 1333627
+        Involuntary context switches: 1152
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 1676.47
+        System time (seconds): 8.74
+        Percent of CPU this job got: 16626%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.13
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 2998396
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 2
+        Minor (reclaiming a frame) page faults: 8657
+        Voluntary context switches: 2737509
+        Involuntary context switches: 2201
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 4183.67
+        System time (seconds): 21.33
+        Percent of CPU this job got: 16654%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:25.24
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 7455724
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 9
+        Minor (reclaiming a frame) page faults: 14980
+        Voluntary context switches: 6858769
+        Involuntary context switches: 4740
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 8193.10
+        System time (seconds): 37.33
+        Percent of CPU this job got: 16654%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:49.41
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 14871656
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 20
+        Minor (reclaiming a frame) page faults: 27502
+        Voluntary context switches: 13425264
+        Involuntary context switches: 9045
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 16879.13
+        System time (seconds): 73.77
+        Percent of CPU this job got: 16652%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:41.80
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 29715592
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 25
+        Minor (reclaiming a frame) page faults: 44951
+        Voluntary context switches: 27721794
+        Involuntary context switches: 16898
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 42282.78
+        System time (seconds): 175.88
+        Percent of CPU this job got: 16634%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 4:15.24
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 74247212
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 8
+        Minor (reclaiming a frame) page faults: 125501
+        Voluntary context switches: 69465625
+        Involuntary context switches: 43236
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+1.in    Command being timed: "./../../pbbsbench_x/build/zdtree -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 0 -r 1 -i 0 -k 10"
+        User time (seconds): 84524.06
+        System time (seconds): 354.01
+        Percent of CPU this job got: 16647%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 8:29.84
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 148472088
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 35
+        Minor (reclaiming a frame) page faults: 206263
+        Voluntary context switches: 138764226
+        Involuntary context switches: 82802
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 0
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+

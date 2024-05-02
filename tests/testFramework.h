@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
@@ -48,10 +49,10 @@ class counter_iterator {
         return {};
     }
 
-    counter_iterator& operator++() {  // ++a
+    counter_iterator& operator++() { // ++a
         return *this;
     }
-    counter_iterator operator++(int) {  // a++
+    counter_iterator operator++(int) { // a++
         return *this;
     }
 
@@ -64,8 +65,8 @@ template<typename point>
 void generate_random_points(parlay::sequence<point>& wp, coord _box_size, long n, int Dim) {
     coord box_size = _box_size;
 
-    std::random_device rd;      // a seed source for the random number engine
-    std::mt19937 gen_mt(rd());  // mersenne_twister_engine seeded with rd()
+    std::random_device rd;     // a seed source for the random number engine
+    std::mt19937 gen_mt(rd()); // mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<int> distrib(1, box_size);
 
     parlay::random_generator gen(distrib(gen_mt));
@@ -90,31 +91,47 @@ std::pair<size_t, int> read_points(const char* iFile, parlay::sequence<point>& w
     using coord = typename point::coord;
     using coords = typename point::coords;
     static coords samplePoint;
-    parlay::sequence<char> S = readStringFromFile(iFile);
-    parlay::sequence<char*> W = stringToWords(S);
-    size_t N = std::stoul(W[0], nullptr, 10);
-    int Dim = atoi(W[1]);
-    assert(N >= 0 && Dim >= 1 && N >= K);
+    // parlay::sequence<char> S = readStringFromFile(iFile);
+    // parlay::sequence<char*> W = stringToWords(S);
+    // size_t N = std::stoul(W[0], nullptr, 10);
+    // int Dim = atoi(W[1]);
+    // assert(N >= 0 && Dim >= 1 && N >= K);
+    //
+    // auto pts = W.cut(2, W.size());
+    // assert(pts.size() % Dim == 0);
+    // size_t n = pts.size() / Dim;
+    // auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
+    //     if constexpr (std::is_integral_v<coord>)
+    //         return std::stol(pts[i]);
+    //     else if (std::is_floating_point_v<coord>)
+    //         return std::stod(pts[i]);
+    // });
+    // wp.resize(N);
+    // parlay::parallel_for(0, n, [&](size_t i) {
+    //     for (int j = 0; j < Dim; j++) {
+    //         wp[i].pnt[j] = a[i * Dim + j];
+    //         if constexpr (std::is_same_v<point, PointType<coord, samplePoint.size()>>) {
+    //         } else {
+    //             wp[i].id = i;
+    //         }
+    //     }
+    // });
 
-    auto pts = W.cut(2, W.size());
-    assert(pts.size() % Dim == 0);
-    size_t n = pts.size() / Dim;
-    auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
-        if constexpr (std::is_integral_v<coord>)
-            return std::stol(pts[i]);
-        else if (std::is_floating_point_v<coord>)
-            return std::stod(pts[i]);
-    });
+    ifstream fs;
+    fs.open(iFile);
+    size_t N;
+    int Dim;
+    string str;
+    fs >> str, N = stol(str);
+    fs >> str, Dim = stoi(str);
+    // LOG << N << " " << Dim << ENDL;
     wp.resize(N);
-    parlay::parallel_for(0, n, [&](size_t i) {
+    for (size_t i = 0; i < N; i++) {
         for (int j = 0; j < Dim; j++) {
-            wp[i].pnt[j] = a[i * Dim + j];
-            if constexpr (std::is_same_v<point, PointType<coord, samplePoint.size()>>) {
-            } else {
-                wp[i].id = i;
-            }
+            fs >> str;
+            wp[i].pnt[j] = std::stol(str);
         }
-    });
+    }
     return std::make_pair(N, Dim);
 }
 
@@ -174,8 +191,8 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
 }
 
 template<typename point>
-std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> gen_rectangles(
-    int recNum, const int type, const parlay::sequence<point>& WP, int DIM) {
+std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t>
+gen_rectangles(int recNum, const int type, const parlay::sequence<point>& WP, int DIM) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
@@ -184,13 +201,13 @@ std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> 
 
     size_t n = WP.size();
     std::pair<size_t, size_t> range;
-    if (type == 0) {  //* small bracket
+    if (type == 0) { //* small bracket
         range.first = 1;
         range.second = size_t(std::sqrt(std::sqrt(n)));
-    } else if (type == 1) {  //* medium bracket
+    } else if (type == 1) { //* medium bracket
         range.first = size_t(std::sqrt(std::sqrt(n)));
         range.second = size_t(std::sqrt(n));
-    } else if (type == 2) {  //* large bracket
+    } else if (type == 2) { //* large bracket
         range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
@@ -412,7 +429,7 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     using points = typename tree::points;
     using node = typename tree::node;
     points wp = points::uninitialized(WP.size());
-    points wi = points::uninitialized(WP.size());  //! warnning need to adjust space if necessary
+    points wi = points::uninitialized(WP.size()); //! warnning need to adjust space if necessary
 
     pkd.delete_tree();
 
@@ -476,7 +493,7 @@ void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
     double aveQuery = time_loop(
         rounds, loopLate, [&]() { parlay::parallel_for(0, n, [&](size_t i) { bq[i].reset(); }); },
         [&]() {
-            if (!flattenTreeTag) {  //! Ensure pkd.size() == wp.size()
+            if (!flattenTreeTag) { //! Ensure pkd.size() == wp.size()
                 pkd.flatten(pkd.get_root(), parlay::make_slice(wp));
             }
             auto bx = pkd.get_root_box();

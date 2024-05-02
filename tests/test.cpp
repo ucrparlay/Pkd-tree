@@ -20,7 +20,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     // for ( int i = 0; i < 10; i++ ) {
     //   LOG << boxs[i].first << " " << boxs[i].second << ENDL;
     // }
-    // return;
+    return;
 
     if (N != wp.size()) {
         puts("input parameter N is different to input points size");

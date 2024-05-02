@@ -68,7 +68,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     //       Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
     // });
 
-    // return;
+    return;
     timer.start();
     Splitter split;
     Tree tree(_points.begin(), _points.end(), split);
@@ -383,6 +383,7 @@ std::pair<size_t, int> cgal_read_points(const char* iFile, std::vector<Point_d>&
     string str;
     fs >> str, N = stol(str);
     fs >> str, Dim = stoi(str);
+    // LOG << N << " " << Dim << ENDL;
     wp.resize(N);
     for (size_t i = 0; i < N; i++) {
         std::array<coord, 3> arr;
