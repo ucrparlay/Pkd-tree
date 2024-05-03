@@ -302,7 +302,7 @@ void incrementalDelete(const int Dim, const parlay::sequence<point>& WP, const p
     return;
 }
 
-template<typename point>
+template<typename point, bool serial = false>
 void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, const parlay::sequence<point>& WI,
                  const uint_fast8_t& DIM, const int& rounds, double ratio = 1.0) {
     using tree = ParallelKDtree<point>;
@@ -319,7 +319,16 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
             parlay::copy(WP, wp), parlay::copy(WI, wi);
             pkd.build(parlay::make_slice(wp), DIM);
         },
-        [&]() { pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM); }, [&]() { pkd.delete_tree(); });
+        [&]() {
+            if (!serial) {
+                pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+            } else {
+                for (size_t i = 0; i < wi.size() * ratio; i++) {
+                    pkd.batchInsert(wi.cut(i, i + 1), DIM);
+                }
+            }
+        },
+        [&]() { pkd.delete_tree(); });
 
     //* set status to be finish insert
     parlay::copy(WP, wp), parlay::copy(WI, wi);
@@ -331,7 +340,7 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     return;
 }
 
-template<typename point>
+template<typename point, bool serial = false>
 void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, const parlay::sequence<point>& WI,
                  const uint_fast8_t& DIM, const int& rounds, bool afterInsert = 1, double ratio = 1.0) {
     using tree = ParallelKDtree<point>;
@@ -359,9 +368,13 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
             }
         },
         [&]() {
-            // LOG << "start batch delete " << ratio << ENDL;
-            pkd.batchDelete(wi.cut(0, batchSize), DIM);
-            // LOG << "end one batch delete " << ratio << ENDL;
+            if (!serial) {
+                pkd.batchDelete(wi.cut(0, batchSize), DIM);
+            } else {
+                for (size_t i = 0; i < batchSize; i++) {
+                    pkd.batchDelete(wi.cut(i, i + 1), DIM);
+                }
+            }
         },
         [&]() { pkd.delete_tree(); });
 
