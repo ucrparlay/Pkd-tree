@@ -6,6 +6,68 @@
 #include <utility>
 
 namespace cpdd {
+template<typename point>
+void ParallelKDtree<point>::pointDelete(const point p, const dim_type DIM) {
+    node* T = this->root;
+    box bx = this->bbox;
+    dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
+    std::tie(this->root, this->bbox) = pointDelete_recursive(T, bx, p, d, DIM, 1);
+}
+
+template<typename point>
+typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recursive(node* T, const box& bx,
+                                                                                      const point& p, dim_type d,
+                                                                                      const dim_type DIM,
+                                                                                      bool hasTomb) {
+    if (T->is_dummy) {
+        T->size--;
+        assert(get_box(T) == box(p, p));
+        return node_box(T, box(p, p));
+    }
+
+    if (T->is_leaf) {
+        assert(!T->is_dummy);
+
+        leaf* TL = static_cast<leaf*>(T);
+        auto it = std::ranges::find(TL->pts.begin(), TL->pts.begin() + TL->size, p);
+        assert(it != TL->pts.begin() + TL->size);
+        std::ranges::iter_swap(it, TL->pts.begin() + TL->size - 1);
+        TL->size--;
+        assert(TL->size >= 0);
+        return node_box(T, get_box(TL->pts.cut(0, TL->size)));
+    }
+
+    interior* TI = static_cast<interior*>(T);
+
+    // NOTE: seieve the point
+    dim_type next_dim = (d + 1) % DIM;
+    box lbox(bx), rbox(bx), new_box;
+    lbox.second.pnt[TI->split.second] = TI->split.first;  // PERF: loose
+    rbox.first.pnt[TI->split.second] = TI->split.first;
+    bool putTomb;
+
+    if (Num::Lt(p.pnt[TI->split.second], TI->split.first)) {  // NOTE: go left
+        putTomb = hasTomb && inbalance_node(TI->left->size - 1, TI->size);
+        hasTomb = putTomb ? false : hasTomb;
+        auto [L, Lbox] = pointDelete_recursive(TI->left, lbox, p, next_dim, DIM, hasTomb);
+        update_interior(T, L, TI->right);
+        new_box = get_box(Lbox, rbox);
+    } else {  // NOTE: go right
+        putTomb = hasTomb && inbalance_node(TI->right->size - 1, TI->size);
+        hasTomb = putTomb ? false : hasTomb;
+        auto [R, Rbox] = pointDelete_recursive(TI->right, rbox, p, next_dim, DIM, hasTomb);
+        update_interior(T, TI->left, R);
+        new_box = get_box(lbox, Rbox);
+    }
+
+    // NOTE: rebuild if necessary
+    if (putTomb) {
+        return rebuild_single_tree(T, d, DIM, true);
+    }
+
+    return node_box(T, new_box);
+}
+
 // NOTE: default batch delete
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
@@ -21,18 +83,6 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, FullCovered
     node* T = this->root;
     box bx = this->bbox;
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
-    // LOG << "Begin batch delete .. the size of A: " << A.size() << ENDL;
-    // point p;
-    // p.pnt[0] = 70528, p.pnt[1] = 42516, p.pnt[2] = 81031;
-    // int cnt = 0;
-    // for (int i = 0; i < A.size(); i++) {
-    //   if (A[i] == p) {
-    //     LOG << "pos: " << i << " ";
-    //     cnt++;
-    //
-    //   }
-    // }
-    // LOG << "input cnt: " << cnt << ENDL;
     std::tie(this->root, this->bbox) =
         batchDelete_recursive(T, bx, A, parlay::make_slice(B), d, DIM, 1, FullCoveredTag());
     return;

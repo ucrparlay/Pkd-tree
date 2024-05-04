@@ -28,12 +28,12 @@ class ParallelKDtree {
     using box_s = parlay::sequence<box>;
     using circle = std::pair<point, coord>;
 
-    //@ Const variables
-    //@ uint32t handle up to 4e9 at least
-    //! bucket num should smaller than 1<<8 to handle type overflow
+    // NOTE: Const variables
+    // NOTE: uint32t handle up to 4e9 at least
+    // WARN: bucket num should smaller than 1<<8 to handle type overflow
 
     // TODO: wrap the variables using std::getenv()
-    static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  //* last layer is leaf
+    static constexpr bucket_type BUILD_DEPTH_ONCE = 6;  // NOTE: last layer is leaf
     static constexpr bucket_type PIVOT_NUM = (1 << BUILD_DEPTH_ONCE) - 1;
     static constexpr bucket_type BUCKET_NUM = 1 << BUILD_DEPTH_ONCE;
     // NOTE: tree structure
@@ -50,11 +50,11 @@ class ParallelKDtree {
     struct PartialCoverTag {};
 
     //*------------------- Tree Structures--------------------*//
-    //@ kd tree node types and functions
+    // NOTE: kd tree node types and functions
     struct node;
     struct leaf;
     struct interior;
-    //@ range query tree node
+    // NOTE: range query tree node
     struct simple_node;
 
     static leaf* alloc_leaf_node(slice In);
@@ -72,14 +72,14 @@ class ParallelKDtree {
     using node_box = std::pair<node*, box>;
     using node_tag = std::pair<node*, uint_fast8_t>;
     using node_tags = parlay::sequence<node_tag>;
-    using tag_nodes = parlay::sequence<balls_type>;  //*index by tag
+    using tag_nodes = parlay::sequence<balls_type>;  // NOTE:index by tag
 
     enum split_rule { MAX_STRETCH_DIM, ROTATE_DIM };
 
-    //@ array based inner tree for batch insertion and deletion
+    // NOTE: array based inner tree for batch insertion and deletion
     struct InnerTree;
 
-    //@ box operations
+    // NOTE: box operations
     static inline bool legal_box(const box& bx);
     static inline bool within_box(const box& a, const box& b);
     static inline bool within_box(const point& p, const box& bx);
@@ -93,12 +93,12 @@ class ParallelKDtree {
     static inline bool within_circle(const point& p, const circle& cl);
     static inline bool circle_intersect_box(const circle& cl, const box& bx);
 
-    //@ dimensionality
+    // NOTE: dimensionality
     inline dim_type pick_rebuild_dim(const node* T, const dim_type d, const dim_type DIM);
     static inline dim_type pick_max_stretch_dim(const box& bx, const dim_type DIM);
 
-    //@ Parallel KD tree cores
-    //@ build
+    // NOTE: Parallel KD tree cores
+    // NOTE: build
     void divide_rotate(slice In, splitter_s& pivots, dim_type dim, bucket_type idx, bucket_type deep,
                        bucket_type& bucket, const dim_type DIM, box_s& boxs, const box& bx);
     void pick_pivots(slice In, const size_t& n, splitter_s& pivots, const dim_type dim, const dim_type DIM, box_s& boxs,
@@ -112,10 +112,10 @@ class ParallelKDtree {
     node* serial_build_recursive(slice In, slice Out, dim_type dim, const dim_type DIM, const box& bx);
     node* build_recursive(slice In, slice Out, dim_type dim, const dim_type DIM, const box& bx);
 
-    //@ random support
+    // NOTE: random support
     static inline uint64_t _hash64(uint64_t u);
 
-    //@ batch helpers:
+    // NOTE: batch helpers:
     template<typename Slice>
     static void flatten(node* T, Slice Out, bool granularity = true);
 
@@ -139,19 +139,28 @@ class ParallelKDtree {
 
     static void delete_simple_tree_recursive(simple_node* T);
 
-    //@ batch insert
+    // NOTE: batch insert
+    void batchInsert(slice In, const dim_type DIM);
+
     node* rebuild_with_insert(node* T, slice In, const dim_type d, const dim_type DIM);
 
     static inline void update_interior(node* T, node* L, node* R);
-
-    void batchInsert(slice In, const dim_type DIM);
 
     node* batchInsert_recusive(node* T, slice In, slice Out, dim_type d, const dim_type DIM);
 
     static node* update_inner_tree_by_tag(bucket_type idx, const node_tags& tags, parlay::sequence<node*>& treeNodes,
                                           bucket_type& p, const tag_nodes& rev_tag);
-    //@ batch delete
 
+    // NOTE: single point insert
+    void pointInsert(const point p, const dim_type DIM);
+    node* pointInsert_recursive(node* T, const point& p, dim_type d, const dim_type DIM);
+
+    // NOTE: single point delete
+    void pointDelete(const point p, const dim_type DIM);
+    node_box pointDelete_recursive(node* T, const box& bx, const point& p, dim_type d, const dim_type DIM,
+                                   bool hasTomb);
+
+    // NOTE: batch delete
     // NOTE: in default, all points to be deleted are assumed in the tree
     void batchDelete(slice In, const dim_type DIM);
 

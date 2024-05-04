@@ -324,7 +324,7 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
                 pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
             } else {
                 for (size_t i = 0; i < wi.size() * ratio; i++) {
-                    pkd.batchInsert(wi.cut(i, i + 1), DIM);
+                    pkd.pointInsert(wi[i], DIM);
                 }
             }
         },
@@ -333,7 +333,13 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     //* set status to be finish insert
     parlay::copy(WP, wp), parlay::copy(WI, wi);
     pkd.build(parlay::make_slice(wp), DIM);
-    pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+    if (!serial) {
+        pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+    } else {
+        for (size_t i = 0; i < wi.size() * ratio; i++) {
+            pkd.pointInsert(wi[i], DIM);
+        }
+    }
 
     LOG << aveInsert << " " << std::flush;
 
@@ -372,7 +378,7 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
                 pkd.batchDelete(wi.cut(0, batchSize), DIM);
             } else {
                 for (size_t i = 0; i < batchSize; i++) {
-                    pkd.batchDelete(wi.cut(i, i + 1), DIM);
+                    pkd.pointDelete(wi[i], DIM);
                 }
             }
         },
@@ -385,7 +391,13 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
         pkd.build(parlay::make_slice(wp), DIM);
         pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
         parlay::copy(WP, wp), parlay::copy(WI, wi);
-        pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+        if (!serial) {
+            pkd.batchDelete(wi.cut(0, batchSize), DIM);
+        } else {
+            for (size_t i = 0; i < batchSize; i++) {
+                pkd.pointDelete(wi[i], DIM);
+            }
+        }
     } else {
         parlay::copy(WP, wp);
         pkd.build(parlay::make_slice(wp), DIM);

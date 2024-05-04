@@ -2,8 +2,61 @@
 
 #include "../kdTreeParallel.h"
 #include "inner_tree.hpp"
+#include "parlay/slice.h"
 
 namespace cpdd {
+template<typename point>
+void ParallelKDtree<point>::pointInsert(const point p, const dim_type DIM) {
+    if (this->root == nullptr) {
+        parlay::sequence<point> pts(1);
+        pts[0] = p;
+        return build(parlay::make_slice(pts), DIM);
+    }
+    node* T = this->root;
+    this->bbox = get_box(this->bbox, box(p, p));
+    dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
+    this->root = pointInsert_recursive(T, p, d, DIM);
+    return;
+}
+
+template<typename point>
+typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursive(node* T, const point& p, dim_type d,
+                                                                                   const dim_type DIM) {
+    if (T->is_dummy) {
+        T->size++;
+        return T;
+    }
+
+    if (T->is_leaf) {
+        leaf* TL = static_cast<leaf*>(T);
+        if (TL->size + 1 <= this->LEAVE_WRAP) {
+            TL->pts[TL->size] = p;
+            TL->size++;
+            return T;
+        } else {
+            parlay::sequence<point> pts{p};
+            return rebuild_with_insert(T, parlay::make_slice(pts), d, DIM);
+        }
+    }
+
+    interior* TI = static_cast<interior*>(T);
+
+    bool go_left = Num::Lt(p.pnt[TI->split.second], TI->split.first) ? true : false;
+    node* nxt_node = go_left ? TI->left : TI->right;
+    if (!inbalance_node(nxt_node->size + 1, TI->size)) {
+        d = (d + 1) % DIM;
+        auto return_node = pointInsert_recursive(nxt_node, p, d, DIM);
+        if (go_left) {
+            update_interior(T, return_node, TI->right);
+        } else {
+            update_interior(T, TI->left, return_node);
+        }
+        return TI;
+    } else {
+        parlay::sequence<point> pts{p};
+        return rebuild_with_insert(T, parlay::make_slice(pts), d, DIM);
+    }
+}
 
 template<typename point>
 void ParallelKDtree<point>::batchInsert(slice A, const dim_type DIM) {

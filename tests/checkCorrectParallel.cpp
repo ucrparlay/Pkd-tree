@@ -36,6 +36,7 @@ size_t N;
 
 size_t maxReduceSize = 0;
 const size_t batchQuerySize = 1000000;
+const double batchInsertCheckRatio = 0.1;
 
 void runCGAL(points& wp, points& wi, Typename* cgknn, int queryNum, parlay::sequence<Point_d>& Out) {
     //* cgal
@@ -47,29 +48,30 @@ void runCGAL(points& wp, points& wi, Typename* cgknn, int queryNum, parlay::sequ
     tree.build<CGAL::Parallel_tag>();
 
     // LOG << tree.bounding_box() << ENDL;
+    size_t sz = wp.size() * batchInsertCheckRatio;
 
     if (tag >= 1) {
         _points.resize(wi.size());
         parlay::parallel_for(0, wi.size(), [&](size_t j) {
             _points[j] = Point_d(Dim, std::begin(wi[j].pnt), (std::begin(wi[j].pnt) + Dim));
         });
-        tree.insert(_points.begin(), _points.end());
+        tree.insert(_points.begin(), _points.begin() + sz);
         tree.build<CGAL::Parallel_tag>();
-        assert(tree.size() == wp.size() + wi.size());
-        wp.append(wi);
-        assert(tree.size() == wp.size());
+        assert(tree.size() == wp.size() + sz);
+        wp.append(wi.cut(0, sz));
         puts("finish insert to cgal");
     }
     LOG << tree.root()->num_items() << ENDL;
 
     if (tag >= 2) {
         assert(_points.size() == wi.size());
-        for (auto p : _points) {
-            tree.remove(p);
+        // for (auto p : _points) {
+        for (size_t i = 0; i < sz; i++) {
+            tree.remove(_points[i]);
         }
 
         LOG << tree.root()->num_items() << ENDL;
-        wp.pop_tail(wi.size());
+        wp.pop_tail(sz);
         puts("finish delete from cgal");
     }
 
@@ -154,14 +156,14 @@ void runKDParallel(points& wp, const points& wi, Typename* kdknn, points& p, int
     pkd.validate(Dim);
 
     if (tag >= 1) {
-        batchInsert<point>(pkd, wp, wi, Dim, 2);
-        if (tag == 1) wp.append(wi);
+        batchInsert<point, true>(pkd, wp, wi, Dim, 2, batchInsertCheckRatio);
+        if (tag == 1) wp.append(wi.cut(0, wp.size() * batchInsertCheckRatio));
         pkd.validate(Dim);
         LOG << "finish insert" << ENDL;
     }
 
     if (tag >= 2) {
-        batchDelete<point>(pkd, wp, wi, Dim, 2);
+        batchDelete<point, true>(pkd, wp, wi, Dim, 2, true, batchInsertCheckRatio);
         pkd.validate(Dim);
         LOG << "finish delete" << ENDL;
     }
