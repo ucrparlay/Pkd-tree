@@ -418,11 +418,15 @@ main( int argc, char* argv[] ) {
       run(std::integral_constant<int,2>{});
     } else if ( Dim == 3 ) {
       run(std::integral_constant<int,3>{});
-    }/* else if ( Dim == 5 ) {
+    } else if ( Dim == 5 ) {
       run(std::integral_constant<int,5>{});
     } else if ( Dim == 7 ) {
       run(std::integral_constant<int,7>{});
-    }*/
+    } else if ( Dim == 9 ) {
+      run(std::integral_constant<int,9>{});
+    } else if ( Dim == 10 ) {
+      run(std::integral_constant<int,10>{});
+    }
   };
 
   if(treeType==0)
