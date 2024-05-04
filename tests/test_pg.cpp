@@ -206,6 +206,57 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   return;
 }
 
+template<class TreeDesc, typename point>
+void bench_osm_year(int Dim, int LEAVE_WRAP, int K, int rounds,
+                    const string& osm_prefix, int tag_ext){
+  const uint32_t year_begin = (tag_ext>>4) & 0xfff;
+  const uint32_t year_end = (tag_ext>>16) & 0xfff;
+  printf("year: %u - %u\n", year_begin, year_end);
+
+  using points = parlay::sequence<point>;
+  parlay::sequence<points> node_by_year(year_end-year_begin+1);
+  for(uint32_t year=year_begin; year<=year_end; ++year) {
+      const std::string path = osm_prefix + "osm_" + std::to_string(year) + ".csv";
+      printf("read from %s\n", path.c_str());
+      read_points<point>(path.c_str(), node_by_year[year-year_begin], K);
+  }
+
+  using Tree = typename TreeDesc::type;
+  Tree *pkd = nullptr;
+  insertOsmByTime<TreeDesc,point>(Dim, node_by_year, rounds, pkd);
+
+  auto all_points = parlay::flatten(node_by_year);
+  Typename *kdknn = new Typename[all_points.size()];
+  queryKNN<TreeDesc,point>(Dim, all_points, rounds, pkd, kdknn, K, false );
+  delete[] kdknn;
+}
+
+template<class TreeDesc, typename point>
+void bench_osm_month(int Dim, int LEAVE_WRAP, int K, int rounds,
+                    const string& osm_prefix, int tag_ext){
+  const uint32_t year_begin = (tag_ext>>4) & 0xfff;
+  const uint32_t year_end = (tag_ext>>16) & 0xfff;
+  printf("year: %u - %u\n", year_begin, year_end);
+
+  using points = parlay::sequence<point>;
+  parlay::sequence<points> node((year_end-year_begin+1)*12);
+  for(uint32_t year=year_begin; year<=year_end; ++year)
+      for(uint32_t month=1; month<=12; ++month){
+      const std::string path = osm_prefix + std::to_string(year) + "/" + std::to_string(month) + ".csv";
+      printf("read from %s\n", path.c_str());
+      read_points<point>(path.c_str(), node[(year-year_begin)*12+month-1], K);
+  }
+
+  using Tree = typename TreeDesc::type;
+  Tree *pkd = nullptr;
+  insertOsmByTime<TreeDesc,point>(Dim, node, rounds, pkd);
+
+  auto all_points = parlay::flatten(node);
+  Typename *kdknn = new Typename[all_points.size()];
+  queryKNN<TreeDesc,point>(Dim, all_points, rounds, pkd, kdknn, K, false );
+  delete[] kdknn;
+}
+
 template<typename T, uint_fast8_t d>
 // using PointType = pargeo::_point<d,T,double,pargeo::_empty>;
 using PointType = pargeo::batchKdTree::point<d>;
@@ -304,12 +355,22 @@ main( int argc, char* argv[] ) {
   auto run_test = [&]<class Wrapper>(Wrapper){
 
     auto run = [&](auto dim_wrapper){
+
       constexpr const auto D = decltype(dim_wrapper)::value;
+      using point_t = PointType<coord,D>;
+      using Desc = typename Wrapper::desc<point_t>;
+
+      if(tag<0 && (tag&0xf)==1){
+        bench_osm_year<Desc,point_t>(Dim, LEAVE_WRAP, K, rounds, insertFile, tag);
+      }
+      if(tag<0 && (tag&0xf)==2){
+        bench_osm_month<Desc,point_t>(Dim, LEAVE_WRAP, K, rounds, insertFile, tag);
+      }
       auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
         return PointType<coord, D>( wp[i].coordinate() );
       } );
       decltype( wp )().swap( wp );
-      testParallelKDtree<typename Wrapper::desc<PointType<coord,D>> >(Dim, LEAVE_WRAP, pts, N, K, rounds,
+      testParallelKDtree<Desc>(Dim, LEAVE_WRAP, pts, N, K, rounds,
                                                insertFile, tag, queryType );
     };
 
