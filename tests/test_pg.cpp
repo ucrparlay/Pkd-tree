@@ -102,6 +102,16 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       parlay::sequence<point> pwi(wi.begin(), wi.begin()+ins_size);
       batchInsert<TreeDesc,point>( pkd, wp, pwi, Dim, rounds );
     }
+    else if(ins_mode==5) // insert in partial mode (size varies exponentially)
+    {
+      auto ins_size = size_t(wi.size())*2;
+      for(int i=1; i<=ins_ratio; ++i)
+      {
+        ins_size /= 10;
+        parlay::sequence<point> pwi(wi.begin(), wi.begin()+ins_size);
+        batchInsert<TreeDesc,point>( pkd, wp, pwi, Dim, rounds );
+      }
+    }
 
     if ( tag == 1 ) {
       wp.append( wi );
@@ -141,6 +151,17 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       // ### NOTICE: we test deletion from wp instead of wi
       parlay::sequence<point> pwp(wp.begin(), wp.begin()+del_size);
       batchDelete<TreeDesc,point>( pkd, wp, pwp, Dim, rounds, false, true);
+    }
+    else if(del_mode==5) // delete in partial mode (size varies exponentially)
+    {
+      auto del_size = size_t(wp.size())*2;
+      for(int i=1; i<=ins_ratio; ++i)
+      {
+        del_size /= 10;
+        // ### NOTICE: we test deletion from wp instead of wi
+        parlay::sequence<point> pwp(wp.begin(), wp.begin()+del_size);
+        batchDelete<TreeDesc,point>( pkd, wp, pwp, Dim, rounds, false, true);
+      }
     }
 
   } else {
