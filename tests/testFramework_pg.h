@@ -370,12 +370,14 @@ queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int&
     }
   };
 
-  std::cout << "knn1 " << std::flush;
-  // test_knn([&]{tree->template knn<false,false>(wp,K);});
-  // test_knn([&]{tree->template knn<false,true>(wp,K);});
-  test_knn([&]{tree->template knn<true,false>(wp,K);});
-  // test_knn([&]{tree->template knn<true,true>(wp,K);});
-
+  if(TreeDesc::support_knn1)
+  {
+    std::cout << "knn1 " << std::flush;
+    //test_knn([&]{tree->template knn<false,false>(wp,K);});
+    //test_knn([&]{tree->template knn<false,true>(wp,K);});
+    test_knn([&]{tree->template knn<true,false>(wp,K);});
+    //test_knn([&]{tree->template knn<true,true>(wp,K);});
+  }
   if(TreeDesc::support_knn2)
   {
     std::cout << "knn2 " << std::flush;
