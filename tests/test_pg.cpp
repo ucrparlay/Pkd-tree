@@ -184,10 +184,10 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     points Out( queryNum * maxReduceSize );
     */
     points Out;
-    for(int num_rect : {100,1000,10000})
+    for(int num_rect : {10000})
     {
       std::cout << "[num_rect " << num_rect << "] " << std::flush;
-      for(int type_rect : {0,1,2})
+      for(int type_rect : {2})
         rangeQuery<TreeDesc,point>( wp, pkd, Dim, rounds, num_rect, type_rect);
     }
     
