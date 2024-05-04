@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <utility>
+#include <tuple>
 
 #include "common/geometryIO.h"
 #include "common/parse_command_line.h"
@@ -439,7 +440,7 @@ get_random_index( size_t a, size_t b, int seed ) {
 template<typename point>
 size_t
 recurse_box( parlay::slice<point*, point*> In,
-             parlay::sequence<std::pair<point, point>>& boxs, int DIM,
+             parlay::sequence<std::tuple<point,point,int>>& boxs, int DIM,
              std::pair<size_t, size_t> range, int& idx, int recNum, int type ) {
   // using tree = ParallelKDtree<point>;
 
@@ -467,7 +468,7 @@ recurse_box( parlay::slice<point*, point*> In,
       },point{})
     );
 
-    boxs[idx++] = std::make_pair(qMin, qMax);
+    boxs[idx++] = std::make_tuple(qMin, qMax, n);
 
     if ( type == 2 &&
          !parlay::all_of( In, [&]( const point& p ) { return p == In[0]; } ) ) {
@@ -503,14 +504,14 @@ recurse_box( parlay::slice<point*, point*> In,
 }
 
 template<typename point>
-std::pair<parlay::sequence<std::pair<point, point>>, size_t>
+std::pair<parlay::sequence<std::tuple<point,point,int>>, size_t>
 gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, int DIM ) {
   // using tree = ParallelKDtree<point>;
   // using Tree = typename TreeDesc::type;
   // using points = typename tree::points;
   using points = parlay::sequence<point>;
   // using node = typename tree::node;
-  using box = std::pair<point, point>;
+  using box = std::tuple<point, point, int>;
   using boxs = parlay::sequence<box>;
 
   size_t n = WP.size();
@@ -527,6 +528,8 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
     // NOTE: special handle for duplicated points in 2-dimension varden
     if ( n >= 100000000 )
       range.second = n / 100 - 1;
+    else if (n == 1000000000)
+      range.second = n / 1000 - 1;
     else
       range.second = n - 1;
   }
@@ -585,8 +588,28 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type *&tree, i
     rounds, 1.0, []{},
     [&](){
       parlay::parallel_for(0, rects.size(), [&](size_t i){
-        const auto &[qMin, qMax] = rects[i];
-        tree->orthogonalQuery(qMin, qMax);
+        const auto &[qMin, qMax, num_in_rect] = rects[i];
+        auto res = tree->orthogonalQuery(qMin, qMax);
+
+        if(res.size()!=num_in_rect) throw "num_in_rect doesn't match";
+        point resMin = parlay::reduce(
+          res, 
+          parlay::binary_op([](const point &lhs, const point &rhs){
+            point t = lhs;
+            t.minCoords(rhs);
+            return t;
+          }, point{})
+        );
+        point resMax = parlay::reduce(
+          res, 
+          parlay::binary_op([](const point &lhs, const point &rhs){
+            point t = lhs;
+            t.maxCoords(rhs);
+            return t;
+          },point{})
+        );
+        if(resMin!=qMin) throw "wrong min point";
+        if(resMax!=qMax) throw "wrong max point";
       });
     },
     []{}
