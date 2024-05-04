@@ -148,7 +148,7 @@ buildTree(const int &Dim, const parlay::sequence<point>& WP, int rounds, size_t 
   };
 
   double aveBuild = time_loop(
-      rounds, 1.0, 
+      rounds, -1.0, 
       prologue, body, epilogue
   );
 
@@ -198,7 +198,7 @@ batchInsert( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
   };
 
   double aveInsert = time_loop(
-      rounds, 1.0,
+      rounds, -1.0,
       prologue, body, epilogue
   );
 
@@ -262,7 +262,7 @@ batchDelete( typename TreeDesc::type *&tree, const parlay::sequence<point>& WP,
   };
 
   double aveDelete = time_loop(
-      rounds, 1.0,
+      rounds, -1.0,
       prologue, body, epilogue
   );
 
