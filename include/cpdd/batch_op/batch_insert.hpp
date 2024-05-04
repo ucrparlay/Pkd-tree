@@ -22,13 +22,12 @@ void ParallelKDtree<point>::pointInsert(const point p, const dim_type DIM) {
 template<typename point>
 typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursive(node* T, const point& p, dim_type d,
                                                                                    const dim_type DIM) {
-    if (T->is_dummy) {
-        T->size++;
-        return T;
-    }
-
     if (T->is_leaf) {
         leaf* TL = static_cast<leaf*>(T);
+        if (T->is_dummy && TL->pts[0] == p) {
+            T->size++;
+            return T;
+        }
         if (TL->size + 1 <= this->LEAVE_WRAP) {
             TL->pts[TL->size] = p;
             TL->size++;

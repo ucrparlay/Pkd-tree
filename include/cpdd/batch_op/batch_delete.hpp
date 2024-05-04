@@ -20,6 +20,7 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recu
                                                                                       const dim_type DIM,
                                                                                       bool hasTomb) {
     if (T->is_dummy) {
+        assert(static_cast<leaf*>(T)->pts[0] == p);
         T->size--;
         assert(get_box(T) == box(p, p));
         return node_box(T, box(p, p));
