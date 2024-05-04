@@ -152,9 +152,17 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
     if(downsize_k==0)
-      queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, K, false );
-    else for(auto cnt_nbh=K; cnt_nbh>0; cnt_nbh/=downsize_k)
+    {
+      // #### NOTICE: custom query: restrict the query set to the size of 1%
+      auto wq = wp;
+      wq.resize(wp.size()/100);
+      queryKNN<TreeDesc,point>(Dim, wq, rounds, pkd, kdknn, K, false );
+    }
+    else for(auto cnt_nbh=K; cnt_nbh>0; cnt_nbh/=downsize_k) {
+      //parlay::sequence<point> wp_crop(wp.begin(), wp.begin()+1000000);
+      //queryKNN<TreeDesc,point>(Dim, wp_crop, rounds, pkd, kdknn, cnt_nbh, false );
       queryKNN<TreeDesc,point>(Dim, wp, rounds, pkd, kdknn, cnt_nbh, false );
+    }
   } else {
     std::cout << "-1 " << std::flush;
   }
