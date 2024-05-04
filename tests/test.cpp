@@ -153,8 +153,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                                                  0.00000002,  0.00000005,  0.0000001,   0.0000002,
                                                  0.0000005,   0.000001,    0.000002,    0.000005};
         for (int i = 0; i < ratios.size(); i++) {
+            LOG << wi.size() * ratios[i] << ": ";
             batchInsert<point>(pkd, wp, wi, Dim, rounds, ratios[i]);
-            // batchInsert<point, true>(pkd, wp, wi, Dim, rounds, ratios[i]);
+            batchInsert<point, true>(pkd, wp, wi, Dim, rounds, ratios[i]);
+            LOG << ENDL;
         }
     }
 
@@ -166,8 +168,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                                                  0.0000005,   0.000001,    0.000002,    0.000005};
         points tmp;
         for (int i = 0; i < ratios.size(); i++) {
+            LOG << wi.size() * ratios[i] << ": ";
             batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
-            // batchDelete<point, true>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
+            batchDelete<point, true>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
+            LOG << ENDL;
         }
     }
 
