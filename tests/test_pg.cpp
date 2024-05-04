@@ -265,13 +265,14 @@ struct wrapper{
   constexpr const static bool parallel = true;
   constexpr const static bool coarsen = true;
 
-  constexpr const static int NUM_TREES = 21;
+  constexpr const static int NUM_TREES = 24;
   constexpr const static int BUFFER_LOG2_SIZE = 7;
 
   struct COTree_t{
     template<class Point>
     struct desc{
       using type = pargeo::batchKdTree::CO_KdTree<Point::dim, Point, parallel, coarsen>;
+      constexpr static const bool support_knn1 = true;
       constexpr static const bool support_knn2 = false;
       constexpr static const bool support_knn3 = false;
       constexpr static const bool support_insert = false;
@@ -282,6 +283,7 @@ struct wrapper{
     template<class Point>
     struct desc{
       using type = pargeo::batchKdTree::BHL_KdTree<Point::dim, Point, parallel, coarsen>;
+      constexpr static const bool support_knn1 = true;
       constexpr static const bool support_knn2 = false;
       constexpr static const bool support_knn3 = false;
       constexpr static const bool support_insert = true;
@@ -292,7 +294,8 @@ struct wrapper{
     template<class Point>
     struct desc{
       using type = pargeo::batchKdTree::LogTree<NUM_TREES, BUFFER_LOG2_SIZE, Point::dim, Point, parallel, coarsen>;
-      constexpr static const bool support_knn2 = true;
+      constexpr static const bool support_knn1 = false;
+      constexpr static const bool support_knn2 = false;
       constexpr static const bool support_knn3 = true;
       constexpr static const bool support_insert = true;
       constexpr static const bool support_insert_delete = true;
