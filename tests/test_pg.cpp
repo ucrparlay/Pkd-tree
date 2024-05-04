@@ -374,7 +374,7 @@ main( int argc, char* argv[] ) {
     std::cout << name << " ";
   }
 
-  if ( tag >= 1 ) {
+  if ( (tag&0xf) >= 1 ) {
     if ( _insertFile == NULL ) {
       int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
       if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test
