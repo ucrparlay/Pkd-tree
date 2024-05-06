@@ -235,7 +235,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   if(queryType & (1<<4)){ // single-point range query
     for(int num_rect : {100})
     {
-      std::cout << "[num_rect " << num_rect << "] " << std::flush;
+      std::cout << "[num_rect " << num_rect << "] " << std::endl;
       for(int type_rect : {0,1,2})
         rangeQueryWithLog<TreeDesc,point>(wp, pkd, rounds, type_rect, num_rect, Dim);
     }
