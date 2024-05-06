@@ -216,7 +216,6 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
         parlay::maximum<Typename>() );
     points Out( queryNum * maxReduceSize );
     */
-    points Out;
     for(int num_rect : {10000})
     {
       std::cout << "[num_rect " << num_rect << "] " << std::flush;
@@ -227,12 +226,19 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   } else {
     std::cout << "-1 " << std::flush;
   }
-
   if ( queryType & ( 1 << 3 ) ) {
     /*
     generate_knn<point>( Dim, wp, rounds, pkd, kdknn, K, false,
                          "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
     */
+  }
+  if(queryType & (1<<4)){ // single-point range query
+    for(int num_rect : {100})
+    {
+      std::cout << "[num_rect " << num_rect << "] " << std::flush;
+      for(int type_rect : {0,1,2})
+        rangeQueryWithLog<TreeDesc,point>(wp, pkd, rounds, type_rect, num_rect, Dim);
+    }
   }
 
   std::cout << std::endl;
