@@ -616,6 +616,29 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type *&tree, i
   );
   std::cout << aveQuery << ' ' << std::flush;
 }
+
+template<class TreeDesc, typename point>
+void rangeQueryWithLog(const parlay::sequence<point>& wp, typename TreeDesc::type *tree,
+                             const int& rounds, int type_rect, int num_rect, int dim){
+    // using tree = ParallelKDtree<point>;
+    using Tree = typename TreeDesc::type;
+    // using points = typename tree::points;
+    // using node = typename tree::node;
+    // using box = typename tree::box;
+    using points = parlay::sequence<point>;
+
+    auto [rects, maxsize] = gen_rectangles(num_rect, type_rect, wp, dim);
+
+    parlay::internal::timer t;
+    for(const auto &rect : rects){
+        const auto &[qMin, qMax, num_in_rect] = rect;
+        t.reset(), t.start();
+        auto res = tree->orthogonalQuery(qMin, qMax);
+        t.stop();
+        std::cout << num_in_rect << " " << res.size() << " " << t.total_time() << std::endl;
+    }
+}
+
 /*
 template<typename point>
 void
