@@ -367,7 +367,8 @@ main( int argc, char* argv[] ) {
     auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
     N = n;
     assert( d == Dim );
-  } else {  //* construct data byself
+  }
+  else if(!(tag&0x40000000)){  //* construct data byself
     K = 100;
     generate_random_points<PointType<coord, 15>>( wp, 1000000, N, 15);
     std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
@@ -396,11 +397,13 @@ main( int argc, char* argv[] ) {
       using point_t = PointType<coord,D>;
       using Desc = typename Wrapper::desc<point_t>;
 
-      if(tag<0 && (tag&0xf)==1){
+      if((tag&0x40000000) && (tag&0xf)==1){
         bench_osm_year<Desc,point_t>(Dim, LEAVE_WRAP, K, rounds, insertFile, tag);
+        return;
       }
-      if(tag<0 && (tag&0xf)==2){
+      if((tag&0x40000000) && (tag&0xf)==2){
         bench_osm_month<Desc,point_t>(Dim, LEAVE_WRAP, K, rounds, insertFile, tag);
+        return;
       }
       auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
         return PointType<coord, D>( wp[i].coordinate() );
