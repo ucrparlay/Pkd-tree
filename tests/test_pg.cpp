@@ -98,7 +98,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     // ins_mode==3 is reserved as no op
     else if(ins_mode==4) // insert in partial mode
     {
-      const auto ins_size = size_t(wi.size())*ins_ratio/100;
+      const auto ins_size = size_t(wi.size())*ins_ratio/10;
       parlay::sequence<point> pwi(wi.begin(), wi.begin()+ins_size);
       batchInsert<TreeDesc,point>( pkd, wp, pwi, Dim, rounds );
     }
@@ -147,7 +147,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       const auto &cwp = wp;
       pkd = new Tree(parlay::make_slice(cwp));
 
-      const auto del_size = size_t(wp.size())*ins_ratio/100;
+      const auto del_size = size_t(wp.size())*ins_ratio/10;
       // ### NOTICE: we test deletion from wp instead of wi
       parlay::sequence<point> pwp(wp.begin(), wp.begin()+del_size);
       batchDelete<TreeDesc,point>( pkd, wp, pwp, Dim, rounds, false, true);
