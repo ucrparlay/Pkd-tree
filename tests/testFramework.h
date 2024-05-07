@@ -14,13 +14,14 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-using coord = long;
-// using coord = double;
+// using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
 // NOTE: KNN size
 static constexpr double batchQueryRatio = 0.01;
+static constexpr size_t batchQueryOsmSize = 10000000;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 10;
 
@@ -764,7 +765,7 @@ void generate_knn(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, co
 
 template<typename point>
 void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<point>>& node_by_time, const int rounds,
-                     ParallelKDtree<point>& pkd) {
+                     ParallelKDtree<point>& pkd, const int K, Typename* kdknn) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
@@ -803,7 +804,16 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
         pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
 
         t.stop();
-        LOG << wp[i].size() << " " << t.total_time() << ENDL;
+        LOG << wp[i].size() << " " << t.total_time() << " ";
+
+        if (time_period_num < 12) {
+            queryKNN(Dim, wp[0].cut(0, batchQueryOsmSize), rounds, pkd, kdknn, K, true);
+        } else if (i != 0 && (i + 1) % 12 == 0) {
+            points tmp(wp[0].size() + wp[1].size());
+            parlay::copy(parlay::make_slice(wp[0]), tmp.cut(0, wp[0].size()));
+            parlay::copy(parlay::make_slice(wp[1]), tmp.cut(wp[0].size(), tmp.size()));
+            queryKNN(Dim, tmp.cut(0, batchQueryOsmSize), rounds, pkd, kdknn, K, true);
+        }
     }
 
     size_t max_deep = 0;

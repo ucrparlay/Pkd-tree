@@ -377,19 +377,6 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         std::cout << "-1 -1 -1 " << std::flush;
     }
 
-    auto insertOsmByTimaCgal = [&](const std::vector<std::vector<Point_d>>& pts) {
-        int fileNum = pts.size();
-        tree.clear();
-        parlay::internal::timer timer;
-        for (int i = 0; i < fileNum; i++) {
-            timer.reset(), timer.start();
-            tree.insert(pts[i].begin(), pts[i].end());
-            tree.template build<CGAL::Parallel_tag>();
-            timer.stop();
-            LOG << pts[i].size() << " " << timer.total_time() << " " << ENDL;
-        }
-    };
-
     auto queryPointCgal = [&](const int kth, const std::vector<Point_d>& all_pts) {
         timer.reset();
         timer.start();
@@ -410,6 +397,29 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         timer.stop();
         std::cout << timer.total_time() << " " << tree.root()->depth() << " "
                   << parlay::reduce(visNodeNum) / all_pts.size() << " " << std::flush;
+    };
+
+    auto insertOsmByTimaCgal = [&](const std::vector<std::vector<Point_d>>& pts) {
+        int fileNum = pts.size();
+        tree.clear();
+        parlay::internal::timer timer;
+        for (int i = 0; i < fileNum; i++) {
+            timer.reset(), timer.start();
+            tree.insert(pts[i].begin(), pts[i].end());
+            tree.template build<CGAL::Parallel_tag>();
+            timer.stop();
+            LOG << pts[i].size() << " " << timer.total_time() << " " << ENDL;
+
+            if (fileNum < 12) {
+                std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);
+                queryPointCgal(K, tmp);
+            } else if (i != 0 && (i + 1) % 12 == 0) {
+                std::vector<Point_d> tmp( batchQueryOsmSize);
+                parlay::copy(parlay::make_slice(pts[0]), tmp.cut(0, pts[0].size()));
+                parlay::copy(parlay::make_slice(pts[1].begin(), pts[1].begin()+batchQueryOsmSize-pts[0].size()), tmp.cut(pts[0].size(), tmp.size()));
+                queryPointCgal(K);
+            }
+        }
     };
 
     if (queryType & (1 << 11)) {  // NOTE: osm by year

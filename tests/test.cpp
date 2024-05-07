@@ -317,12 +317,12 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             // LOG << path << ENDL;
             read_points(path.c_str(), node_by_year[i], K);
         }
-        insertOsmByTime<point>(Dim, node_by_year, rounds, pkd);
-
-        auto all_points = parlay::flatten(node_by_year);
-        kdknn = new Typename[all_points.size()];
-        queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+        kdknn = new Typename[batchQueryOsmSize];
+        insertOsmByTime<point>(Dim, node_by_year, rounds, pkd, K, kdknn);
         delete[] kdknn;
+
+        // auto all_points = parlay::flatten(node_by_year);
+        // queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
     }
 
     if (queryType & (1 << 12)) {  // NOTE: osm by month
@@ -339,12 +339,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 read_points(path.c_str(), node[i * month.size() + j], K);
             }
         }
-        insertOsmByTime<point>(Dim, node, rounds, pkd);
-
-        auto all_points = parlay::flatten(node);
-        kdknn = new Typename[all_points.size()];
-        queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+        kdknn = new Typename[batchQueryOsmSize];
+        insertOsmByTime<point>(Dim, node, rounds, pkd, K, kdknn);
         delete[] kdknn;
+        // auto all_points = parlay::flatten(node);
+        // queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
     }
 
     std::cout << std::endl << std::flush;
