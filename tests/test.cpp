@@ -147,30 +147,28 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 4)) {  // NOTE: batch insertion with fraction
-        // const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
-        //                                          0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
-        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001,
-                                                 0.00000002,  0.00000005,  0.0000001,   0.0000002,
-                                                 0.0000005,   0.000001,    0.000002,    0.000005};
+        const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
+                                                 0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
+        // const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001,
+        //                                          0.00000002,  0.00000005,  0.0000001,   0.0000002,
+        //                                          0.0000005,   0.000001,    0.000002,    0.000005};
         for (int i = 0; i < ratios.size(); i++) {
             LOG << wi.size() * ratios[i] << ": ";
             batchInsert<point>(pkd, wp, wi, Dim, rounds, ratios[i]);
-            batchInsert<point, true>(pkd, wp, wi, Dim, rounds, ratios[i]);
             LOG << ENDL;
         }
     }
 
     if (queryType & (1 << 5)) {  // NOTE: batch deletion with fraction
-        // const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
-        //                                          0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
-        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001,
-                                                 0.00000002,  0.00000005,  0.0000001,   0.0000002,
-                                                 0.0000005,   0.000001,    0.000002,    0.000005};
+        const parlay::sequence<double> ratios = {0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01,
+                                                 0.02,   0.05,   0.1,    0.2,   0.5,   1.0};
+        // const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001,
+        //                                          0.00000002,  0.00000005,  0.0000001,   0.0000002,
+        //                                          0.0000005,   0.000001,    0.000002,    0.000005};
         points tmp;
         for (int i = 0; i < ratios.size(); i++) {
             LOG << wi.size() * ratios[i] << ": ";
             batchDelete<point>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
-            batchDelete<point, true>(pkd, wp, tmp, Dim, rounds, 0, ratios[i]);
             LOG << ENDL;
         }
     }
@@ -344,6 +342,28 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         delete[] kdknn;
         // auto all_points = parlay::flatten(node);
         // queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+    }
+
+    if (queryType & (1 << 13)) {  // NOTE: serial insert VS batch insert
+        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001, 0.00000002,
+                                                 0.00000005,  0.0000001,   0.0000002,   0.0000005,  0.000001,
+                                                 0.000002,    0.000005,    0.00001,     0.00002,    0.00005};
+        // NOTE: first insert in serial one bu one
+        batchInsert<point, true>(pkd, wp, wi, Dim, rounds, ratios[0]);
+        for (int i = 0; i < ratios.size(); i++) {
+            batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i]);
+        }
+    }
+
+    if (queryType & (1 << 14)) {  // NOTE: serial delete VS batch delete
+        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001, 0.00000002,
+                                                 0.00000005,  0.0000001,   0.0000002,   0.0000005,  0.000001,
+                                                 0.000002,    0.000005,    0.00001,     0.00002,    0.00005};
+        // NOTE: first insert in serial one bu one
+        batchDelete<point, true>(pkd, wp, wi, Dim, rounds, ratios[0]);
+        for (int i = 0; i < ratios.size(); i++) {
+            batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i]);
+        }
     }
 
     std::cout << std::endl << std::flush;

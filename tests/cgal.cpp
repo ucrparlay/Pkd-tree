@@ -2,6 +2,7 @@
 
 #include "parlay/internal/get_time.h"
 #include "parlay/parallel.h"
+#include "parlay/slice.h"
 #include "testFramework.h"
 
 #include <CGAL/Cartesian_d.h>
@@ -414,11 +415,14 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);
                 queryPointCgal(K, tmp);
             } else if (i != 0 && (i + 1) % 12 == 0) {
-                std::vector<Point_d> tmp( batchQueryOsmSize);
-                parlay::copy(parlay::make_slice(pts[0]), tmp.cut(0, pts[0].size()));
-                parlay::copy(parlay::make_slice(pts[1].begin(), pts[1].begin()+batchQueryOsmSize-pts[0].size()), tmp.cut(pts[0].size(), tmp.size()));
-                queryPointCgal(K);
+                std::vector<Point_d> tmp(batchQueryOsmSize);
+                parlay::copy(parlay::make_slice(pts[0]), parlay::make_slice(tmp.begin(), tmp.begin() + pts[0].size()));
+                parlay::copy(parlay::make_slice(pts[1].begin(), pts[1].begin() + batchQueryOsmSize - pts[0].size()),
+                             parlay::make_slice(tmp.begin() + pts[0].size(), tmp.end()));
+                queryPointCgal(K, tmp);
             }
+
+            LOG << ENDL;
         }
     };
 
@@ -442,15 +446,15 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 pts[i][j] = Point_d(Dim, std::begin(node_by_year[i][j].pnt), std::end(node_by_year[i][j].pnt));
             });
         }
+        cgknn = new Typename[batchQueryOsmSize];
         insertOsmByTimaCgal(pts);
 
-        auto all_points = parlay::flatten(node_by_year);
-        cgknn = new Typename[all_points.size()];
-        std::vector<Point_d> all_pts(all_points.size());
-        parlay::parallel_for(0, all_points.size(), [&](size_t j) {
-            all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
-        });
-        queryPointCgal(K, all_pts);
+        // auto all_points = parlay::flatten(node_by_year);
+        // std::vector<Point_d> all_pts(all_points.size());
+        // parlay::parallel_for(0, all_points.size(), [&](size_t j) {
+        //     all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
+        // });
+        // queryPointCgal(K, all_pts);
         delete[] cgknn;
     }
 
@@ -480,15 +484,16 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 });
             }
         }
+        cgknn = new Typename[batchQueryOsmSize];
         insertOsmByTimaCgal(pts);
 
-        auto all_points = parlay::flatten(node);
-        std::vector<Point_d> all_pts(all_points.size());
-        cgknn = new Typename[all_points.size()];
-        parlay::parallel_for(0, all_points.size(), [&](size_t j) {
-            all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
-        });
-        queryPointCgal(K, all_pts);
+        // auto all_points = parlay::flatten(node);
+        // std::vector<Point_d> all_pts(all_points.size());
+        // cgknn = new Typename[all_points.size()];
+        // parlay::parallel_for(0, all_points.size(), [&](size_t j) {
+        //     all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
+        // });
+        // queryPointCgal(K, all_pts);
         delete[] cgknn;
     }
     std::cout << std::endl << std::flush;

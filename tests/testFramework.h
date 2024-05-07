@@ -409,6 +409,59 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     return;
 }
 
+template<typename point, bool insert>
+void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, const parlay::sequence<point>& WI,
+                       const uint_fast8_t& DIM, const int& rounds, double ratio = 1.0) {
+    using tree = ParallelKDtree<point>;
+    using points = typename tree::points;
+    using node = typename tree::node;
+    points wp = points::uninitialized(WP.size());
+    points wi = points::uninitialized(WI.size());
+    size_t n = wi.size();
+
+    pkd.delete_tree();
+
+    double aveInsert = time_loop(
+        rounds, 1.0,
+        [&]() {
+            parlay::copy(WP, wp), parlay::copy(WI, wi);
+            pkd.build(parlay::make_slice(wp), DIM);
+        },
+        [&]() {
+            size_t l = 0, r = 0;
+            size_t step = wi.size() * ratio;
+            while (l < n) {
+                r = std::min(l + step, n);
+                if (insert) {
+                    pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+                } else {
+                    pkd.batchDelete(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+                }
+                l = r;
+            }
+        },
+        [&]() { pkd.delete_tree(); });
+
+    //* set status to be finish insert
+    parlay::copy(WP, wp), parlay::copy(WI, wi);
+    pkd.build(parlay::make_slice(wp), DIM);
+    size_t l = 0, r = 0;
+    size_t step = wi.size() * ratio;
+    while (l < n) {
+        r = std::min(l + step, n);
+        if (insert) {
+            pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+        } else {
+            pkd.batchDelete(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+        }
+        l = r;
+    }
+
+    LOG << aveInsert << " " << std::flush;
+
+    return;
+}
+
 template<typename point, bool printHeight = 1, bool printVisNode = 1>
 void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds, ParallelKDtree<point>& pkd,
               Typename* kdknn, const int K, const bool flattenTreeTag) {
@@ -807,13 +860,17 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
         LOG << wp[i].size() << " " << t.total_time() << " ";
 
         if (time_period_num < 12) {
-            queryKNN(Dim, wp[0].cut(0, batchQueryOsmSize), rounds, pkd, kdknn, K, true);
+            points tmp(wp[0].begin(), wp[0].begin() + batchQueryOsmSize);
+            queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
         } else if (i != 0 && (i + 1) % 12 == 0) {
-            points tmp(wp[0].size() + wp[1].size());
+            points tmp(batchQueryOsmSize);
             parlay::copy(parlay::make_slice(wp[0]), tmp.cut(0, wp[0].size()));
-            parlay::copy(parlay::make_slice(wp[1]), tmp.cut(wp[0].size(), tmp.size()));
-            queryKNN(Dim, tmp.cut(0, batchQueryOsmSize), rounds, pkd, kdknn, K, true);
+            parlay::copy(parlay::make_slice(wp[1].begin(), wp[1].begin() + batchQueryOsmSize - wp[0].size()),
+                         tmp.cut(wp[0].size(), tmp.size()));
+            queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
         }
+
+        LOG << ENDL;
     }
 
     size_t max_deep = 0;
