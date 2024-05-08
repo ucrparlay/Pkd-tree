@@ -286,16 +286,19 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 std::cout << timer.total_time() << " " << std::flush;
             } else {
                 for (int s = 0; s < queryNum; s++) {
-                    timer.reset(), timer.start();
-
-                    Point_d a(Dim, std::begin(queryBox[s].first.first.pnt), std::end(queryBox[s].first.first.pnt)),
-                        b(Dim, std::begin(queryBox[s].first.second.pnt), std::end(queryBox[s].first.second.pnt));
-                    Fuzzy_iso_box fib(a, b, 0.0);
-                    auto it = tree.search(_ans.begin() + s * maxSize, fib);
-                    cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
-
-                    timer.stop();
-                    LOG << queryBox[s].second << " " << timer.total_time() << ENDL;
+                    auto aveQuery = time_loop(
+                        singleQueryLogRepeatNum, 1.0, [&]() {},
+                        [&]() {
+                            Point_d a(Dim, std::begin(queryBox[s].first.first.pnt),
+                                      std::end(queryBox[s].first.first.pnt)),
+                                b(Dim, std::begin(queryBox[s].first.second.pnt),
+                                  std::end(queryBox[s].first.second.pnt));
+                            Fuzzy_iso_box fib(a, b, 0.0);
+                            auto it = tree.search(_ans.begin() + s * maxSize, fib);
+                            cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
+                        },
+                        [&]() {});
+                    LOG << queryBox[s].second << " " << aveQuery << ENDL;
                 }
             }
         };

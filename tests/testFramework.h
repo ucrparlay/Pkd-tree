@@ -25,6 +25,7 @@ static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
+static constexpr int singleQueryLogRepeatNum = 100;
 
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
@@ -61,8 +62,9 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
     if (n <= range.second) {
         boxs[idx++] = std::make_pair(tree::get_box(In), In.size());
         // NOTE: handle the cose that all points are the same then become un-divideable
-        if (type == 0 || (type == 1 && n < 1.8 * range.first) || (type == 2 && n < 1.3 * range.first) ||
-            parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
+        // NOTE: Modify the coefficient to make the rectangle size distribute as uniform as possible within the range
+        if ((type == 0 && n < 40 * range.first) || (type == 1 && n < 10 * range.first) ||
+            (type == 2 && n < 2 * range.first) || parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
             return In.size();
         } else {
             goon = true;
@@ -112,7 +114,7 @@ std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> 
         range.first = size_t(std::sqrt(std::sqrt(n)));
         range.second = size_t(std::sqrt(n));
     } else if (type == 2) {  //* large bracket
-        range.first = size_t(std::sqrt(n)) - 25000;
+        range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
         if (n == 100000000)
@@ -657,28 +659,22 @@ void rangeCountFixWithLog(const parlay::sequence<point>& WP, ParallelKDtree<poin
 
     auto [queryBox, maxSize] = gen_rectangles(recNum, recType, WP, DIM);
     parlay::sequence<size_t> visLeafNum(recNum, 0), visInterNum(recNum, 0);
-
-    // double aveCount = time_loop(
-    //     rounds, 1.0, [&]() {},
-    //     [&]() {
-    //         parlay::parallel_for(
-    //             0, recNum,
-    //             [&](size_t i) {
-    //                 visInterNum[i] = 0;
-    //                 visLeafNum[i] = 0;
-    //                 kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-    //             },
-    //             1);
-    //     },
-    //     [&]() {});
     parlay::internal::timer t;
     for (int i = 0; i < recNum; i++) {
-        t.reset(), t.start();
-        visInterNum[i] = 0;
-        visLeafNum[i] = 0;
-        kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-        t.stop();
-        LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
+        double aveQuery = time_loop(
+            rounds, 1.0,
+            [&]() {
+                visInterNum[i] = 0;
+                visLeafNum[i] = 0;
+            },
+            [&]() { kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]); }, [&]() {});
+        LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
+        // t.reset(), t.start();
+        // visInterNum[i] = 0;
+        // visLeafNum[i] = 0;
+        // kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+        // t.stop();
+        // LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
     }
 
     return;
@@ -730,12 +726,12 @@ void rangeQuerySerialWithLog(const parlay::sequence<point>& WP, ParallelKDtree<p
     // using ref_t = std::reference_wrapper<point>;
     // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
 
-    parlay::internal::timer t;
     for (int i = 0; i < recNum; i++) {
-        t.reset(), t.start();
-        kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
-        t.stop();
-        LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
+        double aveQuery = time_loop(
+            rounds, 1.0, [&]() {},
+            [&]() { kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step)); },
+            [&]() {});
+        LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
     }
 
     return;
