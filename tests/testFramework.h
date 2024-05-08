@@ -4,6 +4,7 @@
 #include <boost/random/linear_feedback_shift.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
@@ -23,7 +24,7 @@ using namespace cpdd;
 static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
 // NOTE: rectangle numbers
-static constexpr int rangeQueryNum = 10;
+static constexpr int rangeQueryNum = 100;
 
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
@@ -59,14 +60,13 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
     bool goon = false;
     if (n <= range.second) {
         boxs[idx++] = std::make_pair(tree::get_box(In), In.size());
-        // if ( type == 2 ) LOG << In.size() << ENDL;
-        // NOTE: handle the cose that all points are the same then become
-        // un-divideabel
-        if (type == 2 && !parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
-            goon = true;
-            mx = In.size();
-        } else {
+        // NOTE: handle the cose that all points are the same then become un-divideable
+        if (type == 0 || (type == 1 && n < 1.8 * range.first) || (type == 2 && n < 1.3 * range.first) ||
+            parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
             return In.size();
+        } else {
+            goon = true;
+            mx = n;
         }
     }
 
@@ -112,7 +112,7 @@ std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> 
         range.first = size_t(std::sqrt(std::sqrt(n)));
         range.second = size_t(std::sqrt(n));
     } else if (type == 2) {  //* large bracket
-        range.first = size_t(std::sqrt(n));
+        range.first = size_t(std::sqrt(n)) - 25000;
 
         // NOTE: special handle for large dimension datasets
         if (n == 100000000)
@@ -678,7 +678,7 @@ void rangeCountFixWithLog(const parlay::sequence<point>& WP, ParallelKDtree<poin
         visLeafNum[i] = 0;
         kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
         t.stop();
-        LOG << queryBox[i].second << " " << t.total_time() << ENDL;
+        LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
     }
 
     return;
@@ -735,7 +735,7 @@ void rangeQuerySerialWithLog(const parlay::sequence<point>& WP, ParallelKDtree<p
         t.reset(), t.start();
         kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
         t.stop();
-        LOG << queryBox[i].second << " " << t.total_time() << ENDL;
+        LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
     }
 
     return;

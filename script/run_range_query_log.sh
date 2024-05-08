@@ -1,8 +1,8 @@
 #!/bin/bash
 set -o xtrace
 
-# Solvers=("test" "cgal")
-Solvers=("test")
+Solvers=("test" "cgal")
+# Solvers=("test")
 Node=(1000000000)
 Dim=(3)
 declare -A datas

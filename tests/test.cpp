@@ -345,24 +345,28 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 13)) {  // NOTE: serial insert VS batch insert
-        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001, 0.00000002,
-                                                 0.00000005,  0.0000001,   0.0000002,   0.0000005,  0.000001,
-                                                 0.000002,    0.000005,    0.00001,     0.00002,    0.00005};
+        const parlay::sequence<double> ratios = {1e-9, 2e-9, 5e-9, 1e-7, 2e-7, 5e-7, 1e-5,
+                                                 2e-5, 5e-5, 1e-3, 2e-3, 5e-3, 1.0};
         // NOTE: first insert in serial one bu one
-        batchInsert<point, true>(pkd, wp, wi, Dim, rounds, ratios[0]);
+        LOG << ENDL;
+        batchInsert<point, true>(pkd, wp, wi, Dim, rounds, 1.0);
+        LOG << ENDL;
         for (int i = 0; i < ratios.size(); i++) {
             batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i]);
+            LOG << ENDL;
         }
     }
 
     if (queryType & (1 << 14)) {  // NOTE: serial delete VS batch delete
-        const parlay::sequence<double> ratios = {0.000000001, 0.000000002, 0.000000005, 0.00000001, 0.00000002,
-                                                 0.00000005,  0.0000001,   0.0000002,   0.0000005,  0.000001,
-                                                 0.000002,    0.000005,    0.00001,     0.00002,    0.00005};
         // NOTE: first insert in serial one bu one
-        batchDelete<point, true>(pkd, wp, wi, Dim, rounds, ratios[0]);
+        const parlay::sequence<double> ratios = {1e-9, 2e-9, 5e-9, 1e-7, 2e-7, 5e-7, 1e-5,
+                                                 2e-5, 5e-5, 1e-3, 2e-3, 5e-3, 1.0};
+        LOG << ENDL;
+        batchDelete<point, true>(pkd, wp, wi, Dim, rounds, false, 1.0);
+        LOG << ENDL;
         for (int i = 0; i < ratios.size(); i++) {
             batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i]);
+            LOG << ENDL;
         }
     }
 
