@@ -37,7 +37,7 @@ struct ParallelKDtree<point>::InnerTree {
     inline void reset_tags_num() { tagsNum = 0; }
 
     // NOTE: Each node in the skeleton receives a tag
-    // NOTE: An leaf node receives the tag < BUCKETNUM
+    // NOTE: A leaf node receives the tag < BUCKETNUM
     // NOTE: All internal node has tag == BUCKETNUM
     void assign_node_tag(node* T, bucket_type idx) {
         if (T->is_leaf || idx > PIVOT_NUM) {
@@ -46,7 +46,7 @@ struct ParallelKDtree<point>::InnerTree {
             rev_tag[tagsNum++] = idx;
             return;
         }
-        //* BUCKET ID in [0, BUCKET_NUM)
+        // INFO: BUCKET ID in [0, BUCKET_NUM)
         tags[idx] = node_tag(T, BUCKET_NUM);
         interior* TI = static_cast<interior*>(T);
         assign_node_tag(TI->left, idx << 1);

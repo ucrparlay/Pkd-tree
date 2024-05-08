@@ -3,6 +3,7 @@
 #include "../kdTreeParallel.h"
 
 namespace cpdd {
+// NOTE: pick the rebuild dimension for tree T based on the split method and current dimension
 template<typename point>
 inline ParallelKDtree<point>::dim_type ParallelKDtree<point>::pick_rebuild_dim(const node* T, const dim_type d,
                                                                                const dim_type DIM) {
@@ -16,6 +17,7 @@ inline ParallelKDtree<point>::dim_type ParallelKDtree<point>::pick_rebuild_dim(c
     }
 }
 
+// NOTE: return the dimension in bx that has max stretch
 template<typename point>
 inline ParallelKDtree<point>::dim_type ParallelKDtree<point>::pick_max_stretch_dim(const box& bx, const dim_type DIM) {
     dim_type d(0);

@@ -7,6 +7,7 @@
 
 namespace cpdd {
 template<typename point>
+// NOTE: delete one point from the tree
 void ParallelKDtree<point>::pointDelete(const point p, const dim_type DIM) {
     node* T = this->root;
     box bx = this->bbox;
@@ -14,6 +15,7 @@ void ParallelKDtree<point>::pointDelete(const point p, const dim_type DIM) {
     std::tie(this->root, this->bbox) = pointDelete_recursive(T, bx, p, d, DIM, 1);
 }
 
+// NOTE: implementaion of pointDelete
 template<typename point>
 typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recursive(node* T, const box& bx,
                                                                                       const point& p, dim_type d,
@@ -72,12 +74,12 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recu
 // NOTE: default batch delete
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
-    batchDelete(A, DIM, FullCoveredTag());
-    // batchDelete(A, DIM, PartialCoverTag());
+    // batchDelete(A, DIM, FullCoveredTag());
+    batchDelete(A, DIM, PartialCoverTag());
     return;
 }
 
-// NOTE: all points are fully covered in the tree
+// NOTE: assume all points are fully covered in the tree
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, FullCoveredTag) {
     points B = points::uninitialized(A.size());
@@ -89,7 +91,7 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, FullCovered
     return;
 }
 
-// NOTE: deleted when points are pratially covered in the tree
+// NOTE: batch delete suitable for points that are pratially covered in the tree
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, PartialCoverTag) {
     points B = points::uninitialized(A.size());
@@ -99,7 +101,6 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, PartialCove
     // NOTE: first sieve the points
     std::tie(T, this->bbox) = batchDelete_recursive(T, A, parlay::make_slice(B), d, DIM, PartialCoverTag());
     // NOTE: then rebuild the tree with full parallelsim
-    // std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
     std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
     assert(bx == this->bbox);
 
@@ -269,7 +270,7 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
 
     if (n == 0) return node_box(T, bx);
 
-    if (T->is_dummy) {
+    if (T->is_dummy) {  // NOTE: need to check whether all points are in the leaf
         assert(T->is_leaf);
         leaf* TL = static_cast<leaf*>(T);
 

@@ -4,6 +4,7 @@
 
 namespace cpdd {
 
+// NOTE: return true if bx is a legal box
 template<typename point>
 inline bool ParallelKDtree<point>::legal_box(const box& bx) {
     if (bx == get_empty_box()) return true;
@@ -15,6 +16,7 @@ inline bool ParallelKDtree<point>::legal_box(const box& bx) {
     return true;
 }
 
+// NOTE: return true if box a is within box b
 template<typename point>
 inline bool ParallelKDtree<point>::within_box(const box& a, const box& b) {
     assert(legal_box(a));
@@ -27,6 +29,7 @@ inline bool ParallelKDtree<point>::within_box(const box& a, const box& b) {
     return true;
 }
 
+// NOTE: return true if point p is within box bx
 template<typename point>
 inline bool ParallelKDtree<point>::within_box(const point& p, const box& bx) {
     assert(legal_box(bx));
@@ -38,6 +41,7 @@ inline bool ParallelKDtree<point>::within_box(const point& p, const box& bx) {
     return true;
 }
 
+// NOTE: return true if box a intersects box b
 template<typename point>
 inline bool ParallelKDtree<point>::box_intersect_box(const box& a, const box& b) {
     assert(legal_box(a) && legal_box(b));
@@ -49,16 +53,19 @@ inline bool ParallelKDtree<point>::box_intersect_box(const box& a, const box& b)
     return true;
 }
 
+// NOTE: return an empty box, fill the left cornor with maximum value and right cornor with minimum value
 template<typename point>
 inline typename ParallelKDtree<point>::box ParallelKDtree<point>::get_empty_box() {
     return box(point(std::numeric_limits<coord>::max()), point(std::numeric_limits<coord>::min()));
 }
 
+// NOTE: merge two bounding box x and y
 template<typename point>
 typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(const box& x, const box& y) {
     return box(x.first.minCoords(y.first), x.second.maxCoords(y.second));
 }
 
+// NOTE: return a bounding box regarding the points in range V
 template<typename point>
 typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(slice V) {
     if (V.size() == 0) {
@@ -72,6 +79,7 @@ typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(slice V) {
     }
 }
 
+// NOTE: return a bounding box regarding the points in tree T
 template<typename point>
 typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(node* T) {
     points wx = points::uninitialized(T->size);
@@ -79,6 +87,7 @@ typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(node* T) {
     return get_box(parlay::make_slice(wx));
 }
 
+// NOTE: return true if bounding box bx is within circle cl
 template<typename point>
 inline bool ParallelKDtree<point>::within_circle(const box& bx, const circle& cl) {
     //* the logical is same as p2b_max_distance <= radius
@@ -95,6 +104,7 @@ inline bool ParallelKDtree<point>::within_circle(const box& bx, const circle& cl
     return true;
 }
 
+// NOTE: return true if the point p is within circle cl
 template<typename point>
 inline bool ParallelKDtree<point>::within_circle(const point& p, const circle& cl) {
     coord r = 0;
@@ -106,6 +116,7 @@ inline bool ParallelKDtree<point>::within_circle(const point& p, const circle& c
     return true;
 }
 
+// NOTE: return true if the circle cl intersects box bx
 template<typename point>
 inline bool ParallelKDtree<point>::circle_intersect_box(const circle& cl, const box& bx) {
     //* the logical is same as p2b_min_distance > radius
