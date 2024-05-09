@@ -15,40 +15,84 @@ template<typename point>
 size_t ParallelKDtree<point>::range_count_rectangle(node* T, const box& queryBox, const box& nodeBox,
                                                     size_t& visLeafNum, size_t& visInterNum) {
 
+    // if (T->is_leaf) {
+    //     visLeafNum++;
+    //     size_t cnt = 0;
+    //     leaf* TL = static_cast<leaf*>(T);
+    //     for (int i = 0; i < TL->size; i++) {
+    //         if (within_box(TL->pts[(!T->is_dummy) * i], queryBox)) {
+    //             cnt++;
+    //         }
+    //     }
+    //     return std::move(cnt);
+    // }
+    //
+    // visInterNum++;
+    // interior* TI = static_cast<interior*>(T);
+    // box lbox(nodeBox), rbox(nodeBox);
+    // lbox.second.pnt[TI->split.second] = TI->split.first;  // TODO loose
+    // rbox.first.pnt[TI->split.second] = TI->split.first;
+    //
+    // size_t l, r;
+    //
+    // auto recurse = [&](node* Ts, const box& bx, size_t& conter) {
+    //     if (!box_intersect_box(bx, queryBox)) {
+    //         conter = 0;
+    //     } else if (within_box(bx, queryBox)) {
+    //         conter = Ts->size;
+    //     } else {
+    //         conter = range_count_rectangle(Ts, queryBox, bx, visLeafNum, visInterNum);
+    //     }
+    // };
+    //
+    // recurse(TI->left, lbox, l);
+    // recurse(TI->right, rbox, r);
+    //
+    // return std::move(l + r);
     if (T->is_leaf) {
-        visLeafNum++;
-        size_t cnt = 0;
         leaf* TL = static_cast<leaf*>(T);
-        for (int i = 0; i < TL->size; i++) {
-            if (within_box(TL->pts[(!T->is_dummy) * i], queryBox)) {
-                cnt++;
+        size_t cnt = 0;
+        if (T->is_dummy) {
+            if (within_box(TL->pts[0], queryBox)) {
+                cnt = TL->size;
+            }
+        } else {
+            for (int i = 0; i < TL->size; i++) {
+                if (within_box(TL->pts[i], queryBox)) {
+                    cnt++;
+                }
             }
         }
-        return std::move(cnt);
+        return cnt;
     }
 
-    visInterNum++;
     interior* TI = static_cast<interior*>(T);
-    box lbox(nodeBox), rbox(nodeBox);
-    lbox.second.pnt[TI->split.second] = TI->split.first;  // TODO loose
-    rbox.first.pnt[TI->split.second] = TI->split.first;
+    // box lbox( nodeBox ), rbox( nodeBox );
+    box abox(nodeBox);
+    // lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+    // rbox.first.pnt[TI->split.second] = TI->split.first;
 
     size_t l, r;
-
-    auto recurse = [&](node* Ts, const box& bx, size_t& conter) {
+    auto recurse = [&](node* Ts, const box& bx, size_t& counter) -> void {
         if (!box_intersect_box(bx, queryBox)) {
-            conter = 0;
+            counter = 0;
         } else if (within_box(bx, queryBox)) {
-            conter = Ts->size;
+            counter = Ts->size;
         } else {
-            conter = range_count_rectangle(Ts, queryBox, bx, visLeafNum, visInterNum);
+            counter = range_count_rectangle(Ts, queryBox, bx, visLeafNum, visInterNum);
         }
     };
 
-    recurse(TI->left, lbox, l);
-    recurse(TI->right, rbox, r);
+    auto& mod_dim = abox.second.pnt[TI->split.second];
+    auto split = TI->split.first;
+    std::swap(mod_dim, split);
+    recurse(TI->left, abox, l);
 
-    return std::move(l + r);
+    std::swap(mod_dim, split);
+    abox.first.pnt[TI->split.second] = split;
+    recurse(TI->right, abox, r);
+
+    return l + r;
 }
 
 template<typename point>

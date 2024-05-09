@@ -117,6 +117,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         kdknn = new Typename[recNum];
         const int type[3] = {0, 1, 2};
 
+        LOG << ENDL;
         for (int i = 0; i < 3; i++) {
             rangeCountFixWithLog<point>(wp, pkd, kdknn, singleQueryLogRepeatNum, type[i], recNum, Dim);
         }
@@ -130,6 +131,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         if (summary == 0) {
             int recNum = rangeQueryNum;
             const int type[3] = {0, 1, 2};
+
+            LOG << ENDL;
             for (int i = 0; i < 3; i++) {
                 //* run range count to obtain size
                 kdknn = new Typename[recNum];

@@ -15,8 +15,8 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-// using coord = long;
-using coord = double;
+using coord = long;
+// using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -25,7 +25,7 @@ static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
-static constexpr int singleQueryLogRepeatNum = 100;
+static constexpr int singleQueryLogRepeatNum = 3;
 
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
@@ -662,19 +662,14 @@ void rangeCountFixWithLog(const parlay::sequence<point>& WP, ParallelKDtree<poin
     parlay::internal::timer t;
     for (int i = 0; i < recNum; i++) {
         double aveQuery = time_loop(
-            rounds, 1.0,
+            rounds, -1.0,
             [&]() {
                 visInterNum[i] = 0;
                 visLeafNum[i] = 0;
             },
             [&]() { kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]); }, [&]() {});
+        if (queryBox[i].second != kdknn[i]) LOG << "wrong" << ENDL;
         LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
-        // t.reset(), t.start();
-        // visInterNum[i] = 0;
-        // visLeafNum[i] = 0;
-        // kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-        // t.stop();
-        // LOG << queryBox[i].second << " " << std::setprecision(7) << t.total_time() << ENDL;
     }
 
     return;
@@ -728,9 +723,10 @@ void rangeQuerySerialWithLog(const parlay::sequence<point>& WP, ParallelKDtree<p
 
     for (int i = 0; i < recNum; i++) {
         double aveQuery = time_loop(
-            rounds, 1.0, [&]() {},
+            rounds, -1.0, [&]() {},
             [&]() { kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step)); },
             [&]() {});
+        if (queryBox[i].second != kdknn[i]) LOG << "wrong" << ENDL;
         LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
     }
 
