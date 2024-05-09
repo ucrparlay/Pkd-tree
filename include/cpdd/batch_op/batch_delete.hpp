@@ -74,8 +74,8 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recu
 // NOTE: default batch delete
 template<typename point>
 void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM) {
-    // batchDelete(A, DIM, FullCoveredTag());
-    batchDelete(A, DIM, PartialCoverTag());
+    batchDelete(A, DIM, FullCoveredTag());
+    // batchDelete(A, DIM, PartialCoverTag());
     return;
 }
 
@@ -99,7 +99,7 @@ void ParallelKDtree<point>::batchDelete(slice A, const dim_type DIM, PartialCove
     box bx = this->bbox;
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
     // NOTE: first sieve the points
-    std::tie(T, this->bbox) = batchDelete_recursive(T, A, parlay::make_slice(B), d, DIM, PartialCoverTag());
+    std::tie(T, this->bbox) = batchDelete_recursive(T, bx, A, parlay::make_slice(B), d, DIM, PartialCoverTag());
     // NOTE: then rebuild the tree with full parallelsim
     std::tie(this->root, bx) = rebuild_tree_recursive(T, d, DIM, false);
     assert(bx == this->bbox);
