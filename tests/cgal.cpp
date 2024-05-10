@@ -298,7 +298,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                             cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
                         },
                         [&]() {});
-                    LOG << queryBox[s].second << " " << aveQuery << ENDL;
+                    LOG << queryBox[s].second << " " << std::scientific << aveQuery << ENDL;
                 }
             }
         };

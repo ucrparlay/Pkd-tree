@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
+#include <ios>
 #include "cpdd/cpdd.h"
 
 #include "common/geometryIO.h"
@@ -25,7 +26,7 @@ static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
-static constexpr int singleQueryLogRepeatNum = 3;
+static constexpr int singleQueryLogRepeatNum = 100;
 
 // NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
@@ -413,13 +414,13 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
 
 template<typename point, bool insert>
 void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, const parlay::sequence<point>& WI,
-                       const uint_fast8_t& DIM, const int& rounds, double ratio = 1.0) {
+                       const uint_fast8_t& DIM, const int& rounds, double ratio = 1.0, double max_ratio = 1e-2) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
     points wp = points::uninitialized(WP.size());
     points wi = points::uninitialized(WI.size());
-    size_t n = wi.size();
+    size_t n = static_cast<size_t>(max_ratio * wi.size());
 
     pkd.delete_tree();
 
@@ -431,9 +432,10 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
         },
         [&]() {
             size_t l = 0, r = 0;
-            size_t step = wi.size() * ratio;
+            size_t step = static_cast<size_t>(wi.size() * ratio);
             while (l < n) {
                 r = std::min(l + step, n);
+                // LOG << l << ' ' << r << ENDL;
                 if (insert) {
                     pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
                 } else {
@@ -441,23 +443,25 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
                 }
                 l = r;
             }
+            // LOG << l << ENDL;
         },
         [&]() { pkd.delete_tree(); });
 
-    //* set status to be finish insert
-    parlay::copy(WP, wp), parlay::copy(WI, wi);
-    pkd.build(parlay::make_slice(wp), DIM);
-    size_t l = 0, r = 0;
-    size_t step = wi.size() * ratio;
-    while (l < n) {
-        r = std::min(l + step, n);
-        if (insert) {
-            pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
-        } else {
-            pkd.batchDelete(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
-        }
-        l = r;
-    }
+    // WARN: not reset status
+
+    // parlay::copy(WP, wp), parlay::copy(WI, wi);
+    // pkd.build(parlay::make_slice(wp), DIM);
+    // size_t l = 0, r = 0;
+    // size_t step = wi.size() * ratio;
+    // while (l < n) {
+    //     r = std::min(l + step, n);
+    //     if (insert) {
+    //         pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+    //     } else {
+    //         pkd.batchDelete(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
+    //     }
+    //     l = r;
+    // }
 
     LOG << aveInsert << " " << std::flush;
 
@@ -669,7 +673,7 @@ void rangeCountFixWithLog(const parlay::sequence<point>& WP, ParallelKDtree<poin
             },
             [&]() { kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]); }, [&]() {});
         if (queryBox[i].second != kdknn[i]) LOG << "wrong" << ENDL;
-        LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
+        LOG << queryBox[i].second << " " << std::scientific << aveQuery << ENDL;
     }
 
     return;
@@ -727,7 +731,8 @@ void rangeQuerySerialWithLog(const parlay::sequence<point>& WP, ParallelKDtree<p
             [&]() { kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step)); },
             [&]() {});
         if (queryBox[i].second != kdknn[i]) LOG << "wrong" << ENDL;
-        LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
+        LOG << queryBox[i].second << " " << std::scientific << aveQuery << ENDL;
+        // LOG << queryBox[i].second << " " << std::setprecision(7) << aveQuery << ENDL;
     }
 
     return;
