@@ -21,17 +21,16 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recu
                                                                                       const point& p, dim_type d,
                                                                                       const dim_type DIM,
                                                                                       bool hasTomb) {
-    if (T->is_dummy) {
-        assert(static_cast<leaf*>(T)->pts[0] == p);
-        T->size--;
-        assert(get_box(T) == box(p, p));
-        return node_box(T, box(p, p));
-    }
-
     if (T->is_leaf) {
-        assert(!T->is_dummy);
-
         leaf* TL = static_cast<leaf*>(T);
+
+        if (TL->is_dummy) {
+            assert(static_cast<leaf*>(T)->pts[0] == p);
+            T->size--;
+            assert(get_box(T) == box(p, p));
+            return node_box(T, box(p, p));
+        }
+
         auto it = std::ranges::find(TL->pts.begin(), TL->pts.begin() + TL->size, p);
         assert(it != TL->pts.begin() + TL->size);
         std::ranges::iter_swap(it, TL->pts.begin() + TL->size - 1);
@@ -162,19 +161,17 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
     //     return node_box( T, get_empty_box() );
     // }
 
-    if (T->is_dummy) {
-        assert(T->is_leaf);
-        assert(In.size() <= T->size);  // WARN: cannot delete more points then there are
-        leaf* TL = static_cast<leaf*>(T);
-        T->size -= In.size();  // WARN: this assumes that In\in T
-        return node_box(T, box(TL->pts[0], TL->pts[0]));
-    }
-
     if (T->is_leaf) {
-        assert(!T->is_dummy);
         assert(T->size >= In.size());
-
         leaf* TL = static_cast<leaf*>(T);
+
+        if (TL->is_dummy) {
+            assert(T->is_leaf);
+            assert(In.size() <= T->size);  // WARN: cannot delete more points then there are
+            T->size -= In.size();          // WARN: this assumes that In\in T
+            return node_box(T, box(TL->pts[0], TL->pts[0]));
+        }
+
         auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
         for (int i = 0; i < In.size(); i++) {
             it = std::ranges::find(TL->pts.begin(), end, In[i]);
@@ -270,24 +267,22 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
 
     if (n == 0) return node_box(T, bx);
 
-    if (T->is_dummy) {  // NOTE: need to check whether all points are in the leaf
-        assert(T->is_leaf);
-        leaf* TL = static_cast<leaf*>(T);
-
-        // PERF: slow when In.size() is large
-        for (size_t i = 0; TL->size && i < In.size(); i++) {
-            if (TL->pts[0] == In[i]) {
-                TL->size -= 1;
-            }
-        }
-        assert(TL->size >= 0);
-        return node_box(T, box(TL->pts[0], TL->pts[0]));
-    }
-
     if (T->is_leaf) {
-        assert(!T->is_dummy);
-
         leaf* TL = static_cast<leaf*>(T);
+
+        if (TL->is_dummy) {  // NOTE: need to check whether all points are in the leaf
+            assert(T->is_leaf);
+
+            // PERF: slow when In.size() is large
+            for (size_t i = 0; TL->size && i < In.size(); i++) {
+                if (TL->pts[0] == In[i]) {
+                    TL->size -= 1;
+                }
+            }
+            assert(TL->size >= 0);
+            return node_box(T, box(TL->pts[0], TL->pts[0]));
+        }
+
         auto it = TL->pts.begin(), end = TL->pts.begin() + TL->size;
         for (int i = 0; TL->size && i < In.size(); i++) {
             it = std::ranges::find(TL->pts.begin(), end, In[i]);

@@ -23,22 +23,22 @@ struct ParallelKDtree<point>::node {
     using slice = parlay::slice<point*, point*>;
 
     bool is_leaf;
-    bool is_dummy;
     size_t size;
 };
 
 template<typename point>
 struct ParallelKDtree<point>::leaf : node {
+    bool is_dummy;
     points pts;
-    leaf() : node{true, false, static_cast<size_t>(0)} {};
-    leaf(slice In) : node{true, false, static_cast<size_t>(In.size())} {
-        pts = points::uninitialized(LEAVE_WRAP);
+    leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false) {};
+    leaf(slice In) :
+        node{true, static_cast<size_t>(In.size())}, is_dummy(false), pts(points::uninitialized(LEAVE_WRAP)) {
         for (int i = 0; i < In.size(); i++) {
             pts[i] = In[i];
         }
     }
-    leaf(slice In, bool _is_dummy) : node{true, true, static_cast<size_t>(In.size())} {
-        pts = points::uninitialized(1);
+    leaf(slice In, bool _is_dummy) :
+        node{true, static_cast<size_t>(In.size())}, is_dummy(true), pts(points::uninitialized(1)) {
         pts[0] = In[0];
     }
 };
@@ -48,8 +48,9 @@ struct ParallelKDtree<point>::interior : node {
     node* left;
     node* right;
     splitter split;
+    bool aug_flag;  // TODO: chaneg type of aug_flag to template typename
     interior(node* _left, node* _right, splitter _split) :
-        node{false, false, _left->size + _right->size}, left(_left), right(_right), split(_split) {}
+        node{false, _left->size + _right->size}, left(_left), right(_right), split(_split), aug_flag(false) {}
 };
 
 template<typename point>
@@ -115,7 +116,7 @@ void ParallelKDtree<point>::free_simple_node(simple_node* T) {
 
 template<typename point>
 inline size_t ParallelKDtree<point>::get_imbalance_ratio() {
-    if (const auto env_p = std::getenv("INBALANCE_RATIO")) {
+    if (const auto* env_p = std::getenv("INBALANCE_RATIO")) {
         return static_cast<size_t>(std::stoi(env_p));
     } else {
         return static_cast<size_t>(INBALANCE_RATIO);

@@ -88,14 +88,14 @@ void ParallelKDtree<point>::k_nearest(node* T, const point& q, const dim_type DI
         leaf* TL = static_cast<leaf*>(T);
         int i = 0;
         while (!bq.full() && i < TL->size) {
-            bq.insert(std::make_pair(std::ref(TL->pts[(!T->is_dummy) * i]),
-                                     p2p_distance(q, TL->pts[(!T->is_dummy) * i], DIM)));
+            bq.insert(std::make_pair(std::ref(TL->pts[(!TL->is_dummy) * i]),
+                                     p2p_distance(q, TL->pts[(!TL->is_dummy) * i], DIM)));
             i++;
         }
         while (i < TL->size) {
-            coord r = interruptible_distance(q, TL->pts[(!T->is_dummy) * i], bq.top_value(), DIM);
+            coord r = interruptible_distance(q, TL->pts[(!TL->is_dummy) * i], bq.top_value(), DIM);
             if (Num::Lt(r, bq.top_value())) {
-                bq.insert(std::make_pair(std::ref(TL->pts[(!T->is_dummy) * i]), r));
+                bq.insert(std::make_pair(std::ref(TL->pts[(!TL->is_dummy) * i]), r));
             } else if (TL->is_dummy) {
                 break;
             }

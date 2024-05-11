@@ -24,7 +24,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
                                                                                    const dim_type DIM) {
     if (T->is_leaf) {
         leaf* TL = static_cast<leaf*>(T);
-        if (T->is_dummy && TL->pts[0] == p) {
+        if (TL->is_dummy && TL->pts[0] == p) {
             T->size++;
             return T;
         }
@@ -115,7 +115,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
 
     if (T->is_leaf) {
         leaf* TL = static_cast<leaf*>(T);
-        if (!T->is_dummy && n + TL->size <= LEAVE_WRAP) {
+        if (!TL->is_dummy && n + TL->size <= LEAVE_WRAP) {
             assert(T->size == TL->size);
             if (TL->pts.size() == 0) {
                 TL->pts = points::uninitialized(LEAVE_WRAP);
