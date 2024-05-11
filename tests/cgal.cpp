@@ -49,10 +49,10 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     // NOTE: set cgal threads number
     // TODO: remove it before test summary
-    // int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
+    int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
     // tbb::task_scheduler_init TBBinit(nthreads); // Decrapted
     // NOTE: Limit the number of threads to two for all oneTBB parallel interfaces
-    // tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
+    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
 
     parlay::internal::timer timer;
 
@@ -442,6 +442,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             read_points(path.c_str(), node_by_year[i], K);
         }
 
+        // LOG << "after read osm" << ENDL;
+
         std::vector<std::vector<Point_d>> pts(files.size());
         for (int i = 0; i < files.size(); i++) {
             pts[i].resize(node_by_year[i].size());
@@ -449,6 +451,9 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 pts[i][j] = Point_d(Dim, std::begin(node_by_year[i][j].pnt), std::end(node_by_year[i][j].pnt));
             });
         }
+
+        // LOG << " after generate points " << ENDL;
+        delete[] cgknn;
         cgknn = new Typename[batchQueryOsmSize];
         insertOsmByTimaCgal(pts);
 

@@ -16,8 +16,8 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-using coord = long;
-// using coord = double;
+// using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
