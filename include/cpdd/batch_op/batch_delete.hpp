@@ -116,20 +116,23 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::delete_inner_tre
     const tag_nodes& rev_tag, dim_type d, const dim_type DIM) {
     if (tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2) {
         assert(rev_tag[p] == idx);
+        assert(tags[idx].second == BUCKET_NUM + 1 ||
+               tags[idx].first->size > SERIAL_BUILD_CUTOFF == static_cast<interior*>(tags[idx].first)->aug_flag);
         return treeNodes[p++];  // WARN: this blocks the parallelsim
     }
 
     auto [L, Lbox] = delete_inner_tree(idx << 1, tags, treeNodes, p, rev_tag, (d + 1) % DIM, DIM);
     auto [R, Rbox] = delete_inner_tree(idx << 1 | 1, tags, treeNodes, p, rev_tag, (d + 1) % DIM, DIM);
+
+    assert(tags[idx].first->size > SERIAL_BUILD_CUTOFF == static_cast<interior*>(tags[idx].first)->aug_flag);
     update_interior(tags[idx].first, L, R);
 
-    if (tags[idx].second == BUCKET_NUM + 3) {
+    if (tags[idx].second == BUCKET_NUM + 3) {  // NOTE: launch rebuild
         interior const* TI = static_cast<interior*>(tags[idx].first);
         assert(inbalance_node(TI->left->size, TI->size) || TI->size < THIN_LEAVE_WRAP);
 
-        if (tags[idx].first->size == 0) {  //* special judge for empty tree
-            delete_tree_recursive(tags[idx].first,
-                                  false);  // WARN: disable granularity control
+        if (tags[idx].first->size == 0) {  // NOTE: special judge for empty tree
+            delete_tree_recursive(tags[idx].first, false);
             return node_box(alloc_empty_leaf(), get_empty_box());
         }
 
@@ -139,8 +142,8 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::delete_inner_tre
     return node_box(tags[idx].first, get_box(Lbox, Rbox));
 }
 
-// NOTE: delete with rebuild, with the assumption that all points are in the
-// tree WARN: the param d can be only used when rotate cutting is applied
+// NOTE: delete with rebuild, with the assumption that all points are in the tree
+// WARN: the param d can be only used when rotate cutting is applied
 template<typename point>
 typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recursive(
     node* T, const typename ParallelKDtree<point>::box& bx, slice In, slice Out, dim_type d, const dim_type DIM,
@@ -151,6 +154,7 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
         assert(within_box(get_box(T), bx));
         return node_box(T, bx);
     }
+
     // INFO: may can be used to accelerate the whole deletion process
     // if ( n == T->size ) {
     //     if ( hasTomb ) {
@@ -209,6 +213,8 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
         auto [R, Rbox] =
             batchDelete_recursive(TI->right, rbox, In.cut(_2ndGroup.begin() - In.begin(), n),
                                   Out.cut(_2ndGroup.begin() - In.begin(), n), nextDim, DIM, hasTomb, FullCoveredTag());
+
+        TI->aug_flag = hasTomb ? false : TI->size > this->SERIAL_BUILD_CUTOFF;
         update_interior(T, L, R);
         assert(T->size == L->size + R->size && TI->split.second >= 0 && TI->is_leaf == false);
 

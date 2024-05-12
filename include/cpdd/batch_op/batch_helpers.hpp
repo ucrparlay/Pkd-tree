@@ -6,7 +6,7 @@ namespace cpdd {
 
 // NOTE: flatten the tree into an array in parallel.
 //  If @granularity is set to true, then the flatten will switch to serial by SERIAL_BUILD_CUTOFF; otherwise,
-//  always flatten in serial
+//  always flatten in parallel
 template<typename point>
 template<typename Slice>
 void ParallelKDtree<point>::flatten(typename ParallelKDtree<point>::node* T, Slice Out, bool granularity) {
@@ -25,7 +25,7 @@ void ParallelKDtree<point>::flatten(typename ParallelKDtree<point>::node* T, Sli
     assert(TI->size == TI->left->size + TI->right->size);
     parlay::par_do_if(
         // PERF: check parallelisim using node size can be biased
-        (granularity && TI->size > SERIAL_BUILD_CUTOFF) || !granularity,
+        (granularity && TI->size > SERIAL_BUILD_CUTOFF) || (!granularity && TI->aug_flag),
         [&]() { flatten(TI->left, Out.cut(0, TI->left->size), granularity); },
         [&]() { flatten(TI->right, Out.cut(TI->left->size, TI->size), granularity); });
 
@@ -175,7 +175,7 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::rebuild_tree_rec
     d = (d + 1) % DIM;
     parlay::par_do_if(
         // NOTE: if granularity is disabled, always traverse the tree in parallel
-        (granularity && T->size > SERIAL_BUILD_CUTOFF) || !granularity,
+        (granularity && T->size > SERIAL_BUILD_CUTOFF) || (!granularity && TI->aug_flag),
         [&] { std::tie(L, Lbox) = rebuild_tree_recursive(TI->left, d, DIM, granularity); },
         [&] { std::tie(R, Rbox) = rebuild_tree_recursive(TI->right, d, DIM, granularity); });
 
@@ -196,6 +196,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::delete_tree() {
 }
 
 // NOTE: implementation of the tree deletion
+// TODO: rename granularity to indicate whether the new one used
 template<typename point>
 void ParallelKDtree<point>::delete_tree_recursive(node* T, bool granularity) {
     if (T == nullptr) return;
@@ -204,9 +205,9 @@ void ParallelKDtree<point>::delete_tree_recursive(node* T, bool granularity) {
     } else {
         interior* TI = static_cast<interior*>(T);
 
-        // NOTE: enable granularity control by default, if it is disabled,
-        // always delete in parallel
-        parlay::par_do_if((granularity && T->size > SERIAL_BUILD_CUTOFF) || !granularity,
+        // NOTE: enable granularity control by default, if it is disabled, will check granularity by the value in the
+        // tree
+        parlay::par_do_if((granularity && T->size > SERIAL_BUILD_CUTOFF) || (!granularity && TI->aug_flag),
                           [&] { delete_tree_recursive(TI->left, granularity); },
                           [&] { delete_tree_recursive(TI->right, granularity); });
         free_interior(T);

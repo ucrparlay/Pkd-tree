@@ -103,29 +103,45 @@ struct ParallelKDtree<point>::InnerTree {
     }
 
     // NOTE: the node which needs to be rebuilt has tag BUCKET_NUM+3
-    // NOTE: the bucket node whose ancestor has been rebuilt has tag
-    // BUCKET_NUM+2 NOTE: the bucket node whose ancestor has not been ... has
-    // BUCKET_NUM+1 NOTE: otherwise, it's BUCKET_NUM
+    // the bucket node whose ancestor has been rebuilt has tag BUCKET_NUM+2
+    // the bucket node whose ancestor has not been ... has BUCKET_NUM+1
+    // otherwise, it's BUCKET_NUM
     void mark_tomb(bucket_type idx, box_s& boxs, box bx, bool hasTomb) {
         if (idx > PIVOT_NUM || tags[idx].first->is_leaf) {
             assert(tags[idx].second >= 0 && tags[idx].second < BUCKET_NUM);
-            tags[idx].second = (!hasTomb) ? BUCKET_NUM + 2 : BUCKET_NUM + 1;
+            // tags[idx].second = (!hasTomb) ? BUCKET_NUM + 2 : BUCKET_NUM + 1;
+            if (!hasTomb) {  // NOTE: this subtree needs to be rebuilt in the future, therefore ensure the granularity
+                             // control by assign to aug_flag
+                tags[idx].second = BUCKET_NUM + 2;
+                if (!tags[idx].first->is_leaf) {
+                    assert(static_cast<interior*>(tags[idx].first)->aug_flag = false);
+                    static_cast<interior*>(tags[idx].first)->aug_flag = tags[idx].first->size > SERIAL_BUILD_CUTOFF;
+                }
+            } else {
+                tags[idx].second = BUCKET_NUM + 1;
+            }
             boxs[tagsNum] = bx;
             rev_tag[tagsNum++] = idx;
             return;
         }
+
         assert(tags[idx].second == BUCKET_NUM && (!tags[idx].first->is_leaf));
         interior* TI = static_cast<interior*>(tags[idx].first);
         if (hasTomb && (inbalance_node(TI->left->size - sums_tree[idx << 1], TI->size - sums_tree[idx]) ||
                         (TI->size - sums_tree[idx] < THIN_LEAVE_WRAP))) {
             assert(hasTomb != 0);
+            assert(TI->aug_flag == 0);
             tags[idx].second = BUCKET_NUM + 3;
             hasTomb = false;
         }
 
+        // NOTE: hasTomb == false => need to rebuild
+        TI->aug_flag = hasTomb ? false : TI->size > SERIAL_BUILD_CUTOFF;
+
         box lbox(bx), rbox(bx);
         lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
         rbox.first.pnt[TI->split.second] = TI->split.first;
+
         mark_tomb(idx << 1, boxs, lbox, hasTomb);
         mark_tomb(idx << 1 | 1, boxs, rbox, hasTomb);
         return;
