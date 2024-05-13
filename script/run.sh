@@ -12,8 +12,8 @@
 
 # PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/vardenSerialInsert.out
 
-# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 1 -i 1 -k 10 | tee data/vardenSerialDelete.out
+PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/vardenSerialDelete.out
 
-PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/uniformSerialInsert.out
+# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/uniformSerialInsert.out
 
-PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 1 -i 1 -k 10 | tee data/uniformSerialDelete.out
+PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/uniformSerialDelete.out

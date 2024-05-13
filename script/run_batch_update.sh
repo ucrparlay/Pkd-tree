@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Solvers=("zdtree" "test")
-Solvers=("cgal")
+Solvers=("test")
 Node=(1000000000)
 Dim=(3)
 declare -A datas
-# datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-# datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 # datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+# datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 tag=0
 k=10
 insNum=1

@@ -2,9 +2,9 @@
 #
 set -o xtrace
 
-# Solvers=("test")
+Solvers=("test")
 # Solvers=("zdtree")
-Solvers=("cgal")
+# Solvers=("cgal")
 Node=(1000000000)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/scalability/"
@@ -13,15 +13,24 @@ datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/scalab
 declare -a cores=(1 2 4 8 16 24 48 96 192)
 
 declare -a threads=(
-	"TEST_CGAL_THREADS=1"
-	"TEST_CGAL_THREADS=2"
-	"TEST_CGAL_THREADS=4"
-	"TEST_CGAL_THREADS=8"
-	"TEST_CGAL_THREADS=16"
-	"TEST_CGAL_THREADS=24"
-	"TEST_CGAL_THREADS=48"
-	"TEST_CGAL_THREADS=96"
-	"TEST_CGAL_THREADS=192"
+	# "TEST_CGAL_THREADS=1"
+	# "TEST_CGAL_THREADS=2"
+	# "TEST_CGAL_THREADS=4"
+	# "TEST_CGAL_THREADS=8"
+	# "TEST_CGAL_THREADS=16"
+	# "TEST_CGAL_THREADS=24"
+	# "TEST_CGAL_THREADS=48"
+	# "TEST_CGAL_THREADS=96"
+	# "TEST_CGAL_THREADS=192"
+	"PARLAY_NUM_THREADS=1"
+	"PARLAY_NUM_THREADS=2"
+	"PARLAY_NUM_THREADS=4"
+	"PARLAY_NUM_THREADS=8"
+	"PARLAY_NUM_THREADS=16"
+	"PARLAY_NUM_THREADS=24"
+	"PARLAY_NUM_THREADS=48"
+	"PARLAY_NUM_THREADS=96"
+	"PARLAY_NUM_THREADS=192"
 )
 
 declare -a commands=(
@@ -36,7 +45,7 @@ declare -a commands=(
 	"numactl -i all"                   # 192 threads
 )
 
-tag=1
+tag=2
 dim=3
 k=10
 
