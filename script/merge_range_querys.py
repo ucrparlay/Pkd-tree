@@ -13,7 +13,7 @@ type = "range_query_log"
 
 #! order by test order
 
-solverName = ["test", "cgal", "test_count"]
+solverName = ["test", "cgal", "test_count", "LogTree", "BhlTree"]
 files = ["build", "count"]
 Dims = [3]
 
@@ -21,8 +21,8 @@ resMap = {
     "test": "res_" + type + ".out",
     "test_count": "res_" + "range_count_log" + ".out",
     "cgal": "cgal_" + type + ".out",
-    # "LogTree": "LogTree_" + type + ".out",
-    # "BhlTree": "BhlTree_" + type + ".out",
+    "LogTree": "LogTree_" + type + ".out",
+    "BhlTree": "BhlTree_" + type + ".out",
 }
 
 common = [
@@ -39,6 +39,14 @@ file_header = {
 prefix = [0] * len(files)
 
 
+def get_recType(i):
+    if i < 100:
+        return 1
+    if i < 200:
+        return 2
+    return 3
+
+
 def combine(P, file, csvWriter, solver, benchName, node, dim):
     if not os.path.isfile(P):
         print("No file fonund: " + P)
@@ -49,13 +57,17 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     for line in lines:
         l = " ".join(line.split())
         l = l.split(" ")
+        if len(l) == 0:
+            continue
         sep_lines.append(l)
 
     sep_lines.pop(0)
 
     num = 1
     for i in range(0, len(sep_lines), num):
-        csvWriter.writerow([solver, benchName, node, dim] + sep_lines[i])
+        csvWriter.writerow(
+            [solver, benchName, node, dim] + sep_lines[i] + [get_recType(i)]
+        )
 
 
 def csvSetup(solver):
@@ -63,7 +75,9 @@ def csvSetup(solver):
     csvFilePointer = open(storePrefix + solver + ".csv", "w", newline="")
     csvFilePointer.truncate()
     csvWriter = csv.writer(csvFilePointer)
-    csvWriter.writerow(["solver", "benchmark", "node", "dim", "batchSize", "batchTime"])
+    csvWriter.writerow(
+        ["solver", "benchmark", "node", "dim", "batchSize", "batchTime", "recType"]
+    )
     return csvWriter
 
 
