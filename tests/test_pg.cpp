@@ -260,14 +260,20 @@ void bench_osm_year(int Dim, int LEAVE_WRAP, int K, int rounds,
       read_points<point>(path.c_str(), node_by_year[year-year_begin], K);
   }
 
+  // NOTICE: we fix the query size 10^7
+  points qs;
+  for(const auto &ps : node_by_year)
+  {
+    if(qs.size()==10000000) break;
+    qs.insert(qs.end(), ps.begin(), ps.begin()+std::min(10000000-qs.size(),ps.size()));
+    printf("inc qs size to %lu\n", qs.size());
+  } 
+  assert(qs.size()==10000000);
+  printf("qs size: %lu\n", qs.size());
+
   using Tree = typename TreeDesc::type;
   Tree *pkd = nullptr;
-  insertOsmByTime<TreeDesc,point>(Dim, node_by_year, rounds, pkd);
-
-  auto all_points = parlay::flatten(node_by_year);
-  Typename *kdknn = new Typename[all_points.size()];
-  queryKNN<TreeDesc,point>(Dim, all_points, rounds, pkd, kdknn, K, false );
-  delete[] kdknn;
+  insertOsmByTime<TreeDesc,point>(Dim, node_by_year, rounds, pkd, qs, K);
 }
 
 template<class TreeDesc, typename point>
@@ -286,14 +292,20 @@ void bench_osm_month(int Dim, int LEAVE_WRAP, int K, int rounds,
       read_points<point>(path.c_str(), node[(year-year_begin)*12+month-1], K);
   }
 
+  // NOTICE: we fix the query size 10^7
+  points qs;
+  for(const auto &ps : node)
+  {
+    if(qs.size()==10000000) break;
+    qs.insert(qs.end(), ps.begin(), ps.begin()+std::min(10000000-qs.size(),ps.size()));
+    printf("inc qs size to %lu\n", qs.size());
+  } 
+  assert(qs.size()==10000000);
+  printf("qs size: %lu\n", qs.size());
+
   using Tree = typename TreeDesc::type;
   Tree *pkd = nullptr;
-  insertOsmByTime<TreeDesc,point>(Dim, node, rounds, pkd);
-
-  auto all_points = parlay::flatten(node);
-  Typename *kdknn = new Typename[all_points.size()];
-  queryKNN<TreeDesc,point>(Dim, all_points, rounds, pkd, kdknn, K, false );
-  delete[] kdknn;
+  insertOsmByTime<TreeDesc,point>(Dim, node, rounds, pkd, qs, K);
 }
 
 template<typename T, uint_fast8_t d>

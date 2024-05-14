@@ -286,61 +286,6 @@ void batchInsertDelete(typename TreeDesc::type *&tree,
 }
 
 template<class TreeDesc, typename point>
-void insertOsmByTime(
-    int Dim, const parlay::sequence<parlay::sequence<point>>& node_by_time,
-    int rounds, typename TreeDesc::type *&tree) 
-{
-    // using tree = ParallelKDtree<point>;
-    using points = parlay::sequence<point>;
-    // using node = typename tree::node;
-    using Tree = typename TreeDesc::type;
-
-    size_t time_period_num = node_by_time.size();
-    size_t size_total = 0;
-    parlay::sequence<points> wp(time_period_num);
-    for(size_t i = 0; i < time_period_num; i++){
-      size_t size_cur = node_by_time[i].size();
-      wp[i].resize(size_cur);
-      size_total += size_cur;
-    }
-    const int log2size = (int)std::ceil(std::log2(size_total));
-
-    auto prologue = [&](){
-        for(size_t i = 0; i < time_period_num; i++){
-            parlay::copy(node_by_time[i], wp[i]);
-        }
-        tree = new Tree(log2size);
-    };
-    auto body = [&](){
-        for(size_t i = 0; i < time_period_num; i++){
-          tree->insert(parlay::make_slice(std::as_const(wp[i])));
-        }
-    };
-    auto epilogue = [&](){
-      delete tree;
-    };
-
-    double ave = time_loop(
-        rounds, -1.0,
-        prologue, body, epilogue
-    );
-
-    std::cout << ave << " " << std::endl;
-
-    prologue();
-    for(size_t i = 0; i < time_period_num; i++){
-        parlay::internal::timer t;
-        t.reset(), t.start();
-
-        tree->insert(parlay::make_slice(std::as_const(wp[i])));
-
-        t.stop();
-        std::cout << wp[i].size() << " " << t.total_time() << std::endl;
-    }
-    std::cout << std::endl;
-}
-
-template<class TreeDesc, typename point>
 void
 queryKNN( const uint_fast8_t &Dim, const parlay::sequence<point>& WP, const int& rounds,
           typename TreeDesc::type *tree, Typename* kdknn, const int& K,
@@ -632,14 +577,72 @@ void rangeQueryWithLog(const parlay::sequence<point>& wp, typename TreeDesc::typ
 
     auto [rects, maxsize] = gen_rectangles(num_rect, type_rect, wp, dim);
 
-    parlay::internal::timer t;
     for(const auto &rect : rects){
         const auto &[qMin, qMax, num_in_rect] = rect;
-        t.reset(), t.start();
-        auto res = tree->orthogonalQuery(qMin, qMax);
-        t.stop();
-        std::cout << num_in_rect << " " << res.size() << " " << t.total_time() << std::endl;
+        points res;
+        auto time_avg = time_loop(
+            rounds, -1.0,
+            []{},
+            [&](){res = tree->orthogonalQuery(qMin, qMax);},
+            []{}
+        );
+        std::cout << num_in_rect << " " << res.size() << " " << time_avg << std::endl;
     }
+}
+
+template<class TreeDesc, typename point>
+void insertOsmByTime(
+    int Dim, const parlay::sequence<parlay::sequence<point>>& node_by_time,
+    int rounds, typename TreeDesc::type *&tree, 
+    const parlay::sequence<point> &qs, int K) 
+{
+    // using tree = ParallelKDtree<point>;
+    using points = parlay::sequence<point>;
+    // using node = typename tree::node;
+    using Tree = typename TreeDesc::type;
+
+    size_t time_period_num = node_by_time.size();
+    size_t size_total = 0;
+    parlay::sequence<points> wp(time_period_num);
+    for(size_t i = 0; i < time_period_num; i++){
+      size_t size_cur = node_by_time[i].size();
+      wp[i].resize(size_cur);
+      size_total += size_cur;
+    }
+    const int log2size = (int)std::ceil(std::log2(size_total));
+
+    auto prologue = [&](){
+        for(size_t i = 0; i < time_period_num; i++){
+            parlay::copy(node_by_time[i], wp[i]);
+        }
+        tree = new Tree(log2size);
+    };
+    auto body = [&](){
+        for(size_t i = 0; i < time_period_num; i++){
+          tree->insert(parlay::make_slice(std::as_const(wp[i])));
+        }
+    };
+    auto epilogue = [&](){
+      delete tree;
+    };
+
+    double ave = time_loop(
+        rounds, -1.0,
+        prologue, body, epilogue
+    );
+
+    std::cout << ave << " " << std::endl;
+
+    prologue();
+    for(size_t i = 0; i < time_period_num; i++){
+        parlay::internal::timer t;
+        t.reset(), t.start();
+        tree->insert(parlay::make_slice(std::as_const(wp[i])));
+        t.stop();
+        queryKNN<TreeDesc,point>(Dim, qs, rounds, tree, nullptr, K, false );
+        std::cout << wp[i].size() << " " << t.total_time() << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 /*
