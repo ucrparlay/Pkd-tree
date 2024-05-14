@@ -449,7 +449,8 @@ recurse_box( parlay::slice<point*, point*> In,
 
   size_t mx = 0;
   bool goon = false;
-  if ( n >= range.first && n <= range.second ) {
+
+  if (n <= range.second) {
     point qMin = parlay::reduce(
       In, 
       parlay::binary_op([](const point &lhs, const point &rhs){
@@ -470,12 +471,14 @@ recurse_box( parlay::slice<point*, point*> In,
 
     boxs[idx++] = std::make_tuple(qMin, qMax, n);
 
-    if ( type == 2 &&
-         !parlay::all_of( In, [&]( const point& p ) { return p == In[0]; } ) ) {
-      goon = true;
-      mx = In.size();
-    } else {
+    // NOTE: handle the cose that all points are the same then become un-divideable
+    // NOTE: Modify the coefficient to make the rectangle size distribute as uniform as possible within the range
+    if ((type == 0 && n < 40 * range.first) || (type == 1 && n < 10 * range.first) ||
+        (type == 2 && n < 2 * range.first) || parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
       return In.size();
+    } else {
+      goon = true;
+      mx = n;
     }
   }
 
