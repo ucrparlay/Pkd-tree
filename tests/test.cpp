@@ -215,6 +215,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         points np, nq;
         std::string prefix, path;
         const string insertFileBack = insertFile;
+        const string ten_varden_path = "/data/zmen002/kdtree/ss_varden/1000000000_3/10V.in";
+        const string one_uniform_nine_varden = "/data/zmen002/kdtree/ss_varden/1000000000_3/1U9V.in";
 
         auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
         auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
@@ -222,10 +224,20 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         // NOTE: helper functions
         auto clean = [&]() {
             prefix = insertFile.substr(0, insertFile.rfind("/"));
-            // prefix = insertFileBack.substr(0, insertFileBack.rfind("/"));
-            // LOG << insertFile << " " << insertFileBack << " " << prefix << ENDL;
             np.clear();
             nq.clear();
+        };
+
+        auto writeToFile = [&](string path) {
+            std::ofstream f(path);
+            f << np.size() << " " << Dim << std::endl;
+            for (size_t i = 0; i < np.size(); i++) {
+                for (size_t j = 0; j < Dim; j++) {
+                    f << np[i].pnt[j] << " ";
+                }
+                f << std::endl;
+            }
+            f.close();
         };
 
         // NOTE: run the test
@@ -233,55 +245,60 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             if (inbaBuildType == 0) {
                 buildTree<point, 2>(Dim, np, rounds, pkd);
             } else {
-                incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
+                // incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
+                incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
             }
 
-            if (inbaQueryType == 0) {
-                size_t batchSize = static_cast<size_t>(np.size() * knnBatchInbaRatio);
-                points newPts(batchSize);
-                parlay::copy(np.cut(0, batchSize), newPts.cut(0, batchSize));
-                kdknn = new Typename[batchSize];
-                const int k[3] = {1, 5, 100};
-                for (int i = 0; i < 3; i++) {
-                    queryKNN<point, 0, 1>(Dim, newPts, rounds, pkd, kdknn, k[i], true);
-                }
-                delete[] kdknn;
-            } else if (inbaQueryType == 1) {
-                kdknn = new Typename[rangeQueryNumInbaRatio];
-                int type = 2;
-                rangeCountFix<point>(np, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
-                delete[] kdknn;
-            }
+            // if (inbaQueryType == 0) {
+            //     size_t batchSize = static_cast<size_t>(np.size() * knnBatchInbaRatio);
+            //     points newPts(batchSize);
+            //     parlay::copy(np.cut(0, batchSize), newPts.cut(0, batchSize));
+            //     kdknn = new Typename[batchSize];
+            //     const int k[3] = {1, 5, 100};
+            //     for (int i = 0; i < 3; i++) {
+            //         queryKNN<point, 0, 1>(Dim, newPts, rounds, pkd, kdknn, k[i], true);
+            //     }
+            //     delete[] kdknn;
+            // } else if (inbaQueryType == 1) {
+            //     kdknn = new Typename[rangeQueryNumInbaRatio];
+            //     int type = 2;
+            //     rangeCountFix<point>(np, pkd, kdknn, rounds, type, rangeQueryNumInbaRatio, Dim);
+            //     delete[] kdknn;
+            // }
         };
 
         LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
         // HACK: need start with varden file
         // NOTE: 1: 10*0.1 different vardens.
         clean();
-        for (int i = 1; i <= fileNum; i++) {
-            path = prefix + "/" + std::to_string(i) + ".in";
-            // std::cout << path << std::endl;
-            read_points<point>(path.c_str(), nq, K);
-            np.append(nq.cut(0, batchPointNum));
-            nq.clear();
-        }
+        // for (int i = 1; i <= fileNum; i++) {
+        //     path = prefix + "/" + std::to_string(i) + ".in";
+        //     // std::cout << path << std::endl;
+        //     read_points<point>(path.c_str(), nq, K);
+        //     np.append(nq.cut(0, batchPointNum));
+        //     nq.clear();
+        // }
+        // writeToFile(ten_varden_path);
+        read_points(ten_varden_path.c_str(), np, K);
         assert(np.size() == wp.size());
         run();
 
-        //@ 2: 1 uniform, and 9*0.1 same varden
+        // NOTE: 2: 1 uniform, and 9*0.1 same varden
         //* read varden first
         clean();
-        path = prefix + "/1.in";
+        // path = prefix + "/1.in";
         // std::cout << "varden path" << path << std::endl;
-        read_points<point>(path.c_str(), np, K);
+        // read_points<point>(path.c_str(), np, K);
         //* then read uniforprefixm
-        prefix = prefix.substr(0, prefix.rfind("/"));  // 1000000_3
-        prefix = prefix.substr(0, prefix.rfind("/"));  // ss_varden
-        path = prefix + "/uniform/" + std::to_string(wp.size()) + "_" + std::to_string(Dim) + "/1.in";
+        // prefix = prefix.substr(0, prefix.rfind("/"));  // 1000000_3
+        // prefix = prefix.substr(0, prefix.rfind("/"));  // ss_varden
+        // path = prefix + "/uniform/" + std::to_string(wp.size()) + "_" + std::to_string(Dim) + "/1.in";
         // std::cout << "uniform path:" << path << std::endl;
 
-        read_points<point>(path.c_str(), nq, K);
-        parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });
+        // read_points<point>(path.c_str(), nq, K);
+        // parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });
+        // writeToFile(one_uniform_nine_varden);
+        read_points(one_uniform_nine_varden.c_str(), np, K);
         run();
 
         //@ 3: 1 varden, but flatten;

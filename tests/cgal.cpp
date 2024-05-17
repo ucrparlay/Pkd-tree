@@ -49,10 +49,10 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     // NOTE: set cgal threads number
     // TODO: remove it before test summary
-    int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
+    // int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
     // tbb::task_scheduler_init TBBinit(nthreads); // Decrapted
     // NOTE: Limit the number of threads to two for all oneTBB parallel interfaces
-    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
+    // tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
 
     parlay::internal::timer timer;
 
@@ -84,11 +84,12 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     timer.start();
     Splitter split;
+    // Tree tree;
     Tree tree(_points.begin(), _points.end(), split);
     tree.template build<CGAL::Parallel_tag>();
     timer.stop();
 
-    std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
+    // std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
 
     if (tag >= 1) {
         auto cgal_insert = [&](double r) {
@@ -428,6 +429,58 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             LOG << ENDL;
         }
     };
+
+    if (queryType & (1 << 10)) {  // NOTE: inba ratio reference
+        const int fileNum = 10;
+
+        const size_t batchPointNum = wp.size() / fileNum;
+
+        points np, nq;
+        std::string prefix, path;
+        const string insertFileBack = insertFile;
+        auto clean = [&]() {
+            prefix = insertFile.substr(0, insertFile.rfind("/"));
+            // prefix = insertFileBack.substr(0, insertFileBack.rfind("/"));
+            // LOG << insertFile << " " << insertFileBack << " " << prefix << ENDL;
+            np.clear();
+            nq.clear();
+        };
+        clean();
+        for (int i = 1; i <= fileNum; i++) {
+            path = prefix + "/" + std::to_string(i) + ".in";
+            std::cout << path << std::endl << std::flush;
+            read_points<point>(path.c_str(), nq, K);
+            np.append(nq.cut(0, batchPointNum));
+            nq.clear();
+        }
+        _points.resize(np.size());
+        parlay::parallel_for(
+            0, N, [&](size_t i) { _points[i] = Point_d(Dim, std::begin(np[i].pnt), (std::begin(np[i].pnt) + Dim)); });
+        size_t batchSize = static_cast<size_t>(np.size() * insertBatchInbaRatio);
+        size_t KnnSize = static_cast<size_t>(np.size() * knnBatchInbaRatio);
+        Splitter split;
+        Tree tree(_points.begin(), _points.begin() + batchSize, split);
+        tree.template build<CGAL::Parallel_tag>();
+        timer.reset();
+        timer.start();
+        LOG << "finish build the tree" << ENDL;
+        parlay::sequence<size_t> visNodeNum(KnnSize, 0);
+        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, KnnSize), [&](const tbb::blocked_range<std::size_t>& r) {
+            for (std::size_t s = r.begin(); s != r.end(); ++s) {
+                // Neighbor search can be instantiated from
+                // several threads at the same time
+                Point_d query = _points[s];
+                Neighbor_search search(tree, query, 1);
+                auto it = search.end();
+                it--;
+                // cgknn[s] = it->second;
+                visNodeNum[s] = search.internals_visited() + search.leafs_visited();
+            }
+        });
+        timer.stop();
+        std::cout << timer.total_time() << " " << tree.root()->depth() << " " << parlay::reduce(visNodeNum) / KnnSize
+                  << " " << std::flush;
+    }
 
     if (queryType & (1 << 11)) {  // NOTE: osm by year
         LOG << ENDL;

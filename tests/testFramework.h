@@ -217,20 +217,13 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP, const in
     if (pkd.get_imbalance_ratio() == 1) {
         delay = -0.1;
     }
-    // LOG << "step ratio " << stepRatio << ENDL;
-    // LOG << "WP size: " << n << ENDL;
 
     double aveIncreBuild = time_loop(
-        rounds, delay,
-        [&]() {
-            parlay::copy(WP, wp);
-            // parlay::random_shuffle( wp );
-        },
+        rounds, delay, [&]() { parlay::copy(WP, wp); },
         [&]() {
             size_t l = 0, r = 0;
             while (l < n) {
                 r = std::min(l + step, n);
-                // LOG << l << " " << r << ENDL;
                 pkd.batchInsert(wp.cut(l, r), Dim);
                 l = r;
             }
@@ -475,8 +468,8 @@ void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
     using points = typename tree::points;
     using node = typename tree::node;
     using coord = typename point::coord;
-    // using nn_pair = std::pair<std::reference_wrapper<point>, coord>;
-    using nn_pair = std::pair<point, coord>;
+    using nn_pair = std::pair<std::reference_wrapper<point>, coord>;
+    // using nn_pair = std::pair<point, coord>;
     size_t n = WP.size();
     int LEAVE_WRAP = 32;
     double loopLate = rounds > 1 ? 1.0 : -0.1;
@@ -484,8 +477,8 @@ void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
     points wp = points::uninitialized(n);
     parlay::copy(WP, wp);
 
-    // parlay::sequence<nn_pair> Out(K * n, nn_pair(std::ref(wp[0]), 0));
-    parlay::sequence<nn_pair> Out(K * n);
+    parlay::sequence<nn_pair> Out(K * n, nn_pair(std::ref(wp[0]), 0));
+    // parlay::sequence<nn_pair> Out(K * n);
     parlay::sequence<kBoundedQueue<point, nn_pair>> bq =
         parlay::sequence<kBoundedQueue<point, nn_pair>>::uninitialized(n);
     parlay::parallel_for(0, n, [&](size_t i) { bq[i].resize(Out.cut(i * K, i * K + K)); });
@@ -874,6 +867,65 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
     LOG << ave << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight() << " "
         << std::flush;
 
+    return;
+}
+
+template<typename point, int print = 1>
+void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, const int rounds,
+                              ParallelKDtree<point>& pkd, double stepRatio) {
+    using tree = ParallelKDtree<point>;
+    using points = typename tree::points;
+    using node = typename tree::node;
+    size_t n = WP.size();
+    size_t step = n * stepRatio;
+    points wp = points::uninitialized(n);
+
+    pkd.delete_tree();
+
+    parlay::copy(WP, wp);
+    size_t l = 0, r = 0;
+
+    size_t batchSize = static_cast<size_t>(WP.size() * knnBatchInbaRatio);
+    points newPts(batchSize);
+    parlay::copy(WP.cut(0, batchSize), newPts.cut(0, batchSize));
+    Typename* kdknn = new Typename[batchSize];
+    const int k[3] = {1, 5, 100};
+
+    LOG << "begin insert: " << batchSize << ENDL;
+    size_t cnt = 0;
+    while (l < n) {
+        parlay::internal::timer t;
+        t.reset(), t.start();
+        r = std::min(l + step, n);
+        pkd.batchInsert(wp.cut(l, r), Dim);
+        t.stop();
+
+        // NOTE: print info
+
+        if ((cnt < 50 && cnt % 5 == 0) || (cnt < 100 && cnt % 10 == 0) || (cnt % 100 == 0)) {
+            size_t max_deep = 0;
+            LOG << l << " " << r << " " << t.total_time() << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " "
+                << pkd.getAveTreeHeight() << " " << std::flush;
+
+            // NOTE: add additional query phase
+            for (int i = 0; i < 3; i++) {
+                queryKNN<point, 0, 1>(Dim, newPts, 1, pkd, kdknn, k[i], true);
+            }
+            LOG << ENDL;
+        }
+        cnt++;
+        l = r;
+    }
+    delete[] kdknn;
+
+    // if (print == 1) {
+    //     auto deep = pkd.getAveTreeHeight();
+    //     LOG << aveIncreBuild << " " << deep << " " << std::flush;
+    // } else if (print == 2) {  // NOTE: print the maxtree height and avetree height
+    //     size_t max_deep = 0;
+    //     LOG << aveIncreBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight()
+    //         << " " << std::flush;
+    // }
     return;
 }
 

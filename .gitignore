@@ -11,7 +11,7 @@ run_transfer.sh
 transfer.sh
 
 # Debug files
-*.log
+# *.log
 *.data
 # *.sh
 *.dat
