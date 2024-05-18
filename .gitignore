@@ -6,6 +6,7 @@
 
 # Debug files
 *.log
+*.cache
 *.data
 # *.sh
 *.dat
