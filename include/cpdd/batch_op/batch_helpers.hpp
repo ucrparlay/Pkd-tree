@@ -146,6 +146,8 @@ template<typename point>
 typename ParallelKDtree<point>::node_box ParallelKDtree<point>::rebuild_single_tree(node* T, const dim_type d,
                                                                                     const dim_type DIM,
                                                                                     const bool granularity) {
+    this->rebuild_times++;
+
     points wo = points::uninitialized(T->size);
     points wx = points::uninitialized(T->size);
     uint_fast8_t curDim = pick_rebuild_dim(T, d, DIM);

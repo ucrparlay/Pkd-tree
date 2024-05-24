@@ -189,7 +189,8 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::batchDelete_recu
         return node_box(T, get_box(TL->pts.cut(0, TL->size)));
     }
 
-    if (In.size() <= SERIAL_BUILD_CUTOFF) {
+    // if (In.size() <= SERIAL_BUILD_CUTOFF) {
+    if (In.size() <= 32) {
         interior* TI = static_cast<interior*>(T);
         auto _2ndGroup = std::ranges::partition(
             In, [&](const point& p) { return Num::Lt(p.pnt[TI->split.second], TI->split.first); });

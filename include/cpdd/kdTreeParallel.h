@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include "comparator.h"
 #include "basic_point.h"
 #include "query_op/nn_search_helpers.h"
@@ -239,12 +240,17 @@ class ParallelKDtree {
 
     inline box get_root_box() { return this->bbox; }
 
+    inline void reset_rebuild_time() { this->rebuild_times = 0; }
+
+    inline void print_rebuild_time() { LOG << rebuild_times << " "; }
+
    private:
     node* root = nullptr;
     parlay::internal::timer timer;
     // split_rule _split_rule = ROTATE_DIM;
     split_rule _split_rule = MAX_STRETCH_DIM;
     box bbox;
+    std::atomic_uint_fast64_t rebuild_times = 0;
 };
 
 }  // namespace cpdd

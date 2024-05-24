@@ -418,10 +418,11 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
     pkd.delete_tree();
 
     double aveInsert = time_loop(
-        rounds, 1.0,
+        rounds, -1.0,
         [&]() {
             parlay::copy(WP, wp), parlay::copy(WI, wi);
             pkd.build(parlay::make_slice(wp), DIM);
+            pkd.reset_rebuild_time();
         },
         [&]() {
             size_t l = 0, r = 0;
@@ -436,7 +437,8 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
                 }
                 l = r;
             }
-            // LOG << l << ENDL;
+            LOG << " ";
+            pkd.print_rebuild_time();
         },
         [&]() { pkd.delete_tree(); });
 

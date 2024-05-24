@@ -95,6 +95,8 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree_b
 template<typename point>
 typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
                                                                                  const dim_type DIM) {
+    this->rebuild_times++;
+
     uint_fast8_t curDim = pick_rebuild_dim(T, d, DIM);
     points wo = points::uninitialized(T->size + In.size());
     points wx = points::uninitialized(T->size + In.size());
@@ -130,7 +132,8 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
         }
     }
 
-    if (n <= SERIAL_BUILD_CUTOFF) {
+    // if (n <= SERIAL_BUILD_CUTOFF) {
+    if (n <= 32) {
         interior* TI = static_cast<interior*>(T);
         auto _2ndGroup = std::ranges::partition(
             In, [&](const point& p) { return Num::Lt(p.pnt[TI->split.second], TI->split.first); });
