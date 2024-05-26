@@ -872,7 +872,8 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
 
 template<typename point, int print = 1>
 void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, const int rounds,
-                              ParallelKDtree<point>& pkd, double stepRatio) {
+                              ParallelKDtree<point>& pkd, double stepRatio,
+                              const parlay::sequence<point>& query_points) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
@@ -886,8 +887,6 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
     size_t l = 0, r = 0;
 
     size_t batchSize = static_cast<size_t>(WP.size() * knnBatchInbaRatio);
-    points newPts(batchSize);
-    parlay::copy(WP.cut(0, batchSize), newPts.cut(0, batchSize));
     Typename* kdknn = new Typename[batchSize];
     const int k[3] = {1, 5, 100};
 
@@ -909,7 +908,7 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
 
             // NOTE: add additional query phase
             for (int i = 0; i < 3; i++) {
-                queryKNN<point, 0, 1>(Dim, newPts, 1, pkd, kdknn, k[i], true);
+                queryKNN<point, 0, 1>(Dim, query_points, 1, pkd, kdknn, k[i], true);
             }
             LOG << ENDL;
         }
@@ -918,14 +917,6 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
     }
     delete[] kdknn;
 
-    // if (print == 1) {
-    //     auto deep = pkd.getAveTreeHeight();
-    //     LOG << aveIncreBuild << " " << deep << " " << std::flush;
-    // } else if (print == 2) {  // NOTE: print the maxtree height and avetree height
-    //     size_t max_deep = 0;
-    //     LOG << aveIncreBuild << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight()
-    //         << " " << std::flush;
-    // }
     return;
 }
 

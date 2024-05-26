@@ -212,11 +212,12 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         const size_t batchPointNum = wp.size() / fileNum;
 
-        points np, nq;
+        points np, nq, up;
         std::string prefix, path;
         const string insertFileBack = insertFile;
         const string ten_varden_path = "/data/zmen002/kdtree/ss_varden/1000000000_3/10V.in";
         const string one_uniform_nine_varden = "/data/zmen002/kdtree/ss_varden/1000000000_3/1U9V.in";
+        const string uniform_path = "/data/zmen002/kdtree/uniform/1000000000_3/1.in";
 
         auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
         auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
@@ -246,7 +247,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 buildTree<point, 2>(Dim, np, rounds, pkd);
             } else {
                 // incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
-                incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
+
+                size_t batchSize = static_cast<size_t>(up.size() * knnBatchInbaRatio);
+                points newPts(batchSize);
+                parlay::copy(up.cut(0, batchSize), newPts.cut(0, batchSize));
+                incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio, newPts);
             }
 
             // if (inbaQueryType == 0) {
@@ -266,6 +271,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             //     delete[] kdknn;
             // }
         };
+
+        read_points(uniform_path.c_str(), up, K);
 
         LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
         // HACK: need start with varden file

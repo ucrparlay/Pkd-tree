@@ -10,14 +10,6 @@
 #
 # PARLAY_NUM_THREADS=192 timeout 3700s numactl -i all ./../../pbbsbench_x/build/zdtree -p /data3/zmen002/kdtree/uniform/100000000_2/1.in -d 2 -t 0 -k 10 -q 4096 -i 0 -r 3 | tee ../benchmark/real_world/osm_month_zdtree.out
 
-# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/Parallel_insert_varden.log
-# PARLAY_NUM_THREADS=1 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/serial_insert_varden.log
-
-# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/Parallel_delete_varden.out
-PARLAY_NUM_THREADS=1 numactl -i all ./../build/test -p /data3/zmen002/kdtree/ss_varden/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/serial_delete_varden.out
-
-# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/Parallel_insert_uniform.log
-# PARLAY_NUM_THREADS=1 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 8192 -r 1 -i 1 -k 10 | tee data/serial_insert_uniform.log
-
-# PARLAY_NUM_THREADS=192 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/Parallel_delete_uniform.out
-PARLAY_NUM_THREADS=1 numactl -i all ./../build/test -p /data3/zmen002/kdtree/uniform/1000000000_3/1.in -t 0 -s 0 -d 3 -q 16384 -r 3 -i 1 -k 10 | tee data/serial_delete_uniform.out
+# INBALANCE_RATIO=40 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba40_od.log"
+# INBALANCE_RATIO=48 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba48_od.log"
+INBALANCE_RATIO=49 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba49_od.log"
