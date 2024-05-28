@@ -133,7 +133,8 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
     }
 
     // if (n <= SERIAL_BUILD_CUTOFF) {
-    if (n <= 32) {
+    // if (n <= 32) {
+    if (0) {
         interior* TI = static_cast<interior*>(T);
         auto _2ndGroup = std::ranges::partition(
             In, [&](const point& p) { return Num::Lt(p.pnt[TI->split.second], TI->split.first); });

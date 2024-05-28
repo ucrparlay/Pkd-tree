@@ -354,7 +354,6 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 13)) {  // NOTE: serial insert VS batch insert
-        // NOTE: first insert in serial one bu one
         const parlay::sequence<double> ratios = {1e-9, 2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6,
                                                  5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2};
         // LOG << ENDL << "serial ";
@@ -368,12 +367,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 14)) {  // NOTE: serial delete VS batch delete
-        // NOTE: first insert in serial one bu one
         const parlay::sequence<double> ratios = {1e-9, 2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6,
                                                  5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3, 1e-2};
         // LOG << ENDL << "serial ";
         // batchDelete<point, true>(pkd, wp, wi, Dim, rounds, false, *ratios.rbegin());
-        // LOG << ENDL;
+        LOG << ENDL;
         for (int i = 0; i < ratios.size(); i++) {
             LOG << wi.size() * ratios[i] << " ";
             batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i], *ratios.rbegin());
