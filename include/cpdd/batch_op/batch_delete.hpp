@@ -49,13 +49,13 @@ typename ParallelKDtree<point>::node_box ParallelKDtree<point>::pointDelete_recu
     bool putTomb;
 
     if (Num::Lt(p.pnt[TI->split.second], TI->split.first)) {  // NOTE: go left
-        putTomb = hasTomb && inbalance_node(TI->left->size - 1, TI->size);
+        putTomb = hasTomb && inbalance_node(TI->left->size - 1, TI->size - 1);
         hasTomb = putTomb ? false : hasTomb;
         auto [L, Lbox] = pointDelete_recursive(TI->left, lbox, p, next_dim, DIM, hasTomb);
         update_interior(T, L, TI->right);
         new_box = get_box(Lbox, rbox);
     } else {  // NOTE: go right
-        putTomb = hasTomb && inbalance_node(TI->right->size - 1, TI->size);
+        putTomb = hasTomb && inbalance_node(TI->right->size - 1, TI->size - 1);
         hasTomb = putTomb ? false : hasTomb;
         auto [R, Rbox] = pointDelete_recursive(TI->right, rbox, p, next_dim, DIM, hasTomb);
         update_interior(T, TI->left, R);

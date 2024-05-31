@@ -42,7 +42,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
 
     bool go_left = Num::Lt(p.pnt[TI->split.second], TI->split.first) ? true : false;
     node* nxt_node = go_left ? TI->left : TI->right;
-    if (!inbalance_node(nxt_node->size + 1, TI->size)) {
+    if (!inbalance_node(nxt_node->size + 1, TI->size + 1)) {
         d = (d + 1) % DIM;
         auto return_node = pointInsert_recursive(nxt_node, p, d, DIM);
         if (go_left) {
@@ -53,7 +53,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
         return TI;
     } else {
         parlay::sequence<point> pts{p};
-        return rebuild_with_insert(T, parlay::make_slice(pts), d, DIM);
+        return rebuild_with_insert(T, parlay::make_slice(pts), d, DIM);  // NOTE: the rebuild is in parallel
     }
 }
 

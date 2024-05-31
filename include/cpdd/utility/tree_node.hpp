@@ -125,6 +125,7 @@ inline size_t ParallelKDtree<point>::get_imbalance_ratio() {
 
 template<typename point>
 inline bool ParallelKDtree<point>::inbalance_node(const size_t l, const size_t n) {
+    // TODO: we can read the imbalance ratio during the tree initialization
     if (n == 0) return true;
     return Num::Gt(static_cast<size_t>(std::abs(100.0 * l / n - 50.0)), get_imbalance_ratio());
 }
