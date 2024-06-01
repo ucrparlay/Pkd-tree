@@ -33,7 +33,7 @@ static constexpr int rangeQueryNumInbaRatio = 50000;
 // NOTE: insert batch ratio for inba ratio
 static constexpr double insertBatchInbaRatio = 0.001;
 // NOTE: knn batch ratio for inba ratio
-static constexpr double knnBatchInbaRatio = 0.1;
+static constexpr double knnBatchInbaRatio = 0.01;
 
 // NOTE: Insert Ratio when summary
 static constexpr double batchInsertRatio = 0.01;
@@ -888,7 +888,8 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
 
     size_t batchSize = static_cast<size_t>(WP.size() * knnBatchInbaRatio);
     Typename* kdknn = new Typename[batchSize];
-    const int k[3] = {1, 5, 100};
+    // const int k[3] = {1, 5, 100};
+    const int k[3] = {1};
 
     LOG << "begin insert: " << batchSize << ENDL;
     size_t cnt = 0;
@@ -907,7 +908,8 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
                 << pkd.getAveTreeHeight() << " " << std::flush;
 
             // NOTE: add additional query phase
-            for (int i = 0; i < 3; i++) {
+            // for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 1; i++) {
                 queryKNN<point, 0, 1>(Dim, query_points, 1, pkd, kdknn, k[i], true);
             }
             LOG << ENDL;

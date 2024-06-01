@@ -12,4 +12,5 @@
 
 # INBALANCE_RATIO=40 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba40_od.log"
 # INBALANCE_RATIO=48 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba48_od.log"
-INBALANCE_RATIO=49 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba49_od.log"
+# INBALANCE_RATIO=49 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba49_od.log"
+INBALANCE_RATIO=20 INBA_QUERY=0 INBA_BUILD=1 ../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -k 10 -t 0 -d 3 -q 1024 -i 0 -r 1 | tee "data/inba49_od.log"
