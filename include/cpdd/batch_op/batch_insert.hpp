@@ -27,8 +27,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
         if (TL->is_dummy && TL->pts[0] == p) {
             T->size++;
             return T;
-        }
-        if (TL->size + 1 <= this->LEAVE_WRAP) {
+        } else if (!TL->is_dummy && TL->size + 1 <= this->LEAVE_WRAP) {
             TL->pts[TL->size] = p;
             TL->size++;
             return T;
