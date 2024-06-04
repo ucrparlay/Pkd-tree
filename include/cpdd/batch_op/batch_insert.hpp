@@ -12,10 +12,12 @@ void ParallelKDtree<point>::pointInsert(const point p, const dim_type DIM) {
         pts[0] = p;
         return build(parlay::make_slice(pts), DIM);
     }
+    this->reset_rebuild_time();
     node* T = this->root;
     this->bbox = get_box(this->bbox, box(p, p));
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
     this->root = pointInsert_recursive(T, p, d, DIM);
+    this->print_rebuild_time();
     return;
 }
 
@@ -42,7 +44,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
 
     bool go_left = Num::Lt(p.pnt[TI->split.second], TI->split.first) ? true : false;
     node* nxt_node = go_left ? TI->left : TI->right;
-    if (!inbalance_node(nxt_node->size + 1, TI->size)) {
+    if (!inbalance_node(nxt_node->size + 1, TI->size + 1)) {
         d = (d + 1) % DIM;
         auto return_node = pointInsert_recursive(nxt_node, p, d, DIM);
         if (go_left) {
