@@ -43,7 +43,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     Typename* kdknn = nullptr;
 
     //* begin test
-    buildTree<point>(Dim, wp, rounds, pkd);
+    /*buildTree<point>(Dim, wp, rounds, pkd);*/
 
     //* batch insert
     if (tag >= 1) {

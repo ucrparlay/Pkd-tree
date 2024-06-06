@@ -311,7 +311,7 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     pkd.delete_tree();
 
     double aveInsert = time_loop(
-        rounds, 1.0,
+        rounds, -1.0,
         [&]() {
             parlay::copy(WP, wp), parlay::copy(WI, wi);
             pkd.build(parlay::make_slice(wp), DIM);
@@ -320,9 +320,11 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
             if (!serial) {
                 pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
             } else {
+                pkd.reset_rebuild_time();
                 for (size_t i = 0; i < wi.size() * ratio; i++) {
                     pkd.pointInsert(wi[i], DIM);
                 }
+                pkd.print_rebuild_time();
             }
         },
         [&]() { pkd.delete_tree(); });
@@ -429,7 +431,7 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
             size_t step = static_cast<size_t>(wi.size() * ratio);
             while (l < n) {
                 r = std::min(l + step, n);
-                // LOG << l << ' ' << r << ENDL;
+                /*LOG << l << ' ' << r << ENDL;*/
                 if (insert) {
                     pkd.batchInsert(parlay::make_slice(wi.begin() + l, wi.begin() + r), DIM);
                 } else {

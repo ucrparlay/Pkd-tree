@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Nodes=(1000000 5000000 8000000)
+Nodes=(1000000 5000000 8000000 10000000)
 
 K=100
 tester="checkCorrectParallel"
@@ -8,7 +8,7 @@ resFile="Correct.out"
 dest="logger.in"
 out="log.in"
 : >${dest}
-tag=2
+tag=1
 count=1 # count the number of ok in the output
 dim=5
 queryTypes=(0 1 2)

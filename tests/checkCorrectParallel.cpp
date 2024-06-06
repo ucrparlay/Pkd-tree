@@ -156,7 +156,7 @@ void runKDParallel(points& wp, const points& wi, Typename* kdknn, points& p, int
     pkd.validate(Dim);
 
     if (tag >= 1) {
-        batchInsert<point, true>(pkd, wp, wi, Dim, 2, batchInsertCheckRatio);
+        batchInsert<point, false>(pkd, wp, wi, Dim, 2, batchInsertCheckRatio);
         if (tag == 1) wp.append(wi.cut(0, wp.size() * batchInsertCheckRatio));
         pkd.validate(Dim);
         LOG << "finish insert" << ENDL;

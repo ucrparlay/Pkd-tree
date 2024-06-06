@@ -12,12 +12,10 @@ void ParallelKDtree<point>::pointInsert(const point p, const dim_type DIM) {
         pts[0] = p;
         return build(parlay::make_slice(pts), DIM);
     }
-    this->reset_rebuild_time();
     node* T = this->root;
     this->bbox = get_box(this->bbox, box(p, p));
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
     this->root = pointInsert_recursive(T, p, d, DIM);
-    this->print_rebuild_time();
     return;
 }
 
@@ -29,8 +27,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
         if (TL->is_dummy && TL->pts[0] == p) {
             T->size++;
             return T;
-        }
-        if (TL->size + 1 <= this->LEAVE_WRAP) {
+        } else if (!TL->is_dummy && TL->size + 1 <= this->LEAVE_WRAP) {
             TL->pts[TL->size] = p;
             TL->size++;
             return T;
@@ -134,9 +131,9 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
         }
     }
 
-    // if (n <= SERIAL_BUILD_CUTOFF) {
-    // if (n <= 32) {
-    if (0) {
+    if (n <= SERIAL_BUILD_CUTOFF) {
+        // if (n <= 32) {
+        /*if (0) {*/
         interior* TI = static_cast<interior*>(T);
         auto _2ndGroup = std::ranges::partition(
             In, [&](const point& p) { return Num::Lt(p.pnt[TI->split.second], TI->split.first); });
