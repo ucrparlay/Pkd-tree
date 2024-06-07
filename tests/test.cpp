@@ -405,7 +405,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         LOG << "input box: " << input_box.first << " " << input_box.second << ENDL;
         LOG << "query box: " << query_box.first << " " << query_box.second << ENDL;
 
-        const int kQueryNum = 1e6;
+        size_t kQueryNum = wp.size() * knnBatchInbaRatio;
         points wq(kQueryNum);
         for (int i = 0; i < Dim; i++) {
             parlay::random_generator gen(0);
