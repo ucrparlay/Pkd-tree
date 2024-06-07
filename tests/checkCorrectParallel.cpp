@@ -130,7 +130,7 @@ void runCGAL(points& wp, points& wi, Typename* cgknn, int queryNum, parlay::sequ
     }
 
     if (tag == 1) {
-        wp.pop_tail(wi.size());
+        wp.pop_tail(wi.size() * batchInsertCheckRatio);
         assert(wp.size() == N);
     }
     tree.clear();
@@ -156,7 +156,7 @@ void runKDParallel(points& wp, const points& wi, Typename* kdknn, points& p, int
     pkd.validate(Dim);
 
     if (tag >= 1) {
-        batchInsert<point, false>(pkd, wp, wi, Dim, 2, batchInsertCheckRatio);
+        batchInsert<point, true>(pkd, wp, wi, Dim, 2, batchInsertCheckRatio);
         if (tag == 1) wp.append(wi.cut(0, wp.size() * batchInsertCheckRatio));
         pkd.validate(Dim);
         LOG << "finish insert" << ENDL;
@@ -189,7 +189,7 @@ void runKDParallel(points& wp, const points& wi, Typename* kdknn, points& p, int
         rangeQuery<point>(wp, pkd, kdknn, rounds, queryNum, p);
     }
 
-    if (tag == 1) wp.pop_tail(wi.size());
+    if (tag == 1) wp.pop_tail(wi.size() * batchInsertCheckRatio);
     assert(wp.size() == N);
     pkd.delete_tree();
     return;
