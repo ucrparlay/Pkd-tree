@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+#include "parlay/parallel.h"
 #include "parlay/primitives.h"
 #include "testFramework.h"
 
@@ -387,6 +388,40 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i], *ratios.rbegin());
             LOG << ENDL;
         }
+    }
+
+    if (queryType & (1 << 15)) {  // NOTE: try query a varden from long distance away
+        auto input_box = pkd.get_box(parlay::make_slice(wp));
+        box query_box;
+        const int kDistanceRatio = 100;
+        parlay::sequence<coord> width(Dim);
+
+        for (int i = 0; i < Dim; i++) {
+            width[i] = input_box.second.pnt[i] - input_box.first.pnt[i];
+            query_box.first.pnt[i] = kDistanceRatio * width[i] + input_box.first.pnt[i];
+            query_box.second.pnt[i] = kDistanceRatio * width[i] + input_box.second.pnt[i];
+        }
+
+        LOG << "input box: " << input_box.first << " " << input_box.second << ENDL;
+        LOG << "query box: " << query_box.first << " " << query_box.second << ENDL;
+
+        const int kQueryNum = 1e6;
+        points wq(kQueryNum);
+        for (int i = 0; i < Dim; i++) {
+            parlay::random_generator gen(0);
+            std::uniform_int_distribution<coord> dis(query_box.first.pnt[i], query_box.second.pnt[i]);
+            parlay::parallel_for(0, kQueryNum, [&](size_t j) {
+                auto r = gen[j];
+                wq[j].pnt[i] = dis(r);
+            });
+        }
+
+        for (int i = 0; i < 10; i++) {
+            LOG << wq[i] << ENDL;
+        }
+
+        LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
+        incrementalBuildAndQuery<point, 2>(Dim, wp, rounds, pkd, insertBatchInbaRatio, wq);
     }
 
     std::cout << std::endl << std::flush;
