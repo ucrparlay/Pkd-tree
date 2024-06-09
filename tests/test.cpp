@@ -244,16 +244,29 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         // NOTE: run the test
         auto run = [&]() {
-            if (inbaBuildType == 0) {
-                buildTree<point, 2>(Dim, np, rounds, pkd);
-            } else {
-                // incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
+            /*if (inbaBuildType == 0) {*/
+            /*buildTree<point, 2>(Dim, np, rounds, pkd);*/
+            /*size_t batchSize = static_cast<size_t>(up.size() * knnBatchInbaRatio);*/
+            /*points newPts(batchSize);*/
+            /*parlay::copy(up.cut(0, batchSize), newPts.cut(0, batchSize));*/
+            /*kdknn = new Typename[batchSize];*/
+            /*const int k[3] = {1, 5, 100};*/
+            /*for (int i = 0; i < 3; i++) {*/
+            /*    queryKNN<point, 0, 1>(Dim, newPts, rounds, pkd, kdknn, k[i], true);*/
+            /*}*/
+            /*delete[] kdknn;*/
+            /*} else {*/
+            // incrementalBuild<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio);
 
-                size_t batchSize = static_cast<size_t>(up.size() * knnBatchInbaRatio);
-                points newPts(batchSize);
-                parlay::copy(up.cut(0, batchSize), newPts.cut(0, batchSize));
-                incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd, insertBatchInbaRatio, newPts);
+            size_t batchSize = static_cast<size_t>(up.size() * knnBatchInbaRatio);
+            points newPts(batchSize);
+            parlay::copy(up.cut(0, batchSize), newPts.cut(0, batchSize));
+            if (inbaBuildType == 0) {
+                incrementalBuildAndQuery<point, false>(Dim, np, rounds, pkd, insertBatchInbaRatio, newPts);
+            } else {
+                incrementalBuildAndQuery<point, true>(Dim, np, rounds, pkd, insertBatchInbaRatio, newPts);
             }
+            /*}*/
 
             // if (inbaQueryType == 0) {
             //     size_t batchSize = static_cast<size_t>(np.size() * knnBatchInbaRatio);
@@ -306,8 +319,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         // read_points<point>(path.c_str(), nq, K);
         // parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });
         // writeToFile(one_uniform_nine_varden);
-        read_points(one_uniform_nine_varden.c_str(), np, K);
-        run();
+        /*read_points(one_uniform_nine_varden.c_str(), np, K);*/
+        /*run();*/
 
         //@ 3: 1 varden, but flatten;
         // clean();
@@ -421,7 +434,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         }
 
         LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
-        incrementalBuildAndQuery<point, 2>(Dim, wp, rounds, pkd, insertBatchInbaRatio, wq);
+        incrementalBuildAndQuery<point, true>(Dim, wp, rounds, pkd, insertBatchInbaRatio, wq);
     }
 
     std::cout << std::endl << std::flush;

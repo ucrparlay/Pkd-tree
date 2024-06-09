@@ -33,7 +33,7 @@ static constexpr int rangeQueryNumInbaRatio = 50000;
 // NOTE: insert batch ratio for inba ratio
 static constexpr double insertBatchInbaRatio = 0.001;
 // NOTE: knn batch ratio for inba ratio
-static constexpr double knnBatchInbaRatio = 0.01;
+static constexpr double knnBatchInbaRatio = 0.001;
 
 // NOTE: Insert Ratio when summary
 static constexpr double batchInsertRatio = 0.01;
@@ -870,7 +870,7 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
     return;
 }
 
-template<typename point, int print = 1>
+template<typename point, bool insertBuild = 1>
 void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, const int rounds,
                               ParallelKDtree<point>& pkd, double stepRatio,
                               const parlay::sequence<point>& query_points) {
@@ -886,23 +886,29 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
     parlay::copy(WP, wp);
     size_t l = 0, r = 0;
 
-    size_t batchSize = static_cast<size_t>(WP.size() * knnBatchInbaRatio);
+    size_t batchSize = query_points.size();
     Typename* kdknn = new Typename[batchSize];
     const int k[3] = {1, 5, 100};
     /*const int k[3] = {1};*/
 
-    LOG << "begin insert: " << batchSize << ENDL;
+    /*LOG << "begin insert: " << batchSize << ENDL;*/
     size_t cnt = 0;
     while (l < n) {
         parlay::internal::timer t;
-        t.reset(), t.start();
         r = std::min(l + step, n);
-        pkd.batchInsert(wp.cut(l, r), Dim);
+        if (insertBuild) {
+            t.reset(), t.start();
+            pkd.batchInsert(wp.cut(l, r), Dim);
+        } else {
+            pkd.delete_tree();
+            t.reset(), t.start();
+            pkd.build(wp.cut(0, r), Dim);
+        }
         t.stop();
 
         // NOTE: print info
 
-        if ((cnt < 50 && cnt % 5 == 0) || (cnt < 100 && cnt % 10 == 0) || (cnt % 100 == 0)) {
+        if (cnt % 10 == 0) {
             size_t max_deep = 0;
             LOG << l << " " << r << " " << t.total_time() << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " "
                 << pkd.getAveTreeHeight() << " " << std::flush;

@@ -7,7 +7,8 @@ set -o xtrace
 Solvers=("test")
 Node=(1000000000)
 # Inba=(1 2 3 4 5 6 10 20 30 40 45 46 47 48 49 50)
-Inba=(50)
+Inba=(1 5 10 20 30 40 48 49 50)
+# Inba=(50)
 Dim=(3)
 declare -A datas
 # datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
@@ -20,7 +21,8 @@ queryType=1024 # 001 011 111
 echo $queryType
 
 if [[ ${inbaQuery} -eq 0 ]]; then
-	resFile="inba_ratio_knn.out"
+	# resFile="inba_ratio_knn.out"
+	resFile="inba_ratio_knn_ave_max.out"
 else
 	resFile="inba_ratio_rc.out"
 fi
@@ -37,7 +39,7 @@ for solver in "${Solvers[@]}"; do
 				echo ">>>${dest}"
 
 				# NOTE: run basic first
-				# PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
+				PARLAY_NUM_THREADS=192 INBA_QUERY=${inbaQuery} INBA_BUILD=0 numactl -i all ${exe} -p "${files_path}/1.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>"${dest}"
 
 				# NOTE: run others then
 				for ratio in "${Inba[@]}"; do
