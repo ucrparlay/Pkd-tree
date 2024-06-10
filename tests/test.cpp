@@ -406,35 +406,40 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     if (queryType & (1 << 15)) {  // NOTE: try query a varden from long distance away
         auto input_box = pkd.get_box(parlay::make_slice(wp));
         box query_box;
-        const int kDistanceRatio = 100;
-        parlay::sequence<coord> width(Dim);
 
-        for (int i = 0; i < Dim; i++) {
-            width[i] = input_box.second.pnt[i] - input_box.first.pnt[i];
-            query_box.first.pnt[i] = kDistanceRatio * width[i] + input_box.first.pnt[i];
-            query_box.second.pnt[i] = kDistanceRatio * width[i] + input_box.second.pnt[i];
-        }
+        auto run = [&](const int kDistanceRatio) {
+            parlay::sequence<coord> width(Dim);
 
-        LOG << "input box: " << input_box.first << " " << input_box.second << ENDL;
-        LOG << "query box: " << query_box.first << " " << query_box.second << ENDL;
+            for (int i = 0; i < Dim; i++) {
+                width[i] = input_box.second.pnt[i] - input_box.first.pnt[i];
+                query_box.first.pnt[i] = kDistanceRatio * width[i] + input_box.first.pnt[i];
+                query_box.second.pnt[i] = kDistanceRatio * width[i] + input_box.second.pnt[i];
+            }
 
-        size_t kQueryNum = wp.size() * knnBatchInbaRatio;
-        points wq(kQueryNum);
-        for (int i = 0; i < Dim; i++) {
-            parlay::random_generator gen(0);
-            std::uniform_int_distribution<coord> dis(query_box.first.pnt[i], query_box.second.pnt[i]);
-            parlay::parallel_for(0, kQueryNum, [&](size_t j) {
-                auto r = gen[j];
-                wq[j].pnt[i] = dis(r);
-            });
-        }
+            LOG << "input box: " << input_box.first << " " << input_box.second << ENDL;
+            LOG << "query box: " << query_box.first << " " << query_box.second << ENDL;
 
-        for (int i = 0; i < 10; i++) {
-            LOG << wq[i] << ENDL;
-        }
+            size_t kQueryNum = wp.size() * knnBatchInbaRatio;
+            points wq(kQueryNum);
+            for (int i = 0; i < Dim; i++) {
+                parlay::random_generator gen(0);
+                std::uniform_int_distribution<coord> dis(query_box.first.pnt[i], query_box.second.pnt[i]);
+                parlay::parallel_for(0, kQueryNum, [&](size_t j) {
+                    auto r = gen[j];
+                    wq[j].pnt[i] = dis(r);
+                });
+            }
+
+            incrementalBuildAndQuery<point, true>(Dim, wp, rounds, pkd, insertBatchInbaRatio, wq);
+        };
 
         LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
-        incrementalBuildAndQuery<point, true>(Dim, wp, rounds, pkd, insertBatchInbaRatio, wq);
+        LOG << "distance ratio: " << 0 << ENDL;
+        run(0);
+        LOG << "distance ratio: " << 10 << ENDL;
+        run(10);
+        LOG << "distance ratio: " << 100 << ENDL;
+        run(100);
     }
 
     std::cout << std::endl << std::flush;
