@@ -57,27 +57,44 @@ std::pair<size_t, int>
 read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   using coord =
       std::remove_reference_t<decltype( *std::declval<point>().coordinate() )>;  // *
-  parlay::sequence<char> S = readStringFromFile( iFile );
-  parlay::sequence<char*> W = stringToWords( S );
-  size_t N = atol( W[0] );
-  int Dim = atoi( W[1] );
-  assert( N >= 0 && Dim >= 1 && N >= K );
+  /*parlay::sequence<char> S = readStringFromFile( iFile );*/
+  /*parlay::sequence<char*> W = stringToWords( S );*/
+  /*size_t N = atol( W[0] );*/
+  /*int Dim = atoi( W[1] );*/
+  /*assert( N >= 0 && Dim >= 1 && N >= K );*/
+  /**/
+  /*auto pts = W.cut( 2, W.size() );*/
+  /*assert( pts.size() % Dim == 0 );*/
+  /*size_t n = pts.size() / Dim;*/
+  /*auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {*/
+  /*  if constexpr ( std::is_integral_v<coord> )*/
+  /*    return atol( pts[i] );*/
+  /*  else if ( std::is_floating_point_v<coord> )*/
+  /*    return atof( pts[i] );*/
+  /*} );*/
+  /**/
+  /*wp.resize( N );*/
+  /*parlay::parallel_for( 0, n, [&]( size_t i ) {*/
+  /*  for ( int j = 0; j < Dim; j++ ) {*/
+  /*    wp[i][j] = a[i * Dim + j];*/
+  /*  }*/
+  /*} );*/
 
-  auto pts = W.cut( 2, W.size() );
-  assert( pts.size() % Dim == 0 );
-  size_t n = pts.size() / Dim;
-  auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {
-    if constexpr ( std::is_integral_v<coord> )
-      return atol( pts[i] );
-    else if ( std::is_floating_point_v<coord> )
-      return atof( pts[i] );
-  } );
+  ifstream fs;
+  fs.open( iFile );
+  size_t N;
+  int Dim;
+  string str;
+  fs >> str, N = stol( str );
+  fs >> str, Dim = stoi( str );
+  // LOG << N << " " << Dim << ENDL;
   wp.resize( N );
-  parlay::parallel_for( 0, n, [&]( size_t i ) {
+  for ( size_t i = 0; i < N; i++ ) {
     for ( int j = 0; j < Dim; j++ ) {
-      wp[i][j] = a[i * Dim + j];
+      fs >> str;
+      wp[i][j] = std::stol( str );
     }
-  } );
+  }
   return std::make_pair( N, Dim );
 }
 /*
@@ -125,8 +142,7 @@ checkTreesSize( typename tree::node* T ) {
 */
 template<class TreeDesc, typename point>
 auto
-buildTree( const int& Dim, const parlay::sequence<point>& WP, int rounds,
-           size_t leaf_size ) {
+buildTree( const int& Dim, parlay::sequence<point>& WP, int rounds, size_t leaf_size ) {
   // using tree = ParallelKDtree<point>;
   // using points = typename tree::points;
   using points = parlay::sequence<point>;
@@ -135,23 +151,23 @@ buildTree( const int& Dim, const parlay::sequence<point>& WP, int rounds,
 
   size_t n = WP.size();
   // points wp = points::uninitialized( n );
-  parlay::sequence<point> wp( n );
+  /*parlay::sequence<point> wp( n );*/
   Tree* tree = nullptr;
 
-  auto prologue = [&] { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); };
+  /*auto prologue = [&] { parlay::copy( WP.cut( 0, n ), wp.cut( 0, n ) ); };*/
   auto body = [&] {
     // tree = pargeo::kdTree::build<point::dim,point>(wp.cut(0,n), true, leaf_size);
-    const auto& cwp = wp;
+    const auto& cwp = WP;
     tree = new Tree( cwp.cut( 0, n ) );
   };
-  auto epilogue = [&] { delete tree; };
+  /*auto epilogue = [&] { delete tree; };*/
 
-  double aveBuild = time_loop( rounds, -1.0, prologue, body, epilogue );
+  /*double aveBuild = time_loop( rounds, -1.0, prologue, body, epilogue );*/
 
-  std::cout << aveBuild << " " << std::flush;
+  /*std::cout << aveBuild << " " << std::flush;*/
 
   //* return a built tree
-  prologue();
+  /*prologue();*/
   body();
   return tree;
 }
@@ -285,7 +301,8 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
 
   auto test_knn = [&]( auto knn_func ) {
     try {
-      double aveQuery = time_loop( rounds, 1.0, [] {}, knn_func, [] {} );
+      double aveQuery = time_loop(
+          rounds, 1.0, [] {}, knn_func, [] {} );
       std::cout << aveQuery << " " << std::flush;
     } catch ( ... ) {
       std::cout << "E " << std::flush;

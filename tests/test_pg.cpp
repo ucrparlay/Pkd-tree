@@ -34,15 +34,16 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
   }
 
   points wi;
-  if ( tag >= 1 ) {
-    auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );
-    if ( nd != Dim ) {
-      puts( "read inserted points dimension wrong" );
-      abort();
-    }
-  }
+  /*if ( tag >= 1 ) {*/
+  /*  auto [nn, nd] = read_points<point>( insertFile.c_str(), wi, K );*/
+  /*  if ( nd != Dim ) {*/
+  /*    puts( "read inserted points dimension wrong" );*/
+  /*    abort();*/
+  /*  }*/
+  /*}*/
 
   Typename* kdknn;
+  /*return;*/
 
   //* begin test
   using Tree = typename TreeDesc::type;
@@ -59,172 +60,6 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     wi = wp;
     const int log2size = (int)std::ceil( std::log2( wi.size() ) );
     pkd = new Tree( log2size );
-  }
-
-  if ( tag == 3 ) {
-    const auto ins_size = size_t( wi.size() ) * ins_ratio / 10;
-    parlay::sequence<point> pwi( wi.begin(), wi.begin() + ins_size );
-    batchInsertDelete<TreeDesc, point>( pkd, pwi, Dim, 1 );
-    tag = 0;
-  }
-
-  const int seg_ratio[] = { 100, 10, 20, 25, 50 };
-  auto segs = parlay::tabulate( 100 / seg_ratio[seg_mode], [&]( size_t i ) {
-    return wi.size() * seg_ratio[seg_mode] / 100 * i;
-  } );
-  segs.push_back( wi.size() );
-
-  //* batch insert
-  if ( tag >= 1 ) {
-    if ( ins_mode == 0 )  // unit test
-    {
-      batchInsert<TreeDesc, point>( pkd, wp, wi, Dim, rounds );
-    } else if ( ins_mode == 1 )  // insert all
-    {
-      const auto& cwi = wi;
-      pkd->insert( parlay::make_slice( cwi ) );
-    } else if ( ins_mode == 2 )  // insert in seg mode
-    {
-      for ( size_t i = 1; i < segs.size(); ++i ) {
-        const parlay::sequence<point> pwi( wi.begin() + segs[i - 1],
-                                           wi.begin() + segs[i] );
-        pkd->insert( parlay::make_slice( pwi ) );
-      }
-    }
-    // ins_mode==3 is reserved as no op
-    else if ( ins_mode == 4 )  // insert in partial mode
-    {
-      const auto ins_size = size_t( wi.size() ) * ins_ratio / 10;
-      parlay::sequence<point> pwi( wi.begin(), wi.begin() + ins_size );
-      batchInsert<TreeDesc, point>( pkd, wp, pwi, Dim, rounds );
-    } else if ( ins_mode == 5 )  // insert in partial mode (size varies exponentially)
-    {
-      auto ins_size = size_t( wi.size() ) * 2;
-      for ( int i = 1; i <= ins_ratio; ++i ) {
-        ins_size /= 10;
-        parlay::sequence<point> pwi( wi.begin(), wi.begin() + ins_size );
-        batchInsert<TreeDesc, point>( pkd, wp, pwi, Dim, rounds );
-      }
-    }
-
-    if ( tag == 1 ) {
-      wp.append( wi );
-    }
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-
-  //* batch delete
-  if ( tag >= 2 ) {
-    assert( wi.size() );
-    if ( del_mode == 0 )  // unit test
-    {
-      batchDelete<TreeDesc, point>( pkd, wp, wi, Dim, rounds );
-    } else if ( del_mode == 1 )  // delete all
-    {
-      auto wi2 = wi;
-      pkd->bulk_erase( wi2 );
-    } else if ( del_mode == 2 )  // delete in seg mode
-    {
-      for ( size_t i = 1; i < segs.size(); ++i ) {
-        parlay::sequence<point> pwi( wi.begin() + segs[i - 1], wi.begin() + segs[i] );
-        pkd->bulk_erase( pwi );
-      }
-    }
-    // del_mode==3 is reserved as no op
-    else if ( del_mode == 4 )  // delete in partial mode
-    {
-      delete pkd;
-      const auto& cwp = wp;
-      pkd = new Tree( parlay::make_slice( cwp ) );
-
-      const auto del_size = size_t( wp.size() ) * ins_ratio / 10;
-      // ### NOTICE: we test deletion from wp instead of wi
-      parlay::sequence<point> pwp( wp.begin(), wp.begin() + del_size );
-      batchDelete<TreeDesc, point>( pkd, wp, pwp, Dim, rounds, false, true );
-    } else if ( del_mode == 5 )  // delete in partial mode (size varies exponentially)
-    {
-      auto del_size = size_t( wp.size() ) * 2;
-      for ( int i = 1; i <= ins_ratio; ++i ) {
-        del_size /= 10;
-        // ### NOTICE: we test deletion from wp instead of wi
-        parlay::sequence<point> pwp( wp.begin(), wp.begin() + del_size );
-        batchDelete<TreeDesc, point>( pkd, wp, pwp, Dim, rounds, false, true );
-      }
-    }
-
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-
-  int queryNum = 1000;
-
-  if ( queryType & ( 1 << 0 ) ) {  //* NN
-    kdknn = new Typename[wp.size()];
-    if ( downsize_k == 0 ) {
-      // #### NOTICE: custom query: restrict the query set to the size of 1%
-      auto wq = wp;
-      wq.resize( wp.size() / 100 );
-      queryKNN<TreeDesc, point>( Dim, wq, rounds, pkd, kdknn, K, false );
-    } else
-      for ( auto cnt_nbh = K; cnt_nbh > 0; cnt_nbh /= downsize_k ) {
-        // parlay::sequence<point> wp_crop(wp.begin(), wp.begin()+1000000);
-        // queryKNN<TreeDesc,point>(Dim, wp_crop, rounds, pkd, kdknn, cnt_nbh, false );
-        queryKNN<TreeDesc, point>( Dim, wp, rounds, pkd, kdknn, cnt_nbh, false );
-      }
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-
-  if ( queryType & ( 1 << 1 ) ) {  //* range count
-    // kdknn = new Typename[queryNum];
-    // rangeCount<TreeDesc,point>( wp, pkd, rounds, queryNum );
-    std::cout << "-1 " << std::flush;
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-
-  if ( queryType & ( 1 << 2 ) ) {  //* range query
-    /*
-    if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
-      kdknn = new Typename[queryNum];
-
-      parlay::parallel_for( 0, queryNum, [&]( size_t i ) {
-        box queryBox = pkd.get_box( box( wp[i], wp[i] ),
-                                    box( wp[( i + wp.size() / 2 ) % wp.size()],
-                                         wp[( i + wp.size() / 2 ) % wp.size()] ) );
-        kdknn[i] = pkd.range_count( queryBox );
-      } );
-    }
-    */
-    //* reduce
-    /*
-    auto maxReduceSize = parlay::reduce(
-        parlay::delayed_tabulate( queryNum, [&]( size_t i ) { return kdknn[i]; } ),
-        parlay::maximum<Typename>() );
-    points Out( queryNum * maxReduceSize );
-    */
-    for ( int num_rect : { 10000 } ) {
-      std::cout << "[num_rect " << num_rect << "] " << std::flush;
-      for ( int type_rect : { 2 } )
-        rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect );
-    }
-
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
-  if ( queryType & ( 1 << 3 ) ) {
-    /*
-    generate_knn<point>( Dim, wp, rounds, pkd, kdknn, K, false,
-                         "/data9/zmen002/knn/GeoLifeNoScale.pbbs.out" );
-    */
-  }
-  if ( queryType & ( 1 << 4 ) ) {  // single-point range query
-    for ( int num_rect : { 100 } ) {
-      std::cout << "[num_rect " << num_rect << "] " << std::endl;
-      for ( int type_rect : { 0, 1, 2 } )
-        rangeQueryWithLog<TreeDesc, point>( wp, pkd, rounds, type_rect, num_rect, Dim );
-    }
   }
 
   std::cout << std::endl;
@@ -363,7 +198,7 @@ main( int argc, char* argv[] ) {
   pargeo::batchKdTree::print_config();
 
   int LEAVE_WRAP = 32;
-  parlay::sequence<PointType<coord, 15>> wp;
+  parlay::sequence<PointType<coord, 3>> wp;
   std::string name, insertFile;
 
   //* initialize points
@@ -371,27 +206,23 @@ main( int argc, char* argv[] ) {
     name = std::string( iFile );
     name = name.substr( name.rfind( "/" ) + 1 );
     std::cout << name << " ";
-    auto [n, d] = read_points<PointType<coord, 15>>( iFile, wp, K );
+    auto [n, d] = read_points<PointType<coord, 3>>( iFile, wp, K );
     N = n;
     assert( d == Dim );
-  } else if ( !( tag & 0x40000000 ) ) {  //* construct data byself
-    K = 100;
-    generate_random_points<PointType<coord, 15>>( wp, 1000000, N, 15 );
-    std::string name = std::to_string( N ) + "_" + std::to_string( Dim ) + ".in";
-    std::cout << name << " ";
   }
 
-  if ( ( tag & 0xf ) >= 1 ) {
-    if ( _insertFile == NULL ) {
-      int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );
-      if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test
-      if ( !id ) id++;
-      int pos = std::string( iFile ).rfind( "/" ) + 1;
-      insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) + ".in";
-    } else {
-      insertFile = std::string( _insertFile );
-    }
-  }
+  /*if ( ( tag & 0xf ) >= 1 ) {*/
+  /*  if ( _insertFile == NULL ) {*/
+  /*    int id = std::stoi( name.substr( 0, name.find_first_of( '.' ) ) );*/
+  /*    if ( Dim != 2 ) id = ( id + 1 ) % 3;  //! MOD graph number used to test*/
+  /*    if ( !id ) id++;*/
+  /*    int pos = std::string( iFile ).rfind( "/" ) + 1;*/
+  /*    insertFile = std::string( iFile ).substr( 0, pos ) + std::to_string( id ) +
+   * ".in";*/
+  /*  } else {*/
+  /*    insertFile = std::string( _insertFile );*/
+  /*  }*/
+  /*}*/
 
   assert( N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1 );
 
@@ -399,41 +230,43 @@ main( int argc, char* argv[] ) {
     auto run = [&]( auto dim_wrapper ) {
       constexpr const auto D = decltype( dim_wrapper )::value;
       using point_t = PointType<coord, D>;
-      using Desc = typename Wrapper::desc<point_t>;
+      using Desc = typename Wrapper::template desc<point_t>;
 
-      if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 1 ) {
-        bench_osm_year<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
-        return;
-      }
-      if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 2 ) {
-        bench_osm_month<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
-        return;
-      }
-      auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
-        return PointType<coord, D>( wp[i].coordinate() );
-      } );
-      decltype( wp )().swap( wp );
-      testParallelKDtree<Desc>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag,
+      /*if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 1 ) {*/
+      /*  bench_osm_year<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );*/
+      /*  return;*/
+      /*}*/
+      /*if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 2 ) {*/
+      /*  bench_osm_month<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );*/
+      /*  return;*/
+      /*}*/
+      /*auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {*/
+      /*  return PointType<coord, D>( wp[i].coordinate() );*/
+      /*} );*/
+      /*decltype( wp )().swap( wp );*/
+      /*testParallelKDtree<Desc>( Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag,*/
+      /*                          queryType );*/
+      testParallelKDtree<Desc>( Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag,
                                 queryType );
     };
 
-    if ( tag == -1 ) {
-      //* serial run
-      // todo rewrite test serial code
-      // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-    } else if ( Dim == 2 ) {
-      run( std::integral_constant<int, 2>{} );
-    } else if ( Dim == 3 ) {
-      run( std::integral_constant<int, 3>{} );
-    } else if ( Dim == 5 ) {
-      run( std::integral_constant<int, 5>{} );
-    } else if ( Dim == 7 ) {
-      run( std::integral_constant<int, 7>{} );
-    } else if ( Dim == 9 ) {
-      run( std::integral_constant<int, 9>{} );
-    } else if ( Dim == 10 ) {
-      run( std::integral_constant<int, 10>{} );
-    }
+    /*if ( tag == -1 ) {*/
+    /*  //* serial run*/
+    /*  // todo rewrite test serial code*/
+    /*  // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );*/
+    /*} else if ( Dim == 2 ) {*/
+    /*  run( std::integral_constant<int, 2>{} );*/
+    /*} else if ( Dim == 3 ) {*/
+    run( std::integral_constant<int, 3>{} );
+    /*} else if ( Dim == 5 ) {*/
+    /*  run( std::integral_constant<int, 5>{} );*/
+    /*} else if ( Dim == 7 ) {*/
+    /*  run( std::integral_constant<int, 7>{} );*/
+    /*} else if ( Dim == 9 ) {*/
+    /*  run( std::integral_constant<int, 9>{} );*/
+    /*} else if ( Dim == 10 ) {*/
+    /*  run( std::integral_constant<int, 10>{} );*/
+    /*}*/
   };
 
   if ( treeType == 0 )
