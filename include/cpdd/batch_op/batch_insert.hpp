@@ -64,7 +64,7 @@ void ParallelKDtree<point>::batchInsert(slice A, const dim_type DIM) {
 
     points B = points::uninitialized(A.size());
     node* T = this->root;
-    box b = get_box(A);
+    /*box b = get_box(A);*/
     this->bbox = get_box(this->bbox, get_box(A));
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
     this->root = batchInsert_recusive(T, A, B.cut(0, A.size()), d, DIM);

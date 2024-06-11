@@ -901,6 +901,7 @@ void incrementalBuildAndQuery(const int Dim, const parlay::sequence<point>& WP, 
             pkd.batchInsert(wp.cut(l, r), Dim);
         } else {
             pkd.delete_tree();
+            parlay::copy(WP.cut(0, r), wp);
             t.reset(), t.start();
             pkd.build(wp.cut(0, r), Dim);
         }
