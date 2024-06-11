@@ -65,9 +65,9 @@ for solver in ${Solvers[@]}; do
 					k=10        # unused
 					echo "Test for memory usage and cache misses"
 					tag=65536
-					#$(which time) -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.all 2>&1
+					$(which time) -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.all 2>&1
 					#perf stat -e cache-misses ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.cache.all 2>&1
-					$(which time) -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.prep 2>&1
+					# $(which time) -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.prep 2>&1
 					#perf stat -e cache-misses ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.cache.prep 2>&1
 
 					retval=$?
