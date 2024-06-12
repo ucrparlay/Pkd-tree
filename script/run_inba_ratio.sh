@@ -6,8 +6,8 @@
 set -o xtrace
 Solvers=("test")
 Node=(1000000000)
-# Inba=(1 2 5 10 20 30 40 45 48 49 50)
-Inba=(30 40 45 48 49 50)
+Inba=(1 2 5 10 20 30 40 45 48 49 50)
+# Inba=(30 40 45 48 49 50)
 # Inba=(50)
 Dim=(3)
 declare -A datas
@@ -22,7 +22,8 @@ echo $queryType
 
 if [[ ${inbaQuery} -eq 0 ]]; then
 	# resFile="inba_ratio_knn.out"
-	resFile="inba_ratio_knn_ave_max_again.out"
+	# resFile="inba_ratio_knn_ave_max_again.out"
+	resFile="inba_ratio_knn_ave_max_uniform.out"
 else
 	resFile="inba_ratio_rc.out"
 fi

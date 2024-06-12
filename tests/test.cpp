@@ -291,7 +291,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
         // HACK: need start with varden file
         // NOTE: 1: 10*0.1 different vardens.
-        clean();
+
+        /*clean();*/
         // for (int i = 1; i <= fileNum; i++) {
         //     path = prefix + "/" + std::to_string(i) + ".in";
         //     // std::cout << path << std::endl;
@@ -300,9 +301,9 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         //     nq.clear();
         // }
         // writeToFile(ten_varden_path);
-        read_points(ten_varden_path.c_str(), np, K);
-        assert(np.size() == wp.size());
-        run();
+        /*read_points(ten_varden_path.c_str(), np, K);*/
+        /*assert(np.size() == wp.size());*/
+        /*run();*/
 
         // NOTE: 2: 1 uniform, and 9*0.1 same varden
         //* read varden first
@@ -319,8 +320,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         // read_points<point>(path.c_str(), nq, K);
         // parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i]; });
         // writeToFile(one_uniform_nine_varden);
-        /*read_points(one_uniform_nine_varden.c_str(), np, K);*/
-        /*run();*/
+        read_points(one_uniform_nine_varden.c_str(), np, K);
+        run();
 
         //@ 3: 1 varden, but flatten;
         // clean();
