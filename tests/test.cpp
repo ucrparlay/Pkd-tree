@@ -382,11 +382,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         LOG << ENDL << "serial ";
         batchInsert<point, true>(pkd, wp, wi, Dim, rounds, *ratios.rbegin());
         LOG << ENDL;
-        for (int i = 0; i < ratios.size(); i++) {
-            LOG << wi.size() * ratios[i] << " ";
-            batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i], *ratios.rbegin());
-            LOG << ENDL;
-        }
+        /*for (int i = 0; i < ratios.size(); i++) {*/
+        /*    LOG << wi.size() * ratios[i] << " ";*/
+        /*    batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i], *ratios.rbegin());*/
+        /*    LOG << ENDL;*/
+        /*}*/
     }
 
     if (queryType & (1 << 14)) {  // NOTE: serial delete VS batch delete
