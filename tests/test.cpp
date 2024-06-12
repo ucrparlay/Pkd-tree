@@ -360,11 +360,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         LOG << ENDL << "serial ";
         batchInsert<point, true>(pkd, wp, wi, Dim, rounds, 1e-2);
         LOG << ENDL;
-        for (int i = 0; i < ratios.size(); i++) {
-            LOG << wi.size() * ratios[i] << " ";
-            batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i], *ratios.rbegin());
-            LOG << ENDL;
-        }
+        /*for (int i = 0; i < ratios.size(); i++) {*/
+        /*    LOG << wi.size() * ratios[i] << " ";*/
+        /*    batchUpdateByStep<point, true>(pkd, wp, wi, Dim, rounds, ratios[i], *ratios.rbegin());*/
+        /*    LOG << ENDL;*/
+        /*}*/
     }
 
     if (queryType & (1 << 14)) {  // NOTE: serial delete VS batch delete
@@ -373,11 +373,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         LOG << ENDL << "serial ";
         batchDelete<point, true>(pkd, wp, wi, Dim, rounds, false, *ratios.rbegin());
         LOG << ENDL;
-        for (int i = 0; i < ratios.size(); i++) {
-            LOG << wi.size() * ratios[i] << " ";
-            batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i], *ratios.rbegin());
-            LOG << ENDL;
-        }
+        /*for (int i = 0; i < ratios.size(); i++) {*/
+        /*    LOG << wi.size() * ratios[i] << " ";*/
+        /*    batchUpdateByStep<point, false>(pkd, wp, wp, Dim, rounds, ratios[i], *ratios.rbegin());*/
+        /*    LOG << ENDL;*/
+        /*}*/
     }
 
     std::cout << std::endl << std::flush;
