@@ -350,8 +350,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         insertOsmByTime<point>(Dim, node_by_year, rounds, pkd, K, kdknn);
         delete[] kdknn;
 
-        // auto all_points = parlay::flatten(node_by_year);
-        // queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
+        /*auto all_points = parlay::flatten(node_by_year);*/
+        /*queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);*/
     }
 
     if (queryType & (1 << 12)) {  // NOTE: osm by month
@@ -443,6 +443,29 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         run(100);
     }
 
+    if (queryType & (1 << 16)) {
+        // WARN: remember using double
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
+        parlay::sequence<points> node_by_year(files.size());
+        for (int i = 0; i < files.size(); i++) {
+            std::string path = osm_prefix + "osm_" + files[i] + ".csv";
+            read_points(path.c_str(), node_by_year[i], K);
+        }
+
+        // NOTE: flatten inputs
+        auto all_points = parlay::flatten(node_by_year);
+        buildTree(Dim, all_points, rounds, pkd);
+
+        // NOTE: run knn
+        kdknn = new Typename[all_points.size()];
+        const parlay::sequence<int> Ks = {1, 10, 100};
+        for (const auto& k : Ks) {
+            queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, k, false);
+        }
+        delete[] kdknn;
+    }
     std::cout << std::endl << std::flush;
 
     pkd.delete_tree();
