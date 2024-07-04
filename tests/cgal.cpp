@@ -557,6 +557,54 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         // queryPointCgal(K, all_pts);
         delete[] cgknn;
     }
+
+    if (queryType & (1 << 13)) {
+        // NOTE: osm by year
+        LOG << ENDL;
+
+        // WARN: remember using double
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
+                                                "2019", "2020", "2021", "2022", "2023"};
+        parlay::sequence<points> node_by_year(files.size());
+        for (int i = 0; i < files.size(); i++) {
+            std::string path = osm_prefix + "osm_" + files[i] + ".csv";
+            read_points(path.c_str(), node_by_year[i], K);
+        }
+
+        // LOG << "after read osm" << ENDL;
+
+        /*std::vector<std::vector<Point_d>> pts(files.size());*/
+        /*for (int i = 0; i < files.size(); i++) {*/
+        /*    pts[i].resize(node_by_year[i].size());*/
+        /*    parlay::parallel_for(0, node_by_year[i].size(), [&](size_t j) {*/
+        /*        pts[i][j] = Point_d(Dim, std::begin(node_by_year[i][j].pnt), std::end(node_by_year[i][j].pnt));*/
+        /*    });*/
+        /*}*/
+
+        // LOG << " after generate points " << ENDL;
+        auto all_points = parlay::flatten(node_by_year);
+        std::vector<Point_d> all_pts(all_points.size());
+        parlay::parallel_for(0, all_points.size(), [&](size_t j) {
+            all_pts[j] = Point_d(Dim, std::begin(all_points[j].pnt), std::end(all_points[j].pnt));
+        });
+        tree.clear();
+        tree.insert(all_pts.begin(), all_pts.end());
+        parlay::internal::timer t;
+        t.reset();
+        t.start();
+        tree.template build<CGAL::Parallel_tag>();
+        t.stop();
+        LOG << t.total_time() << " " << tree.root()->depth() << " " << std::flush;
+
+        delete[] cgknn;
+        cgknn = new Typename[all_points.size()];
+        const parlay::sequence<int> Ks = {1, 10, 100};
+        for (const auto& k : Ks) {
+            queryPointCgal(k, all_pts);
+        }
+        delete[] cgknn;
+    }
     std::cout << std::endl << std::flush;
 
     return;

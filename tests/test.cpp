@@ -456,6 +456,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         // NOTE: flatten inputs
         auto all_points = parlay::flatten(node_by_year);
+        LOG << all_points.size() << ENDL;
         buildTree(Dim, all_points, rounds, pkd);
 
         // NOTE: run knn
@@ -466,6 +467,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         }
         delete[] kdknn;
     }
+
     std::cout << std::endl << std::flush;
 
     pkd.delete_tree();
