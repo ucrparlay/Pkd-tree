@@ -15,6 +15,7 @@ double time_loop( int rounds, double delay, F initf, G runf, H endf ) {
     t.start();
     runf();
     t.next_time();
+    if(i==rounds) t.stop();
     endf();
   }
   return t.total_time() / rounds;
