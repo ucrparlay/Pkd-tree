@@ -9,12 +9,12 @@ Node=(100000000)
 #Node=(10000000)
 #Dim=(2 3)
 #Dim=(2 3 5 7 9)
-#Dim=(5 7 9)
-Dim=(9)
+Dim=(5 7 9)
+#Dim=(9)
 # Dim=(2)
 declare -A datas
-#datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=100
@@ -58,16 +58,17 @@ for solver in ${Solvers[@]}; do
                         continue
                     fi
 
-                    # del_mode=0 (unused), ins_mode=0 (unused), build_mode=0 (utest), seg_mode=0 (unused)
+                    # del_mode=0 (unused), ins_mode=0 (unused), build_mode=0 (unit test), seg_mode=0 (unused)
                     # downsize_k=10, ins_ratio=0(unused), tag=0 (build only)
+                    #tag=$((2560+65536))
                     tag=2560
-                    queryType=1 # kNN
+                    queryType=0 # kNN
                     k=10
                     echo "Test 100M for build and $k-NN in high dims" >>${dest}
-                    echo "dim=${dim} BHL Tree:" >>${dest}
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 1 >>${dest}
-                    #echo "dim=${dim} Log Tree:" >>${dest}
-                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #echo "dim=${dim} BHL Tree:" >>${dest}
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 1 >>${dest}
+                    echo "dim=${dim} Log Tree:" >>${dest}
+                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then

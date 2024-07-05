@@ -3,15 +3,15 @@
 set -x
 
 # Solvers=("zdtree" "test")
-Solvers=("bhltree" "logtree")
-#Solvers=("logtree")
+#Solvers=("bhltree" "logtree")
+Solvers=("logtree")
 #Node=(10000000 50000000 100000000)
 Node=(1000000000)
 #Node=(10000000)
 #Dim=(2 3)
 #Dim=(2 3 5 7 9)
 #Dim=(2 3 5 9)
-Dim=(3)
+Dim=(9)
 declare -A datas
 datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -60,14 +60,16 @@ for solver in ${Solvers[@]}; do
                 for ((i = 1; i <= ${insNum}; i++)); do
                     # del_mode=5 (partial exp), ins_mode=5 (partial exp), build_mode=0 (unit test), seg_mode=0 (unused)
                     # downsize_k=0 (unused), ins_ratio=1-4 (0.2-0.0002), tag=2
-                    #queryType=5 # k-NN and range query
-                    queryType=4 # range query
-                    k=10
+                    queryType=5 # k-NN and range query
+                    #queryType=4 # range query
+                    k=100
                     echo "Test for insertion and deletion with exponential batch size, and build time, and the queries"
                     #tag=$((71368722-65536))
                     #tag=89129026
-                    tag=$((89129026+65536)) # build_mode 0 -> 1
-                    kARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}
+                    #tag=$((89129026+65536)) # build_mode 0 -> 1
+                    #tag=71303330 #build_mode=0, ins_mode=4, del_mode=4, ins_ratio=10
+                    tag=$((65536+2560)) #build_mode=1, ins_mode=0, del_mode=0, ins_ratio=0, downsize_k=10
+                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then

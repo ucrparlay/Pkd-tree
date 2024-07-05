@@ -3,14 +3,16 @@
 set -x
 
 # Solvers=("zdtree" "test")
-Solvers=("test_pg")
-# Node=(10000000 50000000 100000000)
-Node=(10000000)
-# Dim=(2 3)
-Dim=(2)
+Solvers=("bhltree" "logtree")
+#Node=(10000000 50000000 100000000)
+Node=(100000000)
+#Node=(10000000)
+#Dim=(2 3)
+#Dim=(5 7 9)
+Dim=(3)
 declare -A datas
-datas["/mnt/dappur/Workspace/KDtree/data/ss_varden/"]="../benchmark/ss_varden/"
-# datas["/mnt/dappur/Workspace/KDtree/data/uniform/"]="../benchmark/uniform/"
+datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=100
@@ -26,8 +28,12 @@ for solver in ${Solvers[@]}; do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
         resFile="res.out"
-    elif [[ ${solver} == "test_pg" ]]; then
-        resFile="pargeo.out"
+    elif [[ ${solver} == "bhltree" ]]; then
+        resFile="bhltree.out"
+        exe="../build/test_pg -T 1"
+    elif [[ ${solver} == "logtree" ]]; then
+        resFile="logtree.out"
+        exe="../build/test_pg -T 2"
     elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal.out"
     elif [[ ${solver} == "zdtree" ]]; then
@@ -60,7 +66,7 @@ for solver in ${Solvers[@]}; do
                     queryType=1 # kNN
                     k=10
                     echo "Test for $k-NN with build once"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
                     # del_mode=3 (none), ins_mode=2 (seg mode), build_mode=2 (empty), seg_mode=1 (10%)
                     # downsize_k=10, ins_ratio=0(unused), tag=2
@@ -68,7 +74,7 @@ for solver in ${Solvers[@]}; do
                     queryType=1 # kNN
                     k=10
                     echo "Test for $k-NN with incremental insertion"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
                     # del_mode=2 (seg mode), ins_mode=1 (all), build_mode=1 (wp), seg_mode=1 (10%)
                     # downsize_k=10, ins_ratio=0(unused), tag=2
@@ -76,7 +82,7 @@ for solver in ${Solvers[@]}; do
                     queryType=1 # kNN
                     k=10
                     echo "Test for $k-NN with incremental deletion"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
 
                     # del_mode=4 (partial), ins_mode=4 (partial), build_mode=1 (wp), seg_mode=0 (unused)
                     # downsize_k=0 (unused), ins_ratio=1-10 (10%-100%), tag=2
@@ -85,7 +91,7 @@ for solver in ${Solvers[@]}; do
                     echo "Test for insertion and deletion with batch size 10%-100%"
                     tags=(71368722 71368738 71368754 71368770 71368786 71368802 71368818 71368834 71368850 71368866)
                     for tag in ${tags[@]}; do
-                        PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                        PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
                     done
 
                     retval=$?

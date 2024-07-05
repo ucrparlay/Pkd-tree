@@ -4,13 +4,13 @@ set -x
 
 # Solvers=("zdtree" "test")
 Solvers=("test_pg")
-# Node=(10000000 50000000 100000000 500000000)
-Node=(10000000)
-# Dim=(2 3)
-Dim=(2)
+ Node=(10000000 50000000 100000000 500000000)
+# Node=(10000000)
+Dim=(2 3)
+# Dim=(2)
 declare -A datas
-datas["/mnt/dappur/Workspace/KDtree/data/ss_varden/"]="../benchmark/ss_varden/"
-# datas["/mnt/dappur/Workspace/KDtree/data/uniform/"]="../benchmark/uniform/"
+datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=100
@@ -56,27 +56,27 @@ for solver in ${Solvers[@]}; do
 
                     tag=2723 # downsize_k=10, ins_ratio=10, tag=3
                     queryType=1 # kNN
-                    k=100 # 100, 10, 1
+                    k=10 # 10, 1
                     echo "Test for kNN with varying k from $k"
                     PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
 
-                    tag=19 # downsize_k=0, ins_ratio=1, tag=3
-                    queryType=1 # kNN
-                    k=100 # fixed
-                    echo "Test for $k-NN with varying ins_ratio"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
-                    tag=51 # downsize_k=0, ins_ratio=3, tag=3
-                    echo "Test for $k-NN with varying ins_ratio"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
-                    tag=83 # downsize_k=0, ins_ratio=5, tag=3
-                    echo "Test for $k-NN with varying ins_ratio"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #tag=19 # downsize_k=0, ins_ratio=1, tag=3
+                    #queryType=1 # kNN
+                    #k=100 # fixed
+                    #echo "Test for $k-NN with varying ins_ratio"
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #tag=51 # downsize_k=0, ins_ratio=3, tag=3
+                    #echo "Test for $k-NN with varying ins_ratio"
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #tag=83 # downsize_k=0, ins_ratio=5, tag=3
+                    #echo "Test for $k-NN with varying ins_ratio"
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
 
-                    tag=163 # downsize_k=0, ins_ratio=10, tag=3
-                    queryType=4 # rangeQuery
-                    k=1 # fixed, minimal
-                    echo "Test for rangeQuery with varying rect sizes"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
+                    #tag=163 # downsize_k=0, ins_ratio=10, tag=3
+                    #queryType=4 # rangeQuery
+                    #k=1 # fixed, minimal
+                    #echo "Test for rangeQuery with varying rect sizes"
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 >>${dest}
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then

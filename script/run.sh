@@ -1,17 +1,23 @@
 #!/bin/bash
 
-Solvers=("test")
-Node=(10000000 50000000 100000000 500000000)
+set -x
+
+
+#Solvers=("test_pg")
+Solvers=("test_dkdt")
+#Node=(10000000 50000000 100000000 500000000)
+Node=(10000000 50000000 100000000)
 Dim=(2 3)
 declare -A datas
-datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+#datas["/data9/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data9/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=100
 onecore=0
 insNum=2
-queryType=3 # 001 011 111
+#queryType=3 # 001 011 111
+queryType=7 # 001 011 111
 
 resFile=""
 
@@ -19,8 +25,10 @@ for solver in ${Solvers[@]}; do
     exe="../build/${solver}"
 
     #* decide output file
-    if [[ ${solver} == "test" ]]; then
-        resFile="res.out"
+    if [[ ${solver} == "test_pg" ]]; then
+        resFile="pargeo.out"
+    elif [[ ${solver} == "test_dkdt" ]]; then
+        resFile="dkdt.out"
     elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal.out"
     elif [[ ${solver} == "zdtree" ]]; then
@@ -46,7 +54,7 @@ for solver in ${Solvers[@]}; do
                         PARLAY_NUM_THREADS=1 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -r 1 -q ${queryType} >>${dest}
                         continue
                     fi
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} >>${dest}
+                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -T 2 -r 3 >>${dest}
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then
