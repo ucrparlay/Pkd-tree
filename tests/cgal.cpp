@@ -558,7 +558,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         delete[] cgknn;
     }
 
-    if (queryType & (1 << 13)) {
+    if (queryType & (1 << 16)) {
         // NOTE: osm by year
         LOG << ENDL;
 
@@ -599,7 +599,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
         delete[] cgknn;
         cgknn = new Typename[all_points.size()];
-        const parlay::sequence<int> Ks = {1, 10, 100};
+        const parlay::sequence<int> Ks = {100};
+        /*const parlay::sequence<int> Ks = {1, 10};*/
         for (const auto& k : Ks) {
             queryPointCgal(k, all_pts);
         }

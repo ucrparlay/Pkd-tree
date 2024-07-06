@@ -424,7 +424,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             points wq(kQueryNum);
             for (int i = 0; i < Dim; i++) {
                 parlay::random_generator gen(0);
-                std::uniform_int_distribution<coord> dis(query_box.first.pnt[i], query_box.second.pnt[i]);
+                std::uniform_int_distribution<long> dis(query_box.first.pnt[i], query_box.second.pnt[i]);
                 parlay::parallel_for(0, kQueryNum, [&](size_t j) {
                     auto r = gen[j];
                     wq[j].pnt[i] = dis(r);
@@ -443,7 +443,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         run(100);
     }
 
-    if (queryType & (1 << 16)) {
+    if (queryType & (1 << 16)) {  // NOTE: test OSM by combining year
         // WARN: remember using double
         string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
@@ -456,12 +456,17 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         // NOTE: flatten inputs
         auto all_points = parlay::flatten(node_by_year);
+        for (int i = 0; i < files.size(); i++) {
+            points().swap(node_by_year[i]);
+        }
+        decltype(node_by_year)().swap(node_by_year);
         LOG << all_points.size() << ENDL;
         buildTree(Dim, all_points, rounds, pkd);
 
         // NOTE: run knn
+        delete[] kdknn;
         kdknn = new Typename[all_points.size()];
-        const parlay::sequence<int> Ks = {1, 10, 100};
+        const parlay::sequence<int> Ks = {1, 10};
         for (const auto& k : Ks) {
             queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, k, false);
         }
