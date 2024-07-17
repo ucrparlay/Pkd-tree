@@ -15,23 +15,22 @@ Pkd-tree is a library of kd-tree that is:
 Necessary:
 
 - CMake >= 3.15
-- g++ or clang++ with C++20 features support (Tested with g++13 and clang17) on Linux machines, we suggest clang++ for better performance.
+- g++ or clang++ with C++20 features support (Tested using clang17, pass compilation on g++13) on Linux machines, we suggest clang++ for better performance.
 - We use [ParlayLib](https://github.com/cmuparlay/parlaylib) to support fork-join parallelism and some parallel primitives. It is provided as a submodule in our repository.
 
 Optional:
 
 - [jemalloc](https://github.com/jemalloc/jemalloc), slightly memory allocation improvement.
 - [NUMA control](https://manpages.ubuntu.com/manpages/trusty/man8/numactl.8.html), improve the performance for parallelism.
-- [Zdtree](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92), [ParGeo](https://github.com/ParAlg/ParGeo) and [CGAL](https://www.cgal.org/index.html), for benchmark comparison.
+- [ParGeo](https://github.com/ParAlg/ParGeo), [CGAL](https://www.cgal.org/index.html), (and [Zdtree](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92)),  for benchmark comparison.
 
 ## Getting Code
 
 Try:
 
-1. Clone the repository.
+1. Clone the repository, then
 
 ```{bash}
-git clone git@github.com:ucrparlay/KDtree.git
 cd KDtree
 ```
 
@@ -45,20 +44,16 @@ File structure:
 
 ```bash
 .
-├── benchmark
 ├── include
 ├── parlaylib
-├── script
 └── tests
 ```
 
-|    Name     |          Usage          |
-| :---------: | :---------------------: |
-| `benchmark` | Stores sample benchmark |
-|  `include`  |  Source of `Pkd-tree`   |
-| `parlaylib` |   Provide parallelism   |
-|  `scipts`   | Scripts for experiments |
-|   `tests`   |   Helpers for testing   |
+|    Name     |        Usage         |
+| :---------: | :------------------: |
+|  `include`  | Source of `Pkd-tree` |
+| `parlaylib` | Provide parallelism  |
+|   `tests`   | Helpers for testing  |
 
 ## Compilation
 
@@ -184,21 +179,22 @@ The execution flow is shown below:
 13. Query `q & (1<<9)` first construct a tree $T$ using $P$ and run a 10-NN on it, then construct another tree $T'$ from $P\cup Q$, delete $Q$ from $T'$ incrementally, after which performs a 10-NN on it.
     For each NN, outputs the total time, average depth and average # nodes visited.
 
+
 ## Comparison
 
-- Zdtree
-
-  1.  Clone the repository of [PBBS](https://github.com/cmuparlay/pbbsbench), then checkout the version [`9820e9f`](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92).
-  2.  Copy folder `tests/zdtree/octTree` to `pbbsbench/benchmarks/nearestNeighbors/`.
-  3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench/benchmarks/nearestNeighbors/bench/`.
-  4.  Copy file `tests/common/time_loop.h` to `pbbsbench/common/`.
-  4.  Run the program according to the tutorial in PBBS.
-
 - ParGeo
-  
+
   See `ParGeo` branch for more details.
 
 - CGAL
   1.  Make sure `CGAL` is installed.
   2.  Compile the whole program with the flag `-DCGAL=ON` attached.
   3.  There should be binary named `cgal` in `build/`, which can be run using the same argument as mentioned in [Usage](##usage) above.
+
+- Zdtree (optional)
+
+  1.  Clone the repository of [PBBS](https://github.com/cmuparlay/pbbsbench), then checkout the version [`9820e9f`](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92).
+  2.  Copy folder `tests/zdtree/octTree` to `pbbsbench/benchmarks/nearestNeighbors/`.
+  3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench/benchmarks/nearestNeighbors/bench/`.
+  4.  Copy file `tests/common/time_loop.h` to `pbbsbench/common/`.
+  5.  Run the program according to the tutorial in PBBS.
