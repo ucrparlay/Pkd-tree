@@ -5,11 +5,10 @@
 !Makefile
 /.cache
 /docs
-/script/backup_data
-/script/plots
+/script
 run_transfer.sh
 transfer.sh
-
+*.out
 # Debug files
 # *.log
 *.data
