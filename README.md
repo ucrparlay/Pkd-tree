@@ -201,6 +201,3 @@ The execution flow is shown below:
   1.  Make sure `CGAL` is installed.
   2.  Compile the whole program with the flag `-DCGAL=ON` attached.
   3.  There should be binary named `cgal` in `build/`, which can be run using the same argument as mentioned in [Usage](##usage) above.
-
-
-## Ciatation
