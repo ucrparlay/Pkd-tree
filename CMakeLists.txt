@@ -26,6 +26,12 @@ option(ONE_LEVEL "" OFF)
 option(NTH_ELEMENT "" OFF)
 option(TEST_CACHE "" OFF)
 option(SAMPLE "" OFF)
+option(PAR_PARTITION "" OFF)
+
+if(PAR_PARTITION)
+	message("PARALLEL PARTITION=ON")
+	add_compile_options(-DPAR_PARTITION)
+endif()
 
 if(ONE_LEVEL)
 	message("ONE_LEVEL=ON")

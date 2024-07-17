@@ -244,11 +244,31 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::build_recursive(sli
     parlay::sequence<balls_type> sums;
 
     pick_pivots(In, In.size(), pivots, dim, DIM, boxs, bx);
+
+#ifdef PAR_PARTITION
+    size_t n = In.size();
+    auto spt = pivots[1];
+    auto flag = parlay::delayed_map(In, [&](point i) -> size_t { return i.pnt[spt.second] < spt.first; });
+    auto [scan_sum, offset] = parlay::scan(parlay::to_sequence(flag));
+    size_t cut = offset;
+    parlay::parallel_for(0, In.size(), [&](size_t j) {
+        if (flag[j]) {
+            Out[scan_sum[j]] = In[j];
+        } else {
+            Out[offset + j - scan_sum[j]] = In[j];
+        }
+    });
+    assert(cut != -1);
+    node *L, *R;
+    dim = (dim + 1) % DIM;
+    parlay::par_do([&]() { L = build_recursive(Out.cut(0, cut), In.cut(0, cut), dim, DIM, boxs[0]); },
+                   [&]() { R = build_recursive(Out.cut(cut, n), In.cut(cut, n), dim, DIM, boxs[1]); });
+
+    return alloc_interior_node(L, R, pivots[1]);
+#else
     partition(In, Out, In.size(), pivots, sums);
 
-    // NOTE: if random sampling failed to split points, re-partitions using
-    // serail
-    //  approach
+    // NOTE: if random sampling failed to split points, re-partitions using serail approach
     auto treeNodes = parlay::sequence<node*>::uninitialized(BUCKET_NUM);
     auto nodesMap = parlay::sequence<bucket_type>::uninitialized(BUCKET_NUM);
     bucket_type zeros = 0, cnt = 0;
@@ -282,6 +302,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::build_recursive(sli
         },
         1);
     return build_inner_tree(1, pivots, treeNodes);
+#endif  // PARALLEL PARTITION
 }
 
 }  // namespace cpdd
