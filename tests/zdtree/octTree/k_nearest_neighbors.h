@@ -20,8 +20,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#include <limits>
 int queue_cutoff = 50;
 
+#define LOG  std::cout
+#define ENDL std::endl << std::flush
 #include <math.h>
 
 #include <algorithm>
@@ -437,6 +440,8 @@ struct k_nearest_neighbors {
             std::cout << "ERROR: points not contained in bounding box of data structure" << std::endl;
             abort();
         }
+
+        parlay::internal::timer timer;
         parlay::sequence<indexed_point> idpts;
         idpts = parlay::sequence<indexed_point>(vsize);
         auto points = parlay::delayed_seq<indexed_point>(vsize, [&](size_t i) -> indexed_point {
@@ -444,11 +449,11 @@ struct k_nearest_neighbors {
         });
         auto less = [](indexed_point a, indexed_point b) { return a.first < b.first; };
         auto x = parlay::sort(points, less);
-        // std::cout << "sorted" << std::endl;
+        // timer.next("sort");
         batch_insert0(parlay::make_slice(x), R);
-        // std::cout << "inserted" << std::endl;
+        // timer.next("insert");
         box root_box = o_tree::update_boxes(R);
-        // std::cout << "updated boxes" << std::endl;
+        // timer.next("update box");
     }
 
     void batch_delete0(slice_t idpts, node* R) {
@@ -516,13 +521,62 @@ struct k_nearest_neighbors {
         return true;
     }
 
+    box mergeBox(box& a, box& b) { return box(a.first.minCoords(b.first), a.second.maxCoords(b.second)); }
+
     bool intersect_box(box a, box b, double epsilon) {
         for (int i = 0; i < a.first.dimension(); i++) {
-            if (a.first[i] - epsilon > b.second[i]) {
+            if (a.second[i] - epsilon < b.first[i] || a.first[i] + epsilon > b.second[i]) {
                 return false;
             }
         }
         return true;
+    }
+
+    box get_box_from_leaf(const parlay::sequence<vtx*>& pts) {
+        box bx;
+        bx.first = pts[0]->pt, bx.second = pts[0]->pt;
+        for (int i = 0; i < pts.size(); i++) {
+            bx = box(bx.first.minCoords(pts[i]->pt), bx.second.maxCoords(pts[i]->pt));
+        }
+        return bx;
+    }
+
+    box verifyBoundindBox(node* T) {
+        if (T->is_leaf()) {
+            // auto point_box = o_tree::get_box(T->Vertices());
+            auto point_box = get_box_from_leaf(T->Vertices());
+            assert(box_within_box(point_box, T->Box(), 1e-9));
+            return point_box;
+        }
+        auto Lbox = verifyBoundindBox(T->Left());
+        auto Rbox = verifyBoundindBox(T->Right());
+        auto merged_box = mergeBox(Lbox, Rbox);
+        assert(box_within_box(merged_box, T->Box(), 1e-9));
+        // assert(box_within_box(T->Box(), merged_box, 1e-9));
+        if (intersect_box(Lbox, Rbox, 1e-9)) {
+            LOG << "<<<<<<<< \n";
+            LOG << std::setprecision(6) << Lbox.first << "->" << Lbox.second << ENDL;
+            LOG << std::setprecision(6) << Rbox.first << "->" << Rbox.second << ENDL;
+            auto lpts = T->Left()->flatten();
+            auto rpts = T->Right()->flatten();
+            LOG << "The left tree contain: \n";
+            for (auto i : lpts) {
+                i->pt.print();
+                LOG << " -> ";
+            }
+            LOG << "\n The right tree contain: \n";
+            for (auto i : rpts) {
+                i->pt.print();
+                LOG << " -> ";
+            }
+        }
+        // if (intersect_box(T->Left()->Box(), T->Right()->Box(), 1e-9)) {
+        //     LOG << ">>>>>>>>> ";
+        //     LOG << std::setprecision(6) << T->Left()->Box().first << "->" << T->Left()->Box().second << ENDL;
+        //     LOG << std::setprecision(6) << T->Right()->Box().first << "->" << T->Right()->Box().second << ENDL;
+        // }
+        // assert(!intersect_box(T->Left()->Box(), T->Right()->Box(), 1e-9));
+        return merged_box;
     }
 
     void range_count(node* T, box queryBox, double Delta) {

@@ -113,6 +113,7 @@ Parameters:
 Under `build/` folder, first generate two inputs, $P_1$ for tree construction and $P_2$ for batch update:
 
 ```{bash}
+mkdir ../benchmark
 ./data_generator ../benchmark 10000 3 2 0
 ```
 

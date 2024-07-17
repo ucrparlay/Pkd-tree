@@ -6,6 +6,7 @@
 /.cache
 /docs
 /script
+/benchmark
 run_transfer.sh
 transfer.sh
 *.out
