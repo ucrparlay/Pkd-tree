@@ -486,7 +486,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         LOG << ENDL;
 
         // WARN: remember using double
-        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());
@@ -522,7 +522,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     if (queryType & (1 << 12)) {  // NOTE: osm by month
         LOG << ENDL;
         // WARN: remember using double
-        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/month/";
+        string osm_prefix = "/data/path/kdtree/real_world/osm/month/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         const std::vector<std::string> month = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
@@ -563,7 +563,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         LOG << ENDL;
 
         // WARN: remember using double
-        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());

@@ -4,6 +4,7 @@
 !*/
 !Makefile
 /.cache
+/.vscode
 /docs
 /script
 /benchmark

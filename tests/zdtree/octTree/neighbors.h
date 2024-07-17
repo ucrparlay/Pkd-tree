@@ -653,7 +653,7 @@ void ANN(parlay::sequence<vtx> &v, int k, int rounds, parlay::sequence<vtx> &vin
 
         if (queryType & (1 << 11)) {  // NOTE: by year
             LOG << ENDL;
-            string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+            string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
             const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                     "2019", "2020", "2021", "2022", "2023"};
             parlay::sequence<parlay::sequence<vtx>> node_by_year(files.size());
@@ -692,7 +692,7 @@ void ANN(parlay::sequence<vtx> &v, int k, int rounds, parlay::sequence<vtx> &vin
 
         if (queryType & (1 << 12)) {  // NOTE: by month
             LOG << ENDL;
-            string osm_prefix = "/data/zmen002/kdtree/real_world/osm/month/";
+            string osm_prefix = "/data/path/kdtree/real_world/osm/month/";
             const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                     "2019", "2020", "2021", "2022", "2023"};
             const std::vector<std::string> month = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
