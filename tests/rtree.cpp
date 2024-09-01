@@ -108,8 +108,13 @@ void testRtreeParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int
         }
     }
 
-    // Insert points into the R-tree (batch insert)
-    // rtree.insert(_points.begin(), _points.end());
+    // PERF: handle the size of cgknn dynamically
+    Typename* cgknn;
+    if (tag == 1) {
+        cgknn = new Typename[N + wi.size()];
+    } else {
+        cgknn = new Typename[N];
+    }
 
     // kNN query: find the 3 nearest neighbors to the point (2.5, 2.5)
     // Point query_point(2.5, 2.5);
@@ -121,6 +126,86 @@ void testRtreeParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int
     //     std::cout << "Point: (" << v.first.get<0>() << ", " << v.first.get<1>() << "), ID: " << v.second <<
     //     std::endl;
     // }
+    if (queryType & (1 << 0)) {  // NOTE: KNN query
+        auto run_rtree_knn = [&](int kth, size_t batchSize) {
+            timer.reset();
+            timer.start();
+            parlay::sequence<size_t> visNodeNum(batchSize, 0);
+            parlay::parallel_for(0, batchSize, [&](size_t i) {
+                RPoint query_point(wp[i].pnt[0], wp[i].pnt[1]);
+                std::vector<RPoint> knn_results;
+                tree.query(bgi::nearest(query_point, kth), std::back_inserter(knn_results));
+            });
+            timer.stop();
+            std::cout << timer.total_time() << " " << -1 << " " << -1 << " " << std::flush;
+        };
+
+        size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
+        if (summary == 0) {
+            const int k[3] = {1, 10, 100};
+            for (int i = 0; i < 3; i++) {
+                run_rtree_knn(k[i], batchSize);
+            }
+        } else {
+            run_rtree_knn(K, batchSize);
+        }
+    }
+
+    //
+    // // Range query: find points within the box defined by (1.5, 1.5) and (4.5, 4.5)
+    // Box query_box(Point(1.5, 1.5), Point(4.5, 4.5));
+    // std::vector<Point> range_results;
+    // rtree.query(bgi::intersects(query_box), std::back_inserter(range_results));
+    //
+    if (queryType & (1 << 3)) {  // NOTE: range query
+        auto run_cgal_range_query = [&](int type) {
+            size_t n = wp.size();
+            int queryNum = summary ? summaryRangeQueryNum : rangeQueryNum;
+            auto [queryBox, maxSize] = gen_rectangles(queryNum, type, wp, Dim);
+            // using ref_t = std::reference_wrapper<Point_d>;
+            // std::vector<ref_t> out_ref( queryNum * maxSize, std::ref( _points[0] )
+            // );
+            std::vector<RPoint> _ans(queryNum * maxSize);
+
+            timer.reset();
+            timer.start();
+            if (summary) {
+                parlay::parallel_for(0, queryNum, [&](size_t s) {
+                    RBox query_box(RPoint(queryBox[s].first.first.pnt[0], queryBox[s].first.first.pnt[1]),
+                                   RPoint(queryBox[s].first.second.pnt[0], queryBox[s].first.second.pnt[1]));
+                    std::vector<RPoint> range_results;
+                    // tree.query(bgi::intersects(query_box), std::back_inserter(range_results));
+                    tree.query(bgi::within(query_box), std::back_inserter(range_results));
+                });
+                timer.stop();
+                std::cout << timer.total_time() << " " << std::flush;
+            } else {
+                for (int s = 0; s < queryNum; s++) {
+                    auto aveQuery = time_loop(
+                        singleQueryLogRepeatNum, -1.0, [&]() {},
+                        [&]() {
+                            RBox query_box(RPoint(queryBox[s].first.first.pnt[0], queryBox[s].first.first.pnt[1]),
+                                           RPoint(queryBox[s].first.second.pnt[0], queryBox[s].first.second.pnt[1]));
+                            std::vector<RPoint> range_results;
+                            // tree.query(bgi::intersects(query_box), std::back_inserter(range_results));
+                            tree.query(bgi::within(query_box), std::back_inserter(range_results));
+                        },
+                        [&]() {});
+                    // LOG << queryBox[s].second << " " << std::scientific << aveQuery << ENDL;
+                }
+            }
+        };
+
+        if (summary == 0) {
+            LOG << ENDL;
+            const int type[3] = {0, 1, 2};
+            for (int i = 0; i < 3; i++) {
+                run_cgal_range_query(type[i]);
+            }
+        } else {
+            run_cgal_range_query(2);
+        }
+    }
     //
     // // Range query: find points within the box defined by (1.5, 1.5) and (4.5, 4.5)
     // Box query_box(Point(1.5, 1.5), Point(4.5, 4.5));
