@@ -17,9 +17,9 @@
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 #include <cstddef>
-#include <tbb/task_scheduler_init.h>
-#include <tbb/task_arena.h>
-#define TBB_PREVIEW_GLOBAL_CONTROL 1
+// #include <tbb/task_scheduler_init.h>
+// #include <tbb/task_arena.h>
+// #define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include <tbb/global_control.h>
 
 using Typename = coord;

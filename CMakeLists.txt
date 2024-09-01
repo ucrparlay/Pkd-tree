@@ -71,6 +71,11 @@ add_executable(test ${PROJECT_SOURCE_DIR}/tests/test.cpp)
 target_link_libraries(test PUBLIC kdTreeParallel)
 target_include_directories(test PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
+find_package(Boost REQUIRED)
+add_executable(rtree ${PROJECT_SOURCE_DIR}/tests/rtree.cpp)
+target_link_libraries(rtree PUBLIC kdTreeParallel ${Boost_LIBRARIES})
+target_include_directories(rtree PUBLIC ${PROJECT_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS})
+
 if(JEMA)
 	target_link_libraries(test PUBLIC libjemalloc.so)
 endif()
