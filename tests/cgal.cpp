@@ -89,7 +89,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     tree.template build<CGAL::Parallel_tag>();
     timer.stop();
 
-    // std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
+    std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
 
     if (tag >= 1) {
         auto cgal_insert = [&](double r) {
