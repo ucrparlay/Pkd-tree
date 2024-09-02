@@ -163,37 +163,36 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         cgknn = new Typename[N];
     }
 
-    if (queryType & (1 << 0)) {  // NOTE: KNN query
-        auto run_cgal_knn = [&](int kth, size_t batchSize) {
-            timer.reset();
-            timer.start();
-            parlay::sequence<size_t> visNodeNum(batchSize, 0);
-            tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize),
-                              [&](const tbb::blocked_range<std::size_t>& r) {
-                                  for (std::size_t s = r.begin(); s != r.end(); ++s) {
-                                      // Neighbor search can be instantiated from
-                                      // several threads at the same time
-                                      Point_d query(Dim, std::begin(wp[s].pnt), std::begin(wp[s].pnt) + Dim);
-                                      Neighbor_search search(tree, query, kth);
-                                      auto it = search.end();
-                                      it--;
-                                      cgknn[s] = it->second;
-                                      visNodeNum[s] = search.internals_visited() + search.leafs_visited();
-                                  }
-                              });
-            timer.stop();
-            std::cout << timer.total_time() << " " << tree.root()->depth() << " "
-                      << parlay::reduce(visNodeNum) / batchSize << " " << std::flush;
-        };
+    auto run_cgal_knn = [&](const auto& wp, int kth, size_t batchSize) {
+        timer.reset();
+        timer.start();
+        parlay::sequence<size_t> visNodeNum(batchSize, 0);
+        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize), [&](const tbb::blocked_range<std::size_t>& r) {
+            for (std::size_t s = r.begin(); s != r.end(); ++s) {
+                // Neighbor search can be instantiated from
+                // several threads at the same time
+                Point_d query(Dim, std::begin(wp[s].pnt), std::begin(wp[s].pnt) + Dim);
+                Neighbor_search search(tree, query, kth);
+                auto it = search.end();
+                it--;
+                cgknn[s] = it->second;
+                visNodeNum[s] = search.internals_visited() + search.leafs_visited();
+            }
+        });
+        timer.stop();
+        std::cout << timer.total_time() << " " << tree.root()->depth() << " " << parlay::reduce(visNodeNum) / batchSize
+                  << " " << std::flush;
+    };
 
+    if (queryType & (1 << 0)) {  // NOTE: KNN query
         size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
         if (summary == 0) {
             const int k[3] = {1, 10, 100};
             for (int i = 0; i < 3; i++) {
-                run_cgal_knn(k[i], batchSize);
+                run_cgal_knn(wp, k[i], batchSize);
             }
         } else {
-            run_cgal_knn(K, batchSize);
+            run_cgal_knn(wp, K, batchSize);
         }
     }
 
@@ -558,8 +557,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         delete[] cgknn;
     }
 
-    if (queryType & (1 << 16)) {
-        // NOTE: osm by year
+    if (queryType & (1 << 16)) {  // NOTE: osm by year
         LOG << ENDL;
 
         // WARN: remember using double
@@ -605,6 +603,25 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             queryPointCgal(k, all_pts);
         }
         delete[] cgknn;
+    }
+
+    if (queryType & (1 << 17)) {  // NOTE: OOD
+        std::string read_path(insertFile), buildDist("ss_varden"), queryDist("uniform");
+        size_t pos = read_path.find("ss_varden");
+        if (pos == std::string::npos) {  // INFO: read is uniform
+            std::ranges::swap(buildDist, queryDist);
+        }
+        read_path.replace(pos, buildDist.length(), queryDist);
+        // LOG << read_path << ENDL;
+
+        points query_points;
+        read_points(read_path.c_str(), query_points, K);
+        // queryKNN(Dim, query_points, rounds, pkd, kdknn, K, true);
+        size_t batchSize = static_cast<size_t>(query_points.size() * batchQueryRatio);
+        const int k[3] = {1, 10, 100};
+        for (int i = 0; i < 3; i++) {
+            run_cgal_knn(wp, k[i], batchSize);
+        }
     }
     std::cout << std::endl << std::flush;
 

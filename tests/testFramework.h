@@ -307,11 +307,12 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     using node = typename tree::node;
     points wp = points::uninitialized(WP.size());
     points wi = points::uninitialized(WI.size());
+    double loopLate = rounds > 1 ? 1.0 : -0.1;
 
     pkd.delete_tree();
 
     double aveInsert = time_loop(
-        rounds, 1.0,
+        rounds, loopLate,
         [&]() {
             parlay::copy(WP, wp), parlay::copy(WI, wi);
             pkd.build(parlay::make_slice(wp), DIM);
@@ -354,9 +355,10 @@ void batchDelete(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
 
     pkd.delete_tree();
     size_t batchSize = static_cast<size_t>(WP.size() * ratio);
+    double loopLate = rounds > 1 ? 1.0 : -0.1;
 
     double aveDelete = time_loop(
-        rounds, 1.0,
+        rounds, loopLate,
         [&]() {
             if (afterInsert) {  //* first insert wi then delete wi
                 parlay::copy(WP, wp), parlay::copy(WI, wi);
@@ -463,7 +465,7 @@ void batchUpdateByStep(ParallelKDtree<point>& pkd, const parlay::sequence<point>
 
 template<typename point, bool printHeight = 1, bool printVisNode = 1>
 void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int& rounds, ParallelKDtree<point>& pkd,
-              Typename* kdknn, const int K, const bool flattenTreeTag) {
+              Typename* kdknn, const int K, const bool do_not_flatten) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
@@ -487,7 +489,7 @@ void queryKNN(const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const 
     double aveQuery = time_loop(
         rounds, loopLate, [&]() { parlay::parallel_for(0, n, [&](size_t i) { bq[i].reset(); }); },
         [&]() {
-            if (!flattenTreeTag) {  // WARN: Need ensure pkd.size() == wp.size()
+            if (!do_not_flatten) {  // WARN: Need ensure pkd.size() == wp.size()
                 pkd.flatten(pkd.get_root(), parlay::make_slice(wp));
             }
             auto bx = pkd.get_root_box();
@@ -689,9 +691,10 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     size_t step = Out.size() / recNum;
     // using ref_t = std::reference_wrapper<point>;
     // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
+    double loopLate = rounds > 1 ? 1.0 : -0.1;
 
     double aveQuery = time_loop(
-        rounds, 1.0, [&]() {},
+        rounds, loopLate, [&]() {},
         [&]() {
             parlay::parallel_for(0, recNum, [&](size_t i) {
                 kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));

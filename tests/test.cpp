@@ -70,17 +70,16 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         }
     }
 
+    auto run_batch_knn = [&](const points& pts, int kth, size_t batchSize) {
+        points newPts(batchSize);
+        parlay::copy(pts.cut(0, batchSize), newPts.cut(0, batchSize));
+        kdknn = new Typename[batchSize];
+        queryKNN<point>(Dim, newPts, rounds, pkd, kdknn, kth, true);
+        delete[] kdknn;
+    };
+
     if (queryType & (1 << 0)) {  // NOTE: KNN
-        auto run_batch_knn = [&](const points& pts, int kth, size_t batchSize) {
-            points newPts(batchSize);
-            parlay::copy(pts.cut(0, batchSize), newPts.cut(0, batchSize));
-            kdknn = new Typename[batchSize];
-            queryKNN<point>(Dim, newPts, rounds, pkd, kdknn, kth, true);
-            delete[] kdknn;
-        };
-
         size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
-
         if (summary == 0) {
             int k[3] = {1, 10, 100};
             for (int i = 0; i < 3; i++) {
@@ -473,6 +472,23 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         delete[] kdknn;
     }
 
+    if (queryType & (1 << 17)) {  // NOTE: OOD
+        std::string read_path(insertFile), buildDist("ss_varden"), queryDist("uniform");
+        size_t pos = read_path.find("ss_varden");
+        if (pos == std::string::npos) {  // INFO: read is uniform
+            std::ranges::swap(buildDist, queryDist);
+        }
+        read_path.replace(pos, buildDist.length(), queryDist);
+        // LOG << read_path << ENDL;
+
+        points query_points;
+        read_points(read_path.c_str(), query_points, K);
+        size_t batchSize = static_cast<size_t>(query_points.size() * batchQueryRatio);
+        const int k[3] = {1, 10, 100};
+        for (int i = 0; i < 3; i++) {
+            run_batch_knn(query_points, k[i], batchSize);
+        }
+    }
     std::cout << std::endl << std::flush;
 
     pkd.delete_tree();

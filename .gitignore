@@ -6,11 +6,11 @@
 /.cache
 /.vscode
 /docs
-/script
+# /script
+# *.out
 /benchmark
 run_transfer.sh
 transfer.sh
-*.out
 # Debug files
 # *.log
 *.data

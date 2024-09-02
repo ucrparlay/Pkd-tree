@@ -16,7 +16,6 @@ using Typename = coord;
 typedef bg::model::point<coord, 2, bg::cs::cartesian> RPoint;
 // Define a box (for range queries)
 typedef bg::model::box<RPoint> RBox;
-// Define a Point type that the R-tree will store (a point and its associated data)
 
 template<typename point>
 void testRtreeParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int N, int K, const int& rounds,
