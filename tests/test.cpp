@@ -48,7 +48,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     //* batch insert
     if (tag >= 1) {
-        if (summary) {
+        if (!summary) {
             const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
             for (int i = 0; i < ratios.size(); i++) {
                 batchInsert<point>(pkd, wp, wi, Dim, rounds, ratios[i]);
@@ -60,7 +60,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     //* batch delete
     if (tag >= 2) {
-        if (summary) {
+        if (!summary) {
             const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
             for (int i = 0; i < ratios.size(); i++) {
                 batchDelete<point>(pkd, wp, wi, Dim, rounds, 0, ratios[i]);

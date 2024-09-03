@@ -5,7 +5,8 @@
 # 	pkill -P $$
 # } &
 set -o xtrace
-Solvers=("rtree" "test" "cgal")
+# Solvers=("rtree" "test" "cgal")
+Solvers=("test")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
@@ -23,7 +24,7 @@ insNum=1
 queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
-rounds=1
+rounds=3
 
 resFile=""
 
