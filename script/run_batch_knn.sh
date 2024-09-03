@@ -1,7 +1,7 @@
 #!/bin/bash
 # set -o xtrace
 
-Solvers=("zdtree" "test" "cgal")
+Solvers=("cgal" "test")
 # Solvers=("test")
 Node=(1000000000)
 Dim=(3)
@@ -16,16 +16,18 @@ insNum=2
 queryType=131072
 type="batch_knn_query"
 resFile=""
-readFile=0
+readFile=1
 
 for solver in "${Solvers[@]}"; do
 	exe="../build/${solver}"
 
 	#* decide output file
 	if [[ ${solver} == "test" ]]; then
-		resFile="res_${type}.out"
+		# resFile="res_${type}.out"
+		resFile="res_${type}_ood.out"
 	elif [[ ${solver} == "cgal" ]]; then
-		resFile="cgal_${type}.out"
+		# resFile="cgal_${type}.out"
+		resFile="cgal_${type}_ood.out"
 	elif [[ ${solver} == "zdtree" ]]; then
 		resFile="zdtree_${type}.out"
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"

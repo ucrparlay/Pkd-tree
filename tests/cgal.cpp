@@ -616,8 +616,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
         points query_points;
         read_points(read_path.c_str(), query_points, K);
-        // queryKNN(Dim, query_points, rounds, pkd, kdknn, K, true);
         size_t batchSize = static_cast<size_t>(query_points.size() * batchQueryRatio);
+        // queryKNN(Dim, query_points, rounds, pkd, kdknn, K, true);
         const int k[3] = {1, 10, 100};
         for (int i = 0; i < 3; i++) {
             run_cgal_knn(wp, k[i], batchSize);

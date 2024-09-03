@@ -20,7 +20,7 @@ kill_tree() {
 
 	if [ "$and_children" = true ]; then
 		# Kill parent process
-		kill "$pid"
+		kill -9 "$pid"
 	fi
 }
 

@@ -5,25 +5,25 @@
 # 	pkill -P $$
 # } &
 set -o xtrace
-Solvers=("cgal")
+Solvers=("rtree" "test" "cgal")
 # Solvers=("zdtree" "test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-Dim=(2 3 5 9)
+# Dim=(2 3 5 9)
+Dim=(2)
 # Dim=(2 9)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
-# tag=2
-tag=0
+tag=2
 k=10
 insNum=1
-queryType=$((2#1)) # 1110000
-# queryType=$((2#1001)) # 1110000
+# queryType=$((2#1)) # 1110000
+queryType=$((2#1001)) # 1110000
 echo $queryType
 type="summary"
-rounds=3
+rounds=1
 
 resFile=""
 
@@ -32,13 +32,12 @@ for solver in "${Solvers[@]}"; do
 
 	#* decide output file
 	if [[ ${solver} == "test" ]]; then
-		resFile="res_${type}.out"
+		# resFile="res_${type}.out"
+		resFile="res_${type}_once.out"
+	elif [[ ${solver} == "rtree" ]]; then
+		resFile="rtree_${type}_once.out"
 	elif [[ ${solver} == "cgal" ]]; then
-		if [[ ${tag} == 0 ]]; then
-			resFile="cgal_${type}_knn.out"
-		else
-			resFile="cgal_${type}.out"
-		fi
+		resFile="cgal_${type}_once.out"
 	elif [[ ${solver} == "zdtree" ]]; then
 		resFile="zdtree_${type}.out"
 		exe="/home/zmen002/pbbsbench_x/build/zdtree"
