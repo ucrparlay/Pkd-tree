@@ -607,11 +607,10 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     if (queryType & (1 << 17)) {  // NOTE: OOD
         std::string read_path(insertFile), buildDist("ss_varden"), queryDist("uniform");
-        size_t pos = read_path.find("ss_varden");
-        if (pos == std::string::npos) {  // INFO: read is uniform
+        if (read_path.find(buildDist) == std::string::npos) {  // INFO: read is uniform
             std::ranges::swap(buildDist, queryDist);
         }
-        read_path.replace(pos, buildDist.length(), queryDist);
+        read_path.replace(read_path.find(buildDist), buildDist.length(), queryDist);
         // LOG << read_path << ENDL;
 
         points query_points;

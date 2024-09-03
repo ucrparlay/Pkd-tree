@@ -8,7 +8,6 @@
 /docs
 # /script
 # *.out
-/benchmark
 run_transfer.sh
 transfer.sh
 # Debug files

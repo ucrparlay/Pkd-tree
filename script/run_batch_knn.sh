@@ -28,9 +28,6 @@ for solver in "${Solvers[@]}"; do
 	elif [[ ${solver} == "cgal" ]]; then
 		# resFile="cgal_${type}.out"
 		resFile="cgal_${type}_ood.out"
-	elif [[ ${solver} == "zdtree" ]]; then
-		resFile="zdtree_${type}.out"
-		exe="/home/zmen002/pbbsbench_x/build/zdtree"
 	fi
 
 	for dim in "${Dim[@]}"; do
