@@ -92,12 +92,15 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree_b
 }
 
 template<typename point>
+template<bool doc>
 typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
                                                                                  const dim_type DIM) {
-    this->rebuild_count++;
-    this->rebuild_size += T->size;
     parlay::internal::timer timer;
-    timer.start();
+    if constexpr (doc) {
+        this->rebuild_count++;
+        this->rebuild_size += T->size;
+        timer.start();
+    }
 
     uint_fast8_t curDim = pick_rebuild_dim(T, d, DIM);
     points wo = points::uninitialized(T->size + In.size());
@@ -108,8 +111,10 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert
     auto o =
         build_recursive(parlay::make_slice(wx), parlay::make_slice(wo), curDim, DIM, get_box(parlay::make_slice(wx)));
 
-    timer.stop();
-    this->rebuild_times += static_cast<uint_fast64_t>(timer.total_time() * scale);
+    if constexpr (doc) {
+        timer.stop();
+        this->rebuild_times += static_cast<uint_fast64_t>(timer.total_time() * scale);
+    }
 
     return o;
 }
@@ -135,7 +140,7 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
             TL->size += n;
             return T;
         } else {
-            return rebuild_with_insert(T, In, d, DIM);
+            return rebuild_with_insert<false>(T, In, d, DIM);
         }
     }
 

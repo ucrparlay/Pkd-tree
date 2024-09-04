@@ -144,6 +144,7 @@ class ParallelKDtree {
     // NOTE: batch insert
     void batchInsert(slice In, const dim_type DIM);
 
+    template<bool doc = true>
     node* rebuild_with_insert(node* T, slice In, const dim_type d, const dim_type DIM);
 
     static inline void update_interior(node* T, node* L, node* R);
