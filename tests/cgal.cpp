@@ -18,8 +18,8 @@
 #include <tbb/parallel_for.h>
 #include <cstddef>
 // #include <tbb/task_scheduler_init.h>
-// #include <tbb/task_arena.h>
-// #define TBB_PREVIEW_GLOBAL_CONTROL 1
+#include <tbb/task_arena.h>
+#define TBB_PREVIEW_GLOBAL_CONTROL 1
 #include <tbb/global_control.h>
 
 using Typename = coord;
@@ -49,10 +49,10 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     // NOTE: set cgal threads number
     // TODO: remove it before test summary
-    // int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
+    int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
     // tbb::task_scheduler_init TBBinit(nthreads); // Decrapted
     // NOTE: Limit the number of threads to two for all oneTBB parallel interfaces
-    // tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
+    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
 
     parlay::internal::timer timer;
 
