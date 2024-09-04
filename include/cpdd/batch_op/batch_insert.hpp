@@ -64,7 +64,7 @@ void ParallelKDtree<point>::batchInsert(slice A, const dim_type DIM) {
 
     points B = points::uninitialized(A.size());
     node* T = this->root;
-    box b = get_box(A);
+    // box b = get_box(A);
     this->bbox = get_box(this->bbox, get_box(A));
     dim_type d = T->is_leaf ? 0 : static_cast<interior*>(T)->split.second;
     this->root = batchInsert_recusive(T, A, B.cut(0, A.size()), d, DIM);
@@ -94,7 +94,10 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree_b
 template<typename point>
 typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
                                                                                  const dim_type DIM) {
-    this->rebuild_times++;
+    this->rebuild_count++;
+    this->rebuild_size += T->size;
+    parlay::internal::timer timer;
+    timer.start();
 
     uint_fast8_t curDim = pick_rebuild_dim(T, d, DIM);
     points wo = points::uninitialized(T->size + In.size());
@@ -102,8 +105,13 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert
     parlay::parallel_for(0, In.size(), [&](size_t j) { wx[j] = In[j]; });
     flatten(T, wx.cut(In.size(), wx.size()));
     delete_tree_recursive(T);
-    return build_recursive(parlay::make_slice(wx), parlay::make_slice(wo), curDim, DIM,
-                           get_box(parlay::make_slice(wx)));
+    auto o =
+        build_recursive(parlay::make_slice(wx), parlay::make_slice(wo), curDim, DIM, get_box(parlay::make_slice(wx)));
+
+    timer.stop();
+    this->rebuild_times += static_cast<uint_fast64_t>(timer.total_time() * scale);
+
+    return o;
 }
 
 //* return the updated node

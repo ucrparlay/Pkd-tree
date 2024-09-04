@@ -317,14 +317,12 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
             pkd.build(parlay::make_slice(wp), DIM);
         },
         [&]() {
-            if (!serial) {
+            if constexpr (!serial) {
                 pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
             } else {
-                pkd.reset_rebuild_time();
                 for (size_t i = 0; i < wi.size() * ratio; i++) {
                     pkd.pointInsert(wi[i], DIM);
                 }
-                pkd.print_rebuild_time();
             }
         },
         [&]() { pkd.delete_tree(); });
@@ -332,15 +330,17 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
     //* set status to be finish insert
     parlay::copy(WP, wp), parlay::copy(WI, wi);
     pkd.build(parlay::make_slice(wp), DIM);
-    if (!serial) {
-        pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
-    } else {
-        for (size_t i = 0; i < wi.size() * ratio; i++) {
-            pkd.pointInsert(wi[i], DIM);
-        }
-    }
+    // if (!serial) {
+    pkd.reset_perf_rebuild();
+    pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+    pkd.print_perf_rebuild();
+    // } else {
+    //     for (size_t i = 0; i < wi.size() * ratio; i++) {
+    //         pkd.pointInsert(wi[i], DIM);
+    //     }
+    // }
 
-    LOG << aveInsert << " " << std::flush;
+    LOG << aveInsert << " " << pkd.get_ave_rebuild_time() / aveInsert * 100 << std::flush;
 
     return;
 }

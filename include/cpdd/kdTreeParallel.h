@@ -240,17 +240,33 @@ class ParallelKDtree {
 
     inline box get_root_box() { return this->bbox; }
 
-    inline void reset_rebuild_time() { this->rebuild_times = 0; }
+    inline void reset_perf_rebuild() {
+        this->init_tree_size = this->root->size;
+        this->rebuild_times = 0;
+        this->rebuild_size = 0;
+        this->rebuild_count = 0;
+    }
 
-    inline void print_rebuild_time() { LOG << rebuild_times << " "; }
+    inline double get_ave_rebuild_time() { return 1.0 * this->rebuild_times / this->rebuild_count / scale; }
+    inline double get_ave_rebuild_portion() {
+        return 100.0 * this->rebuild_size / this->rebuild_count / this->init_tree_size;
+    }
+
+    inline void print_perf_rebuild() {
+        LOG << this->rebuild_count << " " << get_ave_rebuild_portion() << " " << get_ave_rebuild_time() << " ";
+    }
 
    private:
     node* root = nullptr;
-    parlay::internal::timer timer;
+    // parlay::internal::timer timer;
     // split_rule _split_rule = ROTATE_DIM;
     split_rule _split_rule = MAX_STRETCH_DIM;
     box bbox;
     std::atomic_uint_fast64_t rebuild_times = 0;
+    std::atomic_uint_fast64_t rebuild_size = 0;
+    std::atomic_uint_fast64_t rebuild_count = 0;
+    uint64_t init_tree_size = 0;
+    uint64_t scale = 10000;
 };
 
 }  // namespace cpdd
