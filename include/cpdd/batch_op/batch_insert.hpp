@@ -20,8 +20,9 @@ void ParallelKDtree<point>::pointInsert(const point p, const dim_type DIM) {
 }
 
 template<typename point>
-typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursive(node* T, const point& p, dim_type d,
-                                                                                   const dim_type DIM) {
+typename ParallelKDtree<point>::node*
+ParallelKDtree<point>::pointInsert_recursive(node* T, const point& p,
+                                             dim_type d, const dim_type DIM) {
     if (T->is_leaf) {
         leaf* TL = static_cast<leaf*>(T);
         if (TL->is_dummy && TL->pts[0] == p) {
@@ -39,7 +40,8 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::pointInsert_recursi
 
     interior* TI = static_cast<interior*>(T);
 
-    bool go_left = Num::Lt(p.pnt[TI->split.second], TI->split.first) ? true : false;
+    bool go_left =
+        Num::Lt(p.pnt[TI->split.second], TI->split.first) ? true : false;
     node* nxt_node = go_left ? TI->left : TI->right;
     if (!inbalance_node(nxt_node->size + 1, TI->size + 1)) {
         d = (d + 1) % DIM;
@@ -73,11 +75,13 @@ void ParallelKDtree<point>::batchInsert(slice A, const dim_type DIM) {
 }
 
 template<typename point>
-typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree_by_tag(
-    bucket_type idx, const node_tags& tags, parlay::sequence<node*>& treeNodes, bucket_type& p,
-    const tag_nodes& rev_tag) {
+typename ParallelKDtree<point>::node*
+ParallelKDtree<point>::update_inner_tree_by_tag(
+    bucket_type idx, const node_tags& tags, parlay::sequence<node*>& treeNodes,
+    bucket_type& p, const tag_nodes& rev_tag) {
 
-    if (tags[idx].second == BUCKET_NUM + 1 || tags[idx].second == BUCKET_NUM + 2) {
+    if (tags[idx].second == BUCKET_NUM + 1 ||
+        tags[idx].second == BUCKET_NUM + 2) {
         assert(rev_tag[p] == idx);
         return treeNodes[p++];
     }
@@ -93,8 +97,9 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::update_inner_tree_b
 
 template<typename point>
 template<bool doc>
-typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
-                                                                                 const dim_type DIM) {
+typename ParallelKDtree<point>::node*
+ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
+                                           const dim_type DIM) {
     parlay::internal::timer timer;
     if constexpr (doc) {
         this->rebuild_count++;
@@ -108,12 +113,13 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert
     parlay::parallel_for(0, In.size(), [&](size_t j) { wx[j] = In[j]; });
     flatten(T, wx.cut(In.size(), wx.size()));
     delete_tree_recursive(T);
-    auto o =
-        build_recursive(parlay::make_slice(wx), parlay::make_slice(wo), curDim, DIM, get_box(parlay::make_slice(wx)));
+    auto o = build_recursive(parlay::make_slice(wx), parlay::make_slice(wo),
+                             curDim, DIM, get_box(parlay::make_slice(wx)));
 
     if constexpr (doc) {
         timer.stop();
-        this->rebuild_times += static_cast<uint_fast64_t>(timer.total_time() * scale);
+        this->rebuild_times +=
+            static_cast<uint_fast64_t>(timer.total_time() * scale);
     }
 
     return o;
@@ -121,8 +127,9 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::rebuild_with_insert
 
 //* return the updated node
 template<typename point>
-typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusive(node* T, slice In, slice Out,
-                                                                                  dim_type d, const dim_type DIM) {
+typename ParallelKDtree<point>::node*
+ParallelKDtree<point>::batchInsert_recusive(node* T, slice In, slice Out,
+                                            dim_type d, const dim_type DIM) {
     size_t n = In.size();
 
     if (n == 0) return T;
@@ -148,22 +155,27 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
         // if (n <= 32) {
         /*if (0) {*/
         interior* TI = static_cast<interior*>(T);
-        auto _2ndGroup = std::ranges::partition(
-            In, [&](const point& p) { return Num::Lt(p.pnt[TI->split.second], TI->split.first); });
+        auto _2ndGroup = std::ranges::partition(In, [&](const point& p) {
+            return Num::Lt(p.pnt[TI->split.second], TI->split.first);
+        });
 
         //* rebuild
-        if (inbalance_node(TI->left->size + _2ndGroup.begin() - In.begin(), TI->size + n)) {
+        if (inbalance_node(TI->left->size + _2ndGroup.begin() - In.begin(),
+                           TI->size + n)) {
             return rebuild_with_insert(T, In, d, DIM);
         }
         //* continue
         node *L, *R;
         d = (d + 1) % DIM;
-        L = batchInsert_recusive(TI->left, In.cut(0, _2ndGroup.begin() - In.begin()),
-                                 Out.cut(0, _2ndGroup.begin() - In.begin()), d, DIM);
-        R = batchInsert_recusive(TI->right, In.cut(_2ndGroup.begin() - In.begin(), n),
-                                 Out.cut(_2ndGroup.begin() - In.begin(), n), d, DIM);
+        L = batchInsert_recusive(
+            TI->left, In.cut(0, _2ndGroup.begin() - In.begin()),
+            Out.cut(0, _2ndGroup.begin() - In.begin()), d, DIM);
+        R = batchInsert_recusive(
+            TI->right, In.cut(_2ndGroup.begin() - In.begin(), n),
+            Out.cut(_2ndGroup.begin() - In.begin(), n), d, DIM);
         update_interior(T, L, R);
-        assert(T->size == L->size + R->size && TI->split.second >= 0 && TI->is_leaf == false);
+        assert(T->size == L->size + R->size && TI->split.second >= 0 &&
+               TI->is_leaf == false);
         return T;
     }
 
@@ -189,16 +201,21 @@ typename ParallelKDtree<point>::node* ParallelKDtree<point>::batchInsert_recusiv
             }
 
             dim_type nextDim = (d + IT.get_depth_by_index(IT.rev_tag[i])) % DIM;
-            if (IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 1) {  // NOTE: continue sieve
-                treeNodes[i] =
-                    batchInsert_recusive(IT.tags[IT.rev_tag[i]].first, Out.cut(s, s + IT.sums_tree[IT.rev_tag[i]]),
-                                         In.cut(s, s + IT.sums_tree[IT.rev_tag[i]]), nextDim, DIM);
+            if (IT.tags[IT.rev_tag[i]].second ==
+                BUCKET_NUM + 1) {  // NOTE: continue sieve
+                treeNodes[i] = batchInsert_recusive(
+                    IT.tags[IT.rev_tag[i]].first,
+                    Out.cut(s, s + IT.sums_tree[IT.rev_tag[i]]),
+                    In.cut(s, s + IT.sums_tree[IT.rev_tag[i]]), nextDim, DIM);
             } else {  // NOTE: launch rebuild subtree
                 assert(IT.tags[IT.rev_tag[i]].second == BUCKET_NUM + 2);
-                assert(IT.tags[IT.rev_tag[i]].first->size + IT.sums_tree[IT.rev_tag[i]] >= 0);
+                assert(IT.tags[IT.rev_tag[i]].first->size +
+                           IT.sums_tree[IT.rev_tag[i]] >=
+                       0);
 
-                treeNodes[i] = rebuild_with_insert(IT.tags[IT.rev_tag[i]].first,
-                                                   Out.cut(s, s + IT.sums_tree[IT.rev_tag[i]]), nextDim, DIM);
+                treeNodes[i] = rebuild_with_insert(
+                    IT.tags[IT.rev_tag[i]].first,
+                    Out.cut(s, s + IT.sums_tree[IT.rev_tag[i]]), nextDim, DIM);
             }
         },
         1);

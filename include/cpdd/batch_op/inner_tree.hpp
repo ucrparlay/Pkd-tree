@@ -84,7 +84,8 @@ struct ParallelKDtree<point>::InnerTree {
         assert(tags[idx].second == BUCKET_NUM && (!tags[idx].first->is_leaf));
         interior* TI = static_cast<interior*>(tags[idx].first);
 
-        if (inbalance_node(TI->left->size + sums_tree[idx << 1], TI->size + sums_tree[idx])) {
+        if (inbalance_node(TI->left->size + sums_tree[idx << 1],
+                           TI->size + sums_tree[idx])) {
             tags[idx].second = BUCKET_NUM + 2;
             rev_tag[tagsNum++] = idx;
             return;
@@ -110,12 +111,16 @@ struct ParallelKDtree<point>::InnerTree {
         if (idx > PIVOT_NUM || tags[idx].first->is_leaf) {
             assert(tags[idx].second >= 0 && tags[idx].second < BUCKET_NUM);
             // tags[idx].second = (!hasTomb) ? BUCKET_NUM + 2 : BUCKET_NUM + 1;
-            if (!hasTomb) {  // NOTE: this subtree needs to be rebuilt in the future, therefore ensure the granularity
-                             // control by assign to aug_flag
+            if (!hasTomb) {  // NOTE: this subtree needs to be rebuilt in the
+                             // future, therefore ensure the granularity control
+                             // by assign to aug_flag
                 tags[idx].second = BUCKET_NUM + 2;
                 if (!tags[idx].first->is_leaf) {
-                    assert(static_cast<interior*>(tags[idx].first)->aug_flag = false);
-                    static_cast<interior*>(tags[idx].first)->aug_flag = tags[idx].first->size > SERIAL_BUILD_CUTOFF;
+                    // assert(static_cast<interior*>(tags[idx].first)->aug_flag
+                    // ==
+                    //        false);
+                    static_cast<interior*>(tags[idx].first)->aug_flag =
+                        tags[idx].first->size > SERIAL_BUILD_CUTOFF;
                 }
             } else {
                 tags[idx].second = BUCKET_NUM + 1;
@@ -127,8 +132,13 @@ struct ParallelKDtree<point>::InnerTree {
 
         assert(tags[idx].second == BUCKET_NUM && (!tags[idx].first->is_leaf));
         interior* TI = static_cast<interior*>(tags[idx].first);
-        if (hasTomb && (inbalance_node(TI->left->size - sums_tree[idx << 1], TI->size - sums_tree[idx]) ||
-                        (TI->size - sums_tree[idx] < THIN_LEAVE_WRAP))) {
+        if (hasTomb && (inbalance_node(TI->left->size - sums_tree[idx << 1],
+                                       TI->size - sums_tree[idx]))) {
+            // WARN: this removes thin leaves
+            // if (hasTomb && (inbalance_node(TI->left->size - sums_tree[idx <<
+            // 1],
+            //                                TI->size - sums_tree[idx]) ||
+            //                 (TI->size - sums_tree[idx] < THIN_LEAVE_WRAP))) {
             assert(hasTomb != 0);
             assert(TI->aug_flag == 0);
             tags[idx].second = BUCKET_NUM + 3;

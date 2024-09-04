@@ -12,7 +12,8 @@ struct ParallelKDtree<point>::simple_node {
 
     simple_node() {}
     simple_node(size_t sz) : size(sz), left(nullptr), right(nullptr) {}
-    simple_node(simple_node* L, simple_node* R) : size(L->size + R->size), left(L), right(R) {}
+    simple_node(simple_node* L, simple_node* R) :
+        size(L->size + R->size), left(L), right(R) {}
 };
 
 template<typename point>
@@ -32,13 +33,17 @@ struct ParallelKDtree<point>::leaf : node {
     points pts;
     leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false) {};
     leaf(slice In) :
-        node{true, static_cast<size_t>(In.size())}, is_dummy(false), pts(points::uninitialized(LEAVE_WRAP)) {
+        node{true, static_cast<size_t>(In.size())},
+        is_dummy(false),
+        pts(points::uninitialized(LEAVE_WRAP)) {
         for (int i = 0; i < In.size(); i++) {
             pts[i] = In[i];
         }
     }
     leaf(slice In, bool _is_dummy) :
-        node{true, static_cast<size_t>(In.size())}, is_dummy(true), pts(points::uninitialized(1)) {
+        node{true, static_cast<size_t>(In.size())},
+        is_dummy(true),
+        pts(points::uninitialized(1)) {
         pts[0] = In[0];
     }
 };
@@ -50,11 +55,16 @@ struct ParallelKDtree<point>::interior : node {
     splitter split;
     bool aug_flag;  // TODO: chaneg type of aug_flag to template typename
     interior(node* _left, node* _right, splitter _split) :
-        node{false, _left->size + _right->size}, left(_left), right(_right), split(_split), aug_flag(false) {}
+        node{false, _left->size + _right->size},
+        left(_left),
+        right(_right),
+        split(_split),
+        aug_flag(false) {}
 };
 
 template<typename point>
-typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_leaf_node(slice In) {
+typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_leaf_node(
+    slice In) {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new (o) leaf(In);
     assert(o->is_dummy == false);
@@ -62,7 +72,8 @@ typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_leaf_node(sli
 }
 
 template<typename point>
-typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_dummy_leaf(slice In) {
+typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_dummy_leaf(
+    slice In) {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new (o) leaf(In, true);
     assert(o->is_dummy == true);
@@ -70,7 +81,8 @@ typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_dummy_leaf(sl
 }
 
 template<typename point>
-typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_empty_leaf() {
+typename ParallelKDtree<point>::leaf*
+ParallelKDtree<point>::alloc_empty_leaf() {
     leaf* o = parlay::type_allocator<leaf>::alloc();
     new (o) leaf();
     assert(o->size == 0 && o->pts.size() == 0);
@@ -78,22 +90,25 @@ typename ParallelKDtree<point>::leaf* ParallelKDtree<point>::alloc_empty_leaf() 
 }
 
 template<typename point>
-typename ParallelKDtree<point>::interior* ParallelKDtree<point>::alloc_interior_node(node* L, node* R,
-                                                                                     const splitter& split) {
+typename ParallelKDtree<point>::interior*
+ParallelKDtree<point>::alloc_interior_node(node* L, node* R,
+                                           const splitter& split) {
     interior* o = parlay::type_allocator<interior>::alloc();
     new (o) interior(L, R, split);
     return o;
 }
 
 template<typename point>
-typename ParallelKDtree<point>::simple_node* ParallelKDtree<point>::alloc_simple_node(simple_node* L, simple_node* R) {
+typename ParallelKDtree<point>::simple_node*
+ParallelKDtree<point>::alloc_simple_node(simple_node* L, simple_node* R) {
     simple_node* o = parlay::type_allocator<simple_node>::alloc();
     new (o) simple_node(L, R);
     return o;
 }
 
 template<typename point>
-typename ParallelKDtree<point>::simple_node* ParallelKDtree<point>::alloc_simple_node(size_t sz) {
+typename ParallelKDtree<point>::simple_node*
+ParallelKDtree<point>::alloc_simple_node(size_t sz) {
     simple_node* o = parlay::type_allocator<simple_node>::alloc();
     new (o) simple_node(sz);
     return o;
@@ -124,9 +139,13 @@ inline size_t ParallelKDtree<point>::get_imbalance_ratio() {
 }
 
 template<typename point>
-inline bool ParallelKDtree<point>::inbalance_node(const size_t l, const size_t n) {
-    if (n == 0) return true;
-    return Num::Gt(static_cast<size_t>(std::abs(100.0 * l / n - 50.0)), get_imbalance_ratio());
+inline bool ParallelKDtree<point>::inbalance_node(const size_t l,
+                                                  const size_t n) {
+    if (n == 0)
+        return false;  // BUG: this will disable parallel delete a tree in batch
+                       // deletion when the tree was emptied
+    return Num::Gt(static_cast<size_t>(std::abs(100.0 * l / n - 50.0)),
+                   get_imbalance_ratio());
 }
 
 }  // namespace cpdd
