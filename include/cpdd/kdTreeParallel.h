@@ -287,10 +287,15 @@ class ParallelKDtree {
     inline box get_root_box() { return this->bbox; }
 
     inline void reset_perf_rebuild() {
-        this->init_tree_size = this->root->size;
+        this->init_tree_size = this->root == nullptr ? 1 : this->root->size;
         this->rebuild_times = 0;
         this->rebuild_size = 0;
         this->rebuild_count = 0;
+    }
+
+    inline void set_init_size(size_t sz) {
+        this->init_tree_size = sz;
+        this->rebuild_size = 0;
     }
 
     inline double get_ave_rebuild_time() {
@@ -298,14 +303,21 @@ class ParallelKDtree {
     }
 
     inline double get_ave_rebuild_portion() {
-        return 100.0 * this->rebuild_size / this->rebuild_count /
-               this->init_tree_size;
+        return get_rebuild_portion() / this->rebuild_count;
+    }
+
+    inline double get_rebuild_portion() {
+        return this->init_tree_size
+                   ? 100.0 * this->rebuild_size / this->init_tree_size
+                   : 0;
     }
 
     inline void print_perf_rebuild() {
         LOG << this->rebuild_count << " " << get_ave_rebuild_portion() << " "
             << get_ave_rebuild_time() << " ";
     }
+
+    inline size_t get_rebuild_count() { return this->rebuild_count; }
 
    private:
     node* root = nullptr;

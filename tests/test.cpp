@@ -257,10 +257,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
             if (inbaBuildType == 0) {
                 buildTree<point, 2>(Dim, np, rounds, pkd);
             } else {
-                // incrementalBuild<point, 2>(Dim, np, rounds, pkd,
+                incrementalBuild<point, 2>(Dim, np, rounds, pkd,
+                                           insertBatchInbaRatio);
+                // incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd,
                 // insertBatchInbaRatio);
-                incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd,
-                                                   insertBatchInbaRatio);
             }
 
             // if (inbaQueryType == 0) {
@@ -282,7 +282,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
             // }
         };
 
-        LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
+        // LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
+        // LOG << pkd.get_imbalance_ratio() << " ";
         // HACK: need start with varden file
         // NOTE: 1: 10*0.1 different vardens.
         clean();
