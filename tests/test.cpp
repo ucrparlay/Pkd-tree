@@ -315,8 +315,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         // read_points<point>(path.c_str(), nq, K);
         // parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i];
         // }); writeToFile(one_uniform_nine_varden);
-        read_points(one_uniform_nine_varden.c_str(), np, K);
-        run();
+        // read_points(one_uniform_nine_varden.c_str(), np, K);
+        // run();
 
         //@ 3: 1 varden, but flatten;
         // clean();

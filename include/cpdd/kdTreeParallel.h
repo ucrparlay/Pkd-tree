@@ -7,6 +7,8 @@
 
 namespace cpdd {
 
+bool fix_inba_ratio = 0;
+uint_fast8_t INBALANCE_RATIO = 30;
 #define LOG  std::cout
 #define ENDL std::endl << std::flush
 
@@ -47,7 +49,6 @@ class ParallelKDtree {
     static constexpr uint_fast8_t LOG2_BASE = 10;
     static constexpr uint_fast16_t BLOCK_SIZE = 1 << LOG2_BASE;
     // NOTE: reconstruct weight threshold
-    static constexpr uint_fast8_t INBALANCE_RATIO = 30;
     // NOTE: tag indicates whether poitns are full covered in the tree
     struct FullCoveredTag {};
     struct PartialCoverTag {};
@@ -72,6 +73,10 @@ class ParallelKDtree {
     static void free_simple_node(simple_node* T);
     static inline size_t get_imbalance_ratio();
     static inline bool inbalance_node(const size_t l, const size_t n);
+    inline void set_inbalance_ratio(const uint_fast8_t ratio) {
+        fix_inba_ratio = true;
+        INBALANCE_RATIO = ratio;
+    }
 
     using node_box = std::pair<node*, box>;
     using node_tag = std::pair<node*, uint_fast8_t>;
@@ -296,22 +301,24 @@ class ParallelKDtree {
     inline void set_init_size(size_t sz) {
         this->init_tree_size = sz;
         this->rebuild_size = 0;
+        this->rebuild_times = 0;
     }
+    inline double get_rebuild_time_sum() {
+        return 1.0 * this->rebuild_times / scale;
+    }
+    inline size_t get_rebuild_size_sum() { return this->rebuild_size; }
 
     inline double get_ave_rebuild_time() {
         return 1.0 * this->rebuild_times / this->rebuild_count / scale;
     }
-
     inline double get_ave_rebuild_portion() {
         return get_rebuild_portion() / this->rebuild_count;
     }
-
     inline double get_rebuild_portion() {
         return this->init_tree_size
                    ? 100.0 * this->rebuild_size / this->init_tree_size
                    : 0;
     }
-
     inline void print_perf_rebuild() {
         LOG << this->rebuild_count << " " << get_ave_rebuild_portion() << " "
             << get_ave_rebuild_time() << " ";

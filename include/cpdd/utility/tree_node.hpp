@@ -131,7 +131,8 @@ void ParallelKDtree<point>::free_simple_node(simple_node* T) {
 
 template<typename point>
 inline size_t ParallelKDtree<point>::get_imbalance_ratio() {
-    if (const auto* env_p = std::getenv("INBALANCE_RATIO")) {
+    if (const auto* env_p = std::getenv("INBALANCE_RATIO");
+        env_p && !fix_inba_ratio) {
         return static_cast<size_t>(std::stoi(env_p));
     } else {
         return static_cast<size_t>(INBALANCE_RATIO);

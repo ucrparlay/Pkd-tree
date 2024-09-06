@@ -103,7 +103,7 @@ ParallelKDtree<point>::rebuild_with_insert(node* T, slice In, const dim_type d,
     parlay::internal::timer timer;
     if constexpr (doc) {
         this->rebuild_count++;
-        this->rebuild_size += T->size;
+        this->rebuild_size += (T->size + In.size());
         timer.start();
     }
 

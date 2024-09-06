@@ -7,7 +7,8 @@ set -o xtrace
 Solvers=("test")
 Node=(1000000000)
 # Inba=(1 2 5 10 20 30 40 45 48 49 50)
-Inba=(5 10 20 30 40 45 48 49 50 2 1)
+Inba=(30 50)
+# Inba=(10 20 30 40 45 48 49 50 5 2 1)
 Dim=(3)
 declare -A datas
 # datas["/ssd0/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
@@ -35,7 +36,7 @@ fi
 for solver in "${Solvers[@]}"; do
 	exe="../build/${solver}"
 	dest="data/${resFile}"
-	: >"${dest}"
+	# : >"${dest}"
 
 	for dim in "${Dim[@]}"; do
 		for dataPath in "${!datas[@]}"; do
