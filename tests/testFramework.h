@@ -316,6 +316,11 @@ void batchInsert(ParallelKDtree<point>& pkd, const parlay::sequence<point>& WP, 
         [&]() {
             parlay::copy(WP, wp), parlay::copy(WI, wi);
             pkd.build(parlay::make_slice(wp), DIM);
+            parlay::copy(WI.cut(0, size_t(wi.size() * ratio)), wi.cut(0, size_t(wi.size() * ratio)));
+            pkd.batchInsert(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+            parlay::copy(WI.cut(0, size_t(wi.size() * ratio)), wi.cut(0, size_t(wi.size() * ratio)));
+            pkd.batchDelete(wi.cut(0, size_t(wi.size() * ratio)), DIM);
+            parlay::copy(WI.cut(0, size_t(wi.size() * ratio)), wi.cut(0, size_t(wi.size() * ratio)));
         },
         [&]() {
             if (!serial) {

@@ -164,22 +164,28 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     }
 
     auto run_cgal_knn = [&](const auto& wp, int kth, size_t batchSize) {
-        timer.reset();
-        timer.start();
+        // timer.reset();
+        // timer.start();
         parlay::sequence<size_t> visNodeNum(batchSize, 0);
-        tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize), [&](const tbb::blocked_range<std::size_t>& r) {
-            for (std::size_t s = r.begin(); s != r.end(); ++s) {
-                // Neighbor search can be instantiated from
-                // several threads at the same time
-                Point_d query(Dim, std::begin(wp[s].pnt), std::begin(wp[s].pnt) + Dim);
-                Neighbor_search search(tree, query, kth);
-                auto it = search.end();
-                it--;
-                cgknn[s] = it->second;
-                visNodeNum[s] = search.internals_visited() + search.leafs_visited();
-            }
-        });
-        timer.stop();
+        auto t = time_loop(
+            3, 1.0, [&]() {},
+            [&]() {
+                tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize),
+                                  [&](const tbb::blocked_range<std::size_t>& r) {
+                                      for (std::size_t s = r.begin(); s != r.end(); ++s) {
+                                          // Neighbor search can be instantiated from
+                                          // several threads at the same time
+                                          Point_d query(Dim, std::begin(wp[s].pnt), std::begin(wp[s].pnt) + Dim);
+                                          Neighbor_search search(tree, query, kth);
+                                          auto it = search.end();
+                                          it--;
+                                          cgknn[s] = it->second;
+                                          visNodeNum[s] = search.internals_visited() + search.leafs_visited();
+                                      }
+                                  });
+            },
+            [&]() {});
+        // timer.stop();
         std::cout << timer.total_time() << " " << tree.root()->depth() << " " << parlay::reduce(visNodeNum) / batchSize
                   << " " << std::flush;
     };
