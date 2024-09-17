@@ -49,10 +49,10 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
 
     // NOTE: set cgal threads number
     // TODO: remove it before test summary
-    int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
+    // int nthreads = std::stoi(std::getenv("TEST_CGAL_THREADS"));
     // tbb::task_scheduler_init TBBinit(nthreads); // Decrapted
     // NOTE: Limit the number of threads to two for all oneTBB parallel interfaces
-    tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
+    // tbb::global_control global_limit(tbb::global_control::max_allowed_parallelism, nthreads);
 
     parlay::internal::timer timer;
 
@@ -260,7 +260,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     if (queryType & (1 << 3)) {  // NOTE: range query
         auto run_cgal_range_query = [&](int type) {
             size_t n = wp.size();
-            int queryNum = summary ? summaryRangeQueryNum : rangeQueryNum;
+            int queryNum = summary ? (insertFile != "" ? summaryRangeQueryNum : realworldRangeQueryNum) : rangeQueryNum;
             auto [queryBox, maxSize] = gen_rectangles(queryNum, type, wp, Dim);
             // using ref_t = std::reference_wrapper<Point_d>;
             // std::vector<ref_t> out_ref( queryNum * maxSize, std::ref( _points[0] )
@@ -287,7 +287,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             } else {
                 for (int s = 0; s < queryNum; s++) {
                     auto aveQuery = time_loop(
-                        singleQueryLogRepeatNum, -1.0, [&]() {},
+                        // singleQueryLogRepeatNum, -1.0, [&]() {},
+                        rounds, 1.0, [&]() {},
                         [&]() {
                             Point_d a(Dim, std::begin(queryBox[s].first.first.pnt),
                                       std::end(queryBox[s].first.first.pnt)),
@@ -298,7 +299,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                             cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
                         },
                         [&]() {});
-                    LOG << queryBox[s].second << " " << std::scientific << aveQuery << ENDL;
+                    LOG << aveQuery << ENDL;
+                    // LOG << queryBox[s].second << " " << std::scientific << aveQuery << ENDL;
                 }
             }
         };
@@ -569,7 +571,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         LOG << ENDL;
 
         // WARN: remember using double
-        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data3/zmen002/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());

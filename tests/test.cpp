@@ -146,9 +146,13 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 delete[] kdknn;
             }
         } else if (summary == 1) {  // NOTE: for summary
-            kdknn = new Typename[realworldRangeQueryNum];
+            size_t alloc_size = summaryRangeQueryNum;
+            if (readInsertFile){
+                alloc_size = realworldRangeQueryNum;
+            }
+            kdknn = new Typename[alloc_size];
             points Out;
-            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, realworldRangeQueryNum, Dim);
+            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, alloc_size, Dim);
             delete[] kdknn;
         }
     }
@@ -212,6 +216,18 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         delete[] kdknn;
     }
 
+    auto writeToFile = [&](const points& np, string path) {
+        std::ofstream f(path);
+        f << np.size() << " " << Dim << std::endl;
+        for (size_t i = 0; i < np.size(); i++) {
+            for (size_t j = 0; j < Dim; j++) {
+                f << np[i].pnt[j] << " ";
+            }
+            f << std::endl;
+        }
+        f.close();
+    };
+
     if (queryType & (1 << 10)) {  // NOTE: test inbalance ratio
         const int fileNum = 10;
 
@@ -232,18 +248,6 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             prefix = insertFile.substr(0, insertFile.rfind("/"));
             np.clear();
             nq.clear();
-        };
-
-        auto writeToFile = [&](string path) {
-            std::ofstream f(path);
-            f << np.size() << " " << Dim << std::endl;
-            for (size_t i = 0; i < np.size(); i++) {
-                for (size_t j = 0; j < Dim; j++) {
-                    f << np[i].pnt[j] << " ";
-                }
-                f << std::endl;
-            }
-            f.close();
         };
 
         // NOTE: run the test
@@ -341,7 +345,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     if (queryType & (1 << 11)) {  // NOTE: osm by year
         // WARN: remember using double
-        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data3/zmen002/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());
@@ -449,7 +453,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     if (queryType & (1 << 16)) {  // NOTE: test OSM by combining year
         // WARN: remember using double
-        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());
@@ -460,6 +464,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
         // NOTE: flatten inputs
         auto all_points = parlay::flatten(node_by_year);
+        // writeToFile(all_points, "/data3/zmen002/kdtree/geometry/osm.in");
+        // LOG << all_points.size() << ENDL;
+        // return;
+
         for (int i = 0; i < files.size(); i++) {
             points().swap(node_by_year[i]);
         }
