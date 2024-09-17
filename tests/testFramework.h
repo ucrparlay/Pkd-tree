@@ -24,6 +24,7 @@ using namespace cpdd;
 // NOTE: KNN size
 static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
+static constexpr size_t sliding_window_len = 5;
 // NOTE: rectangle numbers
 static constexpr int rangeQueryNum = 100;
 static constexpr int singleQueryLogRepeatNum = 100;
@@ -41,6 +42,8 @@ static constexpr double batchInsertRatio = 0.01;
 static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
 static constexpr int summaryRangeQueryNum = 10000;
+// NOTE: range query num in real-world
+static constexpr int realworldRangeQueryNum = 1000;
 
 //* [a,b)
 inline size_t get_random_index(size_t a, size_t b, int seed) {
@@ -61,6 +64,7 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
     size_t mx = 0;
     bool goon = false;
     if (n <= range.second) {
+        // LOG << idx << " " << n << " " << ENDL;
         boxs[idx++] = std::make_pair(tree::get_box(In), In.size());
         // NOTE: handle the cose that all points are the same then become un-divideable
         // NOTE: Modify the coefficient to make the rectangle size distribute as uniform as possible within the range
@@ -118,9 +122,9 @@ std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> 
         range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
-        if (n == 100000000)
+        if (n >= 100000000)
             range.second = n / 100 - 1;
-        else if (n == 1000000000)
+        else if (n >= 1000000000)
             range.second = n / 1000 - 1;
         else
             range.second = n - 1;
@@ -625,14 +629,11 @@ void rangeCountFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     double aveCount = time_loop(
         rounds, 1.0, [&]() {},
         [&]() {
-            parlay::parallel_for(
-                0, recNum,
-                [&](size_t i) {
-                    visInterNum[i] = 0;
-                    visLeafNum[i] = 0;
-                    kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
-                },
-                1);
+            parlay::parallel_for(0, recNum, [&](size_t i) {
+                visInterNum[i] = 0;
+                visLeafNum[i] = 0;
+                kdknn[i] = pkd.range_count(queryBox[i].first, visLeafNum[i], visInterNum[i]);
+            });
             // for (int i = 0; i < recNum; i++) {
             //     visInterNum[i] = 0;
             //     visLeafNum[i] = 0;
@@ -689,8 +690,8 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
 
     int n = WP.size();
     size_t step = Out.size() / recNum;
-    // using ref_t = std::reference_wrapper<point>;
-    // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
+    using ref_t = std::reference_wrapper<point>;
+    parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
     double loopLate = rounds > 1 ? 1.0 : -0.1;
 
     double aveQuery = time_loop(
@@ -699,6 +700,10 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
             parlay::parallel_for(0, recNum, [&](size_t i) {
                 kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
             });
+            // for (size_t i = 0; i < recNum; i++) {
+            //     kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
+            //     // LOG << kdknn[i] << " " << std::flush;
+            // }
         },
         [&]() {});
 
@@ -819,56 +824,62 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
 
     pkd.delete_tree();
     int time_period_num = node_by_time.size();
-    parlay::sequence<points> wp(time_period_num);
+    parlay::sequence<points> wp(time_period_num), wi(time_period_num);
     for (int i = 0; i < time_period_num; i++) {
         wp[i].resize(node_by_time[i].size());
     }
 
-    double ave = time_loop(
-        rounds, 1.0,
-        [&]() {
-            for (int i = 0; i < time_period_num; i++) {
-                parlay::copy(node_by_time[i], wp[i]);
-            }
-        },
-        [&]() {
-            for (int i = 0; i < time_period_num; i++) {
-                pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
-            }
-        },
-        [&]() { pkd.delete_tree(); });
+    // double ave = time_loop(
+    //     rounds, 1.0,
+    //     [&]() {
+    //         for (int i = 0; i < time_period_num; i++) {
+    //             parlay::copy(node_by_time[i], wp[i]);
+    //         }
+    //     },
+    //     [&]() {
+    //         for (int i = 0; i < time_period_num; i++) {
+    //             pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+    //         }
+    //     },
+    //     [&]() { pkd.delete_tree(); });
 
     // NOTE: begin revert
     for (int i = 0; i < time_period_num; i++) {
         parlay::copy(node_by_time[i], wp[i]);
     }
     LOG << ENDL;
+    int within_num = 0;
     for (int i = 0; i < time_period_num; i++) {
         parlay::internal::timer t;
         t.reset(), t.start();
 
         pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+        if (within_num == sliding_window_len) {
+            pkd.batchDelete(parlay::make_slice(wi[i - within_num]), Dim);
+        } else {
+            within_num++;
+        }
 
         t.stop();
         LOG << wp[i].size() << " " << t.total_time() << " ";
 
         if (time_period_num < 12) {
-            points tmp(wp[0].begin(), wp[0].begin() + batchQueryOsmSize);
-            queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
-        } else if (i != 0 && (i + 1) % 12 == 0) {
-            points tmp(batchQueryOsmSize);
-            parlay::copy(parlay::make_slice(wp[0]), tmp.cut(0, wp[0].size()));
-            parlay::copy(parlay::make_slice(wp[1].begin(), wp[1].begin() + batchQueryOsmSize - wp[0].size()),
-                         tmp.cut(wp[0].size(), tmp.size()));
+            points tmp(node_by_time[0].begin(), node_by_time[0].begin() + batchQueryOsmSize);
             queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
         }
+        // else if (i != 0 && (i + 1) % 12 == 0) {
+        //     points tmp(batchQueryOsmSize);
+        //     parlay::copy(parlay::make_slice(wp[0]), tmp.cut(0, wp[0].size()));
+        //     parlay::copy(parlay::make_slice(wp[1].begin(), wp[1].begin() + batchQueryOsmSize - wp[0].size()),
+        //                  tmp.cut(wp[0].size(), tmp.size()));
+        //     queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
+        // }
 
         LOG << ENDL;
     }
 
     size_t max_deep = 0;
-    LOG << ave << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight() << " "
-        << std::flush;
+    LOG << " " << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " " << pkd.getAveTreeHeight() << " " << std::flush;
 
     return;
 }

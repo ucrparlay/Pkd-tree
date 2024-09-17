@@ -407,10 +407,18 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         int fileNum = pts.size();
         tree.clear();
         parlay::internal::timer timer;
+        int within_num = 0;
         for (int i = 0; i < fileNum; i++) {
             timer.reset(), timer.start();
             tree.insert(pts[i].begin(), pts[i].end());
             tree.template build<CGAL::Parallel_tag>();
+            if (within_num == sliding_window_len) {
+                for (int j = 0; j < pts[i - within_num].size(); j++) {
+                    tree.remove(pts[i - within_num][j]);
+                }
+            } else {
+                within_num++;
+            }
             timer.stop();
             LOG << pts[i].size() << " " << timer.total_time() << " " << ENDL;
 
@@ -557,7 +565,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         delete[] cgknn;
     }
 
-    if (queryType & (1 << 16)) {  // NOTE: osm by year
+    if (queryType & (1 << 16)) {  // NOTE: osm merge
         LOG << ENDL;
 
         // WARN: remember using double
@@ -619,7 +627,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         // queryKNN(Dim, query_points, rounds, pkd, kdknn, K, true);
         const int k[3] = {1, 10, 100};
         for (int i = 0; i < 3; i++) {
-            run_cgal_knn(wp, k[i], batchSize);
+            run_cgal_knn(query_points, k[i], batchSize);
         }
     }
     std::cout << std::endl << std::flush;
@@ -643,7 +651,7 @@ int main(int argc, char* argv[]) {
     int readInsertFile = P.getOptionIntValue("-i", 1);
     int summary = P.getOptionIntValue("-s", 0);
 
-    using point = PointType<coord, 10>;
+    using point = PointType<coord, 16>;
     using points = parlay::sequence<point>;
 
     points wp;
@@ -715,6 +723,12 @@ int main(int argc, char* argv[]) {
             N, [&](size_t i) -> PointType<coord, 10> { return PointType<coord, 10>(wp[i].pnt.begin()); });
         decltype(wp)().swap(wp);
         testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median, PointType<coord, 10>>(
+            Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType, summary);
+    } else if (Dim == 16) {
+        auto pts = parlay::tabulate(
+            N, [&](size_t i) -> PointType<coord, 16> { return PointType<coord, 16>(wp[i].pnt.begin()); });
+        decltype(wp)().swap(wp);
+        testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median, PointType<coord, 16>>(
             Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType, summary);
     }
 

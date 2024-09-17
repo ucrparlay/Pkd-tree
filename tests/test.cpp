@@ -113,14 +113,19 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     if (queryType & (1 << 2)) {  // NOTE: range count
-        int recNum = rangeQueryNum;
-        kdknn = new Typename[recNum];
-        const int type[3] = {0, 1, 2};
-
-        LOG << ENDL;
-        for (int i = 0; i < 3; i++) {
-            rangeCountFixWithLog<point>(wp, pkd, kdknn, singleQueryLogRepeatNum, type[i], recNum, Dim);
+        if (summary == 0) {
+            int recNum = rangeQueryNum;
+            kdknn = new Typename[recNum];
+            const int type[3] = {0, 1, 2};
+            LOG << ENDL;
+            for (int i = 0; i < 3; i++) {
+                rangeCountFixWithLog<point>(wp, pkd, kdknn, singleQueryLogRepeatNum, type[i], recNum, Dim);
+            }
+        } else {
+            kdknn = new Typename[summaryRangeQueryNum];
+            rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, summaryRangeQueryNum, Dim);
         }
+
         // rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, rangeQueryNumInbaRatio, Dim);
         // rangeCountFix<point>(wp, pkd, kdknn, rounds, 2, recNum, Dim);
 
@@ -141,9 +146,9 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
                 delete[] kdknn;
             }
         } else if (summary == 1) {  // NOTE: for summary
-            kdknn = new Typename[summaryRangeQueryNum];
+            kdknn = new Typename[realworldRangeQueryNum];
             points Out;
-            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, summaryRangeQueryNum, Dim);
+            rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, realworldRangeQueryNum, Dim);
             delete[] kdknn;
         }
     }
@@ -368,7 +373,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             }
         }
         kdknn = new Typename[batchQueryOsmSize];
-        insertOsmByTime<point>(Dim, node, rounds, pkd, K, kdknn);
+        // insertOsmByTime<point>(Dim, node, rounds, pkd, K, kdknn);
         delete[] kdknn;
         // auto all_points = parlay::flatten(node);
         // queryKNN<point>(Dim, all_points, rounds, pkd, kdknn, K, false);
@@ -512,8 +517,8 @@ int main(int argc, char* argv[]) {
     int summary = P.getOptionIntValue("-s", 0);
 
     int LEAVE_WRAP = 32;
-    parlay::sequence<PointType<coord, 15>> wp;
-    // parlay::sequence<PointID<coord, 15>> wp;
+    parlay::sequence<PointType<coord, 16>> wp;
+    // parlay::sequence<PointID<coord, 16>> wp;
     std::string name, insertFile = "";
 
     //* initialize points
@@ -521,23 +526,25 @@ int main(int argc, char* argv[]) {
         name = std::string(iFile);
         name = name.substr(name.rfind("/") + 1);
         std::cout << name << " ";
-        auto [n, d] = read_points<PointType<coord, 15>>(iFile, wp, K);
-        // auto [n, d] = read_points<PointID<coord, 15>>( iFile, wp, K );
+        auto [n, d] = read_points<PointType<coord, 16>>(iFile, wp, K);
+        // auto [n, d] = read_points<PointID<coord, 16>>( iFile, wp, K );
         N = n;
         assert(d == Dim);
     } else {  //* construct data byself
         K = 100;
-        generate_random_points<PointType<coord, 15>>(wp, 1000000, N, Dim);
-        // generate_random_points<PointID<coord, 15>>( wp, 1000000, N, Dim );
+        generate_random_points<PointType<coord, 16>>(wp, 1000000, N, Dim);
+        // generate_random_points<PointID<coord, 16>>( wp, 1000000, N, Dim );
         std::string name = std::to_string(N) + "_" + std::to_string(Dim) + ".in";
         std::cout << name << " ";
     }
 
-    int id = std::stoi(name.substr(0, name.find_first_of('.')));
-    id = (id + 1) % 3;  //! MOD graph number used to test
-    if (!id) id++;
-    int pos = std::string(iFile).rfind("/") + 1;
-    insertFile = std::string(iFile).substr(0, pos) + std::to_string(id) + ".in";
+    if (readInsertFile) {
+        int id = std::stoi(name.substr(0, name.find_first_of('.')));
+        id = (id + 1) % 3;  //! MOD graph number used to test
+        if (!id) id++;
+        int pos = std::string(iFile).rfind("/") + 1;
+        insertFile = std::string(iFile).substr(0, pos) + std::to_string(id) + ".in";
+    }
 
     assert(N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1);
 
@@ -580,6 +587,12 @@ int main(int argc, char* argv[]) {
             N, [&](size_t i) -> PointType<coord, 10> { return PointType<coord, 10>(wp[i].pnt.begin()); });
         decltype(wp)().swap(wp);
         testParallelKDtree<PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType,
+                                                 readInsertFile, summary);
+    } else if (Dim == 16) {
+        auto pts = parlay::tabulate(
+            N, [&](size_t i) -> PointType<coord, 16> { return PointType<coord, 16>(wp[i].pnt.begin()); });
+        decltype(wp)().swap(wp);
+        testParallelKDtree<PointType<coord, 16>>(Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType,
                                                  readInsertFile, summary);
     }
 
