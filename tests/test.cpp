@@ -345,7 +345,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     if (queryType & (1 << 11)) {  // NOTE: osm by year
         // WARN: remember using double
-        string osm_prefix = "/data3/zmen002/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());

@@ -422,7 +422,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
                 within_num++;
             }
             timer.stop();
-            LOG << pts[i].size() << " " << timer.total_time() << " " << ENDL;
+            LOG << pts[i].size() << " " << timer.total_time() << " ";
 
             if (fileNum < 12) {
                 std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);
@@ -495,7 +495,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         LOG << ENDL;
 
         // WARN: remember using double
-        string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
+        string osm_prefix = "/data/zmen002/kdtree/real_world/osm/year/";
+        // string osm_prefix = "/data/path/kdtree/real_world/osm/year/";
         const std::vector<std::string> files = {"2014", "2015", "2016", "2017", "2018",
                                                 "2019", "2020", "2021", "2022", "2023"};
         parlay::sequence<points> node_by_year(files.size());
