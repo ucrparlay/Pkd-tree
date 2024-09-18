@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o xtrace
-# Solvers=("test" "zdtree" "cgal")
-Solvers=("cgal" "test")
+# Solvers=("cgal" "test")
+Solvers=("test")
 DataPath="/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["HT"]="10"
@@ -46,7 +46,7 @@ for solver in ${Solvers[@]}; do
         fi
         echo ${filename}
 
-        PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 3 >>${dest}
+        PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 1 -r 3 >>${dest}
 
     done
 done

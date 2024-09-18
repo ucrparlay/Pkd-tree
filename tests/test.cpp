@@ -147,7 +147,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
             }
         } else if (summary == 1) {  // NOTE: for summary
             size_t alloc_size = summaryRangeQueryNum;
-            if (readInsertFile){
+            if (insertFile == "") {
                 alloc_size = realworldRangeQueryNum;
             }
             kdknn = new Typename[alloc_size];
