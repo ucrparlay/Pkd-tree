@@ -19,11 +19,29 @@ using coord = long;
 using Typename = coord;
 using namespace cpdd;
 
-static constexpr size_t batchQuerySize = 1000000;
-static constexpr int rangeQueryNum = 10000;
+// NOTE: KNN size
+static constexpr double batchQueryRatio = 0.01;
+static constexpr size_t batchQueryOsmSize = 10000000;
+static constexpr size_t sliding_window_len = 5;
+// NOTE: rectangle numbers
+static constexpr int rangeQueryNum = 100;
+static constexpr int singleQueryLogRepeatNum = 100;
+
+// NOTE: rectangle numbers for inba ratio
 static constexpr int rangeQueryNumInbaRatio = 50000;
-static constexpr double batchInsertRatio = 0.1;
-static constexpr int summaryRangeQueryType = 3;
+// NOTE: insert batch ratio for inba ratio
+static constexpr double insertBatchInbaRatio = 0.001;
+// NOTE: knn batch ratio for inba ratio
+static constexpr double knnBatchInbaRatio = 0.001;
+
+// NOTE: Insert Ratio when summary
+static constexpr double batchInsertRatio = 0.01;
+// NOTE: rectange type used in summary
+static constexpr int summaryRangeQueryType = 2;
+// NOTE: range query num in summary
+static constexpr int summaryRangeQueryNum = 10000;
+// NOTE: range query num in real-world
+static constexpr int realworldRangeQueryNum = 1000;
 
 template<typename T>
 class counter_iterator {
@@ -682,16 +700,11 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     // using ref_t = std::reference_wrapper<point>;
     // parlay::sequence<ref_t> out_ref( Out.size(), std::ref( Out[0] ) );
 
-    double aveQuery = time_loop(
-        rounds, 1.0, [&]() {},
-        [&]() {
-            parlay::parallel_for(0, recNum, [&](size_t i) {
-                kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
-            });
-        },
-        [&]() {});
+    parlay::parallel_for(0, recNum, [&](size_t i) {
+        kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
+    });
 
-    LOG << aveQuery << " " << std::flush;
+    // LOG << aveQuery << " " << std::flush;
     return;
 }
 

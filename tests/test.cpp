@@ -101,24 +101,13 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     //     delete[] kdknn;
     // }
     //
-    // if (queryType & (1 << 3)) { // NOTE: range query
-    //     if (tag == 0) {
-    //         const int type[3] = {0, 1, 2};
-    //         for (int i = 0; i < 3; i++) {
-    //             //* run range count to obtain size
-    //             kdknn = new Typename[recNum];
-    //             points Out;
-    //             //* range query
-    //             // rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum,
-    //             // Dim);
-    //             // WARN: this will change the rangeq query routine
-    //             rangeQuerySerialWithLog<point>(wp, pkd, kdknn, rounds, Out, type[i], recNum, Dim);
-    //         }
-    //     } else if (tag == 2) { // NOTE: for summary
-    //         kdknn = new Typename[recNum];
-    //         points Out;
-    //         rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, recNum, Dim);
-    //     }
+    if (queryType & (1 << 3)) { // NOTE: range query
+        size_t alloc_size = summaryRangeQueryNum;
+        kdknn = new Typename[alloc_size];
+        points Out;
+        rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, alloc_size, Dim);
+        delete[] kdknn;
+    }
     //
     //     delete[] kdknn;
     // }

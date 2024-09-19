@@ -125,11 +125,11 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
 
     // PERF: handle the size of cgknn dynamically
     Typename* cgknn;
-    if (tag == 1) {
-        cgknn = new Typename[N + wi.size()];
-    } else {
-        cgknn = new Typename[N];
-    }
+    // if (tag == 1) {
+    //     cgknn = new Typename[N + wi.size()];
+    // } else {
+    //     cgknn = new Typename[N];
+    // }
     int queryNum = rangeQueryNum;
 
     if (queryType & (1 << 0)) { // NOTE: KNN query
@@ -223,7 +223,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     }
 
     if (queryType & (1 << 3)) { // NOTE: range query
-        auto run_cgal_range_query = [&](int type) {
+        auto run_cgal_range_query = [&](int type, size_t queryNum) {
             size_t n = wp.size();
             auto [queryBox, maxSize] = gen_rectangles(queryNum, type, wp, Dim);
             // using ref_t = std::reference_wrapper<Point_d>;
@@ -231,48 +231,26 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
             // );
             std::vector<Point_d> _ans(queryNum * maxSize);
 
-            // timer.reset();
-            // timer.start();
-            //
-            // tbb::parallel_for(
-            //     tbb::blocked_range<std::size_t>(0, queryNum),
-            //     [&](const tbb::blocked_range<std::size_t>& r) {
-            //       for (std::size_t s = r.begin(); s != r.end(); ++s) {
-            //         Point_d a(Dim, std::begin(queryBox[s].first.first.pnt),
-            //                   std::end(queryBox[s].first.first.pnt)),
-            //             b(Dim, std::begin(queryBox[s].first.second.pnt),
-            //               std::end(queryBox[s].first.second.pnt));
-            //         Fuzzy_iso_box fib(a, b, 0.0);
-            //         auto it = tree.search(_ans.begin() + s * maxSize, fib);
-            //         cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
-            //       }
-            //     });
-            //
-            // timer.stop();
-            // std::cout << timer.total_time() << " " << std::flush;
+            timer.reset();
+            timer.start();
 
-            for (int s = 0; s < queryNum; s++) {
-                timer.reset(), timer.start();
+            tbb::parallel_for(
+                tbb::blocked_range<std::size_t>(0, queryNum), [&](const tbb::blocked_range<std::size_t>& r) {
+                    for (std::size_t s = r.begin(); s != r.end(); ++s) {
+                        Point_d a(Dim, std::begin(queryBox[s].first.first.pnt), std::end(queryBox[s].first.first.pnt)),
+                            b(Dim, std::begin(queryBox[s].first.second.pnt), std::end(queryBox[s].first.second.pnt));
+                        Fuzzy_iso_box fib(a, b, 0.0);
+                        auto it = tree.search(_ans.begin() + s * maxSize, fib);
+                        cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
+                    }
+                });
 
-                Point_d a(Dim, std::begin(queryBox[s].first.first.pnt), std::end(queryBox[s].first.first.pnt)),
-                    b(Dim, std::begin(queryBox[s].first.second.pnt), std::end(queryBox[s].first.second.pnt));
-                Fuzzy_iso_box fib(a, b, 0.0);
-                auto it = tree.search(_ans.begin() + s * maxSize, fib);
-                cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
-
-                timer.stop();
-                LOG << cgknn[s] << " " << timer.total_time() << " " << (cgknn[s] == queryBox[s].second) << ENDL;
-            }
+            timer.stop();
         };
 
-        if (tag == 0) {
-            const int type[3] = {0, 1, 2};
-            for (int i = 0; i < 3; i++) {
-                run_cgal_range_query(type[i]);
-            }
-        } else {
-            run_cgal_range_query(2);
-        }
+        delete[] cgknn;
+        cgknn = new Typename[summaryRangeQueryNum];
+        run_cgal_range_query(2, summaryRangeQueryNum);
     }
 
     if (queryType & (1 << 4)) { //* batch insert with fraction
