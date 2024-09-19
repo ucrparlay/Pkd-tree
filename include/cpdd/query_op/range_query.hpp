@@ -118,4 +118,4 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
     return;
 }
 
-} // namespace cpdd
+}  // namespace cpdd
