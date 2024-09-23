@@ -230,15 +230,16 @@ gen_rectangles(int recNum, const int type, const points& WP, int DIM) {
         range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
-        if (n >= 10000000)
-            range.second = n / 10 - 1;
-        else if (n >= 100000000)
-            range.second = n / 100 - 1;
-        else if (n >= 1000000000)
-            range.second = n / 1000 - 1;
-        else
+        if (n <= 1000000)
             range.second = n - 1;
+        else if (n <= 10000000)
+            range.second = n / 10 - 1;
+        else if (n <= 100000000)
+            range.second = n / 100 - 1;
+        else if (n <= 1000000000)
+            range.second = n / 1000 - 1;
     }
+    // LOG << n << " " << range.second << " " << ENDL;
     boxs bxs(recNum);
     int cnt = 0;
     points wp(n);
@@ -695,8 +696,8 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     using box = typename tree::box;
 
     auto [queryBox, maxSize] = gen_rectangles<point>(recNum, recType, WP, DIM);
-    Out.resize(recNum * maxSize);
     LOG << recNum << " " << maxSize << " " << std::flush;
+    Out.resize(recNum * maxSize);
 
     int n = WP.size();
     size_t step = Out.size() / recNum;
