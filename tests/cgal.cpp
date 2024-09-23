@@ -1,5 +1,6 @@
 #include "common/parse_command_line.h"
 
+#include "parlay/slice.h"
 #include "testFramework.h"
 #include <fstream>
 
@@ -45,187 +46,30 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     parlay::internal::timer timer;
 
     points wi;
-    if (insertFile != "" && readInsertFile) {
-        auto [nn, nd] = read_points<point>(insertFile.c_str(), wi, K);
-        if (nd != Dim) {
-            puts("read inserted points dimension wrong");
-            abort();
-        }
-    }
-    //* otherwise cannot insert heavy duplicated points
-    // wp = parlay::unique( parlay::sort( wp ),
-    //                      [&]( const point& a, const point& b ) { return a == b;
-    //                      } );
-    // wi = parlay::unique( parlay::sort( wi ),
-    //                      [&]( const point& a, const point& b ) { return a == b;
-    //                      } );
     N = wp.size();
-
-    //* cgal
-    std::vector<Point_d> _points_insert;
-    // parlay::parallel_for(0, N, [&](size_t i) {
-    //   _points[i] =
-    //       Point_d(Dim, std::begin(wp[i].pnt), (std::begin(wp[i].pnt) + Dim));
-    // });
 
     // return;
     timer.start();
     Splitter split;
     Tree tree(_points.begin(), _points.end(), split);
-    return;
     tree.template build<CGAL::Parallel_tag>();
     timer.stop();
 
     std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
 
-    if (tag >= 1) {
-        timer.reset();
-        timer.start();
-        size_t sz = _points_insert.size() * batchInsertRatio;
-        tree.insert(_points_insert.begin(), _points_insert.begin() + sz);
-        tree.template build<CGAL::Parallel_tag>();
-        std::cout << timer.total_time() << " " << std::flush;
-
-        if (tag == 1) wp.append(wi);
-    }
-
-    auto cgal_delete = [&](bool afterInsert = 1, double ratio = 1.0) {
-        if (!afterInsert) {
-            tree.clear();
-            tree.insert(_points.begin(), _points.end());
-            tree.template build<CGAL::Parallel_tag>();
+    // copy the wp, increase the memory usage
+    wp.resize(_points.size());
+    parlay::parallel_for(0, _points.size(), [&](size_t i) {
+        for (int j = 0; j < Dim; j++) {
+            wp[i].pnt[j] = _points[i].cartesian(j);
         }
-        timer.reset();
-        timer.start();
-        if (afterInsert) {
-            size_t sz = _points_insert.size() * ratio;
-            for (auto it = _points_insert.begin(); it != _points_insert.begin() + sz; it++) {
-                tree.remove(*it);
-            }
-        } else {
-            assert(tree.size() == wp.size());
-            size_t sz = _points.size() * ratio;
-            for (auto it = _points.begin(); it != _points.begin() + sz; it++) {
-                tree.remove(*it);
-            }
-        }
-        timer.stop();
-        std::cout << timer.total_time() << " " << std::flush;
-        tree.clear();
-        tree.insert(_points.begin(), _points.end());
-        tree.template build<CGAL::Parallel_tag>();
-        // assert( tree.root()->num_items() == wp.size() );
-    };
-
-    if (tag >= 2) {
-        cgal_delete(0, batchInsertRatio);
-    }
-
-    //* start test
-
-    // PERF: handle the size of cgknn dynamically
+    });
     Typename* cgknn;
-    // if (tag == 1) {
-    //     cgknn = new Typename[N + wi.size()];
-    // } else {
-    //     cgknn = new Typename[N];
-    // }
-    int queryNum = rangeQueryNum;
-
-    if (queryType & (1 << 0)) { // NOTE: KNN query
-        auto run_cgal_knn = [&](int kth) {
-            timer.reset();
-            timer.start();
-            parlay::sequence<size_t> visNodeNum(N, 0);
-            tbb::parallel_for(tbb::blocked_range<std::size_t>(0, N), [&](const tbb::blocked_range<std::size_t>& r) {
-                for (std::size_t s = r.begin(); s != r.end(); ++s) {
-                    // Neighbor search can be instantiated from
-                    // several threads at the same time
-                    Point_d query(Dim, std::begin(wp[s].pnt), std::begin(wp[s].pnt) + Dim);
-                    Neighbor_search search(tree, query, kth);
-                    auto it = search.end();
-                    it--;
-                    cgknn[s] = it->second;
-                    visNodeNum[s] = search.internals_visited() + search.leafs_visited();
-                }
-            });
-            timer.stop();
-            std::cout << timer.total_time() << " " << tree.root()->depth() << " "
-                      << parlay::reduce(visNodeNum) / wp.size() << " " << std::flush;
-        };
-
-        if (tag == 0) {
-            int k[3] = {1, 10, 100};
-            for (int i = 0; i < 3; i++) {
-                run_cgal_knn(k[i]);
-            }
-        } else {
-            run_cgal_knn(K);
-        }
-    }
-
-    if (queryType & (1 << 1)) { // NOTE: batch query
-        auto cgal_batch_knn = [&](points& pts, size_t batchSize) {
-            timer.reset();
-            timer.start();
-            parlay::sequence<size_t> visNodeNum(batchSize, 0);
-            tbb::parallel_for(tbb::blocked_range<std::size_t>(0, batchSize),
-                              [&](const tbb::blocked_range<std::size_t>& r) {
-                                  for (std::size_t s = r.begin(); s != r.end(); ++s) {
-                                      // Neighbor search can be instantiated from
-                                      // several threads at the same time
-                                      Point_d query(Dim, std::begin(pts[s].pnt), std::begin(pts[s].pnt) + Dim);
-                                      Neighbor_search search(tree, query, K);
-                                      auto it = search.end();
-                                      it--;
-                                      cgknn[s] = it->second;
-                                      visNodeNum[s] = search.internals_visited() + search.leafs_visited();
-                                  }
-                              });
-            timer.stop();
-            std::cout << timer.total_time() << " " << std::flush;
-        };
-
-        const std::vector<double> batchRatios = {0.001, 0.01, 0.1, 0.2, 0.5};
-        for (auto r : batchRatios) {
-            cgal_batch_knn(wp, static_cast<size_t>(wp.size() * r));
-        }
-        for (auto r : batchRatios) {
-            cgal_batch_knn(wi, static_cast<size_t>(wp.size() * r));
-        }
-    }
-
-    if (queryType & (1 << 2)) { // NOTE: range count
-        const int type[3] = {0, 1, 2};
-        for (int i = 0; i < 3; i++) {
-            size_t n = wp.size();
-            std::vector<Point_d> _ans(n);
-            auto [queryBox, maxSize] = gen_rectangles(queryNum, type[i], wp, Dim);
-
-            timer.reset();
-            timer.start();
-
-            parlay::parallel_for(0, queryNum, [&](size_t i) {
-                Point_d a(Dim, std::begin(queryBox[i].first.first.pnt), std::end(queryBox[i].first.first.pnt)),
-                    b(Dim, std::begin(queryBox[i].first.second.pnt), std::end(queryBox[i].first.second.pnt));
-                Fuzzy_iso_box fib(a, b, 0.0);
-
-                size_t cnt = 0;
-                counter_iterator<size_t> cnt_iter(cnt);
-
-                auto it = tree.search(cnt_iter, fib);
-                cgknn[i] = cnt;
-            });
-
-            timer.stop();
-            std::cout << timer.total_time() << " " << std::flush;
-        }
-    }
-
     if (queryType & (1 << 3)) { // NOTE: range query
         auto run_cgal_range_query = [&](int type, size_t queryNum) {
             size_t n = wp.size();
-            auto [queryBox, maxSize] = gen_rectangles(queryNum, type, wp, Dim);
+            auto [queryBox, maxSize] = gen_rectangles<point>(queryNum, type, wp, Dim);
+            LOG << queryNum << " " << maxSize << " " << std::flush;
             // using ref_t = std::reference_wrapper<Point_d>;
             // std::vector<ref_t> out_ref( queryNum * maxSize, std::ref( _points[0] )
             // );
@@ -248,77 +92,8 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
             timer.stop();
         };
 
-        delete[] cgknn;
         cgknn = new Typename[summaryRangeQueryNum];
         run_cgal_range_query(2, summaryRangeQueryNum);
-    }
-
-    if (queryType & (1 << 4)) { //* batch insert with fraction
-        // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
-        //                                          0.6, 0.7, 0.8, 0.9, 1.0};
-        const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
-        for (int i = 0; i < ratios.size(); i++) {
-            tree.clear();
-
-            //* build tree
-            _points.resize(wp.size());
-            N = wp.size();
-            tree.insert(_points.begin(), _points.end());
-            tree.template build<CGAL::Parallel_tag>();
-
-            auto sz = size_t(wi.size() * ratios[i]);
-            timer.reset(), timer.start();
-            tree.insert(_points_insert.begin(), _points_insert.begin() + sz);
-            timer.stop();
-            std::cout << timer.total_time() << " " << std::flush;
-        }
-    }
-
-    if (queryType & (1 << 5)) { //* batch deletion with fraction
-        // const parlay::sequence<double> ratios = {0.1, 0.2, 0.3, 0.4, 0.5,
-        //                                          0.6, 0.7, 0.8, 0.9, 1.0};
-        const parlay::sequence<double> ratios = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0};
-        for (int i = 0; i < ratios.size(); i++) {
-            tree.clear();
-
-            //* build tree
-            _points.resize(wp.size());
-            N = wp.size();
-            tree.insert(_points.begin(), _points.end());
-            tree.template build<CGAL::Parallel_tag>();
-
-            auto sz = size_t(wp.size() * ratios[i]);
-            timer.reset(), timer.start();
-            for (size_t i = 0; i < sz; i++) {
-                tree.remove(_points[i]);
-            }
-            timer.stop();
-            std::cout << timer.total_time() << " " << std::flush;
-        }
-    }
-
-    if (queryType & (1 << 6)) { //* incremental construct
-        double ratios[4] = {0.1, 0.2, 0.25, 0.5};
-        for (int i = 0; i < 4; i++) {
-            std::cout << "-1 -1 " << std::flush;
-        }
-    }
-
-    if (queryType & (1 << 7)) { //* incremental delete
-        double ratios[4] = {0.1, 0.2, 0.25, 0.5};
-        for (int i = 0; i < 4; i++) {
-            std::cout << "-1 -1 " << std::flush;
-        }
-    }
-
-    if (queryType & (1 << 8)) { //* incremental then knn
-        std::cout << "-1 -1 -1 " << std::flush;
-        std::cout << "-1 -1 -1 " << std::flush;
-    }
-
-    if (queryType & (1 << 9)) { //* decremental then knn
-        std::cout << "-1 -1 -1 " << std::flush;
-        std::cout << "-1 -1 -1 " << std::flush;
     }
 
     std::cout << std::endl << std::flush;

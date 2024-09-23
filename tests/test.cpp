@@ -30,19 +30,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     tree pkd;
 
     points wi;
-    if (insertFile != "" && read_insert_file) {
-        auto [nn, nd] = read_points<point>(insertFile.c_str(), wi, K);
-        LOG << "read insert file" << ENDL;
-        if (nd != Dim) {
-            puts("read inserted points dimension wrong");
-            abort();
-        }
-    }
 
     Typename* kdknn = nullptr;
 
     //* begin test
-    return;
+    // return;
     buildTree<point>(Dim, wp, rounds, pkd);
 
     // //* batch insert

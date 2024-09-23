@@ -159,12 +159,13 @@ size_t get_random_index(size_t a, size_t b, int seed) {
     // return size_t( ( parlay::hash64( static_cast<uint64_t>( seed ) ) % ( b - a
     // ) ) + a );
 }
-
 template<typename point>
 size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<std::pair<point, point>, size_t>>& boxs,
                    int DIM, std::pair<size_t, size_t> range, int& idx, int recNum, int type) {
     using tree = ParallelKDtree<point>;
     using box = typename tree::box;
+    unsigned seed = 2024;
+    std::default_random_engine rand(seed);
 
     size_t n = In.size();
     if (idx >= recNum || n < range.first || n == 0) return 0;
@@ -172,15 +173,16 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
     size_t mx = 0;
     bool goon = false;
     if (n <= range.second) {
+        // LOG << idx << " " << n << " " << ENDL;
         boxs[idx++] = std::make_pair(tree::get_box(In), In.size());
-        // if ( type == 2 ) LOG << In.size() << ENDL;
-        // NOTE: handle the cose that all points are the same then become
-        // un-divideabel
-        if (type == 2 && !parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
-            goon = true;
-            mx = In.size();
-        } else {
+        // NOTE: handle the cose that all points are the same then become un-divideable
+        // NOTE: Modify the coefficient to make the rectangle size distribute as uniform as possible within the range
+        if ((type == 0 && n < 40 * range.first) || (type == 1 && n < 10 * range.first) ||
+            (type == 2 && n < 2 * range.first) || parlay::all_of(In, [&](const point& p) { return p == In[0]; })) {
             return In.size();
+        } else {
+            goon = true;
+            mx = n;
         }
     }
 
@@ -208,11 +210,10 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
     }
 }
 
-template<typename point>
+template<typename point, typename points>
 std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t>
-gen_rectangles(int recNum, const int type, const parlay::sequence<point>& WP, int DIM) {
+gen_rectangles(int recNum, const int type, const points& WP, int DIM) {
     using tree = ParallelKDtree<point>;
-    using points = typename tree::points;
     using node = typename tree::node;
     using box = typename tree::box;
     using boxs = parlay::sequence<std::pair<box, size_t>>;
@@ -229,9 +230,11 @@ gen_rectangles(int recNum, const int type, const parlay::sequence<point>& WP, in
         range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
-        if (n == 100000000)
+        if (n >= 10000000)
+            range.second = n / 10 - 1;
+        else if (n >= 100000000)
             range.second = n / 100 - 1;
-        else if (n == 1000000000)
+        else if (n >= 1000000000)
             range.second = n / 1000 - 1;
         else
             range.second = n - 1;
@@ -691,9 +694,9 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     using node = typename tree::node;
     using box = typename tree::box;
 
-    auto [queryBox, maxSize] = gen_rectangles(recNum, recType, WP, DIM);
-    // LOG << maxSize << ENDL;
+    auto [queryBox, maxSize] = gen_rectangles<point>(recNum, recType, WP, DIM);
     Out.resize(recNum * maxSize);
+    LOG << recNum << " " << maxSize << " " << std::flush;
 
     int n = WP.size();
     size_t step = Out.size() / recNum;
