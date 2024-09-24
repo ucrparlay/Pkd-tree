@@ -1,9 +1,9 @@
 # Pkd-tree: a parallel kd-tree with batch update
 
-Pkd-tree is a library of kd-tree that is:
+Pkd-tree is an implementation of kd-tree that is:
 
-- Surprisingly fast,
-- Scale to billions input size,
+- Blazingly fast.
+- Scale to the billions input size.
 - All operations are in parallel, including:
   - tree construction,
   - batch insertion/deletion,
