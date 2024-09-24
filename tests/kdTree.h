@@ -2,7 +2,7 @@
 
 #include "testFramework.h"
 
-constexpr int MAX_DIM = 10;
+constexpr int MAX_DIM = 16;
 
 template<typename T>
 class Point {
