@@ -33,7 +33,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     tree pkd;
 
-    LOG << "inba: " << pkd.get_imbalance_ratio() << ENDL;
+    // LOG << "inba: " << pkd.get_imbalance_ratio() << ENDL;
 
     points wi;
     if (readInsertFile && insertFile != "") {
