@@ -226,34 +226,23 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP,
     double delay = -1;
 
     double aveIncreBuild = time_loop(
-        rounds, delay, [&]() { parlay::copy(WP, wp); },
+        rounds, delay,
         [&]() {
+            parlay::copy(WP, wp);
             pkd.reset_perf_rebuild();
+        },
+        [&]() {
             size_t l(0), r(0);
             while (l < n) {
                 r = std::min(l + step, n);
                 pkd.batchInsert(wp.cut(l, r), Dim);
                 l = r;
             }
-            LOG << pkd.get_rebuild_size() << " " << std::flush;
         },
         [&]() { pkd.delete_tree(); });
 
-    // parlay::copy(WP, wp);
+    LOG << aveIncreBuild << " " << pkd.get_rebuild_size() << std::flush;
 
-    // LOG << aveIncreBuild << " "
-    //     << pkd.get_ave_rebuild_time() / (aveIncreBuild / 1000) * 100 << " "
-    //     << std::flush;
-    // if (print == 1) {
-    //     auto deep = pkd.getAveTreeHeight();
-    //     LOG << aveIncreBuild << " " << deep << " " << std::flush;
-    // } else if (print ==
-    //            2) {  // NOTE: print the maxtree height and avetree height
-    //     size_t max_deep = 0;
-    //     LOG << aveIncreBuild << " "
-    //         << pkd.getMaxTreeDepth(pkd.get_root(), max_deep) << " "
-    //         << pkd.getAveTreeHeight() << " " << std::flush;
-    // }
     return;
 }
 

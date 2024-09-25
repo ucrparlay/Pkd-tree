@@ -263,18 +263,10 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         };
 
         // LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;
-        // LOG << pkd.get_imbalance_ratio() << " ";
+        LOG << pkd.get_imbalance_ratio() << " ";
         // HACK: need start with varden file
         // NOTE: 1: 10*0.1 different vardens.
         clean();
-        // for (int i = 1; i <= fileNum; i++) {
-        //     path = prefix + "/" + std::to_string(i) + ".in";
-        //     // std::cout << path << std::endl;
-        //     read_points<point>(path.c_str(), nq, K);
-        //     np.append(nq.cut(0, batchPointNum));
-        //     nq.clear();
-        // }
-        // writeToFile(ten_varden_path);
         read_points(ten_varden_path.c_str(), np, K);
         assert(np.size() == wp.size());
         run();
