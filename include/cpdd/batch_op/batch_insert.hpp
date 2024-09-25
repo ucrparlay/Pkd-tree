@@ -147,7 +147,7 @@ ParallelKDtree<point>::batchInsert_recusive(node* T, slice In, slice Out,
             TL->size += n;
             return T;
         } else {
-            return rebuild_with_insert<false>(T, In, d, DIM);
+            return rebuild_with_insert<true>(T, In, d, DIM);
         }
     }
 
