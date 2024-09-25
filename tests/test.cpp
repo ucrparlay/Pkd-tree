@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "parlay/parallel.h"
 #include "parlay/primitives.h"
+#include "parlay/sequence.h"
 #include "testFramework.h"
 
 template<typename point>
@@ -31,6 +32,8 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     }
 
     tree pkd;
+
+    LOG << "inba: " << pkd.get_imbalance_ratio() << ENDL;
 
     points wi;
     if (readInsertFile && insertFile != "") {
@@ -80,9 +83,11 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
 
     if (queryType & (1 << 0)) {  // NOTE: KNN
         size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
+        // WARN: remove when test others
+        // size_t batchSize = static_cast<size_t>(wp.size());
         if (summary == 0) {
-            int k[3] = {1, 10, 100};
-            for (int i = 0; i < 3; i++) {
+            parlay::sequence<int> k = {1, 10, 100};
+            for (int i = 0; i < k.size(); i++) {
                 run_batch_knn(wp, k[i], batchSize);
             }
         } else {  // test summary

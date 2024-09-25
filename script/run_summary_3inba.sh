@@ -11,8 +11,7 @@ Solvers=("test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
 Dim=(2 3 5 9)
-# Dim=(12)
-# Dim=(2 9)
+Inba=(3 10 30)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
@@ -33,22 +32,10 @@ for solver in "${Solvers[@]}"; do
 
     #* decide output file
     if [[ ${solver} == "test" ]]; then
-        # resFile="res_${type}.out"
-        resFile="res_${type}_once.out"
-    elif [[ ${solver} == "rtree" ]]; then
-        resFile="rtree_${type}_once.out"
-    elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal_${type}_once.out"
-    elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree_${type}.out"
-        exe="/home/zmen002/pbbsbench_x/build/zdtree"
+        resFile="res_${type}.out"
     fi
 
     for dim in "${Dim[@]}"; do
-        if [ "${dim}" -gt 3 ] && [ "${solver}" == "zdtree" ]; then
-            continue
-        fi
-
         for dataPath in "${!datas[@]}"; do
             for node in "${Node[@]}"; do
                 files_path="${dataPath}${node}_${dim}"
@@ -58,19 +45,12 @@ for solver in "${Solvers[@]}"; do
                 : >"${dest}"
                 echo ">>>${dest}"
 
-                for ((i = 1; i <= insNum; i++)); do
-
-                    # export PARLAY_NUM_THREADS=192
-                    export TEST_CGAL_THREADS=192
-                    numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -i 1 -s 1 >>"${dest}"
-
-                    retval=$?
-                    if [ ${retval} -eq 124 ]; then
-                        echo -e "timeout" >>"${dest}"
-                        echo "timeout ${node}_${dim}"
-                    else
-                        echo "finish ${node}_${dim}"
-                    fi
+                for ratio in "${Inba[@]}"; do
+                    for ((i = 1; i <= insNum; i++)); do
+                        export INBALANCE_RATIO=${ratio}
+                        export PARLAY_NUM_THREADS=192
+                        numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r ${rounds} -i 1 -s 1 >>"${dest}"
+                    done
                 done
             done
         done

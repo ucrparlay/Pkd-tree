@@ -30,7 +30,7 @@ template<typename point>
 struct ParallelKDtree<point>::leaf : node {
     bool is_dummy;
     points pts;
-    leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false) {};
+    leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false){};
     leaf(slice In) :
         node{true, static_cast<size_t>(In.size())}, is_dummy(false), pts(points::uninitialized(LEAVE_WRAP)) {
         for (int i = 0; i < In.size(); i++) {

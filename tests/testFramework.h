@@ -121,13 +121,14 @@ std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t> 
     } else if (type == 2) {  //* large bracket
         range.first = size_t(std::sqrt(n));
 
-        // NOTE: special handle for large dimension datasets
-        if (n >= 100000000)
-            range.second = n / 100 - 1;
-        else if (n >= 1000000000)
-            range.second = n / 1000 - 1;
-        else
+        if (n <= 1000000)
             range.second = n - 1;
+        else if (n <= 10000000)
+            range.second = n / 10 - 1;
+        else if (n <= 100000000)
+            range.second = n / 100 - 1;
+        else if (n <= 1000000000)
+            range.second = n / 1000 - 1;
     }
     boxs bxs(recNum);
     int cnt = 0;

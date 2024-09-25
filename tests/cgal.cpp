@@ -205,10 +205,12 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
     };
 
     if (queryType & (1 << 0)) {  // NOTE: KNN query
+        // size_t batchSize = static_cast<size_t>(wp.size());
         size_t batchSize = static_cast<size_t>(wp.size() * batchQueryRatio);
         if (summary == 0) {
-            const int k[3] = {1, 10, 100};
-            for (int i = 0; i < 3; i++) {
+            parlay::sequence<int> k = {1, 10, 100};
+            // parlay::sequence<int> k = {1, 10};
+            for (int i = 0; i < k.size(); i++) {
                 run_cgal_knn(wp, k[i], batchSize);
             }
         } else {
