@@ -317,6 +317,8 @@ class ParallelKDtree {
             << get_ave_rebuild_time() << " ";
     }
 
+    inline size_t get_rebuild_size() { return this->rebuild_size; }
+
     inline size_t get_rebuild_count() { return this->rebuild_count; }
 
    private:

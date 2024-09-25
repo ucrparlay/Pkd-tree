@@ -259,27 +259,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
             } else {
                 incrementalBuild<point, 2>(Dim, np, rounds, pkd,
                                            insertBatchInbaRatio);
-                // incrementalBuildAndQuery<point, 2>(Dim, np, rounds, pkd,
-                // insertBatchInbaRatio);
             }
-
-            // if (inbaQueryType == 0) {
-            //     size_t batchSize = static_cast<size_t>(np.size() *
-            //     knnBatchInbaRatio); points newPts(batchSize);
-            //     parlay::copy(np.cut(0, batchSize), newPts.cut(0, batchSize));
-            //     kdknn = new Typename[batchSize];
-            //     const int k[3] = {1, 5, 100};
-            //     for (int i = 0; i < 3; i++) {
-            //         queryKNN<point, 0, 1>(Dim, newPts, rounds, pkd, kdknn,
-            //         k[i], true);
-            //     }
-            //     delete[] kdknn;
-            // } else if (inbaQueryType == 1) {
-            //     kdknn = new Typename[rangeQueryNumInbaRatio];
-            //     int type = 2;
-            //     rangeCountFix<point>(np, pkd, kdknn, rounds, type,
-            //     rangeQueryNumInbaRatio, Dim); delete[] kdknn;
-            // }
         };
 
         // LOG << "alpha: " << pkd.get_imbalance_ratio() << ENDL;

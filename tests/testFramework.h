@@ -224,42 +224,26 @@ void incrementalBuild(const int Dim, const parlay::sequence<point>& WP,
 
     pkd.delete_tree();
     double delay = -1;
-    if (pkd.get_imbalance_ratio() == 1 || rounds == 1) {
-        delay = -0.1;
-    }
 
     double aveIncreBuild = time_loop(
         rounds, delay, [&]() { parlay::copy(WP, wp); },
         [&]() {
             pkd.reset_perf_rebuild();
             size_t l(0), r(0);
-            double sum_rebuild_portion = 0.0;
             while (l < n) {
-                pkd.set_init_size(l);
-                size_t old_count = pkd.get_rebuild_count();
-
                 r = std::min(l + step, n);
                 pkd.batchInsert(wp.cut(l, r), Dim);
-
-                if (l > 0 && pkd.get_rebuild_count() > old_count) {
-                    sum_rebuild_portion +=
-                        pkd.get_rebuild_portion() /
-                        (1.0 * pkd.get_rebuild_count() - old_count);
-                }
                 l = r;
             }
-            // pkd.print_perf_rebuild();
-            // LOG << sum_rebuild_portion << ENDL;
-            LOG << pkd.get_rebuild_count() << " " << sum_rebuild_portion / 1000
-                << " " << pkd.get_ave_rebuild_time() << " ";
+            LOG << pkd.get_rebuild_size() << " " << std::flush;
         },
         [&]() { pkd.delete_tree(); });
 
     // parlay::copy(WP, wp);
 
-    LOG << aveIncreBuild << " "
-        << pkd.get_ave_rebuild_time() / (aveIncreBuild / 1000) * 100 << " "
-        << std::flush;
+    // LOG << aveIncreBuild << " "
+    //     << pkd.get_ave_rebuild_time() / (aveIncreBuild / 1000) * 100 << " "
+    //     << std::flush;
     // if (print == 1) {
     //     auto deep = pkd.getAveTreeHeight();
     //     LOG << aveIncreBuild << " " << deep << " " << std::flush;
