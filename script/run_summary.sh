@@ -9,7 +9,7 @@ set -o xtrace
 # Solvers=("test" "cgal")
 Solvers=("test" "cgal")
 # Node=(100000000 1000000000)
-Node=(1000000000)
+Node=(100000000)
 # Dim=(2 3 5 9)
 Dim=(12)
 # Dim=(2 9)
@@ -34,11 +34,11 @@ for solver in "${Solvers[@]}"; do
     #* decide output file
     if [[ ${solver} == "test" ]]; then
         # resFile="res_${type}.out"
-        resFile="res_${type}_once.out"
+        resFile="res_${type}.out"
     elif [[ ${solver} == "rtree" ]]; then
-        resFile="rtree_${type}_once.out"
+        resFile="rtree_${type}.out"
     elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal_${type}_once.out"
+        resFile="cgal_${type}.out"
     fi
 
     for dim in "${Dim[@]}"; do
