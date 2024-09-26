@@ -749,6 +749,12 @@ int main(int argc, char* argv[]) {
         decltype(wp)().swap(wp);
         testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median, PointType<coord, 10>>(
             Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType, summary);
+    } else if (Dim == 12) {
+        auto pts = parlay::tabulate(
+            N, [&](size_t i) -> PointType<coord, 12> { return PointType<coord, 12>(wp[i].pnt.begin()); });
+        decltype(wp)().swap(wp);
+        testCGALParallel<Median_of_rectangle, Tree_Median, Neighbor_search_Median, PointType<coord, 12>>(
+            Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType, summary);
     } else if (Dim == 16) {
         auto pts = parlay::tabulate(
             N, [&](size_t i) -> PointType<coord, 16> { return PointType<coord, 16>(wp[i].pnt.begin()); });

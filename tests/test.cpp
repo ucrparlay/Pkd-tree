@@ -601,6 +601,12 @@ int main(int argc, char* argv[]) {
         decltype(wp)().swap(wp);
         testParallelKDtree<PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType,
                                                  readInsertFile, summary);
+    } else if (Dim == 12) {
+        auto pts = parlay::tabulate(
+            N, [&](size_t i) -> PointType<coord, 12> { return PointType<coord, 12>(wp[i].pnt.begin()); });
+        decltype(wp)().swap(wp);
+        testParallelKDtree<PointType<coord, 12>>(Dim, LEAVE_WRAP, pts, N, K, rounds, insertFile, tag, queryType,
+                                                 readInsertFile, summary);
     } else if (Dim == 16) {
         auto pts = parlay::tabulate(
             N, [&](size_t i) -> PointType<coord, 16> { return PointType<coord, 16>(wp[i].pnt.begin()); });

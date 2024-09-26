@@ -7,19 +7,19 @@
 set -o xtrace
 # Solvers=("rtree" "test" "cgal")
 # Solvers=("test" "cgal")
-Solvers=("test")
+Solvers=("test" "cgal")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-Dim=(2 3 5 9)
-# Dim=(12)
+# Dim=(2 3 5 9)
+Dim=(12)
 # Dim=(2 9)
 declare -A datas
-datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+# datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
 datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=10
-insNum=1
+insNum=2
 # queryType=$((2#1)) # 1110000
 queryType=$((2#1001)) # 1110000
 echo $queryType
@@ -39,9 +39,6 @@ for solver in "${Solvers[@]}"; do
         resFile="rtree_${type}_once.out"
     elif [[ ${solver} == "cgal" ]]; then
         resFile="cgal_${type}_once.out"
-    elif [[ ${solver} == "zdtree" ]]; then
-        resFile="zdtree_${type}.out"
-        exe="/home/zmen002/pbbsbench_x/build/zdtree"
     fi
 
     for dim in "${Dim[@]}"; do

@@ -23,7 +23,7 @@ insNum=1
 # queryType=$((2#1)) # 1110000
 queryType=$((2#1001)) # 1110000
 echo $queryType
-type="summary"
+type="summary_3inba"
 rounds=3
 
 resFile=""
