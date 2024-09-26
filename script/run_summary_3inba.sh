@@ -10,7 +10,8 @@ set -o xtrace
 Solvers=("test")
 # Node=(100000000 1000000000)
 Node=(1000000000)
-Dim=(2 3 5 9)
+# Dim=(2 3 5 9)
+Dim=(9 3 5 2)
 Inba=(3 10 30)
 declare -A datas
 datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
