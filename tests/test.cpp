@@ -230,7 +230,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         const string one_uniform_nine_varden =
             "/data/zmen002/kdtree/ss_varden/1000000000_3/1U9V.in";
 
-        auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
+        // auto inbaQueryType = std::stoi(std::getenv("INBA_QUERY"));
         auto inbaBuildType = std::stoi(std::getenv("INBA_BUILD"));
 
         // NOTE: helper functions
