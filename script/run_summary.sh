@@ -14,8 +14,8 @@ Node=(100000000)
 Dim=(12)
 # Dim=(2 9)
 declare -A datas
-# datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data/legacy/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+# datas["/data/legacy/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
 
 tag=2
 k=10
