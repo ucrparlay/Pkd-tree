@@ -8,23 +8,18 @@ path = "../benchmark"
 # benchmarks = ["ss_varden"]
 benchmarks = ["uniform", "ss_varden"]
 storePrefix = "data/"
-# Nodes = [1000000000]
-Nodes = [100000000]
-# Dims = [2, 3, 5, 9]
-Dims = [12]
+Nodes = [1000000000]
+# Nodes = [100000000]
+Dims = [2, 3, 5, 9]
+# Dims = [12]
 
-solverName = ["test", "cgal"]
-resMap = {"test": "res_summary.out", "cgal": "cgal_summary.out"}
+solverName = ["test"]
+resMap = {"test": "res_summary_3inba.out"}
 
-common = [
-    "solver",
-    "benchType",
-    "nodes",
-    "dims",
-]
+common = ["solver", "benchType", "nodes", "dims", "inba_ratios"]
 
 #! order by test order
-files = ["summary"]
+files = ["summary_3inba"]
 
 build_header = [
     "build",
@@ -43,12 +38,11 @@ build_header = [
     "rangeQuery",
 ]
 file_header = {
-    "summary": build_header,
+    "summary_3inba": build_header,
 }
+inba_ratios = ["3", "10", "30"]
 
 prefix = [0] * len(files)
-
-# TODO change order
 
 
 def combine(P, file, csvWriter, solver, benchName, node, dim):
@@ -67,25 +61,11 @@ def combine(P, file, csvWriter, solver, benchName, node, dim):
     lines = open(P, "r").readlines()
     if len(lines) == 0:
         return
-    sep_lines = []
-    for line in lines:
+    for index, line in enumerate(lines):
         l = " ".join(line.split())
         l = l.split(" ")
-        sep_lines.append(l)
-
-    width = len(file_header[file])
-    l = prefix[files.index(file)]
-    r = l + width
-    num = len(lines)
-    for i in range(0, len(sep_lines), num):
-        line = [0] * width
-        for j in range(i, num):
-            for k in range(l, r):
-                line[k - l] = line[k - l] + float(sep_lines[j][k]) / num
-
-        csvWriter.writerow(
-            [solver, benchName, node, dim] + list(map(lambda x: round(x, 3), line))
-        )
+        l[0] = inba_ratios[index]
+        csvWriter.writerow([solver, benchName, node, dim] + l)
 
 
 def csvSetup(solver):
