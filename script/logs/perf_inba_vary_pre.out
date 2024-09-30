@@ -1,0 +1,450 @@
+ begin UNIFORM ... 
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/10000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    23,230,238,941      cycles:u                                                      (66.92%)
+    33,748,394,757      instructions:u            #    1.45  insn per cycle           (83.48%)
+        15,100,269      cache-references:u                                            (83.27%)
+         9,248,705      cache-misses:u            #   61.249 % of all cache refs      (83.39%)
+     6,230,359,379      branch-instructions:u                                         (83.28%)
+        13,178,273      branch-misses:u           #    0.21% of all branches          (83.38%)
+
+       2.446000492 seconds time elapsed
+
+      10.655224000 seconds user
+       7.191354000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/20000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    30,912,097,122      cycles:u                                                      (66.74%)
+    54,467,160,442      instructions:u            #    1.76  insn per cycle           (83.45%)
+        22,920,325      cache-references:u                                            (83.36%)
+        13,683,381      cache-misses:u            #   59.700 % of all cache refs      (83.34%)
+    10,895,136,399      branch-instructions:u                                         (83.43%)
+        27,656,169      branch-misses:u           #    0.25% of all branches          (83.24%)
+
+       4.618126284 seconds time elapsed
+
+      12.112498000 seconds user
+       7.634993000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/50000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    55,795,688,887      cycles:u                                                      (66.63%)
+   115,950,608,447      instructions:u            #    2.08  insn per cycle           (83.29%)
+        45,681,266      cache-references:u                                            (83.37%)
+        26,787,013      cache-misses:u            #   58.639 % of all cache refs      (83.45%)
+    24,906,562,175      branch-instructions:u                                         (83.32%)
+        66,547,874      branch-misses:u           #    0.27% of all branches          (83.38%)
+
+      10.883591840 seconds time elapsed
+
+      18.985436000 seconds user
+       9.479487000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/100000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    96,211,821,148      cycles:u                                                      (66.73%)
+   217,913,829,555      instructions:u            #    2.26  insn per cycle           (83.43%)
+        84,132,142      cache-references:u                                            (83.37%)
+        44,922,466      cache-misses:u            #   53.395 % of all cache refs      (83.27%)
+    48,289,661,273      branch-instructions:u                                         (83.31%)
+       127,641,313      branch-misses:u           #    0.26% of all branches          (83.35%)
+
+      21.334292645 seconds time elapsed
+
+      30.949543000 seconds user
+       8.793802000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/200000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   171,690,593,175      cycles:u                                                      (66.62%)
+   418,733,457,617      instructions:u            #    2.44  insn per cycle           (83.33%)
+       160,741,939      cache-references:u                                            (83.34%)
+        89,291,549      cache-misses:u            #   55.550 % of all cache refs      (83.37%)
+    94,573,374,533      branch-instructions:u                                         (83.38%)
+       263,658,129      branch-misses:u           #    0.28% of all branches          (83.34%)
+
+      42.488680936 seconds time elapsed
+
+      50.985887000 seconds user
+      12.876676000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/500000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   405,330,413,974      cycles:u                                                      (66.70%)
+ 1,026,126,269,780      instructions:u            #    2.53  insn per cycle           (83.36%)
+       390,417,800      cache-references:u                                            (83.35%)
+       211,808,610      cache-misses:u            #   54.252 % of all cache refs      (83.32%)
+   234,108,220,067      branch-instructions:u                                         (83.32%)
+       627,968,700      branch-misses:u           #    0.27% of all branches          (83.33%)
+
+     105.377541508 seconds time elapsed
+
+     115.853117000 seconds user
+      22.515658000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   796,782,922,010      cycles:u                                                      (66.68%)
+ 2,039,568,791,219      instructions:u            #    2.56  insn per cycle           (83.34%)
+       772,717,987      cache-references:u                                            (83.33%)
+       418,128,573      cache-misses:u            #   54.111 % of all cache refs      (83.34%)
+   466,711,156,517      branch-instructions:u                                         (83.33%)
+     1,290,772,498      branch-misses:u           #    0.28% of all branches          (83.33%)
+
+     209.988591149 seconds time elapsed
+
+     224.281847000 seconds user
+      37.976304000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/10000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    21,375,318,433      cycles:u                                                      (66.78%)
+    40,019,630,883      instructions:u            #    1.87  insn per cycle           (83.41%)
+        39,616,218      cache-references:u                                            (83.61%)
+        30,184,842      cache-misses:u            #   76.193 % of all cache refs      (83.47%)
+     8,231,267,564      branch-instructions:u                                         (83.33%)
+        13,228,609      branch-misses:u           #    0.16% of all branches          (83.43%)
+
+       3.915418306 seconds time elapsed
+
+       8.554262000 seconds user
+       3.238471000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/20000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    35,213,154,744      cycles:u                                                      (66.95%)
+    72,912,250,065      instructions:u            #    2.07  insn per cycle           (83.58%)
+        73,651,222      cache-references:u                                            (83.30%)
+        58,280,193      cache-misses:u            #   79.130 % of all cache refs      (83.33%)
+    15,705,413,518      branch-instructions:u                                         (83.24%)
+        28,534,016      branch-misses:u           #    0.18% of all branches          (83.32%)
+
+       7.785853180 seconds time elapsed
+
+      12.126405000 seconds user
+       3.794056000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/50000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    71,719,947,743      cycles:u                                                      (66.70%)
+   167,976,460,154      instructions:u            #    2.34  insn per cycle           (83.38%)
+       174,809,451      cache-references:u                                            (83.38%)
+       140,978,862      cache-misses:u            #   80.647 % of all cache refs      (83.46%)
+    37,574,917,411      branch-instructions:u                                         (83.41%)
+        69,209,222      branch-misses:u           #    0.18% of all branches          (83.31%)
+
+      19.369046773 seconds time elapsed
+
+      22.048307000 seconds user
+       4.821334000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/100000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   138,682,412,596      cycles:u                                                      (66.74%)
+   329,009,115,974      instructions:u            #    2.37  insn per cycle           (83.39%)
+       338,927,849      cache-references:u                                            (83.34%)
+       280,151,611      cache-misses:u            #   82.658 % of all cache refs      (83.33%)
+    74,555,729,213      branch-instructions:u                                         (83.30%)
+       132,465,089      branch-misses:u           #    0.18% of all branches          (83.35%)
+
+      39.487824338 seconds time elapsed
+
+      39.708413000 seconds user
+       7.166878000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/200000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   260,307,832,190      cycles:u                                                      (66.67%)
+   648,624,304,991      instructions:u            #    2.49  insn per cycle           (83.35%)
+       676,253,374      cache-references:u                                            (83.35%)
+       556,801,621      cache-misses:u            #   82.336 % of all cache refs      (83.38%)
+   148,035,869,681      branch-instructions:u                                         (83.32%)
+       281,348,844      branch-misses:u           #    0.19% of all branches          (83.33%)
+
+      76.878556057 seconds time elapsed
+
+      71.975292000 seconds user
+      11.622032000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/500000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   643,889,108,624      cycles:u                                                      (66.65%)
+ 1,612,795,016,824      instructions:u            #    2.50  insn per cycle           (83.33%)
+     1,676,425,171      cache-references:u                                            (83.32%)
+     1,386,880,682      cache-misses:u            #   82.728 % of all cache refs      (83.35%)
+   368,701,778,525      branch-instructions:u                                         (83.36%)
+       654,548,038      branch-misses:u           #    0.18% of all branches          (83.35%)
+
+     193.223575595 seconds time elapsed
+
+     175.920693000 seconds user
+      24.560255000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/ss_varden/1000000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+ 1,277,449,891,089      cycles:u                                                      (66.67%)
+ 3,215,555,207,006      instructions:u            #    2.52  insn per cycle           (83.34%)
+     3,399,568,298      cache-references:u                                            (83.33%)
+     2,770,716,074      cache-misses:u            #   81.502 % of all cache refs      (83.33%)
+   736,681,630,149      branch-instructions:u                                         (83.33%)
+     1,336,151,957      branch-misses:u           #    0.18% of all branches          (83.34%)
+
+     389.073840793 seconds time elapsed
+
+     345.199857000 seconds user
+      49.916828000 seconds sys
+
+
+ begin UNIFORM ... 
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    23,458,351,078      cycles:u                                                      (66.71%)
+    34,510,256,559      instructions:u            #    1.47  insn per cycle           (83.44%)
+        15,709,786      cache-references:u                                            (83.35%)
+         9,486,046      cache-misses:u            #   60.383 % of all cache refs      (83.28%)
+     6,260,930,310      branch-instructions:u                                         (83.44%)
+        17,817,705      branch-misses:u           #    0.28% of all branches          (83.49%)
+
+       2.485164562 seconds time elapsed
+
+       9.762990000 seconds user
+       6.968713000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    32,327,343,159      cycles:u                                                      (66.80%)
+    56,415,448,275      instructions:u            #    1.75  insn per cycle           (83.49%)
+        23,231,377      cache-references:u                                            (83.32%)
+        13,809,902      cache-misses:u            #   59.445 % of all cache refs      (83.30%)
+    11,464,617,746      branch-instructions:u                                         (83.40%)
+        35,134,088      branch-misses:u           #    0.31% of all branches          (83.35%)
+
+       4.712120460 seconds time elapsed
+
+      12.694836000 seconds user
+       8.181913000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    58,241,564,868      cycles:u                                                      (66.85%)
+   119,233,244,444      instructions:u            #    2.05  insn per cycle           (83.51%)
+        45,646,991      cache-references:u                                            (83.35%)
+        26,735,245      cache-misses:u            #   58.570 % of all cache refs      (83.29%)
+    26,172,939,239      branch-instructions:u                                         (83.29%)
+        87,341,648      branch-misses:u           #    0.33% of all branches          (83.32%)
+
+      11.382562511 seconds time elapsed
+
+      19.746714000 seconds user
+       9.053871000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    94,631,469,065      cycles:u                                                      (66.54%)
+   217,055,942,504      instructions:u            #    2.29  insn per cycle           (83.23%)
+        83,722,975      cache-references:u                                            (83.37%)
+        48,403,844      cache-misses:u            #   57.814 % of all cache refs      (83.39%)
+    48,215,338,230      branch-instructions:u                                         (83.45%)
+       176,571,171      branch-misses:u           #    0.37% of all branches          (83.35%)
+
+      21.858847134 seconds time elapsed
+
+      29.413959000 seconds user
+      10.103906000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   178,879,435,362      cycles:u                                                      (66.67%)
+   435,855,973,641      instructions:u            #    2.44  insn per cycle           (83.36%)
+       160,992,499      cache-references:u                                            (83.33%)
+        89,730,232      cache-misses:u            #   55.736 % of all cache refs      (83.31%)
+    99,862,982,970      branch-instructions:u                                         (83.37%)
+       346,124,199      branch-misses:u           #    0.35% of all branches          (83.40%)
+
+      44.632544693 seconds time elapsed
+
+      52.970694000 seconds user
+      13.783920000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   425,205,487,196      cycles:u                                                      (66.66%)
+ 1,070,844,649,651      instructions:u            #    2.52  insn per cycle           (83.33%)
+       387,037,457      cache-references:u                                            (83.33%)
+       214,340,498      cache-misses:u            #   55.380 % of all cache refs      (83.34%)
+   247,552,675,102      branch-instructions:u                                         (83.34%)
+       876,333,374      branch-misses:u           #    0.35% of all branches          (83.36%)
+
+     109.571105955 seconds time elapsed
+
+     120.913911000 seconds user
+      21.806095000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/test -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   828,535,210,520      cycles:u                                                      (66.68%)
+ 2,126,088,998,414      instructions:u            #    2.57  insn per cycle           (83.34%)
+       774,156,823      cache-references:u                                            (83.33%)
+       431,458,166      cache-misses:u            #   55.733 % of all cache refs      (83.32%)
+   493,320,784,297      branch-instructions:u                                         (83.34%)
+     1,693,786,286      branch-misses:u           #    0.34% of all branches          (83.33%)
+
+     220.419417262 seconds time elapsed
+
+     232.507260000 seconds user
+      38.151171000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/10000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    20,926,894,536      cycles:u                                                      (67.18%)
+    39,606,243,285      instructions:u            #    1.89  insn per cycle           (83.53%)
+        39,657,740      cache-references:u                                            (83.01%)
+        30,193,630      cache-misses:u            #   76.136 % of all cache refs      (83.18%)
+     8,186,961,029      branch-instructions:u                                         (83.45%)
+        17,734,101      branch-misses:u           #    0.22% of all branches          (83.69%)
+
+       3.966582985 seconds time elapsed
+
+       8.101291000 seconds user
+       3.158976000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/20000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    34,725,152,087      cycles:u                                                      (66.76%)
+    73,604,681,810      instructions:u            #    2.12  insn per cycle           (83.49%)
+        73,381,578      cache-references:u                                            (83.48%)
+        58,130,392      cache-misses:u            #   79.217 % of all cache refs      (83.53%)
+    16,103,682,489      branch-instructions:u                                         (83.35%)
+        36,140,090      branch-misses:u           #    0.22% of all branches          (83.15%)
+
+       8.036511168 seconds time elapsed
+
+      12.181560000 seconds user
+       3.281811000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/50000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+    74,441,830,596      cycles:u                                                      (66.89%)
+   172,306,181,419      instructions:u            #    2.31  insn per cycle           (83.50%)
+       176,666,097      cache-references:u                                            (83.31%)
+       141,457,011      cache-misses:u            #   80.070 % of all cache refs      (83.28%)
+    38,996,692,713      branch-instructions:u                                         (83.32%)
+        89,585,183      branch-misses:u           #    0.23% of all branches          (83.32%)
+
+      20.158695490 seconds time elapsed
+
+      22.836926000 seconds user
+       4.980187000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/100000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   137,092,274,741      cycles:u                                                      (66.72%)
+   330,118,910,529      instructions:u            #    2.41  insn per cycle           (83.41%)
+       345,350,757      cache-references:u                                            (83.32%)
+       280,170,075      cache-misses:u            #   81.126 % of all cache refs      (83.35%)
+    74,739,955,584      branch-instructions:u                                         (83.36%)
+       174,387,139      branch-misses:u           #    0.23% of all branches          (83.34%)
+
+      38.794638876 seconds time elapsed
+
+      39.171860000 seconds user
+       7.064688000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/200000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   269,197,175,060      cycles:u                                                      (66.69%)
+   666,141,961,491      instructions:u            #    2.47  insn per cycle           (83.33%)
+       674,736,438      cache-references:u                                            (83.36%)
+       557,350,880      cache-misses:u            #   82.603 % of all cache refs      (83.37%)
+   153,314,366,566      branch-instructions:u                                         (83.32%)
+       354,174,520      branch-misses:u           #    0.23% of all branches          (83.32%)
+
+      79.454042203 seconds time elapsed
+
+      74.722435000 seconds user
+      11.154875000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/500000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+   665,197,934,859      cycles:u                                                      (66.66%)
+ 1,654,567,842,849      instructions:u            #    2.49  insn per cycle           (83.34%)
+     1,731,802,772      cache-references:u                                            (83.33%)
+     1,384,517,582      cache-misses:u            #   79.947 % of all cache refs      (83.34%)
+   382,051,678,493      branch-instructions:u                                         (83.34%)
+       827,825,419      branch-misses:u           #    0.22% of all branches          (83.35%)
+
+     198.719475306 seconds time elapsed
+
+     181.006449000 seconds user
+      24.250399000 seconds sys
+
+
+1.in 
+ Performance counter stats for './../build/cgal -p /data/zmen002/kdtree/uniform/1000000000_3/1.in -d 3 -t 0 -q 8 -r 1 -i 0':
+
+ 1,321,477,066,123      cycles:u                                                      (66.67%)
+ 3,301,992,234,686      instructions:u            #    2.50  insn per cycle           (83.34%)
+     3,272,912,767      cache-references:u                                            (83.33%)
+     2,772,190,392      cache-misses:u            #   84.701 % of all cache refs      (83.34%)
+   763,285,682,462      branch-instructions:u                                         (83.34%)
+     1,755,692,534      branch-misses:u           #    0.23% of all branches          (83.33%)
+
+     402.206416671 seconds time elapsed
+
+     357.300267000 seconds user
+      50.132937000 seconds sys
+
+
