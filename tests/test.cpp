@@ -267,37 +267,15 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
         // HACK: need start with varden file
         // NOTE: 1: 10*0.1 different vardens.
         clean();
-        read_points(ten_varden_path.c_str(), np, K);
-        assert(np.size() == wp.size());
-        run();
+        // read_points(ten_varden_path.c_str(), np, K);
+        // assert(np.size() == wp.size());
+        // run();
 
         // NOTE: 2: 1 uniform, and 9*0.1 same varden
         //* read varden first
         clean();
-        // path = prefix + "/1.in";
-        // std::cout << "varden path" << path << std::endl;
-        // read_points<point>(path.c_str(), np, K);
-        //* then read uniforprefixm
-        // prefix = prefix.substr(0, prefix.rfind("/"));  // 1000000_3
-        // prefix = prefix.substr(0, prefix.rfind("/"));  // ss_varden
-        // path = prefix + "/uniform/" + std::to_string(wp.size()) + "_" +
-        // std::to_string(Dim) + "/1.in"; std::cout << "uniform path:" << path
-        // << std::endl;
-
-        // read_points<point>(path.c_str(), nq, K);
-        // parlay::parallel_for(0, batchPointNum, [&](size_t i) { np[i] = nq[i];
-        // }); writeToFile(one_uniform_nine_varden);
-        // read_points(one_uniform_nine_varden.c_str(), np, K);
-        // run();
-
-        //@ 3: 1 varden, but flatten;
-        // clean();
-        // path = prefix + "/1.in";
-        // // std::cout << path << std::endl;
-        // read_points<point>(path.c_str(), np, K);
-        // buildTree<point, 0>(Dim, np, rounds, pkd);
-        // pkd.flatten(pkd.get_root(), parlay::make_slice(np));
-        // run();
+        read_points(one_uniform_nine_varden.c_str(), np, K);
+        run();
 
         // delete[] kdknn;
     }
