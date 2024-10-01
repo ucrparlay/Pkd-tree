@@ -14,8 +14,8 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-using coord = long;
-// using coord = double;
+// using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -139,8 +139,6 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
                    int DIM, std::pair<size_t, size_t> range, int& idx, int recNum, int type) {
     using tree = ParallelKDtree<point>;
     using box = typename tree::box;
-    unsigned seed = 2024;
-    std::default_random_engine rand(seed);
 
     size_t n = In.size();
     if (idx >= recNum || n < range.first || n == 0) return 0;
@@ -184,11 +182,11 @@ size_t recurse_box(parlay::slice<point*, point*> In, parlay::sequence<std::pair<
         return std::max(l, r);
     }
 }
-
-template<typename point, typename points>
+template<typename point>
 std::pair<parlay::sequence<std::pair<std::pair<point, point>, size_t>>, size_t>
-gen_rectangles(int recNum, const int type, const points& WP, int DIM) {
+gen_rectangles(int recNum, const int type, const parlay::sequence<point>& WP, int DIM) {
     using tree = ParallelKDtree<point>;
+    using points = typename tree::points;
     using node = typename tree::node;
     using box = typename tree::box;
     using boxs = parlay::sequence<std::pair<box, size_t>>;
@@ -205,32 +203,30 @@ gen_rectangles(int recNum, const int type, const points& WP, int DIM) {
         range.first = size_t(std::sqrt(n));
 
         // NOTE: special handle for large dimension datasets
-        if (n <= 1000000)
-            range.second = n - 1;
-        else if (n <= 10000000)
-            range.second = n / 10 - 1;
-        else if (n <= 100000000)
+        if (n >= 100000000)
             range.second = n / 100 - 1;
-        else if (n <= 1000000000)
+        else if (n >= 1000000000)
             range.second = n / 1000 - 1;
+        else
+            range.second = n - 1;
     }
-    // LOG << n << " " << range.second << " " << ENDL;
     boxs bxs(recNum);
     int cnt = 0;
     points wp(n);
 
     srand(10);
 
-    // LOG << " " << range.first << " " << range.second << ENDL;
+    LOG << " " << range.first << " " << range.second << ENDL;
 
     size_t maxSize = 0;
     while (cnt < recNum) {
+        LOG << cnt << " " << maxSize << ENDL;
         parlay::copy(WP, wp);
         auto r = recurse_box<point>(parlay::make_slice(wp), bxs, DIM, range, cnt, recNum, type);
         maxSize = std::max(maxSize, r);
-        // LOG << cnt << " " << maxSize << ENDL;
+        LOG << cnt << " " << maxSize << ENDL;
     }
-    // LOG << "finish generate " << ENDL;
+    LOG << "finish generate " << ENDL;
     return std::make_pair(bxs, maxSize);
 }
 

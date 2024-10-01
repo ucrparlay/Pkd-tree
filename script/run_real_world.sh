@@ -1,53 +1,47 @@
 #!/bin/bash
-
-# Solvers=("test" "zdtree" "cgal")
-Solvers=("test")
+set -o xtrace
+# Solvers=("cgal" "test")
+Solvers=("test" "cgal")
 DataPath="/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
-file2Dims["Cosmo50"]="3"
-file2Dims["GeoLifeNoScale"]="3"
-file2Dims["Household"]="7"
 file2Dims["HT"]="10"
-file2Dims["OpenStreetMap"]="2"
+file2Dims["Household"]="7"
+file2Dims["CHEM"]="16"
+file2Dims["GeoLifeNoScale"]="3"
+file2Dims["Cosmo50"]="3"
+file2Dims["osm"]="2"
 
 tag=0
 k=100
 onecore=0
-insNum=2
+insNum=0
 readFile=0
 # queryType=$((2#1)) # 1110000
-queryType=1 # 1110000
-type="real_world"
+queryType=8 # 1110000
+type="real_world_range_query_perf"
 resFile=""
 
 for solver in ${Solvers[@]}; do
-	exe="../build/${solver}"
+    exe="../build/${solver}"
 
-	#* decide output file
-	if [[ ${solver} == "test" ]]; then
-		resFile="res_${type}.out"
-	elif [[ ${solver} == "cgal" ]]; then
-		resFile="cgal_${type}.out"
-	elif [[ ${solver} == "zdtree" ]]; then
-		resFile="zdtree_${type}.out"
-		exe="/home/zmen002/pbbsbench_x/build/zdtree"
-	fi
+    #* decide output file
+    if [[ ${solver} == "test" ]]; then
+        resFile="res_${type}.out"
+    elif [[ ${solver} == "cgal" ]]; then
+        resFile="cgal_${type}.out"
+    fi
 
-	log_path="../benchmark/real_world"
-	mkdir -p ${log_path}
-	dest="${log_path}/${resFile}"
-	: >${dest}
-	echo ">>>${dest}"
+    log_path="../benchmark/real_world"
+    mkdir -p ${log_path}
+    dest="${log_path}/${resFile}"
+    : >${dest}
+    echo ">>>${dest}"
 
-	for filename in "${!file2Dims[@]}"; do
-		if [ ${solver} == "zdtree" ] && [ ${file2Dims[${filename}]} -gt "3" ]; then
-			continue
-		fi
-		echo ${filename}
+    for filename in "${!file2Dims[@]}"; do
 
-		PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} >>${dest}
+        perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 1 -r 3 >>${dest} 2>&1
 
-	done
+    done
 done
 
 current_date_time="$(date "+%d %H:%M:%S")"

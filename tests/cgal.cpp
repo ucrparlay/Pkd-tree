@@ -49,7 +49,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
     points wi;
     N = wp.size();
 
-    return;
+    // return;
     timer.start();
     Splitter split;
     Tree tree(_points.begin(), _points.end(), split);
@@ -58,7 +58,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
 
     std::cout << timer.total_time() << " " << tree.root()->depth() << " " << std::flush;
 
-    return;
+    // return;
     // copy the wp, increase the memory usage
     wp.resize(_points.size());
     parlay::parallel_for(0, _points.size(), [&](size_t i) {

@@ -1,0 +1,102 @@
+../build/cgal: Segmentation fault
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/HT.in -k 100 -t 0 -d 10 -q 8 -i 0 -s 1 -r 3':
+
+   612,494,422,130      cycles:u                                                      (66.68%)
+   599,958,756,351      instructions:u            #    0.98  insn per cycle           (83.35%)
+    42,388,355,686      cache-references:u                                            (83.34%)
+     1,789,573,573      cache-misses:u            #    4.222 % of all cache refs      (83.34%)
+   173,936,257,887      branch-instructions:u                                         (83.33%)
+        39,346,160      branch-misses:u           #    0.02% of all branches          (83.31%)
+
+      13.681448666 seconds time elapsed
+
+     188.126560000 seconds user
+      19.347094000 seconds sys
+
+
+../build/cgal: Interrupt
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/Household.in -k 100 -t 0 -d 7 -q 8 -i 0 -s 1 -r 3':
+
+10,581,806,542,198      cycles:u                                                      (66.67%)
+ 5,280,024,046,076      instructions:u            #    0.50  insn per cycle           (83.33%)
+   436,357,080,959      cache-references:u                                            (83.33%)
+   377,231,852,950      cache-misses:u            #   86.450 % of all cache refs      (83.33%)
+ 1,402,181,228,694      branch-instructions:u                                         (83.33%)
+       625,850,181      branch-misses:u           #    0.04% of all branches          (83.33%)
+
+    2889.422556556 seconds time elapsed
+
+    2875.124625000 seconds user
+       4.183921000 seconds sys
+
+
+../build/cgal: Interrupt
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/osm.in -k 100 -t 0 -d 2 -q 8 -i 0 -s 1 -r 3':
+
+     1,457,808,986      cycles:u                                                      (66.58%)
+     4,421,285,849      instructions:u            #    3.03  insn per cycle           (83.29%)
+         4,215,948      cache-references:u                                            (83.29%)
+           133,100      cache-misses:u            #    3.157 % of all cache refs      (83.41%)
+       791,261,160      branch-instructions:u                                         (83.32%)
+            32,980      branch-misses:u           #    0.00% of all branches          (83.39%)
+
+       0.653596917 seconds time elapsed
+
+       0.383012000 seconds user
+       0.266746000 seconds sys
+
+
+../build/cgal: Interrupt
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/Cosmo50.in -k 100 -t 0 -d 3 -q 8 -i 0 -s 1 -r 3':
+
+        12,205,282      cycles:u                                                      (60.24%)
+        32,325,691      instructions:u            #    2.65  insn per cycle           (80.11%)
+            36,434      cache-references:u                                            (80.92%)
+            11,743      cache-misses:u            #   32.231 % of all cache refs      (90.03%)
+         5,875,018      branch-instructions:u                                         (82.72%)
+            26,895      branch-misses:u           #    0.46% of all branches          (86.08%)
+
+       0.011357800 seconds time elapsed
+
+       0.004341000 seconds user
+       0.006592000 seconds sys
+
+
+../build/cgal: Interrupt
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/GeoLifeNoScale.in -k 100 -t 0 -d 3 -q 8 -i 0 -s 1 -r 3':
+
+        22,280,868      cycles:u                                                      (62.98%)
+        62,621,110      instructions:u            #    2.81  insn per cycle           (82.46%)
+            53,648      cache-references:u                                            (85.47%)
+            10,241      cache-misses:u            #   19.089 % of all cache refs      (85.40%)
+        10,346,883      branch-instructions:u                                         (85.43%)
+            27,918      branch-misses:u           #    0.27% of all branches          (80.72%)
+
+       0.021442208 seconds time elapsed
+
+       0.015163000 seconds user
+       0.006051000 seconds sys
+
+
+../build/cgal: Interrupt
+
+ Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/CHEM.in -k 100 -t 0 -d 16 -q 8 -i 0 -s 1 -r 3':
+
+         9,544,628      cycles:u                                                      (61.71%)
+        24,088,000      instructions:u            #    2.52  insn per cycle           (83.03%)
+            34,735      cache-references:u                                            (85.78%)
+             7,634      cache-misses:u            #   21.978 % of all cache refs      (85.77%)
+         4,134,373      branch-instructions:u                                         (85.80%)
+            27,908      branch-misses:u           #    0.68% of all branches          (80.94%)
+
+       0.014838589 seconds time elapsed
+
+       0.008796000 seconds user
+       0.005901000 seconds sys
+
+

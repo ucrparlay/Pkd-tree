@@ -34,9 +34,9 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     Typename* kdknn = nullptr;
 
     //* begin test
-    return;
+    // return;
     buildTree<point>(Dim, wp, rounds, pkd);
-    return;
+    // return;
 
     if (queryType & (1 << 3)) { // NOTE: range query
         size_t alloc_size = realworldRangeQueryNum;
