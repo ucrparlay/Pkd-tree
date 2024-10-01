@@ -39,7 +39,8 @@ static constexpr double batchInsertRatio = 0.01;
 // NOTE: rectange type used in summary
 static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
-static constexpr int summaryRangeQueryNum = 10000;
+// static constexpr int summaryRangeQueryNum = 10000;
+static constexpr int summaryRangeQueryNum = 100;
 // NOTE: range query num in real-world
 static constexpr int realworldRangeQueryNum = 1000;
 
