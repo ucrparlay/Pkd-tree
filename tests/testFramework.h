@@ -39,8 +39,7 @@ static constexpr double batchInsertRatio = 0.01;
 // NOTE: rectange type used in summary
 static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
-// static constexpr int summaryRangeQueryNum = 10000;
-static constexpr int summaryRangeQueryNum = 100;
+static constexpr int summaryRangeQueryNum = 10000;
 // NOTE: range query num in real-world
 static constexpr int realworldRangeQueryNum = 1000;
 
@@ -110,31 +109,6 @@ std::pair<size_t, int> read_points(const char* iFile, parlay::sequence<point>& w
     using coord = typename point::coord;
     using coords = typename point::coords;
     static coords samplePoint;
-    // parlay::sequence<char> S = readStringFromFile(iFile);
-    // parlay::sequence<char*> W = stringToWords(S);
-    // size_t N = std::stoul(W[0], nullptr, 10);
-    // int Dim = atoi(W[1]);
-    // assert(N >= 0 && Dim >= 1 && N >= K);
-    //
-    // auto pts = W.cut(2, W.size());
-    // assert(pts.size() % Dim == 0);
-    // size_t n = pts.size() / Dim;
-    // auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
-    //     if constexpr (std::is_integral_v<coord>)
-    //         return std::stol(pts[i]);
-    //     else if (std::is_floating_point_v<coord>)
-    //         return std::stod(pts[i]);
-    // });
-    // wp.resize(N);
-    // parlay::parallel_for(0, n, [&](size_t i) {
-    //     for (int j = 0; j < Dim; j++) {
-    //         wp[i].pnt[j] = a[i * Dim + j];
-    //         if constexpr (std::is_same_v<point, PointType<coord, samplePoint.size()>>) {
-    //         } else {
-    //             wp[i].id = i;
-    //         }
-    //     }
-    // });
 
     ifstream fs;
     fs.open(iFile);

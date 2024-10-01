@@ -39,7 +39,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
     return;
 
     if (queryType & (1 << 3)) { // NOTE: range query
-        size_t alloc_size = summaryRangeQueryNum;
+        size_t alloc_size = realworldRangeQueryNum;
         kdknn = new Typename[alloc_size];
         points Out;
         rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, alloc_size, Dim);
@@ -68,8 +68,8 @@ int main(int argc, char* argv[]) {
     int readInsertFile = P.getOptionIntValue("-i", 1);
 
     int LEAVE_WRAP = 32;
-    using point = PointType<coord, 3>;
-    parlay::sequence<point> wp;
+    // using point = PointType<coord, 3>;
+    // parlay::sequence<point> wp;
     // parlay::sequence<PointID<coord, 15>> wp;
     std::string name, insertFile = "";
 
@@ -78,9 +78,6 @@ int main(int argc, char* argv[]) {
         name = std::string(iFile);
         name = name.substr(name.rfind("/") + 1);
         std::cout << name << " ";
-        auto [n, d] = read_points<point>(iFile, wp, K);
-        N = n;
-        assert(d == Dim);
     }
 
     if (readInsertFile == 1) {
@@ -92,61 +89,55 @@ int main(int argc, char* argv[]) {
     }
 
     assert(N > 0 && Dim > 0 && K > 0 && LEAVE_WRAP >= 1);
-    testParallelKDtree<point>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType, readInsertFile);
+    // testParallelKDtree<point>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType, readInsertFile);
 
-    // if (tag == -1) {
-    //   //* serial run
-    //   // todo rewrite test serial code
-    //   // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
-    // } else if (Dim == 2) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 2> {
-    //     return PointType<coord, 2>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 2>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                           insertFile, tag, queryType);
-    // } else if (Dim == 3) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 3> {
-    //     return PointType<coord, 3>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 3>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                           insertFile, tag, queryType);
-    // } else if (Dim == 5) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 5> {
-    //     return PointType<coord, 5>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 5>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                           insertFile, tag, queryType);
-    // } else if (Dim == 7) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 7> {
-    //     return PointType<coord, 7>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 7>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                           insertFile, tag, queryType);
-    // } else if (Dim == 9) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 9> {
-    //     return PointType<coord, 9>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 9>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                           insertFile, tag, queryType);
-    // } else if (Dim == 10) {
-    //   auto pts = parlay::tabulate(N, [&](size_t i) -> PointType<coord, 10> {
-    //     return PointType<coord, 10>(wp[i].pnt.begin());
-    //   });
-    //   decltype(wp)().swap(wp);
-    //   testParallelKDtree<PointType<coord, 10>>(Dim, LEAVE_WRAP, pts, N, K,
-    //   rounds,
-    //                                            insertFile, tag, queryType);
-    // }
+    if (tag == -1) {
+        //* serial run
+        // todo rewrite test serial code
+        // testSerialKDtree( Dim, LEAVE_WRAP, wp, N, K );
+    } else if (Dim == 2) {
+        parlay::sequence<PointType<coord, 2>> wp;
+        auto [n, d] = read_points<PointType<coord, 2>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 2>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                readInsertFile);
+    } else if (Dim == 3) {
+        parlay::sequence<PointType<coord, 3>> wp;
+        auto [n, d] = read_points<PointType<coord, 3>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 3>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                readInsertFile);
+    } else if (Dim == 5) {
+        parlay::sequence<PointType<coord, 5>> wp;
+        auto [n, d] = read_points<PointType<coord, 5>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 5>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                readInsertFile);
+    } else if (Dim == 7) {
+        parlay::sequence<PointType<coord, 7>> wp;
+        auto [n, d] = read_points<PointType<coord, 7>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 7>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                readInsertFile);
+    } else if (Dim == 9) {
+        parlay::sequence<PointType<coord, 9>> wp;
+        auto [n, d] = read_points<PointType<coord, 9>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 9>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                readInsertFile);
+    } else if (Dim == 10) {
+        parlay::sequence<PointType<coord, 10>> wp;
+        auto [n, d] = read_points<PointType<coord, 10>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 10>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                 readInsertFile);
+    } else if (Dim == 16) {
+        parlay::sequence<PointType<coord, 16>> wp;
+        auto [n, d] = read_points<PointType<coord, 16>>(iFile, wp, K);
+        N = n;
+        testParallelKDtree<PointType<coord, 16>>(Dim, LEAVE_WRAP, wp, N, K, rounds, insertFile, tag, queryType,
+                                                 readInsertFile);
+    }
 
     return 0;
 }
