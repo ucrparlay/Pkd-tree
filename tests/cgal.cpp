@@ -123,7 +123,11 @@ std::pair<size_t, int> cgal_read_points(const char* iFile, std::vector<Point_d>&
         std::vector<coord> arr(Dim);
         for (int j = 0; j < Dim; j++) {
             fs >> str;
-            arr[j] = stol(str);
+            if constexpr (std::is_same_v<coord, long>) {
+                arr[j] = stol(str);
+            } else if constexpr (std::is_same_v<coord, double>) {
+                arr[j] = stod(str);
+            }
         }
         wp[i] = Point_d(Dim, std::begin(arr), (std::begin(arr) + Dim));
     }
