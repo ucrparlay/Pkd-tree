@@ -433,18 +433,24 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         parlay::internal::timer timer;
         int within_num = 0;
         for (int i = 0; i < fileNum; i++) {
+            LOG << pts[i].size() << " ";
             timer.reset(), timer.start();
             tree.insert(pts[i].begin(), pts[i].end());
             tree.template build<CGAL::Parallel_tag>();
+            timer.stop();
+            LOG << timer.total_time() << " ";
+
             if (within_num == sliding_window_len) {
+                timer.reset(), timer.start();
                 for (int j = 0; j < pts[i - within_num].size(); j++) {
                     tree.remove(pts[i - within_num][j]);
                 }
+                timer.stop();
+                LOG << timer.total_time() << " ";
             } else {
                 within_num++;
+                LOG << "-1 ";
             }
-            timer.stop();
-            LOG << pts[i].size() << " " << timer.total_time() << " ";
 
             if (fileNum < 12) {
                 std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);

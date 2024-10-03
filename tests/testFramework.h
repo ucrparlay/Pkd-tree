@@ -830,20 +830,6 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
         wp[i].resize(node_by_time[i].size());
     }
 
-    // double ave = time_loop(
-    //     rounds, 1.0,
-    //     [&]() {
-    //         for (int i = 0; i < time_period_num; i++) {
-    //             parlay::copy(node_by_time[i], wp[i]);
-    //         }
-    //     },
-    //     [&]() {
-    //         for (int i = 0; i < time_period_num; i++) {
-    //             pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
-    //         }
-    //     },
-    //     [&]() { pkd.delete_tree(); });
-
     // NOTE: begin revert
     for (int i = 0; i < time_period_num; i++) {
         parlay::copy(node_by_time[i], wp[i]);
@@ -851,30 +837,26 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
     LOG << ENDL;
     int within_num = 0;
     for (int i = 0; i < time_period_num; i++) {
+        LOG << wp[i].size() << " ";
         parlay::internal::timer t;
         t.reset(), t.start();
-
         pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+        t.stop();
+        LOG << t.total_time() << " ";
         if (within_num == sliding_window_len) {
+            t.reset(), t.start();
             pkd.batchDelete(parlay::make_slice(wi[i - within_num]), Dim);
+            t.stop();
+            LOG << t.total_time() << " ";
         } else {
             within_num++;
+            LOG << "-1 ";
         }
-
-        t.stop();
-        LOG << wp[i].size() << " " << t.total_time() << " ";
 
         if (time_period_num < 12) {
             points tmp(node_by_time[0].begin(), node_by_time[0].begin() + batchQueryOsmSize);
             queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
         }
-        // else if (i != 0 && (i + 1) % 12 == 0) {
-        //     points tmp(batchQueryOsmSize);
-        //     parlay::copy(parlay::make_slice(wp[0]), tmp.cut(0, wp[0].size()));
-        //     parlay::copy(parlay::make_slice(wp[1].begin(), wp[1].begin() + batchQueryOsmSize - wp[0].size()),
-        //                  tmp.cut(wp[0].size(), tmp.size()));
-        //     queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
-        // }
 
         LOG << ENDL;
     }
