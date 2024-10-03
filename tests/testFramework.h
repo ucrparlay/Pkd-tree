@@ -16,8 +16,8 @@
 #include "parlay/primitives.h"
 #include "parlay/slice.h"
 
-using coord = long;
-// using coord = double;
+// using coord = long;
+using coord = double;
 using Typename = coord;
 using namespace cpdd;
 
@@ -828,11 +828,13 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
     parlay::sequence<points> wp(time_period_num), wi(time_period_num);
     for (int i = 0; i < time_period_num; i++) {
         wp[i].resize(node_by_time[i].size());
+        wi[i].resize(node_by_time[i].size());
     }
 
     // NOTE: begin revert
     for (int i = 0; i < time_period_num; i++) {
         parlay::copy(node_by_time[i], wp[i]);
+        parlay::copy(node_by_time[i], wi[i]);
     }
     LOG << ENDL;
     int within_num = 0;
@@ -844,6 +846,7 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
         t.stop();
         LOG << t.total_time() << " ";
         if (within_num == sliding_window_len) {
+            // LOG << "begin delete " << wi[i - within_num].size() << " ";
             t.reset(), t.start();
             pkd.batchDelete(parlay::make_slice(wi[i - within_num]), Dim);
             t.stop();

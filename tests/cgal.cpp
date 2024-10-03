@@ -473,6 +473,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         const size_t batchPointNum = wp.size() / fileNum;
 
         points np, nq;
+
         std::string prefix, path;
         const string insertFileBack = insertFile;
         auto clean = [&]() {
@@ -533,7 +534,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             read_points(path.c_str(), node_by_year[i], K);
         }
 
-        // LOG << "after read osm" << ENDL;
+        LOG << "after read osm" << ENDL;
 
         std::vector<std::vector<Point_d>> pts(files.size());
         for (int i = 0; i < files.size(); i++) {
