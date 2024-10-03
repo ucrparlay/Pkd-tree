@@ -121,14 +121,16 @@ gen_rectangles(int recNum, const int type, const parlay::sequence<point>& WP, in
     } else if (type == 2) { //* large bracket
         range.first = size_t(std::sqrt(n));
 
-        if (n <= 1000000)
+        if (n <= 1'000'000)
             range.second = n - 1;
-        else if (n <= 10000000)
+        else if (n <= 10'000'000)
             range.second = n / 10 - 1;
-        else if (n <= 100000000)
+        else if (n <= 100'000'000)
             range.second = n / 100 - 1;
-        else if (n <= 1000000000)
+        else if (n <= 1'000'000'000)
             range.second = n / 1000 - 1;
+        else if (n <= 10'000'000'000)
+            range.second = n / 10000 - 1;
     }
     boxs bxs(recNum);
     int cnt = 0;
@@ -679,21 +681,16 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     using ref_t = std::reference_wrapper<point>;
     parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
     double loopLate = rounds > 1 ? 1.0 : -0.1;
+    return;
 
-    double aveQuery = time_loop(
-        rounds, loopLate, [&]() {},
-        [&]() {
-            parlay::parallel_for(0, recNum, [&](size_t i) {
-                kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
-            });
-            // for (size_t i = 0; i < recNum; i++) {
-            //     kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
-            //     // LOG << kdknn[i] << " " << std::flush;
-            // }
-        },
-        [&]() {});
+    parlay::internal::timer t;
+    t.reset(), t.start();
+    parlay::parallel_for(0, recNum, [&](size_t i) {
+        kdknn[i] = pkd.range_query_serial(queryBox[i].first, Out.cut(i * step, (i + 1) * step));
+    });
+    t.stop();
+    LOG << t.total_time() << " " << std::flush;
 
-    LOG << aveQuery << " " << std::flush;
     return;
 }
 

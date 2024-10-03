@@ -39,7 +39,7 @@ for solver in ${Solvers[@]}; do
 
     for filename in "${!file2Dims[@]}"; do
 
-        perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 1 -r 3 >>${dest} 2>&1
+        perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 >>${dest} 2>&1
 
     done
 done

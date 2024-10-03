@@ -37,7 +37,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         kdknn = new Typename[alloc_size];
         points Out;
         rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, alloc_size, Dim);
-        delete[] kdknn;
+        // delete[] kdknn;
     }
 
     std::cout << std::endl << std::flush;
