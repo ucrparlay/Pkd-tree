@@ -681,7 +681,7 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     using ref_t = std::reference_wrapper<point>;
     parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
     double loopLate = rounds > 1 ? 1.0 : -0.1;
-    return;
+    // return;
 
     parlay::internal::timer t;
     t.reset(), t.start();

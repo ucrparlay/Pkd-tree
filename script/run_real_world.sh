@@ -18,7 +18,7 @@ insNum=0
 readFile=0
 # queryType=$((2#1)) # 1110000
 queryType=8 # 1110000
-type="real_world_range_query_perf"
+type="real_world_range_query_perf_after"
 resFile=""
 
 for solver in ${Solvers[@]}; do
@@ -38,6 +38,11 @@ for solver in ${Solvers[@]}; do
     echo ">>>${dest}"
 
     for filename in "${!file2Dims[@]}"; do
+        if [[ ${solver} == "cgal" ]]; then
+            if [ ${filename} == "Household" ] || [ ${filename} == "GeoLifeNoScale" ]; then
+                continue
+            fi
+        fi
 
         perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 >>${dest} 2>&1
 
