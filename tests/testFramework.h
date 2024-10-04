@@ -43,7 +43,7 @@ static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
 static constexpr int summaryRangeQueryNum = 10000;
 // NOTE: range query num in real-world
-static constexpr int realworldRangeQueryNum = 1000;
+static constexpr int realworldRangeQueryNum = 100000;
 
 //* [a,b)
 inline size_t get_random_index(size_t a, size_t b, int seed) {
