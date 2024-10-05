@@ -43,7 +43,7 @@ static constexpr int summaryRangeQueryType = 2;
 // NOTE: range query num in summary
 static constexpr int summaryRangeQueryNum = 10000;
 // NOTE: range query num in real-world
-static constexpr int realworldRangeQueryNum = 100000;
+static constexpr int realworldRangeQueryNum = 10000;
 
 //* [a,b)
 inline size_t get_random_index(size_t a, size_t b, int seed) {
@@ -681,7 +681,7 @@ void rangeQueryFix(const parlay::sequence<point>& WP, ParallelKDtree<point>& pkd
     using ref_t = std::reference_wrapper<point>;
     parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
     double loopLate = rounds > 1 ? 1.0 : -0.1;
-    // return;
+    return;
 
     parlay::internal::timer t;
     t.reset(), t.start();

@@ -76,7 +76,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, std:
             // std::vector<ref_t> out_ref( queryNum * maxSize, std::ref( _points[0] )
             // );
             std::vector<Point_d> _ans(queryNum * maxSize);
-            // return;
+            return;
 
             timer.reset();
             timer.start();

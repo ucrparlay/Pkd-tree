@@ -1,102 +1,102 @@
-HT.in 0.128312 
+HT.in 0.413703 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/HT.in -k 100 -t 0 -d 10 -q 8 -i 0 -s 0 -r 1':
 
-   232,725,034,601      cycles:u                                                      (66.68%)
-   114,648,388,608      instructions:u            #    0.49  insn per cycle           (83.33%)
-     1,128,510,785      cache-references:u                                            (83.36%)
-       818,536,414      cache-misses:u            #   72.532 % of all cache refs      (83.33%)
-    13,549,544,372      branch-instructions:u                                         (83.34%)
-        31,290,397      branch-misses:u           #    0.23% of all branches          (83.33%)
+ 2,236,239,305,483      cycles:u                                                      (66.67%)
+   689,908,842,353      instructions:u            #    0.31  insn per cycle           (83.34%)
+    14,497,834,987      cache-references:u                                            (83.33%)
+    10,748,265,485      cache-misses:u            #   74.137 % of all cache refs      (83.33%)
+    69,294,075,187      branch-instructions:u                                         (83.34%)
+       165,192,720      branch-misses:u           #    0.24% of all branches          (83.33%)
 
-       2.779924073 seconds time elapsed
+      12.352681641 seconds time elapsed
 
-      88.418134000 seconds user
-      60.402081000 seconds sys
+     790.241415000 seconds user
+     631.125997000 seconds sys
 
 
-Household.in 0.015943 
+Household.in 0.231529 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/Household.in -k 100 -t 0 -d 7 -q 8 -i 0 -s 0 -r 1':
 
-   176,192,036,235      cycles:u                                                      (66.64%)
-   132,784,375,876      instructions:u            #    0.75  insn per cycle           (83.34%)
-       346,418,826      cache-references:u                                            (83.39%)
-       231,921,863      cache-misses:u            #   66.948 % of all cache refs      (83.36%)
-    15,951,862,191      branch-instructions:u                                         (83.34%)
-        47,913,089      branch-misses:u           #    0.30% of all branches          (83.35%)
+ 1,098,597,026,813      cycles:u                                                      (66.67%)
+   580,292,994,799      instructions:u            #    0.53  insn per cycle           (83.35%)
+     3,615,314,639      cache-references:u                                            (83.33%)
+     2,601,345,302      cache-misses:u            #   71.953 % of all cache refs      (83.34%)
+    64,677,577,484      branch-instructions:u                                         (83.34%)
+       253,326,130      branch-misses:u           #    0.39% of all branches          (83.33%)
 
-       2.419921560 seconds time elapsed
+       5.163735359 seconds time elapsed
 
-      64.584971000 seconds user
-      24.746616000 seconds sys
+     395.399861000 seconds user
+     122.340222000 seconds sys
 
 
-osm.in 0.029467 
+osm.in 0.375385 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/osm.in -k 100 -t 0 -d 2 -q 8 -i 0 -s 0 -r 1':
 
- 5,716,223,422,405      cycles:u                                                      (66.67%)
- 5,364,340,925,593      instructions:u            #    0.94  insn per cycle           (83.33%)
-    11,512,711,538      cache-references:u                                            (83.33%)
-     9,779,352,674      cache-misses:u            #   84.944 % of all cache refs      (83.34%)
-   896,947,799,106      branch-instructions:u                                         (83.34%)
-    10,135,803,916      branch-misses:u           #    1.13% of all branches          (83.34%)
+ 9,135,271,668,779      cycles:u                                                      (66.67%)
+ 5,944,535,087,481      instructions:u            #    0.65  insn per cycle           (83.34%)
+    19,661,640,854      cache-references:u                                            (83.33%)
+    16,794,698,410      cache-misses:u            #   85.419 % of all cache refs      (83.34%)
+   940,930,100,536      branch-instructions:u                                         (83.33%)
+    10,291,111,827      branch-misses:u           #    1.09% of all branches          (83.33%)
 
-     409.312401425 seconds time elapsed
+     416.190239321 seconds time elapsed
 
-    1932.057727000 seconds user
-     258.115101000 seconds sys
+    3160.736711000 seconds user
+     281.203279000 seconds sys
 
 
-Cosmo50.in 0.061681 
+Cosmo50.in 0.464252 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/Cosmo50.in -k 100 -t 0 -d 3 -q 8 -i 0 -s 0 -r 1':
 
- 2,263,071,091,012      cycles:u                                                      (66.67%)
- 1,872,926,197,737      instructions:u            #    0.83  insn per cycle           (83.33%)
-     4,732,140,641      cache-references:u                                            (83.33%)
-     4,092,470,434      cache-misses:u            #   86.482 % of all cache refs      (83.33%)
-   329,426,365,297      branch-instructions:u                                         (83.34%)
-     4,844,497,790      branch-misses:u           #    1.47% of all branches          (83.33%)
+ 3,951,469,185,234      cycles:u                                                      (66.67%)
+ 2,465,488,009,391      instructions:u            #    0.62  insn per cycle           (83.34%)
+    10,528,522,249      cache-references:u                                            (83.34%)
+     8,702,300,063      cache-misses:u            #   82.655 % of all cache refs      (83.33%)
+   386,618,127,628      branch-instructions:u                                         (83.33%)
+     5,168,133,350      branch-misses:u           #    1.34% of all branches          (83.33%)
 
-     163.777618201 seconds time elapsed
+     170.512130915 seconds time elapsed
 
-     767.563848000 seconds user
-     108.207650000 seconds sys
+    1375.330427000 seconds user
+     228.297912000 seconds sys
 
 
-GeoLifeNoScale.in 0.015964 
+GeoLifeNoScale.in 0.244948 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/GeoLifeNoScale.in -k 100 -t 0 -d 3 -q 8 -i 0 -s 0 -r 1':
 
-   325,898,594,258      cycles:u                                                      (66.67%)
-   288,495,902,986      instructions:u            #    0.89  insn per cycle           (83.35%)
-       572,414,811      cache-references:u                                            (83.33%)
-       433,529,239      cache-misses:u            #   75.737 % of all cache refs      (83.39%)
-    41,176,342,412      branch-instructions:u                                         (83.30%)
-       340,176,372      branch-misses:u           #    0.83% of all branches          (83.35%)
+ 1,348,481,295,307      cycles:u                                                      (66.67%)
+   690,722,614,006      instructions:u            #    0.51  insn per cycle           (83.34%)
+     3,431,229,805      cache-references:u                                            (83.35%)
+     2,572,213,678      cache-misses:u            #   74.965 % of all cache refs      (83.33%)
+    82,239,623,928      branch-instructions:u                                         (83.33%)
+       561,589,945      branch-misses:u           #    0.68% of all branches          (83.34%)
 
-      12.893392066 seconds time elapsed
+      15.419121950 seconds time elapsed
 
-     118.273184000 seconds user
-      44.373375000 seconds sys
+     483.253948000 seconds user
+     114.637478000 seconds sys
 
 
-CHEM.in 0.123631 
+CHEM.in 0.855548 
 
  Performance counter stats for '../build/test -p /data3/zmen002/kdtree/geometry/CHEM.in -k 100 -t 0 -d 16 -q 8 -i 0 -s 0 -r 1':
 
-   380,527,647,412      cycles:u                                                      (66.68%)
-   236,238,951,905      instructions:u            #    0.62  insn per cycle           (83.33%)
-     1,499,325,332      cache-references:u                                            (83.33%)
-     1,149,323,164      cache-misses:u            #   76.656 % of all cache refs      (83.34%)
-    34,838,942,489      branch-instructions:u                                         (83.34%)
-       143,557,306      branch-misses:u           #    0.41% of all branches          (83.34%)
+ 2,742,566,953,217      cycles:u                                                      (66.67%)
+ 1,026,664,179,111      instructions:u            #    0.37  insn per cycle           (83.34%)
+    13,556,854,129      cache-references:u                                            (83.33%)
+    10,754,975,038      cache-misses:u            #   79.332 % of all cache refs      (83.34%)
+   124,199,989,442      branch-instructions:u                                         (83.34%)
+       426,972,331      branch-misses:u           #    0.34% of all branches          (83.33%)
 
-      12.002316252 seconds time elapsed
+      20.354040252 seconds time elapsed
 
-     139.226863000 seconds user
-      72.245394000 seconds sys
+     978.729456000 seconds user
+     483.352407000 seconds sys
 
 

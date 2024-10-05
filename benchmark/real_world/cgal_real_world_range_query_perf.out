@@ -1,68 +1,68 @@
-HT.in 0.495128 71 1000 627387 
+HT.in 0.514534 71 10000 909873 
 
  Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/HT.in -k 100 -t 0 -d 10 -q 8 -i 0 -s 0 -r 1':
 
-   208,744,833,745      cycles:u                                                      (66.69%)
-   347,432,678,946      instructions:u            #    1.66  insn per cycle           (83.37%)
-     1,000,202,808      cache-references:u                                            (83.36%)
-       811,160,921      cache-misses:u            #   81.100 % of all cache refs      (83.33%)
-    68,773,591,852      branch-instructions:u                                         (83.33%)
-        41,062,822      branch-misses:u           #    0.06% of all branches          (83.34%)
+ 2,562,749,330,002      cycles:u                                                      (66.67%)
+ 4,508,557,278,427      instructions:u            #    1.76  insn per cycle           (83.33%)
+    12,269,118,035      cache-references:u                                            (83.33%)
+    10,316,278,334      cache-misses:u            #   84.083 % of all cache refs      (83.33%)
+   914,921,090,202      branch-instructions:u                                         (83.34%)
+        57,946,559      branch-misses:u           #    0.01% of all branches          (83.34%)
 
-      44.912147381 seconds time elapsed
+     715.444110730 seconds time elapsed
 
-      66.529460000 seconds user
-      52.299939000 seconds sys
+     744.760819000 seconds user
+     272.949101000 seconds sys
 
 
-osm.in 541.417 7216 1000 129655 
+osm.in 544.458 7216 10000 129784 
 
  Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/osm.in -k 100 -t 0 -d 2 -q 8 -i 0 -s 0 -r 1':
 
-46,890,363,172,239      cycles:u                                                      (66.67%)
-10,901,393,253,024      instructions:u            #    0.23  insn per cycle           (83.33%)
-   225,101,486,436      cache-references:u                                            (83.33%)
-   183,661,747,883      cache-misses:u            #   81.591 % of all cache refs      (83.33%)
- 2,370,199,242,535      branch-instructions:u                                         (83.33%)
-    26,169,747,006      branch-misses:u           #    1.10% of all branches          (83.33%)
+53,864,536,433,236      cycles:u                                                      (66.67%)
+12,992,965,593,278      instructions:u            #    0.24  insn per cycle           (83.33%)
+   233,645,843,535      cache-references:u                                            (83.33%)
+   190,087,816,372      cache-misses:u            #   81.357 % of all cache refs      (83.33%)
+ 2,711,619,443,544      branch-instructions:u                                         (83.33%)
+    26,761,426,316      branch-misses:u           #    0.99% of all branches          (83.33%)
 
-    1298.293099426 seconds time elapsed
+    1372.754301199 seconds time elapsed
 
-   16627.869207000 seconds user
-    4691.289559000 seconds sys
+   19140.145357000 seconds user
+    4335.876429000 seconds sys
 
 
-Cosmo50.in 166.576 149 1000 316075 
+Cosmo50.in 154.364 149 10000 320408 
 
  Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/Cosmo50.in -k 100 -t 0 -d 3 -q 8 -i 0 -s 0 -r 1':
 
-12,431,639,296,149      cycles:u                                                      (66.67%)
- 3,323,995,810,081      instructions:u            #    0.27  insn per cycle           (83.34%)
-    71,094,759,007      cache-references:u                                            (83.33%)
-    49,882,207,505      cache-misses:u            #   70.163 % of all cache refs      (83.33%)
-   706,201,631,968      branch-instructions:u                                         (83.33%)
-    10,375,571,652      branch-misses:u           #    1.47% of all branches          (83.33%)
+13,747,768,574,819      cycles:u                                                      (66.67%)
+ 5,013,813,534,842      instructions:u            #    0.36  insn per cycle           (83.34%)
+    77,697,606,352      cache-references:u                                            (83.34%)
+    56,248,139,654      cache-misses:u            #   72.394 % of all cache refs      (83.33%)
+ 1,012,051,825,398      branch-instructions:u                                         (83.33%)
+    10,372,102,647      branch-misses:u           #    1.02% of all branches          (83.33%)
 
-     429.237073093 seconds time elapsed
+     610.290921628 seconds time elapsed
 
-    4411.788488000 seconds user
-    1169.169274000 seconds sys
+    4817.983371000 seconds user
+    1001.830970000 seconds sys
 
 
-CHEM.in 1.90231 23 1000 383883 
+CHEM.in 2.13068 23 10000 420700 
 
  Performance counter stats for '../build/cgal -p /data3/zmen002/kdtree/geometry/CHEM.in -k 100 -t 0 -d 16 -q 8 -i 0 -s 0 -r 1':
 
-   310,753,317,276      cycles:u                                                      (66.68%)
-   362,977,197,802      instructions:u            #    1.17  insn per cycle           (83.36%)
-     1,484,009,094      cache-references:u                                            (83.34%)
-     1,098,175,136      cache-misses:u            #   74.001 % of all cache refs      (83.34%)
-    67,162,971,818      branch-instructions:u                                         (83.34%)
-       147,122,527      branch-misses:u           #    0.22% of all branches          (83.34%)
+ 2,280,138,222,963      cycles:u                                                      (66.65%)
+ 2,775,808,234,744      instructions:u            #    1.22  insn per cycle           (83.33%)
+     8,235,048,354      cache-references:u                                            (83.35%)
+     6,722,542,102      cache-misses:u            #   81.633 % of all cache refs      (83.34%)
+   507,067,315,417      branch-instructions:u                                         (83.33%)
+       170,584,599      branch-misses:u           #    0.03% of all branches          (83.33%)
 
-      39.378059910 seconds time elapsed
+     305.069677055 seconds time elapsed
 
-     106.175068000 seconds user
-     113.611514000 seconds sys
+     753.197349000 seconds user
+     202.994202000 seconds sys
 
 

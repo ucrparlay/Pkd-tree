@@ -18,7 +18,8 @@ insNum=0
 readFile=0
 # queryType=$((2#1)) # 1110000
 queryType=8 # 1110000
-type="real_world_range_query_perf_after"
+# type="real_world_range_query_perf_after"
+type="real_world_range_query_perf"
 resFile=""
 
 for solver in ${Solvers[@]}; do
