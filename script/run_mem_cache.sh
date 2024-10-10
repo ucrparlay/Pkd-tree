@@ -6,8 +6,8 @@ set -x
 Solvers=("bhltree" "logtree")
 #Solvers=("logtree")
 #Node=(500000000 1000000000)
-Node=(10000000 20000000 50000000 100000000 200000000 500000000 1000000000)
-#Node=(10000000)
+#Node=(10000000 20000000 50000000 100000000 200000000 500000000 1000000000)
+Node=(1000000000)
 #Dim=(2 3)
 #Dim=(2 3 5 7 9)
 #Dim=(2 3 5 9)
@@ -65,10 +65,11 @@ for solver in ${Solvers[@]}; do
                     k=10 # unused
                     echo "Test for memory usage and cache misses"
                     tag=65536
-                    `which time` -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.all 2>&1
+                    #`which time` -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.all 2>&1
                     #perf stat -e cache-misses ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.cache.all 2>&1
                     #`which time` -v ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.mem.prep 2>&1
                     #perf stat -e cache-misses ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.cache.prep 2>&1
+                    perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}.ext.all 2>&1
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then

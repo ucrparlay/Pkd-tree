@@ -297,6 +297,56 @@ bench_osm_month( int Dim, int LEAVE_WRAP, int K, int rounds, const string& osm_p
   insertOsmByTime<TreeDesc, point>( Dim, node, rounds, pkd, qs, K );
 }
 
+template<class TreeDesc, typename point>
+void
+bench_osm_sliding_window( int Dim, int LEAVE_WRAP, int K, int rounds, const string& osm_prefix,
+                int tag_ext ) {
+  const uint32_t year_begin = ( tag_ext >> 4 ) & 0xfff;
+  const uint32_t year_end = ( tag_ext >> 16 ) & 0xfff;
+  printf( "year: %u - %u\n", year_begin, year_end );
+
+  using points = parlay::sequence<point>;
+  parlay::sequence<points> node_by_year( year_end - year_begin + 1 );
+  for ( uint32_t year = year_begin; year <= year_end; ++year ) {
+    const std::string path = osm_prefix + "osm_" + std::to_string( year ) + ".csv";
+    printf( "read from %s\n", path.c_str() );
+    read_points<point>( path.c_str(), node_by_year[year - year_begin], K );
+  }
+
+  // NOTICE: we fix the query size 10^7
+  points qs;
+  for ( const auto& ps : node_by_year ) {
+    if ( qs.size() == 10000000 ) break;
+    qs.insert( qs.end(), ps.begin(),
+               ps.begin() + std::min( 10000000 - qs.size(), ps.size() ) );
+    printf( "inc qs size to %lu\n", qs.size() );
+  }
+  assert( qs.size() == 10000000 );
+  printf( "qs size: %lu\n", qs.size() );
+
+  int window_size = 5; // NOTICE: we fix the query size 5
+  using Tree = typename TreeDesc::type;
+  Tree* pkd = nullptr;
+  //insertOsmByTime<TreeDesc, point>( Dim, node_by_year, rounds, pkd, qs, K );
+  auto gen_wp = [&](size_t end_year, size_t backtrace){
+    size_t begin_year = end_year>=backtrace? end_year-backtrace: 0;
+    points wp;
+    for(size_t i=begin_year; i<end_year; ++i)
+    {
+        const auto &ins = node_by_year[i];
+        wp.insert(wp.end(), ins.begin(), ins.end());
+    }
+    return wp;
+  };
+  for(size_t i=0; i<node_by_year.size(); ++i)
+  {
+    batchInsert<TreeDesc, point>( pkd, gen_wp(i,window_size), node_by_year[i], Dim, rounds );
+    if(i>=window_size)
+      batchDelete<TreeDesc, point>( pkd, gen_wp(i+1,window_size+1), node_by_year[i-window_size], Dim, rounds );
+    queryKNN<TreeDesc, point>( Dim, qs, rounds, pkd, nullptr, K, false );
+  }
+}
+
 template<typename T, uint_fast8_t d>
 // using PointType = pargeo::_point<d,T,double,pargeo::_empty>;
 using PointType = pargeo::batchKdTree::point<d>;
@@ -409,6 +459,10 @@ main( int argc, char* argv[] ) {
         bench_osm_month<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
         return;
       }
+      if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 3 ) {
+        bench_osm_sliding_window<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
+        return;
+      }
       auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
         return PointType<coord, D>( wp[i].coordinate() );
       } );
@@ -433,7 +487,9 @@ main( int argc, char* argv[] ) {
       run( std::integral_constant<int, 9>{} );
     } else if ( Dim == 10 ) {
       run( std::integral_constant<int, 10>{} );
-    }
+    } else if ( Dim == 16 ) {
+      run( std::integral_constant<int, 16>{} );
+    } else fprintf(stderr, "unsupported dim: %d\n", Dim);
   };
 
   if ( treeType == 0 )

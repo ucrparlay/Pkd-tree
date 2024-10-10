@@ -14,7 +14,8 @@ Node=(0)
 Dim=(2)
 declare -A datas
 #datas["/data/zmen002/kdtree/real_world/osm/year/"]="../benchmark/osm/year/"
-datas["/data/zmen002/kdtree/real_world/osm/month/"]="../benchmark/osm/month/"
+#datas["/data/zmen002/kdtree/real_world/osm/month/"]="../benchmark/osm/month/"
+datas["/data/zmen002/kdtree/real_world/osm/year/"]="../benchmark/osm/year/sliding/"
 
 tag=2
 k=100
@@ -60,12 +61,16 @@ for solver in ${Solvers[@]}; do
                 for ((i = 1; i <= ${insNum}; i++)); do
                     queryType=0 # not in use
                     k=10 # not in use
-                    echo "Test for update insertion on osm by year"
+                    #echo "Test for update insertion on osm by year"
                     # tag[30]=1 (special mode), (tag&0xf)==1 (osm by year), tag[4..16]=2014, tag[16..28]=2023
                     #tag=1206353377
                     #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -i "${files_path}" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}
                     # tag[30]=1 (special mode), (tag&0xf)==2 (osm by month), tag[4..16]=2014, tag[16..28]=2023
-                    tag=1206353378
+                    #tag=1206353378
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -i "${files_path}" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}
+                    echo "Test for sliding-window insertion on osm by year"
+                    # tag[30]=1 (special mode), (tag&0xf)==3 (osm by year, sliding window), tag[4..16]=2014, tag[16..28]=2023
+                    tag=1206353379
                     PARLAY_NUM_THREADS=192 numactl -i all ${exe} -i "${files_path}" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 1 >>${dest}
 
                     retval=$?

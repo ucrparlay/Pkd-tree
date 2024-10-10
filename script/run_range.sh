@@ -10,11 +10,12 @@ Node=(1000000000)
 #Dim=(3)
 #Dim=(2 3 5 7 9)
 #Dim=(5 7 9)
-Dim=(3)
+Dim=(16)
 declare -A datas
 # datas["/mnt/dappur/Workspace/kdtree/KDtree/data/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
-datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+#datas["/data3/zmen002/kdtree/ss_varden/"]="../benchmark/ss_varden/"
+#datas["/data3/zmen002/kdtree/uniform/"]="../benchmark/uniform/"
+datas["/data3/zmen002/kdtree/geometry/"]="../benchmark/CHEM/"
 
 tag=0
 k=100
@@ -57,14 +58,18 @@ for solver in ${Solvers[@]}; do
                 echo ">>>${dest}"
 
                 for ((i = 1; i <= ${insNum}; i++)); do
-                    # del_mode=0 (unused), ins_mode=0 (unused), build_mode=1 (normal build), seg_mode=0 (unused)
-                    # downsize_k=0, ins_ratio=0(unused), tag=0 (build only)
-                    tag=65536
+                    # del_mode=0 (unused), ins_mode=0 (unused), build_mode=0 (normal build), seg_mode=0 (unused)
+                    # downsize_k=10, ins_ratio=0(unused), tag=0 (build only)
+                    tag=2560 # downsize_k=10
                     # queryType=4 # range query
-                    queryType=16 # range query with log
-                    k=1 # not used
-                    echo "Test range query with log"
-                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 100 >>${dest}
+                    #queryType=16 # range query with log
+                    queryType=$((1+4)) # kNN + range query
+                    #k=1 # not used
+                    k=10
+                    #echo "Test range query with log"
+                    echo "Test range query and kNN"
+                    #PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${files_path}/${i}.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 100 >>${dest}
+                    PARLAY_NUM_THREADS=192 numactl -i all ${exe} -p "${dataPath}/CHEM.in" -k ${k} -t ${tag} -d ${dim} -q ${queryType} -r 3 >>${dest}
 
                     retval=$?
                     if [ ${retval} -eq 124 ]; then
