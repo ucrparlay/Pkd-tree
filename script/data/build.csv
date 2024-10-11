@@ -1,5 +1,5 @@
 solver,benchType,nodes,dims,build,depth
-test,ss_varden,1000000000,3,4.72509,25.5219
-cgal,ss_varden,1000000000,3,397.6015,34.0
-test,uniform,1000000000,3,3.77679,25.5263
-cgal,uniform,1000000000,3,1111.33,31.0
+test,ss_varden,1000000000,3,4.76924,25.5256
+cgal,ss_varden,1000000000,3,381.2575,35.0
+test,uniform,1000000000,3,3.90948,25.5263
+cgal,uniform,1000000000,3,1082.405,31.0

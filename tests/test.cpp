@@ -357,6 +357,7 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP, parlay::sequence<
         for (int i = 0; i < files.size(); i++) {
             std::string path = osm_prefix + "osm_" + files[i] + ".csv";
             // LOG << path << ENDL;
+            points input_node;
             read_points(path.c_str(), node_by_year[i], K);
         }
         kdknn = new Typename[batchQueryOsmSize];

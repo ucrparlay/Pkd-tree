@@ -11,7 +11,8 @@ Nodes = [1000000000]
 Dims = [3]
 
 # type = "batch_update"
-type = "batch_knn_query"
+# type = "batch_knn_query"
+type = "ood_querys"
 # type = "querys"
 # type = "quality"
 # type = "count"
@@ -26,6 +27,10 @@ if type == "batch_update":
     files = ["build", "insert", "delete"]
     Dims = [3]
 elif type == "batch_knn_query":
+    solverName = ["test", "cgal"]
+    files = ["build", "knn"]
+    Dims = [3]
+elif type == "ood_querys":
     solverName = ["test", "cgal"]
     files = ["build", "knn"]
     Dims = [3]

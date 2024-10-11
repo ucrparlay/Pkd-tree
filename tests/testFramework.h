@@ -824,31 +824,30 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
     using box = typename tree::box;
 
     pkd.delete_tree();
-    int time_period_num = node_by_time.size();
+    const int time_period_num = node_by_time.size();
+    const size_t input_offset = batchQueryOsmSize / 10;
     parlay::sequence<points> wp(time_period_num), wi(time_period_num);
+    points query_points(batchQueryOsmSize);
     for (int i = 0; i < time_period_num; i++) {
-        wp[i].resize(node_by_time[i].size());
-        wi[i].resize(node_by_time[i].size());
+        parlay::copy(node_by_time[i].cut(0, input_offset), query_points.cut(i * input_offset, (i + 1) * input_offset));
+        wp[i] = node_by_time[i];
+        wi[i] = node_by_time[i];
     }
 
     // NOTE: begin revert
-    for (int i = 0; i < time_period_num; i++) {
-        parlay::copy(node_by_time[i], wp[i]);
-        parlay::copy(node_by_time[i], wi[i]);
-    }
     LOG << ENDL;
     int within_num = 0;
     for (int i = 0; i < time_period_num; i++) {
         LOG << wp[i].size() << " ";
         parlay::internal::timer t;
         t.reset(), t.start();
-        pkd.batchInsert(parlay::make_slice(wp[i]), Dim);
+        pkd.batchInsert(wp[i].cut(input_offset, wp[i].size()), Dim);
         t.stop();
         LOG << t.total_time() << " ";
         if (within_num == sliding_window_len) {
             // LOG << "begin delete " << wi[i - within_num].size() << " ";
             t.reset(), t.start();
-            pkd.batchDelete(parlay::make_slice(wi[i - within_num]), Dim);
+            pkd.batchDelete(wi[i - within_num].cut(input_offset, wi[i - within_num].size()), Dim);
             t.stop();
             LOG << t.total_time() << " ";
         } else {
@@ -857,8 +856,8 @@ void insertOsmByTime(const int Dim, const parlay::sequence<parlay::sequence<poin
         }
 
         if (time_period_num < 12) {
-            points tmp(node_by_time[0].begin(), node_by_time[0].begin() + batchQueryOsmSize);
-            queryKNN(Dim, tmp, rounds, pkd, kdknn, K, true);
+            // points tmp(node_by_time[0].begin(), node_by_time[0].begin() + batchQueryOsmSize);
+            queryKNN(Dim, query_points, rounds, pkd, kdknn, K, true);
         }
 
         LOG << ENDL;

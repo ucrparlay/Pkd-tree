@@ -432,17 +432,25 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
         tree.clear();
         parlay::internal::timer timer;
         int within_num = 0;
+        const size_t input_offset = batchQueryOsmSize / 10;
+    std:
+        std::vector<Point_d> query_points(batchQueryOsmSize);
+        for (int i = 0; i < fileNum; i++) {
+            for (int j = 0; j < input_offset; j++) {
+                query_points[i * input_offset + j] = pts[i][j];
+            }
+        }
         for (int i = 0; i < fileNum; i++) {
             LOG << pts[i].size() << " ";
             timer.reset(), timer.start();
-            tree.insert(pts[i].begin(), pts[i].end());
+            tree.insert(pts[i].begin() + input_offset, pts[i].end());
             tree.template build<CGAL::Parallel_tag>();
             timer.stop();
             LOG << timer.total_time() << " ";
 
             if (within_num == sliding_window_len) {
                 timer.reset(), timer.start();
-                for (int j = 0; j < pts[i - within_num].size(); j++) {
+                for (int j = input_offset; j < pts[i - within_num].size(); j++) {
                     tree.remove(pts[i - within_num][j]);
                 }
                 timer.stop();
@@ -453,15 +461,17 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int 
             }
 
             if (fileNum < 12) {
-                std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);
-                queryPointCgal(K, tmp);
-            } else if (i != 0 && (i + 1) % 12 == 0) {
-                std::vector<Point_d> tmp(batchQueryOsmSize);
-                parlay::copy(parlay::make_slice(pts[0]), parlay::make_slice(tmp.begin(), tmp.begin() + pts[0].size()));
-                parlay::copy(parlay::make_slice(pts[1].begin(), pts[1].begin() + batchQueryOsmSize - pts[0].size()),
-                             parlay::make_slice(tmp.begin() + pts[0].size(), tmp.end()));
-                queryPointCgal(K, tmp);
+                // std::vector<Point_d> tmp(pts[0].begin(), pts[0].begin() + batchQueryOsmSize);
+                queryPointCgal(K, query_points);
             }
+            // else if (i != 0 && (i + 1) % 12 == 0) {
+            //     std::vector<Point_d> tmp(batchQueryOsmSize);
+            //     parlay::copy(parlay::make_slice(pts[0]), parlay::make_slice(tmp.begin(), tmp.begin() +
+            //     pts[0].size())); parlay::copy(parlay::make_slice(pts[1].begin(), pts[1].begin() + batchQueryOsmSize -
+            //     pts[0].size()),
+            //                  parlay::make_slice(tmp.begin() + pts[0].size(), tmp.end()));
+            //     queryPointCgal(K, tmp);
+            // }
 
             LOG << ENDL;
         }

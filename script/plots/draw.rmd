@@ -1,0 +1,237 @@
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(xtable)
+library(gsubfn)
+library(fmtr)
+library(stringr)
+library(common)
+library(proto)
+library(patchwork)
+library(forcats)
+library(scales)
+library(hash)
+library(ggthemes)
+library(ggsci)
+library(egg)
+library(grid)
+library(RColorBrewer)
+library(wesanderson)
+library(ggpattern)
+library(scales)
+theme_set(theme_light())
+"%!in%" <- function(x, y) !("%in%"(x, y)) # nolint: object_name_linter.
+options(digits = 5, nsmall = 3)
+```
+
+Better plots: 
+https://www.cedricscherer.com/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/
+
+Colors:
+https://nanx.me/ggsci/articles/ggsci.html#introduction
+
+Barchart pattern fill
+https://coolbutuseless.github.io/2020/04/01/introducing-ggpattern-pattern-fills-for-ggplot/
+
+Read the data
+
+```{r wash_name}
+wash_name <- function(t) {
+  # NOTE: Wash data
+  t$solver[t$solver == "test"] <- "Ours"
+  t$solver[t$solver == "zdtree"] <- "ZdTree"
+  t$solver[t$solver == "cgal"] <- "CGAL"
+  t$solver[t$solver == "BHLtree"] <- "BhlTree"
+  t$solver[t$solver == "Logtree"] <- "LogTree"
+  return(t)
+}
+```
+
+Main function for batchupdate
+
+```{r}
+# PERF: plot a subgraph
+plot <- function(t, bench, title) {
+  t <- wash_name(t)
+
+  # NOTE: level
+  nameLevel <- c("Ours", "ZdTree", "LogTree", "BhlTree", "CGAL")
+  shapeLevel <- c(19, 17, 18, 20, 15)
+  t$solver <- factor(t$solver, levels = nameLevel)
+
+  t <- t %>%
+    filter(dims == 3, benchType == bench) %>%
+    select(-c(benchType, nodes, dims)) %>%
+    pivot_longer(!solver, names_to = "BatchSize", values_to = "time")
+
+  t$BatchSize <- factor(t$BatchSize, levels = unique(t$BatchSize))
+
+  # NOTE: START PLOT
+  g <- ggplot(t, aes(
+    x = BatchSize, y = time, color = solver,
+    shape = solver, group = solver
+  )) +
+    geom_point(size = 2, alpha = 0.8) + # point property
+    geom_line() +
+    labs(x = "Batch size", y = "time/sec (log-scale)") +
+    scale_x_discrete(labels = c(
+      "10%", "20%", "30%", "40%",
+      "50%", "60%", "70%", "80%", "90%", "100%"
+    )) +
+    scale_y_log10() +
+    scale_shape_manual(values = shapeLevel) +
+    ggtitle(title) +
+    theme(
+      plot.margin = unit(c(.1, .01, .1, .01), "cm"),
+      plot.title = element_text(hjust = 0.5, size = 9), # title size
+      axis.text.x = element_text(angle = 30, size = 7), # axe size
+      axis.title = element_text(margin = margin(0.5, 0.1, 0.1, 0.1), size = 8),
+    ) +
+    # coord_fixed(ratio = 1) +
+    # scale_color_brewer(palette = "Set1")
+    scale_color_locuszoom()
+  # scale_color_npg()
+  # scale_color_tableau()
+  # scale_color_tableau("Classic 10 Medium")
+  return(g)
+}
+
+# PERF: READ updates
+ti <- read.csv("../data/insert.csv")
+td <- read.csv("../data/delete.csv")
+g <- plot(ti, "ss_varden", "Batch insertion on 3D-V-100M") +
+  plot(ti, "uniform", "Batch insertion on 3D-U-100M") +
+  plot(td, "ss_varden", "Batch deletion on 3D-V-100M") +
+  plot(td, "uniform", "Batch deletion on 3D-U-100M") +
+  plot_layout(guides = "collect")
+
+ggsave("figures/batchupdate.pdf", width = 7, height = 5, dpi = 3600)
+``````
+
+Remove techniques
+
+```{r remove techniques}
+benchType <- c(
+  rep("3D-U-100M / threads = 192", 4),
+  rep("3D-U-100M / threads = 1", 4),
+  rep("3D-V-100M / threads = 192", 4),
+  rep("3D-V-100M / threads = 1", 4)
+)
+time <- c(
+  5.640,
+  4.293,
+  2.444,
+  1.000,
+  1.735,
+  2.124,
+  0.986,
+  1.000,
+  5.102,
+  3.964,
+  2.457,
+  1.000,
+  1.728,
+  2.171,
+  0.985,
+  1.000
+)
+ose <- "one layer + serial median"
+op <- "one layer + parallel median"
+osp <- "one layer + sample median"
+ss <- "six layer + sample median"
+techniques <- rep(c(ose, op, osp, ss))
+t <- data.frame(benchType, techniques, time)
+t$techniques <- factor(t$techniques, levels = c(ss, osp, op, ose))
+
+# View(t)
+
+plt <- ggplot(t, aes(y = time, x = benchType)) +
+  # geom_bar(position = "dodge", stat = "identity") +
+  # geom_bar_pattern(aes(fill = techniques), position = "dodge", stat = "identity") +
+  geom_bar_pattern(
+    aes(
+      pattern = techniques,
+      pattern_angle = techniques
+    ),
+    fill = "white",
+    colour = "black",
+    position = "dodge",
+    stat = "identity",
+    pattern_spacing = 0.025
+  ) +
+  theme(
+    legend.position = c(0.18, 0.87),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, size = 15),
+    axis.text.x = element_text(size = 11), # axe size
+    axis.text.y = element_text(size = 11), # axe size
+    axis.title = element_text(size = 12)
+  ) +
+  labs(
+    x = "Data size and threads number",
+    y = "Normalized slow ratio",
+    title = "Effectiveness of each technique",
+    color = "techniques",
+  ) +
+  scale_y_continuous(breaks = c(0, 1, 4, 7, 10, 13)) +
+  scale_fill_grey()
+# scale_fill_manual(values = wes_palette("GrandBudapest2", n = 4, type = "discrete"))
+# scale_fill_brewer("Techniques", palette = "Pastel1")
+
+ggsave("figures/techniques.pdf", width = 10, height = 8, dpi = 1800)
+``````
+
+
+```{r knn}
+plot <- function(t, bench, title) {
+  t <- wash_name(t)
+  colnames(t)[5] <- "k=1"
+  colnames(t)[8] <- "k=10"
+  colnames(t)[11] <- "k=100"
+  nameLevel <- c("Ours", "ZdTree", "CGAL", "LogTree")
+  t$solver <- factor(t$solver, levels = nameLevel)
+
+  t <- t %>%
+    filter(dims == 3, benchType == bench) %>%
+    select(1, 5, 8, 11) %>%
+    pivot_longer(!solver, names_to = "K", values_to = "time")
+
+  t$K <- factor(t$K, levels = unique(t$K))
+
+  plt <- ggplot(t, aes(y = time, x = K)) +
+    geom_bar_pattern(
+      aes(
+        pattern = solver,
+        pattern_angle = solver
+      ),
+      fill = "white",
+      colour = "black",
+      position = "dodge",
+      stat = "identity",
+      pattern_spacing = 0.025
+    ) +
+    theme(
+      legend.position = c(0.18, 0.87),
+      legend.text = element_text(size = 12),
+      legend.title = element_text(size = 14),
+      plot.title = element_text(hjust = 0.5, size = 15),
+      axis.text.x = element_text(size = 11), # axe size
+      axis.text.y = element_text(size = 11), # axe size
+      axis.title = element_text(size = 12)
+    ) +
+    labs(
+      x = "k-NN seach",
+      y = "time/s",
+      title = "Query time for k-NN search",
+      color = "solver",
+    ) +
+    annotate("text", x = 3.3, y = 0.55, label = "X", size = 12) +
+    scale_fill_grey()
+  return(plt)
+}
+t <- read.csv("../data/knn.csv")
+g <- plot(t, "ss_varden", "name")
+ggsave("figures/knn.pdf", width = 10, height = 8, dpi = 1800)
+``````

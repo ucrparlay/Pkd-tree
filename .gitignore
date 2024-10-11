@@ -6,6 +6,7 @@
 /.cache
 /.vscode
 /docs
+/external
 # /script
 # *.out
 run_transfer.sh
