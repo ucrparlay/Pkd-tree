@@ -17,36 +17,32 @@ onecore=0
 insNum=0
 readFile=0
 # queryType=$((2#1)) # 1110000
-queryType=8 # 1110000
-# type="real_world_range_query_perf_after"
-type="real_world_range_query_perf"
-resFile=""
+QueryTypes=(7 15)
 
 for solver in ${Solvers[@]}; do
     exe="../build/${solver}"
+    log_path="logs/"
+    for queryType in ${QueryTypes[@]}; do
 
-    #* decide output file
-    if [[ ${solver} == "test" ]]; then
-        resFile="res_${type}.out"
-    elif [[ ${solver} == "cgal" ]]; then
-        resFile="cgal_${type}.out"
-    fi
-
-    log_path="../benchmark/real_world"
-    mkdir -p ${log_path}
-    dest="${log_path}/${resFile}"
-    : >${dest}
-    echo ">>>${dest}"
-
-    for filename in "${!file2Dims[@]}"; do
-        if [[ ${solver} == "cgal" ]]; then
-            if [ ${filename} == "Household" ] || [ ${filename} == "GeoLifeNoScale" ]; then
-                continue
-            fi
+        if [[ ${queryType} == 7 ]]; then
+            resFile="perf_real_gen.out"
+        elif [[ ${queryType} == 8 ]]; then
+            resFile="perf_real_total.out"
         fi
+        dest="${log_path}/${resFile}"
+        : >${dest}
+        echo ">>>${dest}"
 
-        perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 >>${dest} 2>&1
+        for filename in "${!file2Dims[@]}"; do
+            if [[ ${solver} == "cgal" ]]; then
+                if [ ${filename} == "Household" ] || [ ${filename} == "GeoLifeNoScale" ]; then
+                    continue
+                fi
+            fi
 
+            perf stat -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 >>${dest} 2>&1
+
+        done
     done
 done
 
