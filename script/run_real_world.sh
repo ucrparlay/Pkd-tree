@@ -19,20 +19,19 @@ readFile=0
 # queryType=$((2#1)) # 1110000
 QueryTypes=(7 15)
 
-for solver in ${Solvers[@]}; do
-    exe="../build/${solver}"
-    log_path="logs/"
-    for queryType in ${QueryTypes[@]}; do
+for queryType in ${QueryTypes[@]}; do
+    log_path="logs"
+    if [[ ${queryType} == 7 ]]; then
+        resFile="perf_real_gen.out"
+    elif [[ ${queryType} == 15 ]]; then
+        resFile="perf_real_total.out"
+    fi
+    dest="${log_path}/${resFile}"
+    : >${dest}
+    echo ">>>${dest}"
 
-        if [[ ${queryType} == 7 ]]; then
-            resFile="perf_real_gen.out"
-        elif [[ ${queryType} == 8 ]]; then
-            resFile="perf_real_total.out"
-        fi
-        dest="${log_path}/${resFile}"
-        : >${dest}
-        echo ">>>${dest}"
-
+    for solver in ${Solvers[@]}; do
+        exe="../build/${solver}"
         for filename in "${!file2Dims[@]}"; do
             if [[ ${solver} == "cgal" ]]; then
                 if [ ${filename} == "Household" ] || [ ${filename} == "GeoLifeNoScale" ]; then
