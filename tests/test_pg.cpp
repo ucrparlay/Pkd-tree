@@ -1,5 +1,9 @@
+#include <cstdio>
+#include <cstdlib>
 #include <initializer_list>
 #include "testFramework_pg.h"
+
+char *iFile_aux = nullptr;
 
 template<class TreeDesc, typename point>
 void
@@ -99,7 +103,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       batchInsert<TreeDesc, point>( pkd, wp, pwi, Dim, rounds );
     } else if ( ins_mode == 5 )  // insert in partial mode (size varies exponentially)
     {
-      auto ins_size = size_t( wi.size() ) * 2;
+      auto ins_size = size_t( wi.size() );
       for ( int i = 1; i <= ins_ratio; ++i ) {
         ins_size /= 10;
         parlay::sequence<point> pwi( wi.begin(), wi.begin() + ins_size );
@@ -144,7 +148,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       batchDelete<TreeDesc, point>( pkd, wp, pwp, Dim, rounds, false, true );
     } else if ( del_mode == 5 )  // delete in partial mode (size varies exponentially)
     {
-      auto del_size = size_t( wp.size() ) * 2;
+      auto del_size = size_t( wp.size() );
       for ( int i = 1; i <= ins_ratio; ++i ) {
         del_size /= 10;
         // ### NOTICE: we test deletion from wp instead of wi
@@ -161,16 +165,26 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
 
   if ( queryType & ( 1 << 0 ) ) {  //* NN
     kdknn = new Typename[wp.size()];
+    points wq;
+
+    if ( iFile_aux != nullptr ) {
+      auto name = std::string( iFile_aux );
+      name = name.substr( name.rfind( "/" ) + 1 );
+      auto [_, d] = read_points<point>( iFile_aux, wq, K );
+      assert( d == Dim );
+    }
+    else wq = wp;
+
     if ( downsize_k == 0 ) {
-      // #### NOTICE: custom query: restrict the query set to the size of 1%
-      auto wq = wp;
-      wq.resize( wp.size() / 100 );
+      // #### NOTICE: custom query: restrict the query set to the size of 10^7
+      //wq.resize( wp.size() / 100 );
+      wq.resize( 10'000'000 );
       queryKNN<TreeDesc, point>( Dim, wq, rounds, pkd, kdknn, K, false );
     } else
       for ( auto cnt_nbh = K; cnt_nbh > 0; cnt_nbh /= downsize_k ) {
         // parlay::sequence<point> wp_crop(wp.begin(), wp.begin()+1000000);
         // queryKNN<TreeDesc,point>(Dim, wp_crop, rounds, pkd, kdknn, cnt_nbh, false );
-        queryKNN<TreeDesc, point>( Dim, wp, rounds, pkd, kdknn, cnt_nbh, false );
+        queryKNN<TreeDesc, point>( Dim, wq, rounds, pkd, kdknn, cnt_nbh, false );
       }
   } else {
     std::cout << "-1 " << std::flush;
@@ -207,12 +221,13 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     for ( int num_rect : { 10000 } ) {
       std::cout << "[num_rect " << num_rect << "] " << std::flush;
       for ( int type_rect : { 2 } )
-        rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect );
+      {
+        bool is_dummy_query = !!(queryType&(1<<16));
+        rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect, is_dummy_query );
+      }
     }
 
-  } else {
-    std::cout << "-1 " << std::flush;
-  }
+  } 
   if ( queryType & ( 1 << 3 ) ) {
     /*
     generate_knn<point>( Dim, wp, rounds, pkd, kdknn, K, false,
@@ -315,13 +330,16 @@ bench_osm_sliding_window( int Dim, int LEAVE_WRAP, int K, int rounds, const stri
 
   // NOTICE: we fix the query size 10^7
   points qs;
-  for ( const auto& ps : node_by_year ) {
-    if ( qs.size() == 10000000 ) break;
-    qs.insert( qs.end(), ps.begin(),
-               ps.begin() + std::min( 10000000 - qs.size(), ps.size() ) );
-    printf( "inc qs size to %lu\n", qs.size() );
+  for ( auto& ps : node_by_year ) {
+    assert( ps.size() > 1'000'000 );
+    if ( qs.size() < 10'000'000 ) {
+        qs.insert( qs.end(), ps.begin(), ps.begin()+1'000'000 );
+        printf( "inc qs size to %lu\n", qs.size() );
+    }
+    ps = points(ps.begin()+1'000'000, ps.end());
+    printf( "ps size : %lu\n", ps.size() );
   }
-  assert( qs.size() == 10000000 );
+  assert( qs.size() == 10'000'000 );
   printf( "qs size: %lu\n", qs.size() );
 
   int window_size = 5; // NOTICE: we fix the query size 5
@@ -401,6 +419,7 @@ main( int argc, char* argv[] ) {
       "[-k {1,...,100}] [-d {2,3,5,7,9,10}] [-n <node num>] [-t "
       "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-q {0,1}] [-i <_insertFile>]" );
   char* iFile = P.getOptionValue( "-p" );
+  iFile_aux = P.getOptionValue( "-pa" );
   char* _insertFile = P.getOptionValue( "-i" );
   int K = P.getOptionIntValue( "-k", 100 );
   int Dim = P.getOptionIntValue( "-d", 3 );
@@ -487,6 +506,8 @@ main( int argc, char* argv[] ) {
       run( std::integral_constant<int, 9>{} );
     } else if ( Dim == 10 ) {
       run( std::integral_constant<int, 10>{} );
+    } else if ( Dim == 12 ) {
+      run( std::integral_constant<int, 12>{} );
     } else if ( Dim == 16 ) {
       run( std::integral_constant<int, 16>{} );
     } else fprintf(stderr, "unsupported dim: %d\n", Dim);
