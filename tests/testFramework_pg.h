@@ -476,7 +476,7 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
 template<class TreeDesc, typename point>
 void
 rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, int dim,
-            int rounds, int num_rect, int type_rect ) {
+            int rounds, int num_rect, int type_rect, bool init_only=false ) {
   // using tree = ParallelKDtree<point>;
   using Tree = typename TreeDesc::type;
   // using points = typename tree::points;
@@ -511,7 +511,9 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
       [&]() {
         parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
           const auto& [qMin, qMax, num_in_rect] = rects[i];
-          auto res = tree->orthogonalQuery( qMin, qMax );
+          auto res = init_only?
+            parlay::tabulate(num_in_rect, [](size_t i){return point{};}): 
+            tree->orthogonalQuery( qMin, qMax );
 
           if ( res.size() != num_in_rect ) throw "num_in_rect doesn't match";
           point resMin =
@@ -530,8 +532,8 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
                                          return t;
                                        },
                                        point{} ) );
-          if ( resMin != qMin ) throw "wrong min point";
-          if ( resMax != qMax ) throw "wrong max point";
+          if ( !init_only && resMin != qMin ) throw "wrong min point";
+          if ( !init_only && resMax != qMax ) throw "wrong max point";
         } );
       },
       [] {} );

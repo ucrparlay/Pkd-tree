@@ -184,7 +184,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     std::cout << "-1 " << std::flush;
   }
 
-  if ( queryType & ( 1 << 2 ) ) {  //* range query
+  if ( queryType & ( 1 << 2 ) || (queryType&(1<<16))) {  //* range query
     /*
     if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
       kdknn = new Typename[queryNum];

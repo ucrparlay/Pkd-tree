@@ -27,12 +27,14 @@ for solver in ${Solvers[@]}; do
 		logdir="../benchmark/real_world/${ds}"
 		mkdir -p ${logdir}
 		dim=${datasets[${ds}]}
-		$perfcmd ${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 4 -r 1
 
-		#logname="${solver}.perf.ext.all"
-		#$perfcmd ${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 4 -r 1 > ${logdir}/${logname} 2>&1
+		logname="${solver}.out"
+		${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 4 -r 1 > ${logdir}/${logname} 2>&1
+
+		logname="${solver}.perf.ext.all"
+		$perfcmd ${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 4 -r 1 > ${logdir}/${logname} 2>&1
 
 		logname="${solver}.perf.ext.noquery"
-		$perfcmd ${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 0 -r 1 > ${logdir}/${logname} 2>&1
+		$perfcmd ${exe} -p ${basepath}/${ds}.in -k 10 -t 65536 -d ${dim} -q 65536 -r 1 > ${logdir}/${logname} 2>&1
 	done
 done
