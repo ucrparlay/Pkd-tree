@@ -3,7 +3,7 @@
 #include <initializer_list>
 #include "testFramework_pg.h"
 
-char *iFile_aux = nullptr;
+char* iFile_aux = nullptr;
 
 template<class TreeDesc, typename point>
 void
@@ -172,12 +172,12 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       name = name.substr( name.rfind( "/" ) + 1 );
       auto [_, d] = read_points<point>( iFile_aux, wq, K );
       assert( d == Dim );
-    }
-    else wq = wp;
+    } else
+      wq = wp;
 
     if ( downsize_k == 0 ) {
       // #### NOTICE: custom query: restrict the query set to the size of 10^7
-      //wq.resize( wp.size() / 100 );
+      // wq.resize( wp.size() / 100 );
       wq.resize( 10'000'000 );
       queryKNN<TreeDesc, point>( Dim, wq, rounds, pkd, kdknn, K, false );
     } else
@@ -198,7 +198,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     std::cout << "-1 " << std::flush;
   }
 
-  if ( queryType & ( 1 << 2 ) || (queryType&(1<<16))) {  //* range query
+  if ( queryType & ( 1 << 2 ) || ( queryType & ( 1 << 16 ) ) ) {  //* range query
     /*
     if ( !( queryType & ( 1 << 1 ) ) ) {  //* run range count to obtain max candidate size
       kdknn = new Typename[queryNum];
@@ -220,14 +220,13 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     */
     for ( int num_rect : { 10000 } ) {
       std::cout << "[num_rect " << num_rect << "] " << std::flush;
-      for ( int type_rect : { 2 } )
-      {
-        bool is_dummy_query = !!(queryType&(1<<16));
-        rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect, is_dummy_query );
+      for ( int type_rect : { 2 } ) {
+        bool is_dummy_query = !!( queryType & ( 1 << 16 ) );
+        rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect,
+                                     is_dummy_query );
       }
     }
-
-  } 
+  }
   if ( queryType & ( 1 << 3 ) ) {
     /*
     generate_knn<point>( Dim, wp, rounds, pkd, kdknn, K, false,
@@ -314,8 +313,8 @@ bench_osm_month( int Dim, int LEAVE_WRAP, int K, int rounds, const string& osm_p
 
 template<class TreeDesc, typename point>
 void
-bench_osm_sliding_window( int Dim, int LEAVE_WRAP, int K, int rounds, const string& osm_prefix,
-                int tag_ext ) {
+bench_osm_sliding_window( int Dim, int LEAVE_WRAP, int K, int rounds,
+                          const string& osm_prefix, int tag_ext ) {
   const uint32_t year_begin = ( tag_ext >> 4 ) & 0xfff;
   const uint32_t year_end = ( tag_ext >> 16 ) & 0xfff;
   printf( "year: %u - %u\n", year_begin, year_end );
@@ -333,34 +332,34 @@ bench_osm_sliding_window( int Dim, int LEAVE_WRAP, int K, int rounds, const stri
   for ( auto& ps : node_by_year ) {
     assert( ps.size() > 1'000'000 );
     if ( qs.size() < 10'000'000 ) {
-        qs.insert( qs.end(), ps.begin(), ps.begin()+1'000'000 );
-        printf( "inc qs size to %lu\n", qs.size() );
+      qs.insert( qs.end(), ps.begin(), ps.begin() + 1'000'000 );
+      printf( "inc qs size to %lu\n", qs.size() );
     }
-    ps = points(ps.begin()+1'000'000, ps.end());
+    ps = points( ps.begin() + 1'000'000, ps.end() );
     printf( "ps size : %lu\n", ps.size() );
   }
   assert( qs.size() == 10'000'000 );
   printf( "qs size: %lu\n", qs.size() );
 
-  int window_size = 5; // NOTICE: we fix the query size 5
+  int window_size = 5;  // NOTICE: we fix the query size 5
   using Tree = typename TreeDesc::type;
   Tree* pkd = nullptr;
-  //insertOsmByTime<TreeDesc, point>( Dim, node_by_year, rounds, pkd, qs, K );
-  auto gen_wp = [&](size_t end_year, size_t backtrace){
-    size_t begin_year = end_year>=backtrace? end_year-backtrace: 0;
+  // insertOsmByTime<TreeDesc, point>( Dim, node_by_year, rounds, pkd, qs, K );
+  auto gen_wp = [&]( size_t end_year, size_t backtrace ) {
+    size_t begin_year = end_year >= backtrace ? end_year - backtrace : 0;
     points wp;
-    for(size_t i=begin_year; i<end_year; ++i)
-    {
-        const auto &ins = node_by_year[i];
-        wp.insert(wp.end(), ins.begin(), ins.end());
+    for ( size_t i = begin_year; i < end_year; ++i ) {
+      const auto& ins = node_by_year[i];
+      wp.insert( wp.end(), ins.begin(), ins.end() );
     }
     return wp;
   };
-  for(size_t i=0; i<node_by_year.size(); ++i)
-  {
-    batchInsert<TreeDesc, point>( pkd, gen_wp(i,window_size), node_by_year[i], Dim, rounds );
-    if(i>=window_size)
-      batchDelete<TreeDesc, point>( pkd, gen_wp(i+1,window_size+1), node_by_year[i-window_size], Dim, rounds );
+  for ( size_t i = 0; i < node_by_year.size(); ++i ) {
+    batchInsert<TreeDesc, point>( pkd, gen_wp( i, window_size ), node_by_year[i], Dim,
+                                  rounds );
+    if ( i >= window_size )
+      batchDelete<TreeDesc, point>( pkd, gen_wp( i + 1, window_size + 1 ),
+                                    node_by_year[i - window_size], Dim, rounds );
     queryKNN<TreeDesc, point>( Dim, qs, rounds, pkd, nullptr, K, false );
   }
 }
@@ -468,7 +467,7 @@ main( int argc, char* argv[] ) {
     auto run = [&]( auto dim_wrapper ) {
       constexpr const auto D = decltype( dim_wrapper )::value;
       using point_t = PointType<coord, D>;
-      using Desc = typename Wrapper::desc<point_t>;
+      using Desc = typename Wrapper::template desc<point_t>;
 
       if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 1 ) {
         bench_osm_year<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
@@ -479,7 +478,8 @@ main( int argc, char* argv[] ) {
         return;
       }
       if ( ( tag & 0x40000000 ) && ( tag & 0xf ) == 3 ) {
-        bench_osm_sliding_window<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile, tag );
+        bench_osm_sliding_window<Desc, point_t>( Dim, LEAVE_WRAP, K, rounds, insertFile,
+                                                 tag );
         return;
       }
       auto pts = parlay::tabulate( N, [&]( size_t i ) -> PointType<coord, D> {
@@ -510,7 +510,8 @@ main( int argc, char* argv[] ) {
       run( std::integral_constant<int, 12>{} );
     } else if ( Dim == 16 ) {
       run( std::integral_constant<int, 16>{} );
-    } else fprintf(stderr, "unsupported dim: %d\n", Dim);
+    } else
+      fprintf( stderr, "unsupported dim: %d\n", Dim );
   };
 
   if ( treeType == 0 )
