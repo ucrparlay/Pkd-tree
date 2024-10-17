@@ -48,5 +48,5 @@ done
 current_date_time="$(date "+%d %H:%M:%S")"
 echo $current_date_time
 
-# NOTE: parse out the datas
+# NOTE: parse out the datas from results generated from perf stat
 # grep -Eo '([0-9, ]+) (cycles|instructions|cache-references|cache-misses|branch-instructions|branch-mi sses):u' logs/perf_real_gen.out | awk '{gsub(/,/, "", $1); print $1}' | paste -sd ' ' | awk '{for (i=1; i<=NF; i++) {printf "%s ", $i; if (i%6==0) printf "\n"}} END {if (NF%6!=0) printf "\n"}' #

@@ -725,10 +725,14 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
     size_t step = Out.size() / recNum;
     parlay::internal::timer t;
     t.reset(), t.start();
-    parlay::parallel_for(0, recNum, [&](size_t i) {
+    // parlay::parallel_for(0, recNum, [&](size_t i) {
+    //     kdknn[i] = pkd.range_query_serial(queryBox[i].first,
+    //                                       Out.cut(i * step, (i + 1) * step));
+    // });
+    for (int i = 0; i < recNum; i++) {
         kdknn[i] = pkd.range_query_serial(queryBox[i].first,
                                           Out.cut(i * step, (i + 1) * step));
-    });
+    }
     t.stop();
     LOG << t.total_time() << " " << std::flush;
 

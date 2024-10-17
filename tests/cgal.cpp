@@ -40,6 +40,26 @@ typedef CGAL::Orthogonal_k_neighbor_search<TreeTraits, Distance,
 typedef Neighbor_search_Midpoint::Tree Tree_Midpoint;
 typedef CGAL::Fuzzy_iso_box<TreeTraits> Fuzzy_iso_box;
 
+void run_cgal_range_query(const auto& queryBox, const auto& maxSize, auto& _ans,
+                          int type, size_t queryNum, const int Dim, auto& tree,
+                          Typename* cgknn) {
+    parlay::internal::timer timer;
+    timer.reset();
+    timer.start();
+
+    for (size_t s = 0; s < queryNum; s++) {
+        Point_d a(Dim, std::begin(queryBox[s].first.first.pnt),
+                  std::end(queryBox[s].first.first.pnt)),
+            b(Dim, std::begin(queryBox[s].first.second.pnt),
+              std::end(queryBox[s].first.second.pnt));
+        Fuzzy_iso_box fib(a, b, 0.0);
+        auto it = tree.search(_ans.begin() + s * maxSize, fib);
+        cgknn[s] = std::distance(_ans.begin() + s * maxSize, it);
+    }
+
+    timer.stop();
+};
+
 template<typename Splitter, typename Tree, typename Neighbor_search,
          typename point>
 void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
@@ -67,29 +87,30 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
                   << std::flush;
 
         Typename* cgknn;
-        auto run_cgal_range_query = [&](const auto& queryBox,
-                                        const auto& maxSize, auto& _ans,
-                                        int type, size_t queryNum) {
-            timer.reset();
-            timer.start();
+        // auto run_cgal_range_query = [&](const auto& queryBox,
+        //                                 const auto& maxSize, auto& _ans,
+        //                                 int type, size_t queryNum) {
+        //     timer.reset();
+        //     timer.start();
 
-            tbb::parallel_for(
-                tbb::blocked_range<std::size_t>(0, queryNum),
-                [&](const tbb::blocked_range<std::size_t>& r) {
-                    for (std::size_t s = r.begin(); s != r.end(); ++s) {
-                        Point_d a(Dim, std::begin(queryBox[s].first.first.pnt),
-                                  std::end(queryBox[s].first.first.pnt)),
-                            b(Dim, std::begin(queryBox[s].first.second.pnt),
-                              std::end(queryBox[s].first.second.pnt));
-                        Fuzzy_iso_box fib(a, b, 0.0);
-                        auto it = tree.search(_ans.begin() + s * maxSize, fib);
-                        cgknn[s] =
-                            std::distance(_ans.begin() + s * maxSize, it);
-                    }
-                });
+        //     tbb::parallel_for(
+        //         tbb::blocked_range<std::size_t>(0, queryNum),
+        //         [&](const tbb::blocked_range<std::size_t>& r) {
+        //             for (std::size_t s = r.begin(); s != r.end(); ++s) {
+        //                 Point_d a(Dim,
+        //                 std::begin(queryBox[s].first.first.pnt),
+        //                           std::end(queryBox[s].first.first.pnt)),
+        //                     b(Dim, std::begin(queryBox[s].first.second.pnt),
+        //                       std::end(queryBox[s].first.second.pnt));
+        //                 Fuzzy_iso_box fib(a, b, 0.0);
+        //                 auto it = tree.search(_ans.begin() + s * maxSize,
+        //                 fib); cgknn[s] =
+        //                     std::distance(_ans.begin() + s * maxSize, it);
+        //             }
+        //         });
 
-            timer.stop();
-        };
+        //     timer.stop();
+        // };
 
         if (queryType & (1 << 2)) { // NOTE: range query
             LOG << "gen box" << ENDL;
@@ -111,7 +132,7 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
             if (queryType & (1 << 3)) {
                 LOG << "range query" << ENDL;
                 run_cgal_range_query(queryBox, maxSize, _ans, type,
-                                     realworldRangeQueryNum);
+                                     realworldRangeQueryNum, Dim, tree, cgknn);
             }
         }
     }
