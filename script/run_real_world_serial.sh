@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o xtrace
-# Solvers=("cgal" "test")
-Solvers=("test" "cgal")
+Solvers=("cgal" "test")
+# Solvers=("test")
 DataPath="/data/legacy/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["HT"]="10"
@@ -33,7 +33,7 @@ for queryType in ${QueryTypes[@]}; do
 
     for solver in ${Solvers[@]}; do
         exe="../build/${solver}"
-        echo ">>> ${solver}" >${dest}
+        echo ">>> ${solver}" >>${dest}
 
         for filename in "${!file2Dims[@]}"; do
             if [[ ${solver} == "cgal" ]]; then
@@ -52,9 +52,8 @@ for queryType in ${QueryTypes[@]}; do
             perf report --stdio --input=${perf_data_name} >${perf_report_name}
 
             echo -n "${filename} " >>${dest}
-            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" ${perf_report_name} | awk '$1!="0.00%"' | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); print $1}' | awk '{v[NR]=$1;} END {for(i=1;i<=NR;i+=2){if(i+1<=NR){res=(v[i]*v[i+1])/100; printf "%d\n", res;}}}')
+            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" ${perf_report_name} | awk '$1!="0.00%"' | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); print $1}' | awk '{v[NR]=$1;} END {for(i=1;i<=NR;i+=2){if(i+1<=NR){res=(v[i]*v[i+1])/100/1000000; printf "%d\n", res;}}}')
             echo -n $res | paste -sd ' ' >>${dest}
-            echo "" >>${dest}
         done
     done
 done
