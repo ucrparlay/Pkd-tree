@@ -23,6 +23,9 @@
 using coord = long;
 using Typename = coord;
 
+int perf_ctl_fd = 0;
+int perf_ctl_ack_fd = 0;
+
 double aveDeep = 0.0;
 
 //*---------- generate points within a 0-box_size --------------------
@@ -293,6 +296,13 @@ queryKNN( const uint_fast8_t& Dim, const parlay::sequence<point>& WP, const int&
   };
 
   if ( TreeDesc::support_knn1 ) {
+    std::cout << "knn1_sample " << std::flush;
+    for(int i : {1,10,100,1000})
+    {
+      points ws(wp.begin(), wp.begin()+i);
+      test_knn( [&] { tree->template knn<true, false>( ws, K ); } );
+    }
+
     std::cout << "knn1 " << std::flush;
     // test_knn([&]{tree->template knn<false,false>(wp,K);});
     // test_knn([&]{tree->template knn<false,true>(wp,K);});
@@ -473,6 +483,12 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
   return std::make_pair( bxs, maxSize );
 }
 
+template<class F>
+__attribute__((noinline)) auto serialrangequery(const F &f)
+{
+    return f();
+}
+
 template<class TreeDesc, typename point>
 void
 rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, int dim,
@@ -506,15 +522,35 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
   for(size_t i=0; i<sizeof(ratio)/sizeof(*ratio); ++i)
     test_rangeQuery(ratio[i]);
   */
+  fprintf(stderr, "init only: %c\n", "NY"[int(init_only)]);
+
+char ack[5];
+if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+{
+  write(perf_ctl_fd, "enable", 7);
+  read(perf_ctl_ack_fd, ack, 5);
+  fprintf(stderr, "ack: %s\n", ack);
+  assert(strcmp(ack, "ack\n") == 0);
+}
   double aveQuery = time_loop(
-      rounds, 1.0, [] {},
+      rounds, -1.0, [] {},
       [&]() {
-        parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
+        //parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
+        for(size_t i=0; i<rects.size(); ++i) {
           const auto& [qMin, qMax, num_in_rect] = rects[i];
+          /*
           auto res = init_only?
             parlay::tabulate(num_in_rect, [](size_t i){return point{};}): 
             tree->orthogonalQuery( qMin, qMax );
+          */
 
+          auto res = serialrangequery([&](){
+            return init_only?
+                parlay::tabulate(num_in_rect, [](size_t i){return point{};}): 
+                tree->orthogonalQuery(qMin, qMax);
+          });
+
+        /*
           if ( res.size() != num_in_rect ) throw "num_in_rect doesn't match";
           point resMin =
               parlay::reduce( res, parlay::binary_op(
@@ -534,9 +570,17 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
                                        point{} ) );
           if ( !init_only && resMin != qMin ) throw "wrong min point";
           if ( !init_only && resMax != qMax ) throw "wrong max point";
-        } );
+        */
+        }
       },
       [] {} );
+if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+{
+  write(perf_ctl_fd, "disable", 8);
+  read(perf_ctl_ack_fd, ack, 5);
+  fprintf(stderr, "ack: %s\n", ack);
+  assert(strcmp(ack, "ack\n") == 0);
+}
   std::cout << aveQuery << ' ' << std::flush;
 }
 

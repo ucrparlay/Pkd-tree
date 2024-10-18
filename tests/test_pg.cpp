@@ -1,9 +1,14 @@
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
+#include <sys/types.h>
+#include <unistd.h>
 #include <initializer_list>
 #include "testFramework_pg.h"
+using namespace std::chrono_literals;
 
 char *iFile_aux = nullptr;
+char *perf_args = nullptr;
 
 template<class TreeDesc, typename point>
 void
@@ -168,6 +173,7 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
     points wq;
 
     if ( iFile_aux != nullptr ) {
+      fprintf(stderr, "reading ood query from %s\n", iFile_aux);
       auto name = std::string( iFile_aux );
       name = name.substr( name.rfind( "/" ) + 1 );
       auto [_, d] = read_points<point>( iFile_aux, wq, K );
@@ -181,6 +187,8 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       wq.resize( 10'000'000 );
       queryKNN<TreeDesc, point>( Dim, wq, rounds, pkd, kdknn, K, false );
     } else
+      // #### NOTICE: custom query: restrict the query set to the size of 10^7
+      wq.resize( 10'000'000 );
       for ( auto cnt_nbh = K; cnt_nbh > 0; cnt_nbh /= downsize_k ) {
         // parlay::sequence<point> wp_crop(wp.begin(), wp.begin()+1000000);
         // queryKNN<TreeDesc,point>(Dim, wp_crop, rounds, pkd, kdknn, cnt_nbh, false );
@@ -223,7 +231,35 @@ testParallelKDtree( const int& Dim, const int& LEAVE_WRAP, parlay::sequence<poin
       for ( int type_rect : { 2 } )
       {
         bool is_dummy_query = !!(queryType&(1<<16));
+        /*
+        if(perf_args){
+          char perfcmd[512];
+          auto pid = getpid();
+          sprintf(perfcmd, "perf record -p %lu %s", (unsigned long)pid, perf_args);
+          fprintf(stderr, "running %s\n", perfcmd);
+          system(perfcmd);
+          std::this_thread::sleep_for(2s);
+        }
+        */
+        /*
+        char ack[5];
+        if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+        {
+          write(perf_ctl_fd, "enable", 7);
+          read(perf_ctl_ack_fd, ack, 5);
+          fprintf(stderr, "ack: %s\n", ack);
+          assert(strcmp(ack, "ack\n") == 0);
+        }*/
+
         rangeQuery<TreeDesc, point>( wp, pkd, Dim, rounds, num_rect, type_rect, is_dummy_query );
+        /*
+        if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+        {
+          write(perf_ctl_fd, "disable", 8);
+          read(perf_ctl_ack_fd, ack, 5);
+          fprintf(stderr, "ack: %s\n", ack);
+          assert(strcmp(ack, "ack\n") == 0);
+        }*/
       }
     }
 
@@ -420,6 +456,7 @@ main( int argc, char* argv[] ) {
       "<parallelTag>] [-p <inFile>] [-r {1,...,5}] [-q {0,1}] [-i <_insertFile>]" );
   char* iFile = P.getOptionValue( "-p" );
   iFile_aux = P.getOptionValue( "-pa" );
+  perf_args = P.getOptionValue( "-perf" );
   char* _insertFile = P.getOptionValue( "-i" );
   int K = P.getOptionIntValue( "-k", 100 );
   int Dim = P.getOptionIntValue( "-d", 3 );
@@ -428,6 +465,9 @@ main( int argc, char* argv[] ) {
   int rounds = P.getOptionIntValue( "-r", 3 );
   int queryType = P.getOptionIntValue( "-q", 0 );
   int treeType = P.getOptionIntValue( "-T", 0 );
+  perf_ctl_fd = P.getOptionIntValue( "-pcf", 0);
+  perf_ctl_ack_fd = P.getOptionIntValue( "-pcaf", 0);
+  printf("perf control: %d %d\n", perf_ctl_fd, perf_ctl_ack_fd);
 
   pargeo::batchKdTree::print_config();
 
