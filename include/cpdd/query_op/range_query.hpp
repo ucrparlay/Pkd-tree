@@ -7,8 +7,9 @@ namespace cpdd {
 
 template<typename point>
 template<typename StoreType>
-size_t ParallelKDtree<point>::range_query_parallel(const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
-                                                   double& tim) {
+size_t ParallelKDtree<point>::range_query_parallel(
+    const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
+    double& tim) {
     parlay::internal::timer t;
     tim = 0.0;
     t.start();
@@ -27,7 +28,8 @@ size_t ParallelKDtree<point>::range_query_parallel(const typename ParallelKDtree
 
 template<typename point>
 template<typename StoreType>
-size_t ParallelKDtree<point>::range_query_serial(const typename ParallelKDtree<point>::box& queryBox, StoreType Out) {
+size_t ParallelKDtree<point>::range_query_serial(
+    const typename ParallelKDtree<point>::box& queryBox, StoreType Out) {
     size_t s = 0;
     range_query_recursive_serial(this->root, Out, s, queryBox, this->bbox);
     return s;
@@ -35,8 +37,8 @@ size_t ParallelKDtree<point>::range_query_serial(const typename ParallelKDtree<p
 
 template<typename point>
 template<typename StoreType>
-void ParallelKDtree<point>::range_query_recursive_parallel(node* T, simple_node* ST, StoreType Out,
-                                                           const box& queryBox) {
+void ParallelKDtree<point>::range_query_recursive_parallel(
+    node* T, simple_node* ST, StoreType Out, const box& queryBox) {
     if (ST->size == 0) {
         return;
     }
@@ -61,15 +63,24 @@ void ParallelKDtree<point>::range_query_recursive_parallel(node* T, simple_node*
     //! granularity control
     parlay::par_do_if(
         ST->size >= SERIAL_BUILD_CUTOFF,
-        [&]() { range_query_recursive_parallel(TI->left, ST->left, Out.cut(0, ST->left->size), queryBox); },
-        [&]() { range_query_recursive_parallel(TI->right, ST->right, Out.cut(ST->left->size, Out.size()), queryBox); });
+        [&]() {
+            range_query_recursive_parallel(
+                TI->left, ST->left, Out.cut(0, ST->left->size), queryBox);
+        },
+        [&]() {
+            range_query_recursive_parallel(TI->right, ST->right,
+                                           Out.cut(ST->left->size, Out.size()),
+                                           queryBox);
+        });
 
     return;
 }
 
 template<typename point>
 template<typename StoreType>
-void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out, size_t& s, const box& queryBox,
+void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
+                                                         size_t& s,
+                                                         const box& queryBox,
                                                          const box& nodeBox) {
     if (T->is_leaf) {
         leaf* TL = static_cast<leaf*>(T);
@@ -89,7 +100,7 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
 
     interior* TI = static_cast<interior*>(T);
     // box lbox( nodeBox ), rbox( nodeBox );
-    box abox(nodeBox);
+    // box abox(nodeBox);
     // lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
     // rbox.first.pnt[TI->split.second] = TI->split.first;
 
@@ -106,16 +117,16 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
         }
     };
 
-    auto& mod_dim = abox.second.pnt[TI->split.second];
-    auto split = TI->split.first;
-    std::swap(mod_dim, split);
-    recurse(TI->left, abox);
+    // auto& mod_dim = abox.second.pnt[TI->split.second];
+    // auto split = TI->split.first;
+    // std::swap(mod_dim, split);
+    recurse(TI->left, TI->left->bound_box);
 
-    std::swap(mod_dim, split);
-    abox.first.pnt[TI->split.second] = split;
-    recurse(TI->right, abox);
+    // std::swap(mod_dim, split);
+    // abox.first.pnt[TI->split.second] = split;
+    recurse(TI->right, TI->right->bound_box);
 
     return;
 }
 
-}  // namespace cpdd
+} // namespace cpdd
