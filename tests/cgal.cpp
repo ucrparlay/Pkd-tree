@@ -90,6 +90,13 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
         auto run_cgal_range_query = [&](const auto& queryBox,
                                         const auto& maxSize, auto& _ans,
                                         int type, size_t queryNum) {
+            char ack[5];
+            if (perf_ctl_fd && perf_ctl_ack_fd) {
+                write(perf_ctl_fd, "enable", 7);
+                read(perf_ctl_ack_fd, ack, 5);
+                fprintf(stderr, "ack: %s\n", ack);
+                assert(strcmp(ack, "ack\n") == 0);
+            }
             timer.reset();
             timer.start();
 
@@ -109,6 +116,13 @@ void testCGALParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp,
                 });
 
             timer.stop();
+            if (perf_ctl_fd && perf_ctl_ack_fd) {
+                write(perf_ctl_fd, "disable", 8);
+                read(perf_ctl_ack_fd, ack, 5);
+                fprintf(stderr, "ack: %s\n", ack);
+                assert(strcmp(ack, "ack\n") == 0);
+            }
+            LOG << timer.total_time() << " " << std::flush;
         };
 
         if (queryType & (1 << 2)) { // NOTE: range query
@@ -192,6 +206,8 @@ int main(int argc, char* argv[]) {
     int rounds = P.getOptionIntValue("-r", 3);
     int queryType = P.getOptionIntValue("-q", 0);
     int readInsertFile = P.getOptionIntValue("-i", 1);
+    perf_ctl_fd = P.getOptionIntValue("-pcf", 0);
+    perf_ctl_ack_fd = P.getOptionIntValue("-pcaf", 0);
 
     using point = PointType<coord, 3>;
     using points = parlay::sequence<point>;
