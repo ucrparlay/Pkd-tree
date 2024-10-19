@@ -73,6 +73,8 @@ int main(int argc, char* argv[]) {
     int queryType = P.getOptionIntValue("-q", 0);
     int readInsertFile = P.getOptionIntValue("-i", 1);
 
+    perf_ctl_fd = P.getOptionIntValue("-pcf", 0);
+    perf_ctl_ack_fd = P.getOptionIntValue("-pcaf", 0);
     int LEAVE_WRAP = 32;
     // using point = PointType<coord, 3>;
     // parlay::sequence<point> wp;
