@@ -48,13 +48,30 @@ for queryType in ${QueryTypes[@]}; do
             perf_data_name="${log_path}/perf/${solver}_${filename}_perf.data"
             perf_report_name="${log_path}/perf/${solver}_${filename}_perf.report"
 
-            perf record -o ${perf_data_name} -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1
+            ctl_dir=/tmp/
+
+            ctl_fifo=${ctl_dir}perf_ctl.fifo
+            test -p ${ctl_fifo} && unlink ${ctl_fifo}
+            mkfifo ${ctl_fifo}
+            exec {ctl_fd}<>${ctl_fifo}
+
+            ctl_ack_fifo=${ctl_dir}perf_ctl_ack.fifo
+            test -p ${ctl_ack_fifo} && unlink ${ctl_ack_fifo}
+            mkfifo ${ctl_ack_fifo}
+            exec {ctl_fd_ack}<>${ctl_ack_fifo}
+
+            perf record -s -D -1 --control fd:${ctl_fd},${ctl_fd_ack} -o ${perf_data_name} -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 -pcf ${ctl_fd} -pcaf ${ctl_fd_ack}
+
+            exec {ctl_fd_ack}>&-
+            unlink ${ctl_ack_fifo}
+
+            exec {ctl_fd}>&-
+            unlink ${ctl_fifo}
+
             perf report --stdio --input=${perf_data_name} >${perf_report_name}
 
             echo -n "${filename} " >>${dest}
-            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" ${perf_report_name} | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); }' | awk '{if($1>100){print; kp=1}else if(kp){print; kp=0}}'
-
-            # awk '{v[NR]=$1;} END {for(i=1;i<=NR;i+=2){if(i+1<=NR){res=(v[i]*v[i+1])/100/1000000; printf "%d\n", res;}}}')
+            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" ${perf_report_name} | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); }' | awk '{if($1>100){print; kp=1}else if(kp){print; kp=0}}')
             echo -n $res | paste -sd ' ' >>${dest}
         done
     done

@@ -20,7 +20,8 @@
 using coord = double;
 using Typename = coord;
 using namespace cpdd;
-
+int perf_ctl_fd = 0;
+int perf_ctl_ack_fd = 0;
 // NOTE: KNN size
 static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
@@ -724,6 +725,15 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
 
     size_t step = Out.size() / recNum;
     parlay::internal::timer t;
+
+    char ack[5];
+    if (perf_ctl_fd && perf_ctl_ack_fd) {
+        write(perf_ctl_fd, "enable", 7);
+        read(perf_ctl_ack_fd, ack, 5);
+        fprintf(stderr, "ack: %s\n", ack);
+        assert(strcmp(ack, "ack\n") == 0);
+    }
+
     t.reset(), t.start();
     parlay::parallel_for(0, recNum, [&](size_t i) {
         kdknn[i] = pkd.range_query_serial(queryBox[i].first,
@@ -734,6 +744,12 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
     //                                       Out.cut(i * step, (i + 1) * step));
     // }
     t.stop();
+    if (perf_ctl_fd && perf_ctl_ack_fd) {
+        write(perf_ctl_fd, "disable", 8);
+        read(perf_ctl_ack_fd, ack, 5);
+        fprintf(stderr, "ack: %s\n", ack);
+        assert(strcmp(ack, "ack\n") == 0);
+    }
     LOG << t.total_time() << " " << std::flush;
 
     return;

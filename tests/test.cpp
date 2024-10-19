@@ -72,7 +72,9 @@ int main(int argc, char* argv[]) {
     int rounds = P.getOptionIntValue("-r", 3);
     int queryType = P.getOptionIntValue("-q", 0);
     int readInsertFile = P.getOptionIntValue("-i", 1);
-
+    perf_ctl_fd = P.getOptionIntValue("-pcf", 0);
+    perf_ctl_ack_fd = P.getOptionIntValue("-pcaf", 0);
+    printf("perf control: %d %d\n", perf_ctl_fd, perf_ctl_ack_fd);
     int LEAVE_WRAP = 32;
     // using point = PointType<coord, 3>;
     // parlay::sequence<point> wp;
