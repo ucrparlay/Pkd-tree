@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o xtrace
 # Solvers=("cgal" "test")
-Solvers=("test")
+Solvers=("cgal")
 DataPath="/data/legacy/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["HT"]="10"
@@ -29,7 +29,7 @@ for queryType in ${QueryTypes[@]}; do
         resFile="perf_real_total_serial.out"
     fi
     dest="${log_path}/${resFile}"
-    : >${dest}
+    # : >${dest}
     echo ">>>${dest}"
 
     for solver in ${Solvers[@]}; do
