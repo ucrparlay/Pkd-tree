@@ -57,45 +57,28 @@ std::pair<size_t, int>
 read_points( const char* iFile, parlay::sequence<point>& wp, int K ) {
   using coord =
       std::remove_reference_t<decltype( *std::declval<point>().coordinate() )>;  // *
-  ifstream fs;
-  fs.open( iFile );
-  size_t N;
-  int Dim;
-  string str;
-  fs >> str, N = stol( str );
-  fs >> str, Dim = stoi( str );
-  // LOG << N << " " << Dim << ENDL;
+  parlay::sequence<char> S = readStringFromFile( iFile );
+  parlay::sequence<char*> W = stringToWords( S );
+  size_t N = atol( W[0] );
+  int Dim = atoi( W[1] );
+  assert( N >= 0 && Dim >= 1 && N >= K );
+
+  auto pts = W.cut( 2, W.size() );
+  assert( pts.size() % Dim == 0 );
+  size_t n = pts.size() / Dim;
+  auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {
+    if constexpr ( std::is_integral_v<coord> )
+      return atol( pts[i] );
+    else if ( std::is_floating_point_v<coord> )
+      return atof( pts[i] );
+  } );
   wp.resize( N );
-  for ( size_t i = 0; i < N; i++ ) {
+  parlay::parallel_for( 0, n, [&]( size_t i ) {
     for ( int j = 0; j < Dim; j++ ) {
-      fs >> str;
-      wp[i][j] = std::stol( str );
+      wp[i][j] = a[i * Dim + j];
     }
-  }
+  } );
   return std::make_pair( N, Dim );
-  //
-  // parlay::sequence<char> S = readStringFromFile( iFile );
-  // parlay::sequence<char*> W = stringToWords( S );
-  // size_t N = atol( W[0] );
-  // int Dim = atoi( W[1] );
-  // assert( N >= 0 && Dim >= 1 && N >= K );
-  //
-  // auto pts = W.cut( 2, W.size() );
-  // assert( pts.size() % Dim == 0 );
-  // size_t n = pts.size() / Dim;
-  // auto a = parlay::tabulate( Dim * n, [&]( size_t i ) -> coord {
-  //   if constexpr ( std::is_integral_v<coord> )
-  //     return atol( pts[i] );
-  //   else if ( std::is_floating_point_v<coord> )
-  //     return atof( pts[i] );
-  // } );
-  // wp.resize( N );
-  // parlay::parallel_for( 0, n, [&]( size_t i ) {
-  //   for ( int j = 0; j < Dim; j++ ) {
-  //     wp[i][j] = a[i * Dim + j];
-  //   }
-  // } );
-  // return std::make_pair( N, Dim );
 }
 /*
 template<typename tree>
@@ -493,7 +476,7 @@ gen_rectangles( int recNum, const int type, const parlay::sequence<point>& WP, i
 template<class TreeDesc, typename point>
 void
 rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, int dim,
-            int rounds, int num_rect, int type_rect, bool init_only = false ) {
+            int rounds, int num_rect, int type_rect, bool init_only=false ) {
   // using tree = ParallelKDtree<point>;
   using Tree = typename TreeDesc::type;
   // using points = typename tree::points;
@@ -528,9 +511,9 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
       [&]() {
         parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
           const auto& [qMin, qMax, num_in_rect] = rects[i];
-          auto res = init_only ? parlay::tabulate( num_in_rect,
-                                                   []( size_t i ) { return point{}; } )
-                               : tree->orthogonalQuery( qMin, qMax );
+          auto res = init_only?
+            parlay::tabulate(num_in_rect, [](size_t i){return point{};}): 
+            tree->orthogonalQuery( qMin, qMax );
 
           if ( res.size() != num_in_rect ) throw "num_in_rect doesn't match";
           point resMin =
