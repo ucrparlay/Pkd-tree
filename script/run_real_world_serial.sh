@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o xtrace
-Solvers=("cgal" "test")
-# Solvers=("test")
+# Solvers=("cgal" "test")
+Solvers=("test")
 DataPath="/data/legacy/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["HT"]="10"
@@ -22,6 +22,7 @@ QueryTypes=(15)
 
 for queryType in ${QueryTypes[@]}; do
     log_path="logs"
+    perf_path="/localdata/zmen002/kdtree/perfs"
     if [[ ${queryType} == 7 ]]; then
         resFile="perf_real_gen_serial.out"
     elif [[ ${queryType} == 15 ]]; then
@@ -45,8 +46,8 @@ for queryType in ${QueryTypes[@]}; do
                 func_name="range_query_recursive_serial"
             fi
 
-            perf_data_name="${log_path}/perf/${solver}_${filename}_perf.data"
-            perf_report_name="${log_path}/perf/${solver}_${filename}_perf.report"
+            perf_data_name="${perf_path}/${solver}_${filename}_perf.data"
+            perf_report_name="${perf_path}/${solver}_${filename}_perf.report"
 
             ctl_dir=/tmp/
 
