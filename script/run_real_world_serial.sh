@@ -72,8 +72,10 @@ for queryType in ${QueryTypes[@]}; do
             # perf report --stdio --input=${perf_data_name} >${perf_report_name}
 
             echo -n "${filename} " >>${dest}
-            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" ${perf_report_name} | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); print $1}' | awk '{if($1>100){print; kp=1}else if(kp){print; kp=0}}' | awk '{v[NR]=$1;} END {for(i=1;i<=NR;i+=2){if(i+1<=NR){res=(v[i]*v[i+1])/100; printf "%d\n", res;}}}')
-            echo -n $res | paste -sd ' ' >>${dest}
+            res=$(grep -E "Samples|Event count|\\b${func_name}\\b" "${perf_report_name}" | awk '/Event count/ {print $NF}')
+            # res=$(grep -E "Samples|Event count|\\b${func_name}\\b" "${perf_report_name}" | awk '/Event count/ {print $NF} /'"${func_name}"'/ {gsub("%", "", $1); print $1}' | awk '{if($1>100){print; kp=1}else if(kp){print; kp=0}}')
+            # res=$(echo "${res}" | awk '{v[NR]=$1;} END {for(i=1;i<=NR;i+=2){if(i+1<=NR){res=(v[i]*v[i+1])/100; printf "%d\n", res;}}}')
+            echo -n "${res}" | paste -sd ' ' >>${dest}
         done
     done
 done
