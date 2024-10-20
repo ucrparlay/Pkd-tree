@@ -111,8 +111,8 @@ if(CGAL)
 	target_link_libraries(cgal PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 	target_include_directories(cgal PUBLIC ${PROJECT_SOURCE_DIR}/include )
 
-	# add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
-	# target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
+	add_executable(checkCorrectParallel ${PROJECT_SOURCE_DIR}/tests/checkCorrectParallel.cpp)
+	target_link_libraries(checkCorrectParallel PUBLIC kdTreeParallel CGAL::CGAL CGAL::TBB_support)
 endif()
 
 set(all_files
