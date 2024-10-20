@@ -535,8 +535,8 @@ if(perf_ctl_ack_fd && perf_ctl_ack_fd)
   double aveQuery = time_loop(
       rounds, -1.0, [] {},
       [&]() {
-        //parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
-        for(size_t i=0; i<rects.size(); ++i) {
+        parlay::parallel_for( 0, rects.size(), [&]( size_t i ) {
+        //for(size_t i=0; i<rects.size(); ++i) {
           const auto& [qMin, qMax, num_in_rect] = rects[i];
           /*
           auto res = init_only?
@@ -571,7 +571,7 @@ if(perf_ctl_ack_fd && perf_ctl_ack_fd)
           if ( !init_only && resMin != qMin ) throw "wrong min point";
           if ( !init_only && resMax != qMax ) throw "wrong max point";
         */
-        }
+        });
       },
       [] {} );
 if(perf_ctl_ack_fd && perf_ctl_ack_fd)
