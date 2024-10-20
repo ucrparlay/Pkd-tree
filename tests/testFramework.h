@@ -735,14 +735,14 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
     }
 
     t.reset(), t.start();
-    parlay::parallel_for(0, recNum, [&](size_t i) {
-        kdknn[i] = pkd.range_query_serial(queryBox[i].first,
-                                          Out.cut(i * step, (i + 1) * step));
-    });
-    // for (int i = 0; i < recNum; i++) {
+    // parlay::parallel_for(0, recNum, [&](size_t i) {
     //     kdknn[i] = pkd.range_query_serial(queryBox[i].first,
     //                                       Out.cut(i * step, (i + 1) * step));
-    // }
+    // });
+    for (int i = 0; i < recNum; i++) {
+        kdknn[i] = pkd.range_query_serial(queryBox[i].first,
+                                          Out.cut(i * step, (i + 1) * step));
+    }
     t.stop();
     if (perf_ctl_fd && perf_ctl_ack_fd) {
         write(perf_ctl_fd, "disable", 8);

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o xtrace
-Solvers=("test" "cgal")
-# Solvers=("cgal")
+# Solvers=("test" "cgal")
+Solvers=("test")
 DataPath="/data/legacy/data3/zmen002/kdtree/geometry"
 declare -A file2Dims
 file2Dims["HT"]="10"
@@ -46,30 +46,30 @@ for queryType in ${QueryTypes[@]}; do
                 func_name="range_query_recursive_serial"
             fi
 
-            perf_data_name="${perf_path}/${solver}_${filename}_perf.data"
-            perf_report_name="${perf_path}/${solver}_${filename}_perf.report"
+            perf_data_name="${perf_path}/${solver}_${filename}_perf_serial.data"
+            perf_report_name="${perf_path}/${solver}_${filename}_perf_serial.report"
 
             ctl_dir=/tmp/
 
-            # ctl_fifo=${ctl_dir}perf_ctl.fifo
-            # test -p ${ctl_fifo} && unlink ${ctl_fifo}
-            # mkfifo ${ctl_fifo}
-            # exec {ctl_fd}<>${ctl_fifo}
-            #
-            # ctl_ack_fifo=${ctl_dir}perf_ctl_ack.fifo
-            # test -p ${ctl_ack_fifo} && unlink ${ctl_ack_fifo}
-            # mkfifo ${ctl_ack_fifo}
-            # exec {ctl_fd_ack}<>${ctl_ack_fifo}
-            #
-            # perf record -s -D -1 --control fd:${ctl_fd},${ctl_fd_ack} -o ${perf_data_name} -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 -pcf ${ctl_fd} -pcaf ${ctl_fd_ack}
-            #
-            # exec {ctl_fd_ack}>&-
-            # unlink ${ctl_ack_fifo}
-            #
-            # exec {ctl_fd}>&-
-            # unlink ${ctl_fifo}
-            #
-            # perf report --stdio --input=${perf_data_name} >${perf_report_name}
+            ctl_fifo=${ctl_dir}perf_ctl.fifo
+            test -p ${ctl_fifo} && unlink ${ctl_fifo}
+            mkfifo ${ctl_fifo}
+            exec {ctl_fd}<>${ctl_fifo}
+
+            ctl_ack_fifo=${ctl_dir}perf_ctl_ack.fifo
+            test -p ${ctl_ack_fifo} && unlink ${ctl_ack_fifo}
+            mkfifo ${ctl_ack_fifo}
+            exec {ctl_fd_ack}<>${ctl_ack_fifo}
+
+            perf record -s -D -1 --control fd:${ctl_fd},${ctl_fd_ack} -o ${perf_data_name} -e cycles,instructions,cache-references,cache-misses,branch-instructions,branch-misses ${exe} -p "${DataPath}/${filename}.in" -k ${k} -t ${tag} -d ${file2Dims[${filename}]} -q ${queryType} -i ${readFile} -s 0 -r 1 -pcf ${ctl_fd} -pcaf ${ctl_fd_ack}
+
+            exec {ctl_fd_ack}>&-
+            unlink ${ctl_ack_fifo}
+
+            exec {ctl_fd}>&-
+            unlink ${ctl_fifo}
+
+            perf report --stdio --input=${perf_data_name} >${perf_report_name}
 
             echo -n "${filename} " >>${dest}
             res=$(grep -E "Samples|Event count|\\b${func_name}\\b" "${perf_report_name}" | awk '/Event count/ {print $NF}')
