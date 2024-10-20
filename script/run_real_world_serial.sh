@@ -46,8 +46,8 @@ for queryType in ${QueryTypes[@]}; do
                 func_name="range_query_recursive_serial"
             fi
 
-            perf_data_name="${perf_path}/${solver}_${filename}_perf_serial.data"
-            perf_report_name="${perf_path}/${solver}_${filename}_perf_serial.report"
+            perf_data_name="${perf_path}/${solver}_${filename}_perf_newout.data"
+            perf_report_name="${perf_path}/${solver}_${filename}_perf_newout.report"
 
             ctl_dir=/tmp/
 

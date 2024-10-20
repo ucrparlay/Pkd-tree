@@ -38,14 +38,14 @@ void testParallelKDtree(const int& Dim, const int& LEAVE_WRAP,
             kdknn = new Typename[recNum];
             points Out;
             auto [queryBox, maxSize] = gen_rectangles(recNum, 2, wp, Dim);
-            Out.resize(recNum * maxSize);
+            // Out.resize(recNum * maxSize);
             int n = wp.size();
-            using ref_t = std::reference_wrapper<point>;
-            parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
+            // using ref_t = std::reference_wrapper<point>;
+            // parlay::sequence<ref_t> out_ref(Out.size(), std::ref(Out[0]));
 
             if (queryType & (1 << 3)) {
                 LOG << "range query" << ENDL;
-                rangeQueryFix<point>(wp, pkd, kdknn, rounds, Out, 2, recNum,
+                rangeQueryFix<point>(wp, pkd, kdknn, rounds, maxSize, 2, recNum,
                                      Dim, queryBox);
             }
             // delete[] kdknn;

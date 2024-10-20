@@ -7,8 +7,9 @@ namespace cpdd {
 
 template<typename point>
 template<typename StoreType>
-size_t ParallelKDtree<point>::range_query_parallel(const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
-                                                   double& tim) {
+size_t ParallelKDtree<point>::range_query_parallel(
+    const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
+    double& tim) {
     parlay::internal::timer t;
     tim = 0.0;
     t.start();
@@ -27,19 +28,22 @@ size_t ParallelKDtree<point>::range_query_parallel(const typename ParallelKDtree
 
 template<typename point>
 template<typename StoreType>
-size_t ParallelKDtree<point>::range_query_serial(const typename ParallelKDtree<point>::box& queryBox, StoreType Out) {
+size_t ParallelKDtree<point>::range_query_serial(
+    const typename ParallelKDtree<point>::box& queryBox, StoreType Out,
+    logger& log) {
     size_t s = 0;
-    range_query_recursive_serial(this->root, Out, s, queryBox, this->bbox);
+    range_query_recursive_serial(this->root, Out, s, queryBox, this->bbox, log);
     return s;
 }
 
 template<typename point>
 template<typename StoreType>
-void ParallelKDtree<point>::range_query_recursive_parallel(node* T, simple_node* ST, StoreType Out,
-                                                           const box& queryBox) {
+void ParallelKDtree<point>::range_query_recursive_parallel(
+    node* T, simple_node* ST, StoreType Out, const box& queryBox) {
     if (ST->size == 0) {
         return;
     }
+
     if (ST->size == T->size) {
         assert(Out.size() == T->size);
         flatten(T, Out.cut(0, T->size));
@@ -61,17 +65,28 @@ void ParallelKDtree<point>::range_query_recursive_parallel(node* T, simple_node*
     //! granularity control
     parlay::par_do_if(
         ST->size >= SERIAL_BUILD_CUTOFF,
-        [&]() { range_query_recursive_parallel(TI->left, ST->left, Out.cut(0, ST->left->size), queryBox); },
-        [&]() { range_query_recursive_parallel(TI->right, ST->right, Out.cut(ST->left->size, Out.size()), queryBox); });
+        [&]() {
+            range_query_recursive_parallel(
+                TI->left, ST->left, Out.cut(0, ST->left->size), queryBox);
+        },
+        [&]() {
+            range_query_recursive_parallel(TI->right, ST->right,
+                                           Out.cut(ST->left->size, Out.size()),
+                                           queryBox);
+        });
 
     return;
 }
 
 template<typename point>
 template<typename StoreType>
-void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out, size_t& s, const box& queryBox,
-                                                         const box& nodeBox) {
+void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
+                                                         size_t& s,
+                                                         const box& queryBox,
+                                                         const box& nodeBox,
+                                                         logger& log) {
     if (T->is_leaf) {
+        log.vis_leaf_node++;
         leaf* TL = static_cast<leaf*>(T);
         if (TL->is_dummy) {
             if (within_box(TL->pts[0], queryBox)) {
@@ -88,6 +103,7 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
     }
 
     interior* TI = static_cast<interior*>(T);
+    log.vis_inter_node++;
     // box lbox( nodeBox ), rbox( nodeBox );
     box abox(nodeBox);
     // lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
@@ -95,13 +111,15 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
 
     auto recurse = [&](node* Ts, const box& bx) -> void {
         if (!box_intersect_box(bx, queryBox)) {
+            log.jump_node++;
             return;
         } else if (within_box(bx, queryBox)) {
+            log.flatten_node++;
             flatten(Ts, Out.cut(s, s + Ts->size));
             s += Ts->size;
             return;
         } else {
-            range_query_recursive_serial(Ts, Out, s, queryBox, bx);
+            range_query_recursive_serial(Ts, Out, s, queryBox, bx, log);
             return;
         }
     };
@@ -118,4 +136,4 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
     return;
 }
 
-}  // namespace cpdd
+} // namespace cpdd

@@ -22,6 +22,7 @@ using Typename = coord;
 using namespace cpdd;
 int perf_ctl_fd = 0;
 int perf_ctl_ack_fd = 0;
+
 // NOTE: KNN size
 static constexpr double batchQueryRatio = 0.01;
 static constexpr size_t batchQueryOsmSize = 10000000;
@@ -716,15 +717,13 @@ void rangeCountFixWithLog(const parlay::sequence<point>& WP,
 template<typename point>
 void rangeQueryFix(const parlay::sequence<point>& WP,
                    ParallelKDtree<point>& pkd, Typename* kdknn,
-                   const int& rounds, parlay::sequence<point>& Out, int recType,
-                   int recNum, int DIM, const auto& queryBox) {
+                   const int& rounds, size_t maxSize, int recType, int recNum,
+                   int DIM, const auto& queryBox) {
     using tree = ParallelKDtree<point>;
     using points = typename tree::points;
     using node = typename tree::node;
     using box = typename tree::box;
-
-    size_t step = Out.size() / recNum;
-    parlay::internal::timer t;
+    parlay::sequence<typename tree::logger> loggers(recNum);
 
     char ack[5];
     if (perf_ctl_fd && perf_ctl_ack_fd) {
@@ -734,23 +733,48 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
         assert(strcmp(ack, "ack\n") == 0);
     }
 
+    // size_t step = Out.size() / recNum;
+    parlay::internal::timer t;
     t.reset(), t.start();
-    // parlay::parallel_for(0, recNum, [&](size_t i) {
+    parlay::parallel_for(0, recNum, [&](size_t i) {
+        parlay::sequence<point> local_out(maxSize);
+        kdknn[i] = pkd.range_query_serial(
+            queryBox[i].first, parlay::make_slice(local_out), loggers[i]);
+    });
+    // for (int i = 0; i < recNum; i++) {
     //     kdknn[i] = pkd.range_query_serial(queryBox[i].first,
     //                                       Out.cut(i * step, (i + 1) * step));
-    // });
-    for (int i = 0; i < recNum; i++) {
-        kdknn[i] = pkd.range_query_serial(queryBox[i].first,
-                                          Out.cut(i * step, (i + 1) * step));
-    }
+    // }
     t.stop();
+    // LOG << "tt: " << t.total_time() << " " << std::flush;
     if (perf_ctl_fd && perf_ctl_ack_fd) {
         write(perf_ctl_fd, "disable", 8);
         read(perf_ctl_ack_fd, ack, 5);
         fprintf(stderr, "ack: %s\n", ack);
         assert(strcmp(ack, "ack\n") == 0);
     }
-    LOG << t.total_time() << " " << std::flush;
+    for (int i = 0; i < recNum; i++) {
+        if (kdknn[i] != queryBox[i].second) {
+            LOG << kdknn[i] << " " << queryBox[i].second << ENDL;
+            LOG << "wrong" << ENDL;
+        }
+    }
+    auto res = parlay::reduce(
+        loggers, parlay::binary_op(
+                     [](const auto& a, const auto& b) {
+                         typename tree::logger tmp;
+                         tmp.vis_leaf_node = a.vis_leaf_node + b.vis_leaf_node;
+                         tmp.vis_inter_node =
+                             a.vis_inter_node + b.vis_inter_node;
+                         tmp.jump_node = a.jump_node + b.jump_node;
+                         tmp.flatten_node = a.flatten_node + b.flatten_node;
+                         return tmp;
+                     },
+                     typename tree::logger{}));
+    LOG << res.vis_leaf_node / recNum << " " << res.vis_inter_node / recNum
+        << " " << res.jump_node / recNum << " " << res.flatten_node / recNum
+        << " " << std::flush;
+    LOG << "tt: " << t.total_time() << " " << std::flush;
 
     return;
 }
@@ -1076,27 +1100,53 @@ std::pair<size_t, int> read_points(const char* iFile,
     using coord = typename point::coord;
     using coords = typename point::coords;
     static coords samplePoint;
+    parlay::sequence<char> S = readStringFromFile(iFile);
+    parlay::sequence<char*> W = stringToWords(S);
+    size_t N = std::stoul(W[0], nullptr, 10);
+    int Dim = atoi(W[1]);
+    assert(N >= 0 && Dim >= 1 && N >= K);
 
-    ifstream fs;
-    fs.open(iFile);
-    size_t N;
-    int Dim;
-    string str;
-    fs >> str, N = stol(str);
-    fs >> str, Dim = stoi(str);
-    // LOG << N << " " << Dim << ENDL;
+    auto pts = W.cut(2, W.size());
+    assert(pts.size() % Dim == 0);
+    size_t n = pts.size() / Dim;
+    auto a = parlay::tabulate(Dim * n, [&](size_t i) -> coord {
+        if constexpr (std::is_integral_v<coord>)
+            return std::stol(pts[i]);
+        else if (std::is_floating_point_v<coord>)
+            return std::stod(pts[i]);
+    });
     wp.resize(N);
-    for (size_t i = 0; i < N; i++) {
+    parlay::parallel_for(0, n, [&](size_t i) {
         for (int j = 0; j < Dim; j++) {
-            fs >> str;
-            if constexpr (std::is_same_v<coord, long>) {
-                wp[i].pnt[j] = std::stol(str);
-            } else if constexpr (std::is_same_v<coord, double>) {
-                wp[i].pnt[j] = std::stod(str);
+            wp[i].pnt[j] = a[i * Dim + j];
+            if constexpr (std::is_same_v<
+                              point, PointType<coord, samplePoint.size()>>) {
             } else {
-                wp[i].pnt[j] = std::stoi(str);
+                wp[i].id = i;
             }
         }
-    }
+    });
     return std::make_pair(N, Dim);
+    // ifstream fs;
+    // fs.open(iFile);
+    // size_t N;
+    // int Dim;
+    // string str;
+    // fs >> str, N = stol(str);
+    // fs >> str, Dim = stoi(str);
+    // // LOG << N << " " << Dim << ENDL;
+    // wp.resize(N);
+    // for (size_t i = 0; i < N; i++) {
+    //     for (int j = 0; j < Dim; j++) {
+    //         fs >> str;
+    //         if constexpr (std::is_same_v<coord, long>) {
+    //             wp[i].pnt[j] = std::stol(str);
+    //         } else if constexpr (std::is_same_v<coord, double>) {
+    //             wp[i].pnt[j] = std::stod(str);
+    //         } else {
+    //             wp[i].pnt[j] = std::stoi(str);
+    //         }
+    //     }
+    // }
+    // return std::make_pair(N, Dim);
 }
