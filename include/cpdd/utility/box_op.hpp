@@ -22,7 +22,8 @@ inline bool ParallelKDtree<point>::within_box(const box& a, const box& b) {
     assert(legal_box(a));
     assert(legal_box(b));
     for (dim_type i = 0; i < a.first.get_dim(); i++) {
-        if (Num::Lt(a.first.pnt[i], b.first.pnt[i]) || Num::Gt(a.second.pnt[i], b.second.pnt[i])) {
+        if (Num::Lt(a.first.pnt[i], b.first.pnt[i]) ||
+            Num::Gt(a.second.pnt[i], b.second.pnt[i])) {
             return false;
         }
     }
@@ -34,7 +35,8 @@ template<typename point>
 inline bool ParallelKDtree<point>::within_box(const point& p, const box& bx) {
     assert(legal_box(bx));
     for (dim_type i = 0; i < p.get_dim(); i++) {
-        if (Num::Lt(p.pnt[i], bx.first.pnt[i]) || Num::Gt(p.pnt[i], bx.second.pnt[i])) {
+        if (Num::Lt(p.pnt[i], bx.first.pnt[i]) ||
+            Num::Gt(p.pnt[i], bx.second.pnt[i])) {
             return false;
         }
     }
@@ -43,25 +45,31 @@ inline bool ParallelKDtree<point>::within_box(const point& p, const box& bx) {
 
 // NOTE: return true if box a intersects box b
 template<typename point>
-inline bool ParallelKDtree<point>::box_intersect_box(const box& a, const box& b) {
+inline bool ParallelKDtree<point>::box_intersect_box(const box& a,
+                                                     const box& b) {
     assert(legal_box(a) && legal_box(b));
     for (dim_type i = 0; i < a.first.get_dim(); i++) {
-        if (Num::Lt(a.second.pnt[i], b.first.pnt[i]) || Num::Gt(a.first.pnt[i], b.second.pnt[i])) {
+        if (Num::Lt(a.second.pnt[i], b.first.pnt[i]) ||
+            Num::Gt(a.first.pnt[i], b.second.pnt[i])) {
             return false;
         }
     }
     return true;
 }
 
-// NOTE: return an empty box, fill the left cornor with maximum value and right cornor with minimum value
+// NOTE: return an empty box, fill the left cornor with maximum value and right
+// cornor with minimum value
 template<typename point>
-inline typename ParallelKDtree<point>::box ParallelKDtree<point>::get_empty_box() {
-    return box(point(std::numeric_limits<coord>::max()), point(std::numeric_limits<coord>::min()));
+inline typename ParallelKDtree<point>::box
+ParallelKDtree<point>::get_empty_box() {
+    return box(point(std::numeric_limits<coord>::max()),
+               point(std::numeric_limits<coord>::lowest()));
 }
 
 // NOTE: merge two bounding box x and y
 template<typename point>
-typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(const box& x, const box& y) {
+typename ParallelKDtree<point>::box
+ParallelKDtree<point>::get_box(const box& x, const box& y) {
     return box(x.first.minCoords(y.first), x.second.maxCoords(y.second));
 }
 
@@ -72,9 +80,11 @@ typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(slice V) {
         return get_empty_box();
     } else {
         auto minmax = [&](const box& x, const box& y) {
-            return box(x.first.minCoords(y.first), x.second.maxCoords(y.second));
+            return box(x.first.minCoords(y.first),
+                       x.second.maxCoords(y.second));
         };
-        auto boxes = parlay::delayed_seq<box>(V.size(), [&](size_t i) { return box(V[i].pnt, V[i].pnt); });
+        auto boxes = parlay::delayed_seq<box>(
+            V.size(), [&](size_t i) { return box(V[i].pnt, V[i].pnt); });
         return parlay::reduce(boxes, parlay::make_monoid(minmax, boxes[0]));
     }
 }
@@ -89,14 +99,18 @@ typename ParallelKDtree<point>::box ParallelKDtree<point>::get_box(node* T) {
 
 // NOTE: return true if bounding box bx is within circle cl
 template<typename point>
-inline bool ParallelKDtree<point>::within_circle(const box& bx, const circle& cl) {
+inline bool ParallelKDtree<point>::within_circle(const box& bx,
+                                                 const circle& cl) {
     //* the logical is same as p2b_max_distance <= radius
     coord r = 0;
     for (dim_type i = 0; i < cl.first.get_dim(); i++) {
-        if (Num::Lt(cl.first.pnt[i], (bx.first.pnt[i] + bx.second.pnt[i]) / 2)) {
-            r += (bx.second.pnt[i] - cl.first.pnt[i]) * (bx.second.pnt[i] - cl.first.pnt[i]);
+        if (Num::Lt(cl.first.pnt[i],
+                    (bx.first.pnt[i] + bx.second.pnt[i]) / 2)) {
+            r += (bx.second.pnt[i] - cl.first.pnt[i]) *
+                 (bx.second.pnt[i] - cl.first.pnt[i]);
         } else {
-            r += (cl.first.pnt[i] - bx.first.pnt[i]) * (cl.first.pnt[i] - bx.first.pnt[i]);
+            r += (cl.first.pnt[i] - bx.first.pnt[i]) *
+                 (cl.first.pnt[i] - bx.first.pnt[i]);
         }
         if (Num::Gt(r, cl.second * cl.second)) return false;
     }
@@ -106,7 +120,8 @@ inline bool ParallelKDtree<point>::within_circle(const box& bx, const circle& cl
 
 // NOTE: return true if the point p is within circle cl
 template<typename point>
-inline bool ParallelKDtree<point>::within_circle(const point& p, const circle& cl) {
+inline bool ParallelKDtree<point>::within_circle(const point& p,
+                                                 const circle& cl) {
     coord r = 0;
     for (dim_type i = 0; i < cl.first.get_dim(); i++) {
         r += (p.pnt[i] - cl.first.pnt[i]) * (p.pnt[i] - cl.first.pnt[i]);
@@ -118,19 +133,22 @@ inline bool ParallelKDtree<point>::within_circle(const point& p, const circle& c
 
 // NOTE: return true if the circle cl intersects box bx
 template<typename point>
-inline bool ParallelKDtree<point>::circle_intersect_box(const circle& cl, const box& bx) {
+inline bool ParallelKDtree<point>::circle_intersect_box(const circle& cl,
+                                                        const box& bx) {
     //* the logical is same as p2b_min_distance > radius
     coord r = 0;
     for (dim_type i = 0; i < cl.first.get_dim(); i++) {
         if (Num::Lt(cl.first.pnt[i], bx.first.pnt[i])) {
-            r += (bx.first.pnt[i] - cl.first.pnt[i]) * (bx.first.pnt[i] - cl.first.pnt[i]);
+            r += (bx.first.pnt[i] - cl.first.pnt[i]) *
+                 (bx.first.pnt[i] - cl.first.pnt[i]);
         } else if (Num::Gt(cl.first.pnt[i], bx.second.pnt[i])) {
-            r += (cl.first.pnt[i] - bx.second.pnt[i]) * (cl.first.pnt[i] - bx.second.pnt[i]);
+            r += (cl.first.pnt[i] - bx.second.pnt[i]) *
+                 (cl.first.pnt[i] - bx.second.pnt[i]);
         }
-        if (Num::Gt(r, cl.second * cl.second)) return false;  //* not intersect
+        if (Num::Gt(r, cl.second * cl.second)) return false; //* not intersect
     }
     assert(Num::Leq(r, cl.second * cl.second));
     return true;
 }
 
-}  // namespace cpdd
+} // namespace cpdd

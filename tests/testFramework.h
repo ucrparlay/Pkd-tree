@@ -753,6 +753,12 @@ void rangeQueryFix(const parlay::sequence<point>& WP,
         fprintf(stderr, "ack: %s\n", ack);
         assert(strcmp(ack, "ack\n") == 0);
     }
+    for (int i = 0; i < recNum; i++) {
+        if (queryBox[i].second != kdknn[i]) {
+            LOG << kdknn[i] << " " << queryBox[i].second << ENDL;
+            LOG << "wrong" << ENDL;
+        }
+    }
     auto res = parlay::reduce(
         loggers, parlay::binary_op(
                      [](const auto& a, const auto& b) {

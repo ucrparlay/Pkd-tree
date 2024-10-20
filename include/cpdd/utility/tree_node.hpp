@@ -25,14 +25,16 @@ struct ParallelKDtree<point>::node {
 
     bool is_leaf;
     size_t size;
-    box bound_box;
+    box bound_box = get_empty_box();
 };
 
 template<typename point>
 struct ParallelKDtree<point>::leaf : node {
     bool is_dummy;
     points pts;
-    leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false) {};
+    leaf() : node{true, static_cast<size_t>(0)}, is_dummy(false) {
+        this->bound_box = get_empty_box();
+    };
     leaf(slice In) :
         node{true, static_cast<size_t>(In.size())},
         is_dummy(false),

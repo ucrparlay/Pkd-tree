@@ -103,9 +103,9 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
 
     interior* TI = static_cast<interior*>(T);
     log.vis_inter_node++;
-    // box lbox( nodeBox ), rbox( nodeBox );
-    // box abox(nodeBox);
-    // lbox.second.pnt[TI->split.second] = TI->split.first;  //* loose
+    // box lbox(nodeBox), rbox(nodeBox);
+    box abox(nodeBox);
+    // lbox.second.pnt[TI->split.second] = TI->split.first; //* loose
     // rbox.first.pnt[TI->split.second] = TI->split.first;
 
     auto recurse = [&](node* Ts, const box& bx) -> void {
@@ -123,14 +123,16 @@ void ParallelKDtree<point>::range_query_recursive_serial(node* T, StoreType Out,
         }
     };
 
-    // auto& mod_dim = abox.second.pnt[TI->split.second];
-    // auto split = TI->split.first;
-    // std::swap(mod_dim, split);
+    auto& mod_dim = abox.second.pnt[TI->split.second];
+    auto split = TI->split.first;
+    std::swap(mod_dim, split);
     recurse(TI->left, TI->left->bound_box);
+    assert(within_box(TI->left->bound_box, abox));
 
-    // std::swap(mod_dim, split);
-    // abox.first.pnt[TI->split.second] = split;
+    std::swap(mod_dim, split);
+    abox.first.pnt[TI->split.second] = split;
     recurse(TI->right, TI->right->bound_box);
+    assert(within_box(TI->right->bound_box, abox));
 
     return;
 }

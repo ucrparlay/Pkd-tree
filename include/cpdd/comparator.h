@@ -42,7 +42,7 @@ class Num_Comparator {
         if constexpr (std::is_integral_v<T>)
             return a >= b;
         else if (std::is_floating_point_v<T>)
-            return ~Lt(a, b);
+            return !Lt(a, b);
         else
             return a >= b;
     }
@@ -51,7 +51,7 @@ class Num_Comparator {
         if constexpr (std::is_integral_v<T>)
             return a <= b;
         else if (std::is_floating_point_v<T>)
-            return ~Gt(a, b);
+            return !Gt(a, b);
         else
             return a <= b;
     }
@@ -78,4 +78,4 @@ class Num_Comparator {
     static constexpr T eps = std::numeric_limits<T>::epsilon();
 };
 
-}  // namespace cpdd
+} // namespace cpdd
