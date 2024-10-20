@@ -266,7 +266,8 @@ int main(int argc, char* argv[]) {
     Typename* cgknn;
     Typename* kdknn;
     points wi;
-    int queryNum = N / 10000;
+    // int queryNum = N / 10000;
+    int queryNum = 10000;
 
     //* initialize insert points file
     if (tag >= 1 && iFile != NULL) {
