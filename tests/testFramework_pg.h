@@ -525,7 +525,7 @@ rangeQuery( const parlay::sequence<point>& wp, typename TreeDesc::type*& tree, i
   fprintf(stderr, "init only: %c\n", "NY"[int(init_only)]);
 
 char ack[5];
-if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+if(perf_ctl_fd && perf_ctl_ack_fd)
 {
   write(perf_ctl_fd, "enable", 7);
   read(perf_ctl_ack_fd, ack, 5);
@@ -574,7 +574,7 @@ if(perf_ctl_ack_fd && perf_ctl_ack_fd)
         });
       },
       [] {} );
-if(perf_ctl_ack_fd && perf_ctl_ack_fd)
+if(perf_ctl_fd && perf_ctl_ack_fd)
 {
   write(perf_ctl_fd, "disable", 8);
   read(perf_ctl_ack_fd, ack, 5);
