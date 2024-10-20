@@ -49,3 +49,6 @@
 *.in
 build/
 .vscode
+
+benchmark/
+profiling/
