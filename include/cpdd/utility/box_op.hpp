@@ -56,7 +56,7 @@ inline bool ParallelKDtree<point>::box_intersect_box(const box& a, const box& b)
 // NOTE: return an empty box, fill the left cornor with maximum value and right cornor with minimum value
 template<typename point>
 inline typename ParallelKDtree<point>::box ParallelKDtree<point>::get_empty_box() {
-    return box(point(std::numeric_limits<coord>::max()), point(std::numeric_limits<coord>::min()));
+    return box(point(std::numeric_limits<coord>::max()), point(std::numeric_limits<coord>::lowest()));
 }
 
 // NOTE: merge two bounding box x and y
