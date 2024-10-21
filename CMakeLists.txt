@@ -23,7 +23,7 @@ option(CGAL "" ON)
 option(MEMCHECK "" OFF)
 option(CACHECHECK "" OFF)
 option(JEMA "" OFF)
-add_compile_options(-Wall -Wextra)
+# add_compile_options(-Wall -Wextra)
 
 if(CILKPLUS)
 	add_compile_options(-DPARLAY_CILKPLUS -DCILK -fcilkplus)
