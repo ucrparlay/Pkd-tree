@@ -198,3 +198,17 @@ The execution flow is shown below:
   3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench/benchmarks/nearestNeighbors/bench/`.
   4.  Copy file `tests/common/time_loop.h` to `pbbsbench/common/`.
   5.  Run the program according to the tutorial in PBBS.
+
+ ## Citation
+ If you use our code, please cite our paper:
+ ```{latex}
+@misc{men2024pkdtreeparallelkdtreebatch,
+      title={Pkd-tree: Parallel $k$d-tree with Batch Updates}, 
+      author={Ziyang Men and Zheqi Shen and Yan Gu and Yihan Sun},
+      year={2024},
+      eprint={2411.09275},
+      archivePrefix={arXiv},
+      primaryClass={cs.DS},
+      url={https://arxiv.org/abs/2411.09275}, 
+}
+```
