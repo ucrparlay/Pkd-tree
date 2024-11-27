@@ -48,48 +48,52 @@ void testRtreeParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int
 
     parlay::internal::timer timer;
     timer.start();
-    bgi::rtree<RPoint, bgi::quadratic<32>> tree(_points.begin(), _points.end());
+    bgi::rtree<RPoint, bgi::quadratic<2>> tree(_points.begin(), _points.end());
     timer.stop();
     std::cout << timer.total_time() << " " << -1 << " " << std::flush;
 
     if (tag >= 1) {
-        auto rtree_insert = [&](double r) {
+        auto rtree_insert = [&](auto& r_tree, double r) {
             timer.reset();
             timer.start();
             size_t sz = _points_insert.size() * r;
-            tree.insert(_points_insert.begin(), _points_insert.begin() + sz);
+            r_tree.insert(_points_insert.begin(), _points_insert.begin() + sz);
+            assert(tree.size() == _points.size() && r_tree.size() == _points.size() + sz);
+            timer.stop();
             std::cout << timer.total_time() << " " << std::flush;
         };
 
         if (summary) {
             const parlay::sequence<double> ratios = {0.0001, 0.001, 0.01, 0.1};
             for (int i = 0; i < ratios.size(); i++) {
-                tree.clear();
-                tree.insert(_points.begin(), _points.end());
-                rtree_insert(ratios[i]);
+                auto r_tree = tree;
+                rtree_insert(r_tree, ratios[i]);
             }
         } else {
-            rtree_insert(batchInsertRatio);
+            auto r_tree = tree;
+            rtree_insert(r_tree, batchInsertRatio);
         }
 
         if (tag == 1) wp.append(wi);
     }
 
     if (tag >= 2) {
-        auto cgal_delete = [&](bool afterInsert = 1, double ratio = 1.0) {
-            if (!afterInsert) {
-                tree.clear();
-                tree.insert(_points.begin(), _points.end());
-            }
+        auto cgal_delete = [&](bool afterInsert = 0, double ratio = 1.0) {
+            auto r_tree = tree;
+            // if (!afterInsert) {
+            //     tree.clear();
+            //     tree.insert(_points.begin(), _points.end());
+            // }
             timer.reset();
             timer.start();
             if (afterInsert) {
                 size_t sz = _points_insert.size() * ratio;
-                tree.remove(_points_insert.begin(), _points_insert.begin() + sz);
+                r_tree.remove(_points_insert.begin(), _points_insert.begin() + sz);
             } else {
                 assert(tree.size() == wp.size());
                 size_t sz = _points.size() * ratio;
-                tree.remove(_points.begin(), _points.begin() + sz);
+                r_tree.remove(_points.begin(), _points.begin() + sz);
+                assert(tree.size() == _points.size() && r_tree.size() == _points.size() - sz);
             }
             timer.stop();
             std::cout << timer.total_time() << " " << std::flush;
@@ -100,8 +104,8 @@ void testRtreeParallel(int Dim, int LEAVE_WRAP, parlay::sequence<point>& wp, int
             for (int i = 0; i < ratios.size(); i++) {
                 cgal_delete(0, ratios[i]);
             }
-            tree.clear();
-            tree.insert(_points.begin(), _points.end());
+            // tree.clear();
+            // tree.insert(_points.begin(), _points.end());
         } else {
             cgal_delete(0, batchInsertRatio);
         }
