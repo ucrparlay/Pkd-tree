@@ -202,10 +202,10 @@ The execution flow is shown below:
  ## Citation
  If you use our code, please cite our paper:
  ```{latex}
-@misc{men2024pkdtreeparallelkdtreebatch,
-      title={Pkd-tree: Parallel $k$d-tree with Batch Updates}, 
+@misc{men2025parallelkdtreebatchupdates,
+      title={Parallel $k$d-tree with Batch Updates}, 
       author={Ziyang Men and Zheqi Shen and Yan Gu and Yihan Sun},
-      year={2024},
+      year={2025},
       eprint={2411.09275},
       archivePrefix={arXiv},
       primaryClass={cs.DS},
