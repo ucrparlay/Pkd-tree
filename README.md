@@ -88,8 +88,7 @@ Implemented in `tests/test.cpp`. See also `tests/cgal.cpp` and `tests/zdtree/nei
 ### Command line
 
 ```bash
-./test -p [input_path] -d [dimension] -t [batch_mode] \
- -r [rounds] -q [query_type] -i [read_insert_file_flag]
+./test -p [input_path] -d [dimension] -t [batch_mode] -r [rounds] -q [query_type] -i [read_insert_file_flag]
 ```
 
 Parameters:
@@ -122,11 +121,13 @@ To parse the output, see [ Test Framework Format ](#test-framework-format) below
 
 ### Default setting
 
-In default, the Pkd-tree stores all coordinates of points in 64-bit integer (`long`). The balancing parameter is set to $0.3$, the leaf wrap is $32$. It builds $6$ levels of tree at once. Different values on different machine may influence the performance dramatically. See our paper for more explanation.
+In default, the Pkd-tree stores all coordinates of points in 64-bit integer (`long`). The balancing parameter is set to $0.3$, the leaf wrap is $32$. It builds $6$ levels of tree at once. Different values on different machine may influence the performance dramatically. See our [paper](https://arxiv.org/abs/2411.09275) for more explanation.
 
 ## Test Framework Format
 
-Implemented in `tests/testFramework.h`.
+Implemented in `tests/testFramework.h` and `tests/test.cpp`. 
+- **The `testFramework.h` contains how to call the API of `Pkd-tree` with detailed comment, please take a look at it before using.**
+- The `test.cpp` is the entry of the `main` function.
 
 The test starts with $n$ input points $P$, and $\alpha\cdot n$ points $Q$ for insertion and deletion, where $\alpha\in[0,1]$. We also have one integer $t\in\{0,1,2\}$ marks the mode for batch operation before query and another integer $q$ stands for the type of query.
 
@@ -143,13 +144,11 @@ The execution flow is shown below:
 3. Function `delete (t>=2)` delete $Q[0,\cdots, \alpha\cdot n]$ from $T$.
    Outputs delete time.
 
-4. Query `q & (1<<0)` asks KNN of $P$ on $T$.
+4. Query `q & (1<<0)` asks batch KNN of $P$ on $T$.
 
-   If $t=0$, then $k=\{1,10,100\}$, otherwise, $k=10$.
    For each KNN, outputs time for query, average depth and average # nodes visited.
 
-5. Query `q & (1<<1)` asks 10-NN w.r.t points $P'=\{P_0,\cdots,P_{1e6}\}$ (assume $|P|\geq 1e6$).
-   For each KNN, outputs time for query, average depth and average # nodes visited.
+5. Query `q & (1<<1)` save for possible use.
 
 6. Query `q & (1<<2)` asks range count on $T$ each with size $n = [0,n^{1/4}）, [n^{1/4}, n^{1/2}), [n^{1/2}, n)$
    For each query, outputs time for that query.
@@ -179,7 +178,6 @@ The execution flow is shown below:
 13. Query `q & (1<<9)` first construct a tree $T$ using $P$ and run a 10-NN on it, then construct another tree $T'$ from $P\cup Q$, delete $Q$ from $T'$ incrementally, after which performs a 10-NN on it.
     For each NN, outputs the total time, average depth and average # nodes visited.
 
-
 ## Comparison
 
 - ParGeo
@@ -190,14 +188,6 @@ The execution flow is shown below:
   1.  Make sure `CGAL` is installed.
   2.  Compile the whole program with the flag `-DCGAL=ON` attached.
   3.  There should be binary named `cgal` in `build/`, which can be run using the same argument as mentioned in [Usage](##usage) above.
-
-- Zdtree (optional)
-
-  1.  Clone the repository of [PBBS](https://github.com/cmuparlay/pbbsbench), then checkout the version [`9820e9f`](https://github.com/cmuparlay/pbbsbench/tree/9820e9fc38ce64d43aa5c62aa02a0c3ec5384a92).
-  2.  Copy folder `tests/zdtree/octTree` to `pbbsbench/benchmarks/nearestNeighbors/`.
-  3.  Copy file `tests/zdtree/neighborsTime.C` to `pbbsbench/benchmarks/nearestNeighbors/bench/`.
-  4.  Copy file `tests/common/time_loop.h` to `pbbsbench/common/`.
-  5.  Run the program according to the tutorial in PBBS.
 
  ## Citation
  If you use our code, please cite our paper:
