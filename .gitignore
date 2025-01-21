@@ -1,5 +1,4 @@
 # Executables with no extension
-*
 !*.*
 !*/
 !Makefile
