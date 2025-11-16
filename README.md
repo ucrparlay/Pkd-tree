@@ -2,15 +2,15 @@
 
 ---
 ‼️**NOTE:**
-Pkd-tree is now a part of the [PSI-Lib](https://github.com/ucrparlay/SpaceTreeLib), a collection of state-of-the-art parallel implementations for spatial indexes, with higher performance and more robust interface provided.
+Pkd-tree is now a part of the [PSI-Lib](https://github.com/ucrparlay/SpaceTreeLib), a collection of state-of-the-art parallel implementations for spatial indexes, with higher performance, more detailed docs, and more robust interfaces provided.
 
-The PSI-Lib provides follow spatial trees:
+The PSI-Lib provides the following spatial trees:
 - Parallel kd-tree (The Pkd-tree),
 - Parallel quad/oct-tree,
 - Spatial filling curve based 1d-trees,
 - and more!
 
-This repository will no longer be updated. Please checkout the code in the [PSI-Lib](https://github.com/ucrparlay/SpaceTreeLib). Thanks very much!
+This repository will no longer be updated. Please check out the code in the [PSI-Lib](https://github.com/ucrparlay/SpaceTreeLib). Thanks very much!
 
 ---
 Pkd-tree is an implementation of kd-tree that is:
