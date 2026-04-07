@@ -205,13 +205,14 @@ The execution flow is shown below:
  ## Citation
  If you use our code, please cite our paper:
  ```{latex}
-@misc{men2025parallelkdtreebatchupdates,
-      title={Parallel $k$d-tree with Batch Updates}, 
-      author={Ziyang Men and Zheqi Shen and Yan Gu and Yihan Sun},
-      year={2025},
-      eprint={2411.09275},
-      archivePrefix={arXiv},
-      primaryClass={cs.DS},
-      url={https://arxiv.org/abs/2411.09275}, 
+@article{men2025parallel,
+  title={Parallel kd-tree with Batch Updates},
+  author={Men, Ziyang and Shen, Zheqi and Gu, Yan and Sun, Yihan},
+  journal={Proceedings of the ACM on Management of Data},
+  volume={3},
+  number={1},
+  pages={1--26},
+  year={2025},
+  publisher={ACM New York, NY, USA}
 }
 ```
